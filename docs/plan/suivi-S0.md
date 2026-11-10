@@ -38,8 +38,10 @@ Démarré le 2026-11-10. Légende : ✅ fait · 🔄 en cours · ⏳ à faire ·
 
 | Étape | Prototype | Statut |
 |---|---|---|
-| S0.18 | Micro en arrière-plan + LiteRT | ⏳ |
-| S0.19 | Audio chiffré en flux | ⏳ |
-| S0.20 | SMS multipart Digicel et Natcom | ⏳ |
-| S0.21 | GPS en trajet réel | ⏳ |
+| S0.18 | Micro en arrière-plan + LiteRT | 🔄 APK prêt, mesures 👤 |
+| S0.19 | Audio chiffré en flux | 🔄 APK prêt, mesures 👤 |
+| S0.20 | SMS multipart Digicel et Natcom | 🔄 APK prêt, mesures 👤 |
+| S0.21 | GPS en trajet réel | 🔄 APK prêt, mesures 👤 |
 | S0.22 | supabase-kt : OTP + RPC + Realtime | ⏳ (nécessite S0.08 et S0.09) |
+
+Code : `spikes/` · protocole : [protocole-prototypes-S0.md](protocole-prototypes-S0.md).

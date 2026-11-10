@@ -20,6 +20,7 @@ Cercle Rouge **ne prédit pas** un enlèvement ou une agression. Elle détecte d
 | 8 | [decisions/](decisions/) | Décisions d'architecture (ADR) |
 | 9 | [questions-ouvertes.md](questions-ouvertes.md) | Points à trancher avant d'implémenter |
 | 10 | [glossaire.md](glossaire.md) | Vocabulaire commun |
+| 11 | [plan/](plan/README.md) | Plan de développement sprint par sprint et prompts Claude Code |
 
 ### Modules produit (`produit/`)
 

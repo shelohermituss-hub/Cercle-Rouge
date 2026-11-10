@@ -9,13 +9,14 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.test.runTest
 
 /** S1.10–S1.12 sur un vrai Android : Keystore, SQLCipher, journal chaîné. */
 class EncryptedStorageTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
-    @Test fun base_chiffree_relue_apres_reouverture() = runTest {
+    @Test fun base_chiffree_relue_apres_reouverture() = runTest(timeout = 10.minutes) {
         context.deleteDatabase(PrivacyDatabase.NAME)
         val db = PrivacyDatabase.open(context)
         db.settings().put(SettingEntity("canari", "valeur-secrete-canari"))

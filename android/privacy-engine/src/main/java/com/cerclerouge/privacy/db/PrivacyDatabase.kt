@@ -87,10 +87,17 @@ abstract class PrivacyDatabase : RoomDatabase() {
     companion object {
         const val NAME = "cercle-rouge.db"
 
-        /** Base Room chiffrée par SQLCipher (AES-256), clé issue de [DatabaseKey]. */
+        /**
+         * Base Room chiffrée par SQLCipher (AES-256), clé issue de [DatabaseKey].
+         * La clé est déjà aléatoire sur 256 bits : on la passe en clé brute (« x'…' ») pour éviter la dérivation
+         * PBKDF2 de SQLCipher à chaque ouverture, inutile ici et coûteuse sur les téléphones d'entrée de gamme.
+         */
         fun open(context: Context): PrivacyDatabase {
             System.loadLibrary("sqlcipher")
-            val factory = SupportOpenHelperFactory(DatabaseKey.getOrCreate(context))
+            val key = DatabaseKey.getOrCreate(context)
+            val rawKey = "x'" + key.joinToString("") { "%02x".format(it) } + "'"
+            key.fill(0)
+            val factory = SupportOpenHelperFactory(rawKey.toByteArray(Charsets.US_ASCII))
             return Room.databaseBuilder(context, PrivacyDatabase::class.java, NAME)
                 .openHelperFactory(factory)
                 .build()

@@ -6,9 +6,8 @@
 
 ```
 Android Keystore (matériel : TEE, ou StrongBox si disponible), non exportable
- ├── KEK_db      AES-256-GCM   → enveloppe la phrase de passe SQLCipher (Room)
+ ├── KEK_db      AES-256-GCM   → enveloppe la clé brute SQLCipher (Room) : base + réglages + journal (ADR-0007 amendé)
  ├── KEK_evid    AES-256-GCM   → enveloppe les clés de données des preuves (une par alerte)
- ├── KEK_prefs   AES-256-GCM   → enveloppe le keyset Tink des réglages sensibles (DataStore chiffré)
  ├── K_device    ECDSA P-256   → signe les racines de chaîne de preuves et la clé publique de partage
  └── KEK_share   AES-256-GCM   → enveloppe le keyset Tink hybride (clé privée de partage des preuves, ADR-0016)
 ```
@@ -17,7 +16,7 @@ Android Keystore (matériel : TEE, ou StrongBox si disponible), non exportable
 |---|---|---|
 | Fichiers de preuves | Tink `StreamingAead` AES256_GCM_HKDF_1MB | Chiffrement en flux de gros fichiers, authentifié |
 | Base locale | Room + SQLCipher (AES-256) | Métadonnées, file d'attente, journal |
-| Réglages sensibles | Tink `Aead` + DataStore | ⚠ `androidx.security:security-crypto` (EncryptedFile, EncryptedSharedPreferences) est déprécié : ne pas l'utiliser |
+| Réglages sensibles | Dans la base SQLCipher (ADR-0007 amendé) | ⚠ `androidx.security:security-crypto` (EncryptedFile, EncryptedSharedPreferences) est déprécié : ne pas l'utiliser |
 | PIN | Argon2id (m = 64 Mo, t = 3, p = 1) ou PBKDF2-HMAC-SHA256 ≥ 310 000 itérations, avec sel de 16 octets ; résultat enveloppé par une clé du Keystore | Résiste à l'extraction hors ligne |
 | Accès au coffre | Clé du Keystore avec `setUserAuthenticationRequired(true)` et biométrie forte ou identifiants de l'appareil | Liée à l'authentification |
 | Intégrité des preuves | SHA-256 + chaîne de hachages ; racine signée par `K_device` | Non-altération |

@@ -31,6 +31,8 @@ data class CrColors(
     val raised: Color,
     val forestDeep: Color,
     val forest: Color,
+    /** Vert sombre de l'escalier des affiches lime. */
+    val forestShade: Color,
     /** Couleur d'action et d'état « protégé ». */
     val lime: Color,
     val glow: Color,
@@ -56,6 +58,7 @@ val PixelLime = CrColors(
     raised = Color(0xFF1B1E21),
     forestDeep = Color(0xFF2A2E33),
     forest = Color(0xFF009443),
+    forestShade = Color(0xFF00430F),
     lime = Color(0xFFA0E705),
     glow = Color(0x66A0E705),
     onLime = Color(0xFF0E1012),

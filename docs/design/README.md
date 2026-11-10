@@ -18,6 +18,8 @@ Maquettes du porteur du projet (canevas « Cercle Rouge — Maquettes », page �
 
 Typo : Pixelify Sans (titres, capitales), Space Mono (texte). Angles crénelés de 4 dp, disques en pixels, icônes 8×8, animations par paliers (désactivées si « réduire les animations »).
 
+Revue visuelle sans émulateur : `./gradlew :app:testDebugUnitTest --tests '*ScreenshotTest*'` rend l'accueil (veille / actif), le SOS, le compte à rebours et une affiche en PNG dans `android/app/build/screenshots/` (Robolectric, rendu natif).
+
 Garde-fous conservés :
 - **La carte d'accueil est un dessin local d'Haïti** (contour simplifié, aucune tuile réseau) **sans point de position** : rien n'est localisé tant qu'aucun trajet ni alerte n'est en cours (P4, R-PE-02). La carte réelle avec position viendra avec le module Trajet.
 - SOS toujours en rouge, même en veille monochrome ; appui long 1,5 s (un seul geste) ou appui court vers l'écran SOS.

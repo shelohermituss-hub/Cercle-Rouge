@@ -333,31 +333,6 @@ fun Led(color: Color, blink: Boolean, modifier: Modifier = Modifier, size: Dp = 
     Box(modifier.size(size).background(if (on) color else Color.Transparent))
 }
 
-/** Segments « x / total » (contacts prêts). */
-@Composable
-fun Segments(filled: Int, total: Int, color: Color = Cr.colors.lime) {
-    val c = Cr.colors
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.semantics { stateDescription = "$filled / $total" }) {
-        repeat(total) { i ->
-            val on = i < filled
-            Box(
-                Modifier
-                    .size(16.dp)
-                    .background(if (on) color else Color.Transparent)
-                    .then(
-                        if (on) {
-                            Modifier
-                        } else {
-                            Modifier.drawBehind {
-                                drawRect(c.line, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
-                            }
-                        }
-                    )
-            )
-        }
-    }
-}
-
 /** Égaliseur de 5 barres : l'écoute est active (aucun contenu audio n'est affiché). */
 @Composable
 fun EqBars() {
@@ -530,7 +505,7 @@ fun Poster(
                     .align(Alignment.BottomEnd)
                     .fillMaxWidth(1f - left / 360f)
                     .height((24 * (i + 1)).dp)
-                    .background(if (i % 2 == 0) c.forest else c.forestDeep)
+                    .background(if (i % 2 == 0) c.forest else c.forestShade)
             )
         }
         Column(Modifier.fillMaxSize()) {

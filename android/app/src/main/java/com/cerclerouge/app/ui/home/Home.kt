@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -83,7 +84,6 @@ import com.cerclerouge.app.ui.components.PxButton
 import com.cerclerouge.app.ui.components.PxNavBar
 import com.cerclerouge.app.ui.components.PxPanel
 import com.cerclerouge.app.ui.components.PxVariant
-import com.cerclerouge.app.ui.components.Segments
 import com.cerclerouge.app.ui.components.SosBar
 import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.components.pixelGrid
@@ -212,7 +212,7 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit) {
 }
 
 @Composable
-private fun HomeConsole(
+internal fun HomeConsole(
     state: EngineState,
     onToggle: () -> Unit,
     onSoon: () -> Unit,
@@ -240,11 +240,12 @@ private fun HomeConsole(
             }
         }
         Box(Modifier.weight(1f).fillMaxWidth()) {
+            // Carte en haut, pleine largeur ; le losange et ses fonctions viennent par-dessus son bas (référence « connect »).
             HaitiMap(
-                landColor = if (armed) c.lime.copy(alpha = 0.16f) else c.ink.copy(alpha = 0.07f),
-                coastColor = if (armed) c.lime.copy(alpha = 0.55f) else c.ink.copy(alpha = 0.22f),
+                landColor = if (armed) c.lime.copy(alpha = 0.18f) else c.ink.copy(alpha = 0.08f),
+                coastColor = if (armed) c.lime.copy(alpha = 0.6f) else c.ink.copy(alpha = 0.26f),
                 seaColor = c.line,
-                modifier = Modifier.matchParentSize()
+                modifier = Modifier.fillMaxWidth().aspectRatio(1.3f)
             )
             Text(
                 stringResource(R.string.home_map_caption).uppercase(),
@@ -252,7 +253,7 @@ private fun HomeConsole(
                 color = c.muted,
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
-            Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.size(336.dp, 288.dp), contentAlignment = Alignment.Center) {
                     // Losange qui relie le disque aux quatre fonctions (repris de la référence « connect »).
                     Canvas(Modifier.size(260.dp)) {
@@ -304,7 +305,7 @@ private fun HomeConsole(
                         armed,
                         onSoon,
                         Modifier.align(Alignment.BottomStart)
-                    ) { Segments(CONTACTS_READY, 5, accent) }
+                    )
                     Satellite(
                         PixelIcon.ARROW_RIGHT,
                         stringResource(R.string.home_row_trip),
@@ -344,7 +345,7 @@ private fun Satellite(
 ) {
     val c = Cr.colors
     PxPanel(
-        modifier.width(104.dp).clickable(role = Role.Button, onClick = onClick),
+        modifier.width(112.dp).clickable(role = Role.Button, onClick = onClick),
         border = if (armed) c.lime else c.lineControl,
         padding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
     ) {
@@ -362,7 +363,7 @@ private fun Satellite(
 
 /** Maquette « SOS · appui long » : 12 carrés s'allument autour du disque pendant 1,5 s. */
 @Composable
-private fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit) {
+internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit) {
     val c = Cr.colors
     val progress = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
@@ -439,7 +440,7 @@ private fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit) {
 
 /** Maquette « SOS · compte à rebours » : 5 s pour annuler, puis l'alerte part. */
 @Composable
-private fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit) {
+internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit) {
     val c = Cr.colors
     var seconds by remember { mutableIntStateOf(5) }
     val a11y = pluralStringResource(R.plurals.countdown_a11y, seconds, seconds)

@@ -125,7 +125,7 @@
     <string name="notif_screen_title">Notifications</string>
     <string name="sat_on">Active</string>
     <string name="sat_off">Arrêtée</string>
-    <string name="sat_position_off">Non partagée</string>
+    <string name="sat_position_off">Privée</string>
     <string name="sat_contacts">%1$d / 5</string>
     <string name="sat_trip_none">Aucun</string>
     <string name="home_map_caption">Haïti · aucune position affichée</string>

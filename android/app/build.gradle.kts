@@ -40,6 +40,14 @@ android {
         disable += setOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion")
     }
 }
+android.testOptions.unitTests.isIncludeAndroidResources = true
+
+// Robolectric télécharge android-all : même miroir que settings.gradle.kts (Maven Central limite le débit).
+tasks.withType<Test>().configureEach {
+    jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED", "--add-opens=java.base/java.io=ALL-UNNAMED")
+    systemProperty("robolectric.dependency.repo.url", "https://maven-central.storage-download.googleapis.com/maven2")
+}
+
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 
 dependencies {
@@ -58,4 +66,9 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.biometric)
     testImplementation(libs.kotlin.test)
+    // Rendu des écrans sur la JVM (captures PNG dans build/screenshots), sans émulateur.
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

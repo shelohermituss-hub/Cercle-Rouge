@@ -125,7 +125,7 @@
     <string name="notif_screen_title">Notifikasyon</string>
     <string name="sat_on">Aktif</string>
     <string name="sat_off">Kanpe</string>
-    <string name="sat_position_off">Pa pataje</string>
+    <string name="sat_position_off">Prive</string>
     <string name="sat_contacts">%1$d / 5</string>
     <string name="sat_trip_none">Okenn</string>
     <string name="home_map_caption">Ayiti · pa gen pozisyon</string>

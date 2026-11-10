@@ -8,8 +8,8 @@
 | IA embarquée | LiteRT (TFLite) ; ❓ ONNX Runtime pour un VAD Silero si besoin | ADR-0003 |
 | Crypto locale | Android Keystore (StrongBox si disponible) + Google Tink | ADR-0007 |
 | iOS | Swift + SwiftUI | Phase 2 ; `core-domain` reste portable (❓ Kotlin Multiplatform) |
-| Backend | ❓ Node.js (TypeScript) ou Go ; PostgreSQL, Redis, stockage objet chiffré | Voir [backend-api](backend-api.md) |
-| Temps réel | WebSocket (suivi d'urgence) | Repli en polling |
+| Backend | **Supabase** : Auth (OTP téléphone), Postgres + RLS, RPC, Edge Functions, Realtime, Storage, pg_cron | ADR-0011, [backend-api](backend-api.md) |
+| Temps réel | Supabase Realtime (app) ; polling d'une Edge Function (page web) | — |
 | Notifications | Firebase Cloud Messaging + SMS de secours | FCM ne transporte **aucune** donnée sensible : seulement un « réveil » |
 | Cartes | ❓ Mapbox ou Google Maps SDK ; V1 sans fournisseur (corridor) | [Module 4](../produit/04-deviation-itineraire.md) |
 
@@ -28,7 +28,7 @@
 | `:privacy-engine` | Android library | core-domain |
 | `:ui-mobile` (`:app`) | Application | tous |
 
-Les modules serveur (`backend-api`, `admin-console`) vivent dans `server/` et `admin/`, dans le même dépôt (❓ ou des dépôts séparés).
+Le backend vit dans `supabase/` (migrations, Edge Functions, tests SQL) ; la page web des proches et `admin-console` dans `web/`, dans le même dépôt.
 
 ### Règles de dépendance
 

@@ -9,7 +9,7 @@ Android Keystore (matériel : TEE, ou StrongBox si disponible), non exportable
  ├── KEK_db      AES-256-GCM   → enveloppe la phrase de passe SQLCipher (Room)
  ├── KEK_evid    AES-256-GCM   → enveloppe les clés de données des preuves (une par alerte)
  ├── KEK_prefs   AES-256-GCM   → enveloppe le keyset Tink des réglages sensibles (DataStore chiffré)
- └── K_device    ECDSA P-256   → signe les requêtes au serveur (identité de l'appareil)
+ └── K_device    ECDSA P-256   → signe les racines de chaîne de preuves
 ```
 
 | Élément | Choix | Raison |
@@ -25,7 +25,7 @@ Android Keystore (matériel : TEE, ou StrongBox si disponible), non exportable
 ## Transport
 
 - TLS 1.3 (1.2 minimum) ; épinglage des **clés publiques** (SPKI) du serveur avec au moins 2 broches (primaire + secours), dans la Network Security Config ; `cleartextTrafficPermitted=false`.
-- Requêtes signées par `K_device` (horodatage + nonce) contre le rejeu.
+- Authentification par JWT Supabase (OTP téléphone) ; les jetons de session sont stockés chiffrés par Tink.
 
 ## Partage des preuves avec les proches
 

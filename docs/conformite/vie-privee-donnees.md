@@ -21,7 +21,7 @@
 
 ## Sous-traitants prévus (❓ à choisir)
 
-Hébergeur (deux régions) · passerelle SMS (couverture Digicel et Natcom) · téléphonie (appel automatisé) · Firebase Cloud Messaging (Google) · ❓ fournisseur de cartes · ❓ autorité d'horodatage · ❓ WhatsApp Business Platform (Meta).
+Supabase (hébergement, base, stockage, région à confirmer) · passerelle SMS (couverture Digicel et Natcom) · téléphonie (appel automatisé) · Firebase Cloud Messaging (Google) · ❓ fournisseur de cartes · ❓ autorité d'horodatage · ❓ WhatsApp Business Platform (Meta).
 
 Chaque sous-traitant doit faire l'objet d'un contrat de traitement des données, et ses transferts hors UE doivent être identifiés.
 

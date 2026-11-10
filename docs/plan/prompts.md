@@ -36,9 +36,14 @@ Règles :
    une API ; signale les API dépréciées.
 8. Avant de livrer : /code-review-and-quality ; /security-and-hardening si ça touche
    à la crypto, au réseau, aux permissions ou au backend ; /ponytail-review pour la logique.
-9. Contexte : lancement en Haïti (+509, 114/115/116, Digicel et Natcom), utilisateurs
+9. Backend Supabase (ADR-0011) : RLS sur toutes les tables, écritures sensibles via des RPC
+   SECURITY DEFINER (search_path fixé, EXECUTE retiré à PUBLIC et anon), service_role
+   uniquement dans les Edge Functions, supabase/tests/security.sql à chaque migration.
+10. Consentement parental (ADR-0013) : un mineur de 12–15 ans sans lien confirmé n'a
+   que le SOS manuel ; le parent n'obtient jamais d'accès de surveillance.
+11. Contexte : lancement en Haïti (+509, 114/115/116, Digicel et Natcom), utilisateurs
    dès 12 ans, langues FR/HT/EN, téléphones d'entrée de gamme sous Android 10.
-10. À la fin : ce qui est fait, exigences couvertes, tests lancés (avec leur résultat
+12. À la fin : ce qui est fait, exigences couvertes, tests lancés (avec leur résultat
     réel), ce qui reste, questions ouvertes.
 
 Branche : sprint/S<n>-<sujet>. Commits atomiques en français.
@@ -70,6 +75,8 @@ l'utilisateur, service de premier plan microphone, détection de déviation d'it
 alerte graduée, enregistrement chiffré, hors ligne d'abord.
 
 Produis :
+0. Le schéma Supabase (tables, RLS, RPC, Edge Functions, pg_cron) confronté à
+   docs/modules/backend-api.md.
 1. Une critique : incohérences, manques, sur-ingénierie (/doubt-driven-development,
    /ponytail), et ce qui est impossible ou risqué sur Android 10 à 15 et Google Play.
 2. Le graphe de dépendances des modules Gradle et le diagramme de flux
@@ -79,9 +86,10 @@ Produis :
    comportement en cas de refus.
 5. Les risques de confidentialité restants, classés.
 
-Contraintes : aucun envoi d'audio brut en continu vers un serveur ; pas
+Contraintes : backend Supabase (ADR-0011) ; aucun envoi d'audio brut en continu vers un serveur ; pas
 d'ACCESS_BACKGROUND_LOCATION ; aucun SDK publicitaire ou analytics tiers ;
-compatible avec la politique Play « Familles » (utilisateurs dès 12 ans).
+compatible avec la politique Play « Familles » (utilisateurs dès 12 ans) ; consentement parental
+selon docs/produit/11-consentement-parental.md.
 Ne code rien. Pose tes questions, puis propose les modifications de docs/ en ADR.
 ```
 
@@ -219,8 +227,8 @@ juriste. Ne prétends pas donner un avis juridique.
 | Sprint | Prompt |
 |---|---|
 | S0 | « Sprint 0 — Cadrage. Pas de code. Interviewe-moi (/interview-me) pour trancher une à une les questions 🔴 restantes de docs/questions-ouvertes.md, puis rédige les ADR et mets à jour docs/. Ensuite, prototypes jetables dans spikes/ selon les étapes 0.17 à 0.20, avec un rapport de mesures par téléphone. » |
-| S1 | « Sprint 1 — Socle. Commence par le squelette Gradle et la CI, puis la machine à états en TDD (prompt 4), puis Room + SQLCipher, PIN, permissions, onboarding (12 ans et +, consentement parental pour les 12–15 ans). » |
+| S1 | « Sprint 1 — Socle. Suis les blocs A à E de la section Sprint 1 : Gradle et CI, machine à états en TDD (prompt 4), stockage chiffré et PIN, socle Supabase (migration, RLS, RPC de consentement parental, security.sql), puis inscription OTP et parcours jeune et parent. Démo : un jeune de 13 ans débloqué par son parent depuis un autre téléphone. » |
 | S2 | « Sprint 2 — Alertes locales. Objectif démontrable : en mode avion, un SOS envoie un SMS avec la position aux contacts. Suis la section Sprint 2. » |
-| S3 | « Sprint 3 — Backend. Commence par le contrat OpenAPI (docs/modules/backend-api.md), fais-le-moi valider, puis le serveur, la page des proches et l'intégration mobile. » |
+| S3 | « Sprint 3 — Alertes via Supabase. Commence par la migration (tables, RLS, CHECK) et les signatures des RPC de docs/modules/backend-api.md ; fais-les-moi valider ; écris security.sql AVANT les RPC ; puis les Edge Functions notify-alert et track, la page des proches et l'intégration mobile. » |
 | S7 | « Sprint 7 — Sécurité. Lance les agents security-auditor et code-reviewer sur tout le dépôt, compare au modèle de menace T1–T14, puis corrige par priorité. » |
 | S8 | « Sprint 8 — Tests et lancement. Produis la grille de test terrain (20 à 50 téléphones), les scripts de tests réseau faible et mode avion, le protocole de mesure batterie et de faux positifs, puis le dossier Play complet. » |

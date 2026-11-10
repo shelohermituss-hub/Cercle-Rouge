@@ -34,6 +34,7 @@ Cercle Rouge **ne prédit pas** un enlèvement ou une agression. Elle détecte d
 8. [Réseau, hors-ligne et résilience](produit/08-reseau-hors-ligne.md)
 9. [Sécurité et anti-manipulation](produit/09-anti-manipulation.md)
 10. [Tableau de bord des proches](produit/10-tableau-de-bord-proches.md)
+11. [Consentement parental (12–15 ans)](produit/11-consentement-parental.md)
 
 ### Modules logiciels (`modules/`)
 
@@ -49,7 +50,7 @@ Cercle Rouge **ne prédit pas** un enlèvement ou une agression. Elle détecte d
 | [sync-engine](modules/sync-engine.md) | Synchronisation sécurisée, file d'attente, reprise après panne |
 | [privacy-engine](modules/privacy-engine.md) | Permissions, consentements, journalisation, suppression des données |
 | [ui-mobile](modules/ui-mobile.md) | Écrans, widgets, notifications, mode urgence |
-| [backend-api](modules/backend-api.md) | Comptes, alertes, liens de suivi, canaux de notification |
+| [backend-api](modules/backend-api.md) | Supabase : comptes, alertes, liens de suivi, canaux de notification |
 | [admin-console](modules/admin-console.md) | Modération, incidents, statistiques anonymisées, support |
 
 ## Conventions de ce dossier
@@ -74,4 +75,7 @@ Cercle Rouge **ne prédit pas** un enlèvement ou une agression. Elle détecte d
 | Chiffrement local | Android Keystore + Tink (AES-256-GCM, streaming) | [ADR-0007](decisions/ADR-0007-chiffrement-local.md) |
 | Score de risque | `Risk = w₁A + w₂B + w₃C + w₄D + w₅E` | [ADR-0008](decisions/ADR-0008-formule-score-risque.md) |
 | Lancement et âge | Haïti ; 12 ans minimum | [ADR-0009](decisions/ADR-0009-haiti-age-minimum-12.md) |
+| Backend | Supabase | [ADR-0011](decisions/ADR-0011-backend-supabase.md) |
+| Architecture UI | MVVM + flux unidirectionnel | [ADR-0012](decisions/ADR-0012-mvvm-udf.md) |
+| Consentement parental | Confirmation dans l'app du parent inscrit | [ADR-0013](decisions/ADR-0013-consentement-parental.md) |
 | Périmètre MVP | SOS, contacts, push et SMS, trajet, audio chiffré après alerte, mots-clés, vérification, hors ligne, page des proches | [ADR-0010](decisions/ADR-0010-perimetre-mvp.md) |

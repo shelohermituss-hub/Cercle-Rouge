@@ -8,7 +8,8 @@ Cercle Rouge (nom provisoire) : application Android de sécurité personnelle. E
 
 - Android natif : Kotlin + Jetpack Compose, minSdk 29, `com.cerclerouge.app`. IA locale : LiteRT. Langues : FR (défaut), créole haïtien (`ht`), EN.
 - Lancement : Haïti, utilisateurs dès 12 ans (ADR-0009). Périmètre MVP : ADR-0010. Plan : `docs/plan/` (sprints S0–S8, prompts).
-- Backend (❓ Go ou Node.js), PostgreSQL, Redis, WebSocket, FCM + SMS de secours. iOS en phase 2.
+- Backend : **Supabase** (ADR-0011) dans `supabase/` (migrations, Edge Functions, `tests/security.sql`) ; FCM + SMS de secours. iOS en phase 2.
+- Consentement parental 12–15 ans : confirmation dans l'app du parent inscrit (ADR-0013).
 
 ## Règles absolues (détail dans `docs/00-vision-principes.md`)
 
@@ -20,7 +21,8 @@ Cercle Rouge (nom provisoire) : application Android de sécurité personnelle. E
 6. Local d'abord : file persistante, SMS de secours, idempotence.
 7. Ne jamais prétendre prédire un danger. Probabilités calibrées, versions des modèles journalisées.
 8. Toute exigence a un identifiant `R-XXX-nn` ; le code et les tests y font référence. Toute nouvelle permission → `docs/conformite/android-permissions-play.md`.
-9. Avant d'implémenter un module, vérifier `docs/questions-ouvertes.md` (questions 🔴 bloquantes) et poser les questions à l'utilisateur plutôt que supposer.
+9. **Supabase** : RLS sur toutes les tables ; écritures sensibles (alertes, consentements, liens, statuts) uniquement via des RPC `SECURITY DEFINER` (`SET search_path = public`, `REVOKE EXECUTE` à `PUBLIC` et `anon`, `(select auth.uid())`, `FOR UPDATE`, idempotentes) ; helpers `is_admin()` ; contraintes CHECK ; `service_role` seulement dans les Edge Functions ; après toute migration : `supabase/tests/security.sql` + Security Advisor sans nouvelle alerte.
+10. Avant d'implémenter un module, vérifier `docs/questions-ouvertes.md` (questions 🔴 bloquantes) et poser les questions à l'utilisateur plutôt que supposer.
 
 Les skills web (`/shadcn`, Tailwind) ne concernent que la page de suivi des proches et `admin-console`. Pour l'app Android, appliquer les principes de `/ui-ux-pro-max`, `/frontend-ui-engineering` et `/emil-design-eng` en Compose.
 

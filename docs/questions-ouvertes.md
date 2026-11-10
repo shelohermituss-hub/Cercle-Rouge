@@ -9,7 +9,9 @@
 | ~~Q1~~ ✅ | Formule du score de risque | **Décidé** : `Risk = w₁A + w₂B + w₃C + w₄D + w₅E` (ADR-0008) | — |
 | ~~Q2~~ ✅ | Pays de lancement | **Décidé : Haïti** (ADR-0009). Reste à confirmer les numéros 114, 115 et 116 auprès des autorités | — |
 | ~~Q3~~ ✅ | Âge minimum | **Décidé : 12 ans** (ADR-0009). Reste Q3b ci-dessous | — |
-| Q3b 🔴 | Comment recueillir le consentement du parent ou tuteur pour les 12–15 ans (SMS au parent ? Le parent devient-il automatiquement contact de confiance ?) | SMS de confirmation au parent ; il n'obtient **aucun** accès de suivi en dehors des alertes (anti-surveillance) | onboarding, S1 |
+| ~~Q3b~~ ✅ | Consentement parental | **Décidé** : confirmation dans l'app, sur le téléphone du parent inscrit (ADR-0013, produit 11) | — |
+| Q3c | Parent proposé automatiquement comme contact de confiance ? | Proposé ; le jeune décide | produit 11 |
+| Q3d | Aucun adulte avec smartphone (fréquent en Haïti) ? | MVP : SOS manuel seulement ; V2 : code SMS + appel de vérification | produit 11 |
 | Q4 | PIN obligatoire en mode trajet ? | Fortement recommandé, pas obligatoire (R-SEC-01) | module 9 |
 | Q5 | PIN de contrainte (désarmement simulé + alerte silencieuse) | Oui | module 9 |
 | Q6 | Un contact non consenti peut-il recevoir un SOS manuel ? | Oui, SOS manuel uniquement, avec lien de blocage | contacts-engine |
@@ -21,7 +23,8 @@
 
 | # | Question | Recommandation | Bloque |
 |---|---|---|---|
-| Q10 🔴 | Backend : Go ou Node.js ? Hébergement et localisation des données ? | Go si l'équipe est à l'aise ; deux régions | backend-api |
+| ~~Q10~~ ✅ | Backend | **Supabase** (ADR-0011). Reste Q10b | — |
+| Q10b | Région Supabase (`us-east-1` ?) et fournisseur SMS pour l'OTP et les alertes (Twilio ?) avec une bonne remise chez Digicel et Natcom | À tester en S0 | S0 |
 | Q11 🔴 | Exception Play `SEND_SMS` : soumettre ? Variante APK hors Play ? | Soumettre tôt ; plan B serveur | ADR-0005 |
 | Q12 | Partage des preuves avec les proches : option A, B ou C | B (clé dans le fragment de l'URL) | crypto, backend |
 | Q13 | Fournisseurs SMS et téléphonie couvrant Digicel et Natcom | À évaluer (coût, fiabilité, délai) | backend-api |
@@ -29,6 +32,7 @@
 | Q15 | Appareils sans Google Play Services (FCM, Fused Location) : à supporter ? | Repli `LocationManager` + SMS ; pas de push | sync, location |
 | Q16 | `IGNORE_BATTERY_OPTIMIZATIONS` et `USE_EXACT_ALARM` : acceptables pour Play ? | Demander avec justification « safety » | alert-engine |
 | Q17 | Kotlin Multiplatform pour `core-domain` (iOS phase 2) ? | Garder du Kotlin pur maintenant, décider en phase 2 | — |
+| Q28 | Épinglage TLS avec Supabase : épingler les autorités de certification (avec secours et expiration) ou ne rien épingler ? | Épingler l'ensemble des AC avec une expiration courte, et garder le SMS direct en secours | S0 |
 | Q18 | Crash reporting sans données personnelles : outil ? | ACRA auto-hébergé, ou rien en V1 | — |
 
 ## IA et données

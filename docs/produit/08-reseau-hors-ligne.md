@@ -30,7 +30,7 @@ L'alerte ne dépend **jamais** du serveur seul. Sans données mobiles, le SMS et
 | Détection de perte de réseau | `ConnectivityManager.NetworkCallback` + vérification de la capacité « validated » |
 | Mode avion | Preuves conservées localement ; la file reprend dès le retour du réseau |
 | Reprise automatique | WorkManager avec la contrainte « réseau connecté » pour les envois volumineux ; envoi immédiat (dans le service de premier plan) pour les alertes |
-| Serveur de secours | Deux régions ou fournisseurs indépendants ; le client connaît deux URL et bascule après 2 échecs (❓ hébergement) |
+| Serveur de secours | Avec Supabase (ADR-0011) : un seul projet. Le canal indépendant est le **SMS direct depuis le téléphone** ; PITR + sauvegardes ; page de statut |
 | Chronologie | Chaque événement porte l'horodatage UTC, l'horloge monotone et un numéro de séquence local, pour reconstituer l'ordre même avec une horloge faussée |
 
 ## Règles
@@ -43,4 +43,4 @@ L'alerte ne dépend **jamais** du serveur seul. Sans données mobiles, le SMS et
 | R-NET-04 | **DOIT** : la vidéo n'est envoyée en données mobiles que si l'utilisateur l'a autorisé (par défaut : Wi-Fi seulement, sauf en `EMERGENCY_MODE`, où l'audio est autorisé sur réseau mobile). |
 | R-NET-05 | **DOIT** : un battement (« heartbeat ») est envoyé toutes les 2 min pendant un trajet actif, si la perte de contact est activée (R-TRIP-05). |
 | R-NET-06 | **DEVRAIT** : la file locale se vide en < 10 s après le retour du réseau pour les messages d'alerte (hors médias). |
-| R-NET-07 | **DOIT** : TLS 1.2 minimum (1.3 préféré), épinglage des clés publiques du serveur avec une clé de secours (Network Security Config), pas de HTTP en clair. |
+| R-NET-07 | **DOIT** : TLS 1.2 minimum (1.3 préféré), épinglage des clés publiques des autorités de certification utilisées par Supabase, avec des broches de secours et une date d'expiration (Network Security Config). ❓ Ou pas d'épinglage : le domaine `*.supabase.co` renouvelle ses certificats, donc un épinglage mal fait peut couper toutes les alertes. À décider en S0 (Q28), pas de HTTP en clair. |

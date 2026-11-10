@@ -1,6 +1,6 @@
 # Plan de développement — Cercle Rouge MVP (1.0)
 
-> Version 2, du 2026-11-10. Elle fusionne ta proposition de 9 sprints avec la spécification `docs/`. Tous tes éléments sont conservés. Marquage : **➕** ajouté · **↪** déplacé d'un autre sprint · **V2** reporté après le MVP (selon ta définition du MVP, ADR-0010).
+> Version 3, du 2026-11-10 : backend **Supabase** et consentement parental intégrés. Elle fusionne ta proposition de 9 sprints avec la spécification `docs/`. Tous tes éléments sont conservés. Marquage : **➕** ajouté · **↪** déplacé d'un autre sprint · **V2** reporté après le MVP (selon ta définition du MVP, ADR-0010).
 
 ## Décisions intégrées
 
@@ -11,6 +11,8 @@
 | Âge minimum | 12 ans ; consentement d'un parent ou tuteur pour les 12–15 ans ; politique Play « Familles » | ADR-0009 |
 | Périmètre MVP | Tes 10 points + PIN et journal local | ADR-0010 |
 | Plateforme | Android d'abord (Kotlin + Compose), iOS en V2 | ADR-0001 |
+| Backend | Supabase (Auth OTP, Postgres + RLS, RPC, Edge Functions, Realtime, Storage, pg_cron) | ADR-0011 |
+| Consentement parental | Confirmation dans l'app, sur le téléphone du parent inscrit | ADR-0013 |
 
 ## Pourquoi j'ai réordonné tes sprints
 
@@ -27,26 +29,26 @@
 
 ## Feuille de route
 
-| Sprint | Thème | Démo de fin de sprint (sur un vrai téléphone) | Durée |
-|---|---|---|---|
-| **S0** | Cadrage + prototypes | Décisions prises, maquettes Figma testées, 4 prototypes mesurés | 3 sem. |
-| **S1** | Socle Android | App installée, onboarding avec consentements, PIN, SOS qui passe en `EMERGENCY_MODE` (journal + notification locale) | 2 sem. |
-| **S2** | Alertes locales | **Mode avion : SOS → les proches reçoivent un SMS avec la position** ; vérification « Es-tu en sécurité ? » | 2 sem. |
-| **S3** | Backend + proches | Notification push + SMS serveur + **lien de suivi** ouvert par un proche ; consentement du contact | 2 sem. |
-| **S4** | Localisation et trajet | Trajet réel → détour → vérification → alerte avec la carte ; téléphone éteint → « perte de contact » | 2 sem. |
-| **S5** | Écoute IA locale | « Au secours » ou « Anmwe » → vérification ; phrase secrète → alerte silencieuse ; musique forte → rien | 2 sem. |
-| **S6** | Preuves | Alerte → audio chiffré → le proche écoute l'extrait → supprimé automatiquement après 24 h | 2 sem. |
-| **S7** | Sécurité | PIN de contrainte, mode leurre, effacement d'urgence ; audit sans faille haute | 2 sem. |
-| **S8** | Tests et lancement | Rapport de terrain sur 20 à 50 téléphones ; bêta fermée ; pilote | 3 sem. |
+| Sprint | Thème | Démo de fin de sprint |
+|---|---|---|
+| **S0** (3 sem.) | Cadrage, comptes (Supabase, SMS, Firebase, Play), prototypes | Décisions, maquettes testées, 5 prototypes mesurés |
+| **S1** | Socle Android + socle Supabase | Inscription OTP, **consentement parental de bout en bout**, PIN, machine à états |
+| **S2** | Alertes locales | Mode avion : SOS → SMS aux proches avec la position |
+| **S3** | Alertes via Supabase + page des proches | Push, SMS serveur, lien de suivi, « J'ai pris contact » |
+| **S4** | Trajet protégé | Détour → vérification → alerte avec carte ; perte de contact |
+| **S5** | Écoute IA locale | Mots-clés FR et HT, phrase secrète ; faux positifs mesurés |
+| **S6** | Preuves | Audio chiffré, écouté par le proche, supprimé à 24 h |
+| **S7** | Sécurité | PIN de contrainte, leurre, effacement ; audit |
+| **S8** (3 sem.) | Tests terrain et lancement | 20 à 50 téléphones, bêta, pilote Haïti |
 
-**Total : environ 20 semaines (5 mois)** avec 2 développeurs + Claude Code. Avec 1 seul développeur, il faut compter des sprints de 3 semaines, soit environ 7 mois.
+**≈ 20 semaines** avec 2 développeurs + Claude Code (≈ 7 mois avec 1 seul).
 
 ### Points de décision (go / no-go)
 
 | Quand | Critère | Si non |
 |---|---|---|
 | Fin S0 | Prototypes : micro écran éteint ≥ 2 h sur 3 appareils sur 4, ≤ 4 %/h de batterie ; SMS reçu < 10 s ; audio chiffré sans fichier en clair | Revoir la spécification avant le socle |
-| Fin S3 | SOS + suivi fonctionnels | **Bêta interne possible** (10 personnes) |
+| Fin S3 | SOS + suivi + consentement parental fonctionnels | **Bêta interne possible** (10 personnes) |
 | Fin S5 | ≤ 1 vérification injustifiée par 8 h d'écoute | L'IA sort désactivée par défaut, avec la mention « bêta » |
 | Fin S7 | 0 vulnérabilité haute ou critique | Pas de bêta publique |
 
@@ -61,6 +63,7 @@ Détail : **[sprints-mvp.md](sprints-mvp.md)** · Après le MVP : **[v2.md](v2.m
 - [ ] Permission ajoutée → `conformite/android-permissions-play.md` mis à jour ; règle changée → doc mise à jour dans le même commit.
 - [ ] Revue : `/code-review-and-quality` ; `/security-and-hardening` (crypto, réseau, permissions, backend) ; `/ponytail-review` (logique).
 - [ ] Testé sur au moins 2 téléphones physiques, dont 1 entrée de gamme sous Android 10.
+- [ ] Migration Supabase : RLS + `supabase/tests/security.sql` vert + Security Advisor sans nouvelle alerte.
 - [ ] CI verte avant la fusion ; une PR par tâche significative.
 
 ## Équipe et outils (❓ à confirmer en S0)
@@ -68,7 +71,7 @@ Détail : **[sprints-mvp.md](sprints-mvp.md)** · Après le MVP : **[v2.md](v2.m
 | Rôle | Charge |
 |---|---|
 | Développeur Android principal | Plein temps |
-| Développeur backend et web (ou le même) | Plein temps à partir de S3 |
+| Développeur Supabase et web (ou le même) | Mi-temps en S1, plein temps à partir de S3 |
 | Designer (Figma) | S0, puis 2 jours par sprint |
 | Testeurs terrain à Haïti | S5 (calibration), S8 (campagne) |
 | Juriste | S0 (lancement), S8 (validation) |

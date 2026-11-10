@@ -26,7 +26,7 @@ stateDiagram-v2
     OFF --> TRIP_ACTIVE: Démarrer un trajet
     ARMED_AUDIO_ONLY --> ARMED_FULL: Localisation accordée
     ARMED_FULL --> TRIP_ACTIVE: Démarrer un trajet
-    TRIP_ACTIVE --> ARMED_FULL: « Je suis arrivé » (+PIN si exigé)
+    TRIP_ACTIVE --> ARMED_FULL: « Je suis arrivé » (+PIN) — retour à l'état d'avant le trajet
     ARMED_AUDIO_ONLY --> OFF: Désactiver (+PIN si exigé)
     ARMED_FULL --> OFF: Désactiver (+PIN si exigé)
 
@@ -50,6 +50,14 @@ stateDiagram-v2
 
 Après la clôture d'une alerte, on revient à l'état armé **précédent** : `TRIP_ACTIVE` si le trajet n'est pas terminé, sinon `ARMED_FULL` ou `ARMED_AUDIO_ONLY` selon les permissions. Par simplicité, le diagramme montre `ARMED_FULL`.
 
+## Précisions tranchées à l'implémentation (S1)
+
+- « J'ai besoin d'aide » pendant une vérification vaut un SOS : passage direct en `EMERGENCY_MODE`, niveau 3 (et non niveau 2).
+- « Je suis arrivé » ramène à l'état d'avant le trajet (`OFF`, `ARMED_AUDIO_ONLY` ou `ARMED_FULL`), pas systématiquement à `ARMED_FULL`.
+- Armer utilise la position dès qu'elle est autorisée (`ARMED_FULL`), sinon `ARMED_AUDIO_ONLY`. Sans micro ni position, l'armement est refusé.
+- Après une vérification annulée (« Je vais bien »), la même raison est ignorée pendant 2 min (période réfractaire).
+- Implémentation : `android/alert-engine` (`AlertEngine.reduce`), testée par une table de transitions et des tests de propriétés.
+
 ## Règles de transition
 
 | ID | Règle |
@@ -69,7 +77,7 @@ Après la clôture d'une alerte, on revient à l'état armé **précédent** : `
 |---|---|---|---|---|
 | 0 | Information | Score faible, détection isolée | Entrée dans le journal local ; notification locale optionnelle | Aucun |
 | 1 | Vérification | Score ≥ seuil de vérification | Vibration discrète, notification silencieuse « Es-tu en sécurité ? ». Délai de 10, 20 ou 30 s (20 s par défaut) | Aucun |
-| 2 | Alerte proches | Pas de réponse au niveau 1, **ou** « J'ai besoin d'aide », **ou** événement grave de trajet non confirmé | Message aux contacts choisis : position, heure, raison, confiance, lien de suivi temporaire, extrait audio court si activé. Début de l'enregistrement de preuves | Proches choisis |
+| 2 | Alerte proches | Pas de réponse au niveau 1, **ou** événement grave de trajet non confirmé | Message aux contacts choisis : position, heure, raison, confiance, lien de suivi temporaire, extrait audio court si activé. Début de l'enregistrement de preuves | Proches choisis |
 | 3 | Alerte élargie | Pas d'accusé de réception d'un proche après X min, **ou** nouveau signal pendant le niveau 2 | Appel automatique au contact n° 1, SMS à plusieurs contacts, notifications répétées, direct audio/vidéo si autorisé | Proches (tous ceux du plan) |
 | 4 | Autorités | Uniquement si l'utilisateur l'a configuré | Transmission structurée si une intégration officielle existe ; sinon un **guide d'appel** (numéro, position, description et preuves prêtes). Jamais d'appel automatique non validé | Secours |
 

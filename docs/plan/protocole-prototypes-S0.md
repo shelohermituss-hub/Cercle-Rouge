@@ -50,6 +50,7 @@ Application : « CR Prototypes » (`spikes/`, fichier `app-debug.apk`). À faire
 | « envoyé au réseau » | Tous les segments OK |
 | « remis au destinataire » | < 10 s (l'accusé de remise dépend de l'opérateur ; noter s'il n'arrive jamais) |
 | Message reçu | Accents et créole intacts (é, è, ò), segments réassemblés en un seul message |
+| Remarque | Le texte d'essai S0.20 contient volontairement « — » et « peut-être » : c'est le pire cas (UCS-2, 4 SMS). |
 
 ## S0.21 · GPS en trajet réel (1 h)
 

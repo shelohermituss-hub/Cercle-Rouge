@@ -112,7 +112,7 @@ class MainActivity : Activity() {
         gpsStatus = root.mono()
 
         // Essai automatisé (émulateur, adb) : am start -n com.cerclerouge.spikes/.MainActivity --es autotest mic|stopmic|evidence|sms|gps|stopgps
-        when (intent.getStringExtra("autotest")) {
+        if (savedInstanceState == null) when (intent.getStringExtra("autotest")) {
             "mic" -> startForegroundService(Intent(this, MicService::class.java))
             "stopmic" -> stopService(Intent(this, MicService::class.java))
             "evidence" -> Thread {
@@ -121,10 +121,11 @@ class MainActivity : Activity() {
                     .onFailure { SpikeLog(this, EvidenceSpike.LOG_NAME).line("echec", it.javaClass.simpleName, it.message) }
                 spike.wipe()
             }.start()
-            "sms" -> runCatching { smsSpike.send(intent.getStringExtra("to") ?: "5554", SmsSpike.SAMPLE_TEXT) }
+            "sms" -> runCatching { smsSpike.send(intent.getStringExtra("to") ?: "5554", intent.getStringExtra("text") ?: SmsSpike.SAMPLE_TEXT) }
                 .onFailure { SpikeLog(this, SmsSpike.LOG_NAME).line("echec", it.message) }
             "gps" -> startForegroundService(Intent(this, GpsService::class.java).putExtra(GpsService.EXTRA_FUSED, false))
             "stopgps" -> stopService(Intent(this, GpsService::class.java))
+            "infer" -> Thread { inferenceSelfTest() }.start()
         }
 
         // Résultats
@@ -141,6 +142,27 @@ class MainActivity : Activity() {
     override fun onResume() { super.onResume(); handler.post(refresh) }
     override fun onPause() { handler.removeCallbacks(refresh); super.onPause() }
     override fun onDestroy() { smsSpike.release(); super.onDestroy() }
+
+    /** Essai hors micro : YAMNet sur un bruit blanc puis une sinusoïde de 1 kHz (vérifie le chemin d'inférence). */
+    private fun inferenceSelfTest() {
+        val log = SpikeLog(this, MicService.LOG_NAME)
+        val interpreter = org.tensorflow.lite.Interpreter(MicService.loadModel(this))
+        val labels = assets.open("yamnet_labels.txt").bufferedReader().readLines()
+        val rnd = java.util.Random(1)
+        listOf(
+            "bruit_blanc" to FloatArray(15_600) { (rnd.nextFloat() * 2 - 1) * 0.5f },
+            "sinus_1kHz" to FloatArray(15_600) { (0.5 * Math.sin(2 * Math.PI * 1000 * it / 16_000.0)).toFloat() }
+        ).forEach { (name, window) ->
+            val out = arrayOf(FloatArray(521))
+            val t0 = android.os.SystemClock.elapsedRealtime()
+            interpreter.run(window, out)
+            val ms = android.os.SystemClock.elapsedRealtime() - t0
+            val top = out[0].indices.sortedByDescending { out[0][it] }.take(3)
+                .joinToString(" ; ") { "${labels[it]} ${"%.2f".format(out[0][it])}" }
+            log.line("autotest_inference", name, "ms=$ms", top)
+        }
+        interpreter.close()
+    }
 
     private fun gpsSummary(): String {
         val lines = SpikeLog(this, GpsService.LOG_NAME).file.takeIf { it.exists() }?.readLines().orEmpty()

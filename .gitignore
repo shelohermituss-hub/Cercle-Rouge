@@ -5,3 +5,6 @@ graphify-out/graph.html
 graphify-out/manifest.json
 graphify-out/cost.json
 graphify-out/.graphify_*
+
+# Binaires de test
+*.apk

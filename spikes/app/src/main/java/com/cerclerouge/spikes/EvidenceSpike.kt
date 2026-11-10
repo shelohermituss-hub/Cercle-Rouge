@@ -121,8 +121,8 @@ class EvidenceSpike(private val context: Context, private val report: (String) -
         val cpuMs = android.os.Process.getElapsedCpuTime() - cpu0
         pcm.fill(0)
 
-        // 1. Nouveaux fichiers créés pendant l'enregistrement (hors journaux et clé enveloppée)
-        val created = (snapshot() - before).filterNot { it.contains("/logs/") || it.contains("shared_prefs") }
+        // 1. Nouveaux fichiers créés pendant l'enregistrement (hors journaux, clé enveloppée et fichier technique d'AndroidX)
+        val created = (snapshot() - before).filterNot { it.contains("/logs/") || it.contains("shared_prefs") || it.endsWith("profileInstalled") }
         // 2. Le début de la 1re trame encodée apparaît-il en clair dans un fichier ?
         val leak = firstFrameProbe?.let { probe -> created.any { containsBytes(File(it), probe) } } ?: false
         val entropy = entropy(out)

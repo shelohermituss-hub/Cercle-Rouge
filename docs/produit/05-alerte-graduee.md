@@ -42,7 +42,7 @@ Gabarit (FR, adapté pour HT et EN) :
 | Lien de suivi | `backend-api` | Jeton aléatoire ≥ 128 bits, valable 2 à 6 h (réglable, 4 h par défaut), révocable, sans données dans l'URL |
 | Phrase secrète | — | Le message ne révèle **jamais** que la phrase secrète a été utilisée si l'utilisateur a choisi le mode silencieux (le proche voit « SOS déclenché ») |
 
-En SMS : version courte ≤ 160 caractères GSM-7 si possible (les accents imposent l'UCS-2, donc 70 caractères par segment ; prévoir 2 ou 3 segments), avec le lien et des coordonnées brutes (`18.5392,-72.3364`), utilisables sans Internet par le destinataire.
+En SMS : version courte en **alphabet GSM-7** (160 caractères par SMS, 153 par segment), avec le lien et des coordonnées brutes (`18.5392,-72.3364`), utilisables sans Internet par le destinataire. Mesuré au S0 (prototype S0.20) : é è à ù ì ò et Ç font partie du GSM-7, donc le **créole** et la plupart du français passent ; en revanche ê â î ô û, les guillemets « », l'apostrophe typographique ’ et le tiret long — basculent tout le message en UCS-2 (70 caractères par segment) : le message d'essai passait ainsi de 2 à 4 SMS.
 
 ## Canaux
 
@@ -67,4 +67,5 @@ En SMS : version courte ≤ 160 caractères GSM-7 si possible (les accents impos
 | R-ALR-04 | **DOIT** : l'envoi est **local d'abord**. Le SMS depuis le téléphone ne dépend pas du serveur ; le serveur est un canal supplémentaire, pas un point unique de défaillance. |
 | R-ALR-05 | **DOIT** : un « test d'alerte » utilise exactement le même chemin, avec un marqueur « TEST » visible en tête de chaque message. |
 | R-ALR-06 | **DOIT** : limitation anti-spam : au maximum 1 alerte réelle par contact toutes les 2 min (hors mises à jour de la même alerte), et au maximum 12 SMS par alerte. |
+| R-ALR-08 | **DOIT** : les gabarits SMS (FR, HT, EN) restent en GSM-7 : un test CI échoue si un gabarit contient un caractère hors GSM-7 (ex. « peut-être » → « peut etre » ou reformulé). Les noms saisis par l'utilisateur peuvent forcer l'UCS-2 : c'est accepté. |
 | R-ALR-07 | **DOIT** : les gabarits de messages sont traduits dans les 3 langues ; chaque proche reçoit la langue qu'il a choisie au consentement. |

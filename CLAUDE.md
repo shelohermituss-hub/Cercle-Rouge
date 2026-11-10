@@ -9,7 +9,7 @@ Cercle Rouge (nom provisoire) : application Android de sécurité personnelle. E
 - Android natif : Kotlin + Jetpack Compose, minSdk 29, `com.cerclerouge.app`. IA locale : LiteRT. Langues : FR (défaut), créole haïtien (`ht`), EN.
 - Lancement : Haïti, utilisateurs dès 12 ans (ADR-0009). Périmètre MVP : ADR-0010. Plan : `docs/plan/` (sprints S0–S8, prompts).
 - Backend : **Supabase** (ADR-0011) dans `supabase/` (migrations, Edge Functions, `tests/security.sql`) ; FCM + SMS de secours. iOS en phase 2.
-- Consentement parental 12–15 ans : confirmation dans l'app du parent inscrit (ADR-0013).
+- Consentement 12–15 ans : confirmation dans l'app par un adulte référent inscrit (parent ou adulte de confiance), ajouté par défaut comme contact (ADR-0013).
 
 ## Règles absolues (détail dans `docs/00-vision-principes.md`)
 

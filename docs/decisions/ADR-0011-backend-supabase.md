@@ -12,13 +12,13 @@ Il faut un backend pour les comptes, les alertes, les liens de suivi, le temps r
 | Données | PostgreSQL + **RLS** sur toutes les tables ; écritures sensibles via des RPC `SECURITY DEFINER` |
 | Temps réel (application) | Supabase Realtime (Postgres Changes ou Broadcast, autorisés par RLS) |
 | Temps réel (page web des proches sans compte) | Edge Function + polling toutes les 5 s (MVP) |
-| Notifications, SMS, e-mail | Edge Functions (Deno/TypeScript) déclenchées par Database Webhooks ; FCM HTTP v1 ; passerelle SMS (❓ Twilio, à valider pour Digicel et Natcom) |
+| Notifications, SMS, e-mail | Edge Functions (Deno/TypeScript) déclenchées par Database Webhooks ; FCM HTTP v1 ; passerelle SMS **Vonage** (décidé, remise chez Digicel et Natcom à mesurer en S0) |
 | Tâches planifiées | `pg_cron` : surveillance des battements (chaque minute), purges de rétention |
 | Preuves | Supabase Storage, bucket privé, envois reprenables (TUS), fichiers **déjà chiffrés par l'app** |
 | Client Android | `supabase-kt` (Auth, Postgrest, Realtime, Storage, Functions) |
 | Versionnage | Dossier `supabase/` : `migrations/`, `functions/`, `tests/security.sql`, `seed.sql` |
 
-Plan **Pro** obligatoire en production : le plan gratuit met le projet en pause après une période d'inactivité, et une alerte ne doit jamais tomber sur un serveur en pause. Région : ❓ `us-east-1` (la plus proche d'Haïti), à confirmer.
+Plan **Pro** obligatoire en production : le plan gratuit met le projet en pause après une période d'inactivité, et une alerte ne doit jamais tomber sur un serveur en pause. Région : **`us-east-1`** (décidé). Fournisseur OTP de Supabase Auth : **Vonage**. Si la remise en Haïti est insuffisante (< 95 % en < 30 s), on passe à un hook SMS personnalisé vers un autre fournisseur.
 
 ## Règles de sécurité (reprises du projet Konvwa)
 1. La RLS est la seule vraie barrière ; chaque table a la RLS activée et des politiques par rôle, testées.

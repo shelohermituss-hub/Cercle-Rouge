@@ -29,7 +29,7 @@ pg_cron ─► heartbeat_watchdog() chaque minute · purge_expired() chaque heur
 | Table | Colonnes clés | RLS (résumé) |
 |---|---|---|
 | `profiles` | `id` (= `auth.uid`), `display_name`, `locale`, `birth_year_month`, `age_band`, `country`, `role` (`user`, `support`, `admin`) | Lecture et mise à jour de sa ligne (sauf `role`, `age_band` : calculés) ; un trigger empêche l'élévation de rôle |
-| `guardian_links` | `minor_id`, `guardian_phone_hash`, `guardian_id?`, `status` (`pending`, `confirmed`, `refused`, `revoked`, `expired`), `expires_at`, `confirmed_at` | Le jeune lit les siennes ; le parent lit celles qui le concernent ; **écriture par RPC uniquement** |
+| `guardian_links` | `minor_id`, `guardian_phone_hash`, `guardian_id?`, `relationship` (parent, tuteur, autre), `status` (`pending`, `confirmed`, `refused`, `revoked`, `expired`), `expires_at`, `confirmed_at` | Le jeune lit les siennes ; le parent lit celles qui le concernent ; **écriture par RPC uniquement** |
 | `devices` | `user_id`, `fcm_token`, `platform`, `last_seen_at` | Propriétaire |
 | `trusted_contacts` | `owner_id`, `display_name`, `phone_enc` (pgsodium ou chiffrement applicatif), `phone_hash`, `locale`, `channels[]`, `rank`, `role`, `consent_status`, `contact_user_id?` | Propriétaire en CRUD (sauf `consent_status`) ; le contact lit les lignes qui le concernent |
 | `contact_invites` | `contact_id`, `token_hash`, `expires_at` | Aucune (Edge Function) |

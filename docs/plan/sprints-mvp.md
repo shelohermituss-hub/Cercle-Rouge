@@ -30,18 +30,18 @@
 |---|---|---|
 | S0.01 | Choisir le **nom définitif** (vérifier la marque à Haïti et la disponibilité sur Play) | Nom inscrit dans un ADR |
 | S0.02 | **Niveau de protection par défaut** : recommandé « Désactivé » + SOS toujours visible + proposition « Trajet protégé » au 1er trajet | ADR |
-| S0.03 | Contacts et canaux : 10 contacts maximum, 5 alertés à la fois ; push + SMS ; Q6 (SOS vers un contact non consenti) ; Q3c (parent proposé comme contact) | `questions-ouvertes.md` à jour |
+| S0.03 | Contacts et canaux : 10 contacts maximum, 5 alertés à la fois ; push + SMS ; Q6 (SOS vers un contact non consenti) ; Q3c ✅ (adulte référent ajouté par défaut) | `questions-ouvertes.md` à jour |
 | S0.04 | Conservation : confirmer 24 h par défaut (7 j, 30 j, à la clôture) ; côté serveur, identique | ✅ déjà décidé, à relire |
 | S0.05 | Partage des preuves (Q12) : option B recommandée (clé dans le fragment du lien) | ADR |
-| S0.06 | Épinglage TLS avec Supabase (Q28) | ADR |
+| S0.06 | ✅ Épinglage TLS (Q28) → ADR-0014 ; relever la chaîne réelle de `<projet>.supabase.co` après S0.08 | Broches listées |
 | S0.07 | Relire et signer ADR-0008 à 0013 (formule, Haïti 12 ans et +, MVP, Supabase, MVVM, consentement parental) | Statut « Acceptée » |
 
 ### Semaine 1 et 2 — Comptes, démarches longues
 
 | Étape | Faire | Vérifier |
 |---|---|---|
-| S0.08 | **Supabase** : créer l'organisation, 2 projets (`cercle-rouge-staging`, `cercle-rouge-prod`) en plan **Pro**, région ❓ `us-east-1` ; activer PITR sur la prod ; activer les extensions `pg_cron` et `pgcrypto` | Projets visibles ; pas de mise en pause possible |
-| S0.09 | **Fournisseur SMS** (❓ Twilio) : compte, numéro expéditeur ou alphanumérique autorisé en Haïti ; brancher l'OTP de Supabase Auth dessus | 20 OTP envoyés vers Digicel et Natcom : taux de réception et délai mesurés |
+| S0.08 | **Supabase** : créer l'organisation, 2 projets (`cercle-rouge-staging`, `cercle-rouge-prod`) en plan **Pro**, région `us-east-1` ; activer PITR sur la prod ; activer les extensions `pg_cron` et `pgcrypto` | Projets visibles ; pas de mise en pause possible |
+| S0.09 | **Fournisseur SMS : Vonage** (décidé) : compte, numéro expéditeur ou alphanumérique autorisé en Haïti ; brancher l'OTP de Supabase Auth dessus | 20 OTP envoyés vers Digicel et Natcom : taux de réception et délai mesurés |
 | S0.10 | **Firebase** : projet, FCM activé, compte de service pour l'API HTTP v1 (clé destinée aux secrets Supabase) | Notification de test reçue |
 | S0.11 | **Google Play Console** : compte, nom réservé ; dossier d'exception `SEND_SMS` ; déclaration du public cible incluant les moins de 13 ans (« Familles ») | Dossiers prêts ou déposés |
 | S0.12 | **Juriste** : enregistrement de tiers, mineurs de 12 ans et +, consentement parental, conditions d'utilisation, réquisitions | Questions envoyées, date de retour |
@@ -112,8 +112,8 @@
 | S1.19 | Navigation Compose, thème clair et sombre (issu de Figma), `values`/`values-ht`/`values-en`, MVVM + flux unidirectionnel (ADR-0012), Hilt | App dans les 3 langues |
 | S1.20 | Inscription par **OTP téléphone** (supabase-kt), +509 par défaut | Connexion sur un vrai numéro Digicel |
 | S1.21 | Saisie de la date de naissance (mois et année) → tranche d'âge ; < 12 ans → refus poli + SOS vers le composeur | Tests UI |
-| S1.22 | **Parcours jeune 12–15 ans** : saisie du numéro du parent → `request_guardian_consent` → écran d'attente en mode restreint (SOS manuel seulement) [Renvoyer] [Changer] | Démo |
-| S1.23 | **Parcours parent** : inscription OTP avec le numéro invité → attestation 18 ans et + → écran « Demande de Prénom » (ce que tu verras / ne verras jamais) → confirmation par PIN ou biométrie → `confirm_guardian_consent` | Le jeune est débloqué en < 5 s (Realtime + push) |
+| S1.22 | **Parcours jeune 12–15 ans** : saisie du numéro d'un parent ou adulte de confiance + lien déclaré → `request_guardian_consent` → écran d'attente en mode restreint (SOS manuel seulement) [Renvoyer] [Changer] | Démo |
+| S1.23 | **Parcours adulte référent** : inscription OTP avec le numéro invité → attestation 18 ans et + → écran « Demande de Prénom » (ce que tu verras / ne verras jamais) → confirmation par PIN ou biométrie → `confirm_guardian_consent` | Le jeune est débloqué en < 5 s (Realtime + push) |
 | S1.24 | Retrait du consentement (parent ou jeune) → retour en mode restreint, notification aux deux | Test |
 | S1.25 | Onboarding : écrans explicatifs, consentements séparés et historisés (local + table `consents`), permissions en contexte, tout refuser → l'app reste utilisable | Test UI avec tout refusé |
 | S1.26 | Écran d'accueil (états, statut), bouton SOS (appui long, annulation de 5 s → `EMERGENCY_MODE` + journal), notifications locales (3 canaux, contenu neutre sur l'écran de verrouillage) | Démo |
@@ -129,7 +129,7 @@
 |---|---|---|
 | S2.01 | `contacts-engine` : sélecteur système (aucune permission), E.164 (+509), groupes, rôles (1 répondant principal), langue, canaux | Tests ; numéro invalide refusé |
 | S2.02 | Ordre d'alerte : glisser-déposer ; `resolveRecipients` pur (niveau 2 : principal + backups ≤ 5 ; deux canaux indépendants ; GSM d'abord si pas de données) | Tests de table |
-| S2.03 | Proposer le parent (s'il est lié) comme contact, sans l'imposer (Q3c) | Test UI |
+| S2.03 | Adulte référent ajouté par défaut comme contact (Q3c) ; retrait silencieux, sans retrait du consentement (R-PAR-07) | Test : aucune notification envoyée à l'adulte |
 | S2.04 | `ProtectionService` unique : service de premier plan, notification persistante [SOS] [Désactiver] ; état persisté **avant** les effets ; restauration après la mort du processus ; « Réarmer » après un redémarrage | Survit 30 min écran éteint ; restauration testée |
 | S2.05 | Exécuteur d'effets : vibrations codées, notifications, minuteries robustes en veille (`setExactAndAllowWhileIdle` + coroutine) | Vérification déclenchée à l'heure en mode Doze (test adb) |
 | S2.06 | ↪ File d'attente hors ligne : jobs Room persistants, idempotents, priorités, backoff de 2 à 60 s pendant une alerte | Mort du processus pendant un envoi → ni doublon ni perte |

@@ -56,7 +56,7 @@ Chaque permission est demandée **en contexte** (au moment où l'utilisateur act
 | R-ONB-05 | **DOIT** : textes disponibles en français, créole haïtien et anglais, rédigés en langage simple (niveau de lecture visé : fin de primaire). Relecture par un locuteur natif pour le créole. |
 | R-ONB-06 | **DOIT** : l'onboarding peut être interrompu et repris. Le SOS manuel est utilisable dès le premier écran. |
 | R-ONB-07 | **DEVRAIT** : afficher un résumé final « Voici ce qui est actif / inactif », modifiable. |
-| R-ONB-08 | **DOIT** : l'utilisateur atteste avoir l'âge minimum (❓ 13, 16 ou 18 ans ; voir questions ouvertes) et être le détenteur du téléphone protégé (anti-stalkerware, N9). |
+| R-ONB-08 | **DOIT** : l'utilisateur indique sa tranche d'âge ; **minimum 12 ans**. Pour les 12–15 ans, un parent ou tuteur confirme son consentement (ADR-0009). L'utilisateur atteste aussi être le détenteur du téléphone protégé (anti-stalkerware, N9). |
 
 ## Indicateur d'état permanent
 

@@ -26,7 +26,7 @@
 | 2 | Classification audio | Voix, cri, musique, bruit, choc, vitre, alarme, klaxon, freinage, pleurs | **YAMNet** (AudioSet, 521 classes, entrée 16 kHz, 0,975 s), puis réapprentissage d'une tête sur nos classes | ≈ 4 Mo (int8) · < 30 ms | V1 |
 | 3 | Mots-clés (KWS) | « au secours », « aide-moi », « appelle la police » ; « anmwe », « ede m », « rele lapolis » (❓ liste à valider par des locuteurs) ; « help », « call the police » | Petit réseau CNN ou DS-CNN par langue, entraîné sur des données collectées avec consentement ; ❓ Vosk avec grammaire restreinte comme prototype | < 1 Mo par langue · < 20 ms | V1 FR ; HT et EN selon les données |
 | 3b | Phrase secrète | Phrase personnelle | Empreinte de mots-clés (KWS few-shot) : moyenne de 3 à 5 enrôlements, similarité cosinus | Partage le modèle 3 | V1 |
-| 4 | Détresse vocale | Peur, panique, agression | Classifieur sur des empreintes de parole | — | **V2 expérimental**, jamais déclencheur seul |
+| 4 | Détresse vocale (V2) | Peur, panique, agression | Classifieur sur des empreintes de parole | — | **V2 expérimental**, jamais déclencheur seul |
 | 5 | Fusion multimodale | Score de risque | **Règles pondérées** (ci-dessous) | — | V1 règles ; V2 éventuellement un modèle |
 
 ### Correspondance YAMNet → nos classes (point de départ)
@@ -58,36 +58,44 @@
 
 ## Score de risque
 
-> ❓ **La formule de la spécification d'origine n'a pas été transmise.** Ce qui suit est une **proposition** à valider ; les composantes A à E reprennent la spécification.
+> ✅ **Formule validée (2026-11-10)** : `Risk = w₁·A + w₂·B + w₃·C + w₄·D + w₅·E` (ADR-0008).
 
 ### Composantes (toutes normalisées entre 0 et 1)
 
-| Composante | Définition proposée |
+| Composante | Définition |
 |---|---|
-| **A** — cri ou détresse vocale | max(`scream`, `distress`, confiance d'un mot-clé) sur les 10 dernières secondes |
-| **B** — bruit de violence | max(`violence_probability`) sur les 10 dernières secondes, renforcé si le capteur signale un mouvement violent ou une chute (+0,2, plafonné à 1) |
-| **C** — gravité de la déviation | 0 sans trajet ; sinon une fonction croissante de l'écart normalisé par le seuil du mode de transport (ex. 0,5 au seuil, 1 au double), maximum avec l'arrêt prolongé et le retard |
-| **D** — perte de réseau ou de mouvement | 0,5 si immobilité anormale ou perte de réseau ; 1 si les deux, ou après une activité vocale forte |
-| **E** — contexte de vulnérabilité | Fixé par le profil et le moment : trajet nocturne (22 h – 5 h) + 0,3 ; profil enfant ou personne isolée + 0,3 ; zone non sûre + 0,4 ; plafonné à 1 |
+| **A** — cri ou détresse vocale | max(`scream`, `distress`, confiance d'un mot-clé) sur les 10 dernières secondes. En MVP : confiance du mot-clé seulement (la classification des cris est en V2, ADR-0010) |
+| **B** — bruit de violence | max(`violence_probability`) sur les 10 dernières secondes, renforcé si le capteur signale un mouvement violent ou une chute (+0,2, plafonné à 1). En MVP : 0, sauf chute détectée |
+| **C** — gravité de la déviation | 0 sans trajet ; sinon une fonction croissante de l'écart normalisé par le seuil du mode de transport (0,5 au seuil, 1 au double), maximum avec l'arrêt prolongé et le retard |
+| **D** — perte de réseau ou de mouvement | 0,5 si immobilité anormale **ou** perte de réseau ; 1 si les deux, ou après une activité vocale forte |
+| **E** — contexte de vulnérabilité | Trajet nocturne (22 h – 5 h) : +0,3 ; profil 12–14 ans ou personne isolée : +0,3 ; zone non sûre : +0,4 ; plafonné à 1 |
 
-### Formule proposée
+### Formule
 
 ```
-R_signaux = wA·A + wB·B + wC·C + wD·D        avec wA + wB + wC + wD = 1
-R         = min(1, R_signaux · (1 + wE·E))
+Risk = w1·A + w2·B + w3·C + w4·D + w5·E        avec w1 + w2 + w3 + w4 + w5 = 1  →  Risk ∈ [0, 1]
 ```
 
-E **amplifie** des signaux existants mais ne crée jamais d'alerte seul : un trajet nocturne sans aucun signal donne R = 0.
+**Garde-fou** : E est **additif**, donc un contexte vulnérable seul (ex. une ado de 13 ans, la nuit, en zone non sûre) produit un score de base non nul. Pour ne jamais alerter sur le contexte seul :
+- E ne compte **pas** comme un « signal » dans la règle des deux signaux indépendants (R-ESC-07) ;
+- si A = B = C = D = 0, l'action est forcée à NONE, quel que soit E (R-RISK-01) ;
+- w₅ ≤ 0,15 (R-RISK-02).
 
-### Poids par profil (valeurs initiales à calibrer)
+### Poids par profil (valeurs initiales, à calibrer pendant le pilote)
 
-| Profil | wA | wB | wC | wD | wE |
+| Profil | w₁ (A) | w₂ (B) | w₃ (C) | w₄ (D) | w₅ (E) |
 |---|---|---|---|---|---|
-| Adulte | 0,40 | 0,30 | 0,20 | 0,10 | 0,25 |
-| Adolescent·e | 0,35 | 0,30 | 0,25 | 0,10 | 0,35 |
-| Enfant | 0,30 | 0,30 | 0,30 | 0,10 | 0,50 |
-| Personne isolée | 0,35 | 0,30 | 0,15 | 0,20 | 0,40 |
-| Trajet nocturne | Profil de base, avec wC + 0,05 et wA − 0,05 | | | | |
+| Adulte (18 ans et +) | 0,35 | 0,25 | 0,20 | 0,10 | 0,10 |
+| Adolescent·e 15–17 ans | 0,30 | 0,25 | 0,25 | 0,10 | 0,10 |
+| Jeune 12–14 ans | 0,30 | 0,20 | 0,25 | 0,10 | 0,15 |
+| Personne isolée | 0,30 | 0,25 | 0,15 | 0,15 | 0,15 |
+| Trajet nocturne (modificateur) | −0,05 | — | +0,05 | — | — |
+
+| ID | Règle |
+|---|---|
+| R-RISK-01 | **DOIT** : si A = B = C = D = 0, alors `recommended_action` = NONE. |
+| R-RISK-02 | **DOIT** : Σwᵢ = 1 (vérifié au chargement de la configuration) et w₅ ≤ 0,15. |
+| R-RISK-03 | **DOIT** : les poids et seuils sont dans une configuration versionnée ; la version est journalisée avec chaque décision (R-AL-06). |
 
 ### Seuils et décision (sensibilité normale)
 

@@ -16,7 +16,7 @@ Modules logiciels : `ui-mobile`, `alert-engine`, `location-engine`, `sensor-engi
 | **Je suis arrivé** | Termine `TRIP_ACTIVE`, arrête le suivi, envoie « Arrivé·e » aux proches qui suivaient | PIN si configuré (sinon un agresseur peut « terminer » le trajet) |
 | **Historique** | Alertes et trajets, issus du journal local | Respecte la rétention ; aucune donnée au-delà |
 | **Contacts d'urgence** | Accès en 1 tap, avec appel direct | — |
-| **Appel secours** | Bouton vers le composeur avec le numéro local pré-rempli | ⚠ Numéros configurés **par pays** : Haïti (police 114, ambulance 116, pompiers 115 — **à vérifier**), France (17, 15, 18, 112), Union européenne (112), États-Unis et Canada (911). Le pays est détecté via la carte SIM, puis modifiable |
+| **Appel secours** | Bouton vers le composeur avec le numéro local pré-rempli | Pays de lancement : **Haïti** (police 114, pompiers 115, ambulance 116, à confirmer auprès de la PNH et de la Protection civile avant la bêta). Les autres pays sont configurables (diaspora) : France (17, 15, 18, 112), Union européenne (112), États-Unis et Canada (911). Le pays est détecté via la carte SIM, puis modifiable |
 
 ## Règles
 

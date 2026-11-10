@@ -72,3 +72,6 @@ Cercle Rouge **ne prédit pas** un enlèvement ou une agression. Elle détecte d
 | Canaux SOS | SMS automatique, appel, WhatsApp (+ notification, e-mail) | [ADR-0005](decisions/ADR-0005-canaux-alerte.md) |
 | Localisation en arrière-plan | Service de premier plan « location » pendant un trajet, sans `ACCESS_BACKGROUND_LOCATION` | [ADR-0006](decisions/ADR-0006-localisation-sans-background-location.md) |
 | Chiffrement local | Android Keystore + Tink (AES-256-GCM, streaming) | [ADR-0007](decisions/ADR-0007-chiffrement-local.md) |
+| Score de risque | `Risk = w₁A + w₂B + w₃C + w₄D + w₅E` | [ADR-0008](decisions/ADR-0008-formule-score-risque.md) |
+| Lancement et âge | Haïti ; 12 ans minimum | [ADR-0009](decisions/ADR-0009-haiti-age-minimum-12.md) |
+| Périmètre MVP | SOS, contacts, push et SMS, trajet, audio chiffré après alerte, mots-clés, vérification, hors ligne, page des proches | [ADR-0010](decisions/ADR-0010-perimetre-mvp.md) |

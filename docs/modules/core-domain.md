@@ -12,7 +12,7 @@ Persistance, réseau, UI, accès capteurs.
 
 | Entité | Champs principaux | Invariants |
 |---|---|---|
-| `User` | `userId`, `displayName`, `locale` (fr, ht, en), `country`, `vulnerabilityProfile` (enfant, ado, adulte, isolé), `emergencyNumbers` | `displayName` non vide ; pays ISO 3166-1 |
+| `User` | `userId`, `displayName`, `locale` (fr, ht, en), `country`, `vulnerabilityProfile` (jeune 12–14, ado 15–17, adulte, isolé), `emergencyNumbers` | `displayName` non vide ; pays ISO 3166-1 |
 | `TrustedContact` | `contactId`, `displayName`, `phoneE164`, `email?`, `group`, `role` (PRIMARY, BACKUP, MEDICAL), `rank`, `channels` (ordonnés), `locale`, `consentStatus`, `anonymousMode` | Au plus 1 PRIMARY ; `rank` unique ; E.164 valide |
 | `Trip` | `tripId`, `origin`, `destination`, `transportMode`, `plannedArrival`, `plannedStops`, `followers`, `status` | `plannedArrival` > départ ; destination ≠ origine (> 100 m) |
 | `Alert` | `alertId`, `level` (0 à 4), `reason`, `confidence` (LOW, MEDIUM, HIGH), `trigger` (AUTO, SOS, SECRET_PHRASE, TRIP, HEARTBEAT_LOSS), `openedAt`, `closedAt?`, `closure` (USER_SAFE, FALSE_ALARM, EXPIRED…), `silent` | Le niveau ne descend que par une action de l'utilisateur ; `closedAt` ≥ `openedAt` |

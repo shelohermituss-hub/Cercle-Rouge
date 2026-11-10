@@ -11,7 +11,7 @@ Réduire le temps entre le moment où une personne est en danger et celui où qu
 | Adulte en trajet (nuit, taxi, moto-taxi, transport en commun) | Que quelqu'un sache s'il n'arrive pas | Faux positifs dans le bruit urbain |
 | Personne en rendez-vous ou en sortie | Alerte discrète, sans montrer l'application | Mode discret, mode leurre |
 | Personne isolée ou vulnérable | Alerte même sans pouvoir toucher le téléphone | Phrase secrète, détection audio |
-| Adolescent·e | Rassurer les parents sans être surveillé·e en permanence | Consentement, autonomie, ❓ âge minimum |
+| Jeune et adolescent·e (12–17 ans) | Rassurer les parents sans être surveillé·e en permanence | Âge minimum 12 ans ; consentement d'un parent ou tuteur pour les 12–15 ans (ADR-0009) ; autonomie |
 | Contact de confiance (proche) | Comprendre vite et agir | Message clair, pas de panique inutile |
 
 ## Ce que Cercle Rouge fait

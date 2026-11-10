@@ -6,15 +6,16 @@
 
 | # | Question | Recommandation | Bloque |
 |---|---|---|---|
-| Q1 🔴 | **Formule du score de risque** : la spécification indique « Où : A… E » mais la formule n'a pas été transmise | Proposition dans [ia/modele-ia-locale.md](ia/modele-ia-locale.md#score-de-risque) | alert-engine |
-| Q2 🔴 | Pays de lancement ? Numéros d'urgence par défaut ? (la spécification cite 17 et 112, qui sont français et européens ; Haïti : police 114, pompiers 115, ambulance 116, à vérifier) | Haïti d'abord, numéros configurables par pays | ui-mobile, juridique |
-| Q3 🔴 | Âge minimum et profils enfant et ado : qui arme l'app d'un enfant ? Consentement parental ? | Adolescents ≥ 13 ans avec consentement ; enfants en V2 après revue juridique | onboarding, conformité Play |
+| ~~Q1~~ ✅ | Formule du score de risque | **Décidé** : `Risk = w₁A + w₂B + w₃C + w₄D + w₅E` (ADR-0008) | — |
+| ~~Q2~~ ✅ | Pays de lancement | **Décidé : Haïti** (ADR-0009). Reste à confirmer les numéros 114, 115 et 116 auprès des autorités | — |
+| ~~Q3~~ ✅ | Âge minimum | **Décidé : 12 ans** (ADR-0009). Reste Q3b ci-dessous | — |
+| Q3b 🔴 | Comment recueillir le consentement du parent ou tuteur pour les 12–15 ans (SMS au parent ? Le parent devient-il automatiquement contact de confiance ?) | SMS de confirmation au parent ; il n'obtient **aucun** accès de suivi en dehors des alertes (anti-surveillance) | onboarding, S1 |
 | Q4 | PIN obligatoire en mode trajet ? | Fortement recommandé, pas obligatoire (R-SEC-01) | module 9 |
 | Q5 | PIN de contrainte (désarmement simulé + alerte silencieuse) | Oui | module 9 |
 | Q6 | Un contact non consenti peut-il recevoir un SOS manuel ? | Oui, SOS manuel uniquement, avec lien de blocage | contacts-engine |
 | Q7 | Nombre maximal de contacts et de destinataires simultanés | 10 et 5 | contacts-engine |
 | Q8 | Mode leurre : interne à l'app seulement, ou aussi un alias d'icône neutre ? | Interne + alias neutre honnête (déclaré) | module 9 |
-| Q9 | Vidéo de preuve en V1 ? | V1.1 (complexité, batterie, données) | evidence-engine |
+| ~~Q9~~ ✅ | Vidéo de preuve | **V2** (ADR-0010) | — |
 
 ## Technique
 

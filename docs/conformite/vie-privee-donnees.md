@@ -38,7 +38,7 @@ Chaque sous-traitant doit faire l'objet d'un contrat de traitement des données,
 ## Points juridiques à instruire (❓)
 
 1. **Enregistrement de tiers** : capter les paroles d'autrui sans leur consentement est encadré, voire pénalement sanctionné, dans plusieurs pays (ex. France, art. 226-1 du Code pénal), même si la jurisprudence admet souvent la preuve produite par une victime. À vérifier pour Haïti et chaque marché, et à formuler dans les conditions d'utilisation.
-2. **Âge minimum** et consentement parental (profils enfant et adolescent ; politique Play « Familles » si des enfants sont visés).
+2. **Âge minimum : 12 ans (décidé).** Un public visé de moins de 13 ans fait entrer l'app dans la politique Play « Familles » (déclaration du public cible, SDK certifiés, pas de publicité). À instruire aussi : consentement du parent ou tuteur pour les 12–15 ans, et COPPA (États-Unis) et RGPD art. 8 (UE) pour les utilisateurs de la diaspora.
 3. **Responsabilité** en cas de non-détection ou de fausse alerte : avertissement clair (N1), conditions d'utilisation.
 4. **Réquisitions** des autorités (procédure, transparence).
 5. **Loi applicable en Haïti** en matière de données personnelles et de télécommunications (❓ à instruire).

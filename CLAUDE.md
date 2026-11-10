@@ -7,6 +7,7 @@ Cercle Rouge (nom provisoire) : application Android de sécurité personnelle. E
 **Statut : phase de spécification. Aucun code n'est écrit tant que l'utilisateur ne l'a pas demandé.** La source de vérité est `docs/` (commencer par `docs/README.md`).
 
 - Android natif : Kotlin + Jetpack Compose, minSdk 29, `com.cerclerouge.app`. IA locale : LiteRT. Langues : FR (défaut), créole haïtien (`ht`), EN.
+- Lancement : Haïti, utilisateurs dès 12 ans (ADR-0009). Périmètre MVP : ADR-0010. Plan : `docs/plan/` (sprints S0–S8, prompts).
 - Backend (❓ Go ou Node.js), PostgreSQL, Redis, WebSocket, FCM + SMS de secours. iOS en phase 2.
 
 ## Règles absolues (détail dans `docs/00-vision-principes.md`)

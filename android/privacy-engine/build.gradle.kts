@@ -32,4 +32,7 @@ dependencies {
     implementation(libs.datastore)
     implementation(libs.coroutines.core)
     testImplementation(libs.kotlin.test)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.kotlin.test)
+    androidTestImplementation(libs.coroutines.test)
 }

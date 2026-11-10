@@ -1,0 +1,31 @@
+name: Supabase
+
+on:
+  push:
+    paths: ["supabase/**", ".github/workflows/supabase.yml"]
+  pull_request:
+    paths: ["supabase/**", ".github/workflows/supabase.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+    steps:
+      - uses: actions/checkout@v4
+      # Migrations + tests d'impersonation (R-BE-09) sur une base jetable qui imite Supabase
+      - run: supabase/scripts/test-local.sh

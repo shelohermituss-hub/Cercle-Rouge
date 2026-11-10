@@ -59,3 +59,20 @@ data class Alert(
     val silent: Boolean,
     val openedAt: Instant
 )
+
+/** Consentements séparés (module produit 1, R-ONB-03). Historisés, jamais modifiés en place. */
+enum class ConsentScope {
+    MICROPHONE,
+    LOCATION,
+    NOTIFICATIONS,
+    CONTACTS,
+    AUDIO_CLIP_SHARING,
+    AUTHORITIES,
+    MODEL_IMPROVEMENT,
+    PRIVACY_POLICY
+}
+
+data class Consent(val scope: ConsentScope, val granted: Boolean, val textVersion: String, val locale: String, val at: Instant)
+
+/** Durée de conservation des preuves, choisie à l'onboarding (ADR-0017). */
+enum class Retention { HOURS_24, DAYS_7, DAYS_30, ON_CLOSURE }

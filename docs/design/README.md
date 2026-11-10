@@ -1,6 +1,31 @@
 # Design — décisions
 
-## v2 « salle d'opérations nocturne » (2026-11-10)
+## v3 « Pixel Lime » (2026-11-10) — retenue, implémentée dans l'app
+
+Maquettes du porteur du projet (canevas « Cercle Rouge — Maquettes », page « v3 · Pixel Lime », 20 écrans 360×800), puis deux retouches demandées :
+
+1. **Fond noir-gris neutre** (comme la référence « Pixel VPN »), pas de vert dans le fond. Le lime reste la seule couleur d'action.
+2. **Accueil = carte en arrière-plan + gros bouton central**, fonctions autour (référence « connect ») : en veille tout est **monochrome** (disque blanc-gris, carte grise) ; protection active, **la couleur revient** (disque lime avec halo et orbite, carte lime, satellites lime).
+
+| Token | Valeur | Usage |
+|---|---|---|
+| void / surface / raised | `#0A0B0C` / `#121416` / `#1B1E21` | fonds, panneaux crénelés |
+| forestDeep / forest | `#2A2E33` / `#009443` | blocs secondaires, escalier des affiches |
+| lime / onLime | `#A0E705` / `#0E1012` | action, état protégé ; texte sur lime ou rouge |
+| ink / muted | `#E6E8EA` / `#9BA1A8` | texte (15:1 et 7,1:1 sur surface) |
+| line / lineControl | `#3A3F45` / `#6B7279` | bordure décorative ; bordure de contrôle (≥ 3,4:1) |
+| danger / warn | `#FF6B5A` / `#FFD23F` | SOS, alerte ; vérification |
+
+Typo : Pixelify Sans (titres, capitales), Space Mono (texte). Angles crénelés de 4 dp, disques en pixels, icônes 8×8, animations par paliers (désactivées si « réduire les animations »).
+
+Garde-fous conservés :
+- **La carte d'accueil est un dessin local d'Haïti** (contour simplifié, aucune tuile réseau) **sans point de position** : rien n'est localisé tant qu'aucun trajet ni alerte n'est en cours (P4, R-PE-02). La carte réelle avec position viendra avec le module Trajet.
+- SOS toujours en rouge, même en veille monochrome ; appui long 1,5 s (un seul geste) ou appui court vers l'écran SOS.
+- Écarts assumés avec les maquettes : 4ᵉ onglet « Journal » (pas encore d'écran Réglages) ; consentement 12–15 ans = notre parcours « adulte référent » (ADR-0013) habillé en Pixel Lime ; données réelles affichées (0 / 5 contacts au Sprint 1).
+
+---
+
+## v2 « salle d'opérations nocturne » (remplacée)
 
 La v1 (HUD épuré) a été jugée trop plate. Nouvelle direction voulue par le porteur du projet, d'après une image de référence : mur de moniteurs vert phosphore, cartes tactiques, alertes rouges, matière et profondeur (cadres biseautés, lueurs, lignes de balayage légères, grain, vignettage). Garde-fous conservés : pas de réticules ni d'imagerie de surveillance, textes non alarmistes, aucun point de position quand la protection est désactivée, SOS dominant, variantes « réduire les animations » et « mode discret ».
 

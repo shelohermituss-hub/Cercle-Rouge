@@ -22,7 +22,7 @@ Mis à jour le 2026-11-10. Légende : ✅ fait et vérifié · 🟡 fait en vers
 | S1.13b clés de partage des preuves | ⏳ | Reporté à S6, où elles servent (ADR-0007 amendé) |
 | S1.14–S1.16, S1.18 | ✅ | Migration, RLS, RPC, tests, CI |
 | S1.17 Edge Function `send-invite` | ⏳ 👤 | Attend le compte Vonage |
-| S1.19 Thème, polices, langues | ✅ | Polices embarquées (couvrent é è ê à ò ç) ; **créole à faire relire par des locuteurs natifs** |
+| S1.19 Thème, polices, langues | ✅ | Design v3 « Pixel Lime » (fond noir-gris, accueil carte + bouton central monochrome/couleur) ; Pixelify Sans + Space Mono ; **créole à faire relire par des locuteurs natifs** |
 | S1.20 Inscription par code SMS | ⏳ 👤 | Attend les comptes Supabase et Vonage |
 | S1.21 Âge (12 ans et +) | ✅ | Même règle côté app (`AgeBand`) et côté serveur (`age_band`) |
 | S1.22 Parcours jeune 12–15 ans | 🟡 | Écrans faits ; envoi et confirmation **simulés localement** (bouton « Simuler la confirmation », builds de développement seulement) |

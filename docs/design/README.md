@@ -1,5 +1,17 @@
 # Design — décisions
 
+## v2 « salle d'opérations nocturne » (2026-11-10)
+
+La v1 (HUD épuré) a été jugée trop plate. Nouvelle direction voulue par le porteur du projet, d'après une image de référence : mur de moniteurs vert phosphore, cartes tactiques, alertes rouges, matière et profondeur (cadres biseautés, lueurs, lignes de balayage légères, grain, vignettage). Garde-fous conservés : pas de réticules ni d'imagerie de surveillance, textes non alarmistes, aucun point de position quand la protection est désactivée, SOS dominant, variantes « réduire les animations » et « mode discret ».
+
+Palette v2 : fond `#050807`, panneaux `#0B1310`, vert phosphore `#3DDC84` (protégé, données), texte `#D9F2E4`, rouge de marque `#E5263B`, alerte `#FF4155`, ambre `#FFB020`. Titres en Chakra Petch. Le design system et le thème Compose seront alignés une fois les maquettes v2 validées.
+
+L'accueil devient une « console » : un mur de moniteurs (radar + SOS, carte de la ville sans position, journal), puis la carte en direct plein écran pendant un trajet.
+
+---
+
+## v1 (remplacée)
+
 ## Accueil adaptatif : radar puis carte (2026-11-10)
 
 Proposition initiale : l'accueil est une carte de suivi en temps réel entourée de boutons.

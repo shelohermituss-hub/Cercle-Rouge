@@ -1,225 +1,236 @@
-# Prompt — Maquettes Cercle Rouge (outil de design)
+# Prompt — Maquettes Cercle Rouge (outil de design) · v2 « salle d'opérations »
 
-> À coller tel quel dans l'outil de design. Direction : **HUD tactique**, sobre et accessible, et non une « interface de hacker » (pas de vert Matrix ni de glitch).
-> L'accueil est **adaptatif** : un radar quand aucun trajet n'est en cours, une carte en direct pendant un trajet ou une alerte (voir la justification dans `docs/design/README.md`).
+> v2 du 2026-11-10 : direction demandée par le porteur du projet, à partir d'une image de référence (centre d'opérations nocturne, murs d'écrans vert phosphore, cartes tactiques, alertes rouges). La v1 était jugée trop plate.
+> Copier le bloc entre les ``` dans l'outil de design.
+
+## Ce qu'on reprend de l'image, et ce qu'on adapte
+
+| Dans l'image | Dans Cercle Rouge | Pourquoi l'adapter |
+|---|---|---|
+| Mur d'écrans encadrés, vert phosphore, lueurs | ✅ Panneaux « moniteurs » à cadre biseauté, lueur verte, fond presque noir | — |
+| Cartes tactiques avec repères rouges | ✅ Carte de Port-au-Prince en vert sur noir, grille, repères | Sans trajet ni alerte, la carte n'affiche **aucun point de position** (protection désactivée = aucune géolocalisation) |
+| Lignes de terminal, coordonnées, données qui défilent | ✅ Journal en console, coordonnées, valeurs HUD | Lisibles : 14 dp minimum, pas de faux code illisible |
+| Lignes de balayage, grain, vignettage d'écran CRT | ✅ Très légers (2 à 4 % d'opacité) | Lisibilité et batterie sur l'entrée de gamme |
+| Rouge « SYSTEM COMPROMISED », « EXFILTRATION » | ✅ Rouge réservé au SOS et aux vraies alertes | Textes rassurants (« Alerte envoyée à 3 contacts »), jamais « compromis » ni « piraté » : le public a dès 12 ans |
+| Réticules de visée, drone, soldat, caméras espion | ❌ Remplacés par le **radar** et les anneaux du cercle rouge | Pas d'imagerie d'arme ni de surveillance : l'app protège, elle n'espionne pas (N9) |
+| Écrans qui clignotent | ⚠ Au plus 1 pulsation par seconde, jamais plus de 3 flashs par seconde | Risque d'épilepsie ; variante « réduire les animations » obligatoire |
 
 ```
 Conçois les maquettes haute fidélité d'une application mobile Android nommée « Cercle Rouge ».
-Format : écrans de téléphone 360 × 800 dp (Android, Material 3 comme base), thème SOMBRE en
-priorité, plus une variante claire des écrans 1 et 3. Langue de l'interface : français
-(Haïti). Livre un écran par artboard, nommé et numéroté, plus une planche de composants
-et une planche de « design tokens ».
+Format : écrans de téléphone 360 × 800 dp, Android (Material 3 comme base technique, mais un
+style très personnalisé). Thème SOMBRE uniquement pour cette série. Langue : français (Haïti).
+Un écran par artboard, nommé et numéroté, plus une planche de composants, une planche
+d'effets et une planche de tokens.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 1. LE PRODUIT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Cercle Rouge protège une personne pendant un trajet, une sortie ou une urgence en Haïti
-(Port-au-Prince, Delmas, Pétion-Ville). L'IA analyse les sons SUR le téléphone (rien
-n'est envoyé), détecte des mots de détresse (« Anmwe ! », « Au secours ! ») ou une
-déviation de trajet, demande « Es-tu en sécurité ? », puis alerte jusqu'à 5 contacts
-de confiance par SMS et notification, avec la position et un lien de suivi temporaire.
-Utilisateurs : de 12 ans à l'âge adulte, souvent sur des téléphones d'entrée de gamme,
-parfois sous stress, d'une seule main, la nuit, dans un tap-tap ou à moto.
+(Port-au-Prince, Delmas, Pétion-Ville). L'IA analyse les sons SUR le téléphone (rien n'est
+envoyé), reconnaît des mots de détresse (« Anmwe ! », « Au secours ! ») ou une déviation de
+trajet, demande « Es-tu en sécurité ? », puis prévient jusqu'à 5 contacts de confiance par SMS,
+avec la position et un lien de suivi temporaire. Utilisateurs dès 12 ans, souvent sur des
+téléphones d'entrée de gamme, parfois sous stress, d'une main, la nuit.
 
-Promesse émotionnelle : « Je suis protégé·e et je garde le contrôle. » L'interface doit
-RASSURER et inspirer la maîtrise, comme un tableau de bord tactique calme, jamais faire
-peur ni donner l'impression d'être surveillé·e.
+Sensation recherchée : « J'ai ma propre salle d'opérations dans la poche. » Puissant, précis,
+en contrôle. Jamais menaçant : c'est l'utilisateur qui pilote, personne ne le surveille.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-2. DIRECTION ARTISTIQUE : « HUD TACTIQUE ÉPURÉ »
+2. DIRECTION ARTISTIQUE : « SALLE D'OPÉRATIONS NOCTURNE »
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Inspiration : interfaces de centre d'opérations, cockpits, radars, montres outdoor
-haut de gamme. Données en temps réel, mais beaucoup d'espace négatif.
-- Fond presque noir bleuté, fine grille de repérage (lignes à 4 % d'opacité, maille 24 dp).
-- Lignes fines (1 dp), coins de cadrage en équerre « [ ] » autour des zones actives,
-  petites étiquettes en capitales monospaces (ex. « GPS ±12 m », « RÉSEAU 3G »).
-- Le motif signature est un CERCLE (le « cercle rouge ») : anneaux concentriques,
-  radar, halo autour du bouton SOS.
-- Surfaces : cartes à coins arrondis 16 dp, bordure 1 dp, pas d'ombres lourdes ;
-  léger flou de fond uniquement pour les feuilles modales.
-- Interdit : vert Matrix, effets glitch, texte qui défile illisible, faux code,
-  crânes, cibles ou réticules d'arme, emoji comme icônes, néons saturés partout.
+Référence : un centre d'opérations de nuit, un mur d'écrans vert phosphore, des cartes
+tactiques, des alertes rouges. Profondeur et matière, PAS de design plat.
+
+Matière et profondeur :
+- Fond : noir verdâtre profond avec un léger dégradé radial (plus clair au centre, vignettage
+  sombre sur les bords), grain fin à 3 % d'opacité.
+- Chaque bloc d'information est un « MONITEUR » : panneau rectangulaire à coins 12 dp, cadre
+  (bezel) de 2 dp légèrement plus clair en haut qu'en bas (effet biseauté), surface intérieure
+  très légèrement bombée (dégradé vertical subtil), reflet de verre en diagonale à 4 %,
+  lignes de balayage horizontales (1 px tous les 3 px, 3 % d'opacité), lueur extérieure
+  verte (glow, flou 16 dp, 25 % d'opacité) quand le moniteur est actif.
+- En-tête de chaque moniteur : une barre fine avec un identifiant en capitales mono
+  (« RADAR-01 », « CARTE // DELMAS », « JOURNAL // LOCAL »), un voyant (point lumineux) et
+  l'heure à droite.
+- Coins en équerre « ⌜ ⌝ ⌞ ⌟ » de 12 dp autour de la zone active de l'écran.
+- Superposition des plans : panneaux qui se chevauchent légèrement, ombres portées vertes
+  très diffuses, pour une vraie profondeur.
+- Une carte tactique : fond noir, rues en vert sombre, grille de coordonnées, étiquettes de
+  quartiers en mono (DELMAS, PÉTION-VILLE, CANAPÉ-VERT), repères ronds lumineux.
+- Le motif signature est le CERCLE ROUGE : anneaux concentriques, radar, halo du bouton SOS.
+
+Interdit : réticules de visée, drones, soldats, caméras espion, crânes, mots « compromis »,
+« piraté », « exfiltration », faux code illisible, effets de glitch violents, emoji.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-3. DESIGN TOKENS
+3. TOKENS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Couleurs (thème sombre) :
-- bg/base #0B0F14 · bg/surface #121821 · bg/elevated #18212C · line/grid #1E2A36
-- text/primary #E6EDF3 · text/secondary #8B9AAB · text/disabled #4A5868
-- brand/rouge #E5263B : réservé au logo, au bouton SOS et aux alertes
-- state/protégé #2DD4BF (cyan-turquoise) : protection active, écoute IA active
-- state/vigilance #F5A524 (ambre) : vérification en cours, hors ligne, batterie faible
-- state/alerte #FF3B4E : alerte envoyée, mode urgence
-- state/inactif #5B6B7D : protection désactivée
-Chaque état combine TOUJOURS couleur + icône + texte (jamais la couleur seule).
-Contraste minimal 4,5:1 pour le texte et 3:1 pour les icônes et les bordures actives.
-Thème clair (écrans 1 et 3) : bg #F5F7FA, surface #FFFFFF, texte #0F172A, mêmes
-couleurs d'état assombries pour garder le contraste.
+Couleurs :
+- bg/void #050807 (fond) · bg/panel #0B1310 (intérieur des moniteurs)
+- bg/panel-raised #101C17 (feuilles, pavé PIN) · line/grid #13241C · line/bezel #1E3A2E
+- phosphor/500 #3DDC84 (vert principal : état protégé, données actives, tracés)
+- phosphor/300 #8CF5B8 (texte lumineux sur fond sombre, valeurs importantes)
+- phosphor/glow rgba(61, 220, 132, 0.25) (lueurs)
+- text/primary #D9F2E4 (texte courant, blanc teinté de vert) · text/secondary #7FA390
+- brand/rouge #E5263B (logo, SOS, anneau de SOS) · alert/red #FF4155 (alertes)
+- alert/glow rgba(255, 65, 85, 0.30)
+- vigilance/amber #FFB020 (vérification, hors ligne)
+- inactive #5E7768 (protection désactivée)
+- focus #7DD3FC (anneau de focus, distinct du vert)
+Contraste : texte ≥ 4,5:1 sur bg/panel (text/primary, text/secondary et phosphor/300 le
+respectent) ; icônes et bordures actives ≥ 3:1. Chaque état = couleur + icône + libellé.
 
-Typographie (doit supporter é è ê à ò ç — français et créole) :
-- Titres : Space Grotesk 600 (24 / 20 / 18)
-- Texte : Inter 400 et 500 (16 de base, interligne 1,5 ; minimum 14 pour les légendes)
-- Données HUD : JetBrains Mono 500, capitales, interlettrage +4 %, chiffres tabulaires
-  (heures, distances, minuteurs, coordonnées)
-Espacements : multiples de 4 et 8 dp (8, 12, 16, 24, 32). Marges latérales de 16 dp.
-Icônes : Lucide, trait de 1,75 dp, 24 dp, contour uniquement (rempli = état actif).
-Cibles tactiles ≥ 48 dp ; bouton SOS ≥ 88 dp ; actions critiques dans la moitié basse.
+Typographie (doit supporter é è ê à ò ç du français et du créole) :
+- Titres : Chakra Petch 600 (24 / 20 / 18), angles techniques, capitales possibles
+- Texte : Inter 400 et 500 (16 de base ; 14 minimum)
+- Données : JetBrains Mono 500, capitales, interlettrage +6 %, chiffres tabulaires
+Espacements : 4, 8, 12, 16, 24, 32 dp. Marges latérales de 16 dp.
+Icônes : Lucide, trait 1,75 dp, couleur phosphore, petite lueur quand actives.
+Cibles tactiles ≥ 48 dp ; bouton SOS ≥ 88 dp (120 dp au centre du radar).
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-4. ANIMATIONS (à documenter sur chaque écran, avec durée et easing)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Style « temps réel » mais calme : 1 à 2 éléments animés par écran au maximum.
-- Radar : balayage lent (une rotation en 4 s, linéaire) UNIQUEMENT quand l'écoute IA
-  est active ; arrêté quand la protection est désactivée.
-- Onde sonore : 24 barres fines réagissant au niveau du micro (sans aucun contenu
-  audio affiché), 60 % d'opacité.
-- Valeurs HUD : chiffres qui « roulent » à la mise à jour (200 ms, ease-out).
-- Journal : nouvelle ligne qui apparaît par fondu + glissement de 8 dp (180 ms).
-- Carte : point de position avec halo qui pulse (1,6 s, ease-in-out) ; la trace se
-  dessine progressivement ; le corridor de trajet est une bande translucide.
-- SOS : appui long de 1,5 s avec un anneau de progression qui se remplit autour du
-  bouton, vibration à la fin ; puis compte à rebours de 5 s, chiffres de 64 dp.
-- Vérification : anneau qui se vide sur 20 s autour de « Es-tu en sécurité ? ».
-- Alerte : anneaux rouges qui s'élargissent depuis le centre (au plus 1 pulsation par
-  seconde ; jamais plus de 3 flashs par seconde, risque d'épilepsie).
-- Transitions d'écran : 250 ms entrée / 180 ms sortie, ease-out ; spring léger sur
-  les boutons pressés (scale 0,97).
-- Prévoir pour chaque écran la variante « Réduire les animations » (tout est statique,
-  l'information reste identique) et la variante « Mode discret » (aucune animation
-  visible, aucun mot « alerte » ni « danger », couleurs neutres).
+Effets (planche dédiée, avec les valeurs) : lueur verte, lueur rouge, lignes de balayage,
+grain, vignettage, reflet de verre, cadre biseauté. Chacun avec une version « réduite »
+(sans lueur ni balayage) pour le mode économie d'énergie.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-5. ÉCRANS À PRODUIRE
+4. ANIMATIONS (durée et courbe sur chaque écran)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Barre d'état Android en haut ; barre de navigation inférieure à 4 onglets avec
-icône + libellé : Accueil · Trajet · Contacts · Journal (Réglages via l'avatar en haut
-à droite). Le bouton SOS est accessible depuis TOUS les écrans principaux.
+- Démarrage : les moniteurs s'allument l'un après l'autre (ligne lumineuse horizontale qui
+  s'ouvre en rectangle, 220 ms chacun, décalage 60 ms), puis 3 lignes de console s'écrivent
+  (« CERCLE ROUGE · INITIALISATION », « ANALYSE LOCALE · PRÊTE », « 0 DONNÉE ENVOYÉE »).
+  Total < 900 ms. Rejoué seulement au lancement à froid.
+- Radar : balayage vert avec traînée qui s'estompe (rotation en 4 s, linéaire), seulement
+  quand l'écoute IA est active.
+- Onde du micro : 32 barres fines vert phosphore, sans aucun contenu audio affiché.
+- Valeurs : chiffres qui « roulent » (200 ms) ; nouvelle ligne de journal tapée en 180 ms.
+- Carte : repère de position avec halo pulsant (1,6 s) ; trace qui se dessine.
+- SOS : appui long 1,5 s, anneau rouge lumineux qui se remplit, vibration ; puis compte à
+  rebours de 5 s en très grands chiffres mono rouges avec lueur.
+- Alerte : bordure rouge des moniteurs qui pulse (1 fois par seconde au plus), bandeau
+  « ALERTE ENVOYÉE » qui défile lentement.
+- Transitions : 250 ms entrée / 180 ms sortie ; pression des boutons : scale 0,97.
+- Variantes obligatoires pour CHAQUE écran : « Réduire les animations » (tout statique) et
+  « Mode discret » (aucune lueur rouge, aucun mot « alerte », interface sobre).
+- Jamais plus de 3 flashs par seconde.
 
-ÉCRAN 1 — Accueil « Radar », protection DÉSACTIVÉE (état par défaut)
-- En haut : logo (cercle rouge fin + « Cercle Rouge »), avatar, puce d'état grise
-  « PROTECTION DÉSACTIVÉE ».
-- Centre : grand radar de 280 dp (3 anneaux concentriques fins, statique, gris).
-  Au centre du radar : bouton SOS rond de 120 dp, rouge plein, texte « SOS » + légende
-  « Appui long 1,5 s ».
-- Autour du radar, 4 boutons satellites en orbite (cercles de 64 dp avec icône + libellé
-  en dessous) : « Trajet protégé » (route), « Écoute IA » (micro), « Contacts » (3/5),
-  « Appeler le 114 » (téléphone).
-- Bas : grand bouton pleine largeur « Activer la protection » (contour cyan) et une
-  ligne HUD : « BATTERIE 82 % · RÉSEAU 3G · CONTACTS JOIGNABLES 3/3 ».
-- Aucune carte et aucune position : la localisation est coupée dans cet état (c'est voulu).
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. ÉCRANS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Navigation basse à 4 onglets (icône + libellé) : Accueil · Trajet · Contacts · Journal,
+dans une barre-moniteur. Le bouton SOS est accessible depuis TOUS les écrans principaux.
 
-ÉCRAN 2 — Accueil « Radar », ÉCOUTE IA ACTIVE
-- Même composition ; puce cyan « ÉCOUTE IA ACTIVE » avec un point qui pulse.
-- Radar cyan avec balayage animé ; onde sonore discrète sous le bouton SOS.
+ÉCRAN 1 — Accueil « Console », protection DÉSACTIVÉE
+Composition en mur de moniteurs (dans l'esprit de l'image de référence) :
+- En haut, petit moniteur d'état : « PROTECTION DÉSACTIVÉE » (voyant gris), heure, batterie,
+  réseau « 3G », « CONTACTS 3/5 ».
+- Grand moniteur central « RADAR-01 » : radar à 3 anneaux, statique et gris ; au centre le
+  bouton SOS rond 120 dp, rouge, halo rouge doux ; 4 boutons satellites autour (Écoute IA,
+  Trajet, Contacts, Appeler le 114), chacun un petit cercle-moniteur avec icône et libellé.
+- Deux petits moniteurs côte à côte en dessous :
+  · « CARTE // PORT-AU-PRINCE » : carte tactique verte de la ville, SANS point de position,
+    avec la mention « POSITION NON PARTAGÉE ».
+  · « JOURNAL // LOCAL » : 3 lignes de console (« 20:12 DÉTECTION · NON CONFIRMÉE ·
+    AUCUNE DONNÉE ENVOYÉE »).
+- En bas : bouton large « Activer la protection » (contour vert lumineux).
+
+ÉCRAN 2 — Accueil « Console », ÉCOUTE IA ACTIVE
+- Même mur ; tous les moniteurs ont leur lueur verte ; voyant « ÉCOUTE IA ACTIVE » qui pulse.
+- Radar avec balayage animé ; onde du micro sous le SOS.
 - Ligne HUD : « ANALYSE LOCALE · 0 DONNÉE ENVOYÉE ».
-- Bouton bas : « Désactiver » (demande le PIN).
 
-ÉCRAN 3 — Accueil « Carte en direct », TRAJET ACTIF (la vue carte de l'accueil)
-- Carte sombre stylisée plein écran (Port-au-Prince : Delmas → Pétion-Ville), routes
-  gris-bleu, pas de couleurs vives ; corridor du trajet en bande cyan translucide ;
-  trace parcourue en cyan plein ; point de position avec halo pulsant ; drapeau de
-  destination.
-- Panneau HUD flottant en haut (coins en équerre) : « TRAJET PROTÉGÉ », « ARRIVÉE
-  PRÉVUE 22:30 », « RESTE 3,2 KM · 14 MIN », « GPS ±12 m », « SUIVI PAR : Maman, Jo ».
-- À droite, colonne de 3 boutons ronds de 48 dp : recentrer, écoute IA on/off, « Je
-  fais un arrêt ».
-- Bas : bouton SOS rond de 88 dp à gauche et grand bouton « Je suis arrivé·e » à
-  droite (cyan plein, demande le PIN).
-- Petit indicateur « Écoute IA active » sous le panneau HUD.
+ÉCRAN 3 — Accueil « Carte en direct », TRAJET PROTÉGÉ
+- La carte tactique devient le grand moniteur plein écran : rues vertes, grille,
+  quartiers ; corridor du trajet en bande verte translucide ; trace parcourue en vert vif ;
+  repère de position avec halo ; drapeau de destination.
+- Moniteur flottant en haut (coins en équerre) : « TRAJET PROTÉGÉ », « ARRIVÉE PRÉVUE 22:30 »,
+  « RESTE 3,2 KM · 14 MIN », « GPS ±12 M », « SUIVI PAR : MAMAN, JO ».
+- Colonne de 3 boutons ronds à droite : recentrer, écoute IA, « Je fais un arrêt ».
+- En bas : SOS 88 dp à gauche, bouton « Je suis arrivé·e » à droite (demande le PIN).
 
-ÉCRAN 4 — Vérification « Es-tu en sécurité ? » (feuille plein écran, priorité maximale)
-- Fond assombri ; anneau ambre qui se vide (compte à rebours de 20 s, chiffres
-  JetBrains Mono 64 dp) ; raison en clair : « Déviation de trajet détectée ».
-- Deux boutons empilés pleine largeur de 64 dp : « Je vais bien » (cyan, demande le PIN
-  ou l'empreinte) et « J'ai besoin d'aide » (rouge).
-- Texte : « Sans réponse, tes contacts seront prévenus. »
+ÉCRAN 4 — Vérification « Es-tu en sécurité ? »
+- Tout l'écran s'assombrit, un moniteur ambre se pose au centre (lueur ambre).
+- Anneau ambre qui se vide sur 20 s, chiffres mono 64 dp ; raison : « DÉVIATION DE TRAJET
+  DÉTECTÉE ».
+- Deux grands boutons de 64 dp : « Je vais bien » (vert, PIN ou empreinte), « J'ai besoin
+  d'aide » (contour rouge lumineux). Texte : « Sans réponse, tes contacts seront prévenus. »
 
-ÉCRAN 5 — SOS en cours de déclenchement
-- Anneau de progression rouge autour du bouton (appui long), puis plein écran : grand
-  compte à rebours « 5 », texte « Envoi de l'alerte à 3 contacts », bouton « Annuler »
-  très visible.
+ÉCRAN 5 — SOS en cours
+- Anneau rouge lumineux qui se remplit autour du bouton ; puis plein écran rouge sombre
+  avec lignes de balayage : très grand « 5 », « ENVOI DE L'ALERTE À 3 CONTACTS », bouton
+  « Annuler » très visible.
 
-ÉCRAN 6 — Mode urgence (alerte envoyée)
-- Bandeau rouge « ALERTE ENVOYÉE · 22:14 » avec une icône ; anneaux d'onde lents.
-- Liste HUD en temps réel de chaque contact avec son état : « Maman — SMS reçu ✓ ·
-  a ouvert le lien », « Jo — notification envoyée », « Ti Paul — en attente ».
-- Lignes de journal qui apparaissent : « 22:14:03 POSITION PARTAGÉE », « 22:14:05
-  ENREGISTREMENT AUDIO CHIFFRÉ ».
-- Boutons : « Appeler le 114 » (composeur), « Je vais bien » (PIN).
+ÉCRAN 6 — Mode urgence
+- Le mur de moniteurs passe en alerte : cadres rouges qui pulsent lentement, bandeau
+  « ALERTE ENVOYÉE · 22:14 ».
+- Moniteur « CONTACTS » : liste en temps réel (« MAMAN — SMS REÇU ✓ · A OUVERT LE LIEN »,
+  « JO — NOTIFICATION ENVOYÉE », « TI PAUL — EN ATTENTE »).
+- Moniteur « CARTE » : position partagée avec halo rouge.
+- Moniteur « JOURNAL » : « 22:14:03 POSITION PARTAGÉE », « 22:14:05 ENREGISTREMENT CHIFFRÉ ».
+- Boutons : « Appeler le 114 » (rouge plein), « Je vais bien » (PIN).
 
-ÉCRAN 7 — Onboarding (3 écrans)
-- 7a Bienvenue : « Ta sécurité, sous ton contrôle. » + illustration du cercle.
-- 7b « L'IA écoute sur ton téléphone. Rien n'est envoyé. » Schéma : micro → téléphone
-  (cadenas) → rien ne sort, sauf alerte.
-- 7c Choix de la conservation des preuves : 4 cartes radio SANS sélection par défaut
-  (24 heures, 7 jours, 30 jours, supprimer à la fin de l'alerte), avec un exemple sous
-  chaque option ; bouton « Continuer » désactivé tant que rien n'est choisi.
+ÉCRAN 7 — Onboarding (3 écrans) en style « initialisation du système »
+- 7a : séquence de démarrage (moniteurs qui s'allument), titre « Ta sécurité, sous ton
+  contrôle. », bouton « Commencer », bouton SOS rouge.
+- 7b : « L'IA écoute sur ton téléphone. Rien n'est envoyé. » Schéma en moniteur :
+  micro → téléphone (cadenas lumineux) → aucune sortie, sauf alerte.
+- 7c : choix de la conservation des preuves : 4 cartes-moniteurs SANS sélection par défaut
+  (24 heures, 7 jours, 30 jours, effacer à la fin de l'alerte), un exemple sous chacune ;
+  « Continuer » désactivé tant que rien n'est choisi.
 
 ÉCRAN 8 — Consentement de l'adulte référent (12–15 ans), 2 écrans
-- 8a Côté jeune : « Un parent ou un adulte de confiance doit confirmer » ; champ numéro
-  +509, choix du lien (parent, tuteur, autre adulte) ; état d'attente avec une animation
-  lente et le rappel « En attendant, le bouton SOS fonctionne ».
-- 8b Côté adulte : « Demande de Naïka (13 ans) » ; deux colonnes claires : « Tu verras »
-  (ses alertes si elle a besoin d'aide) / « Tu ne verras jamais » (sa position hors
-  alerte, ses trajets, son journal) ; boutons « Confirmer avec mon PIN » / « Refuser ».
+- 8a côté jeune : « Un parent ou un adulte de confiance doit confirmer », champ +509,
+  choix du lien (Parent, Tuteur, Autre adulte) en puces vertes, état d'attente avec un
+  voyant ambre et « En attendant, le bouton SOS fonctionne ».
+- 8b côté adulte : « Demande de Naïka (13 ans) », deux moniteurs : « TU VERRAS » (ses
+  alertes) / « TU NE VERRAS JAMAIS » (position hors alerte, trajets, journal) ; boutons
+  « Confirmer avec mon PIN » / « Refuser ».
 
-ÉCRAN 9 — Contacts de confiance (5 maximum)
-- Compteur HUD « 3/5 » ; cartes de contact avec rang (1, 2, 3, glissables), rôle
-  (« Répondant principal »), canaux (icônes SMS, notification), statut de consentement
-  (« Accepté », « En attente »), langue (FR, HT) ; bouton « Ajouter » ; bouton « Tester
-  l'alerte ».
+ÉCRAN 9 — Contacts (5 maximum) : compteur « 3/5 », cartes-moniteurs avec rang, rôle,
+canaux, statut (« ACCEPTÉ », « EN ATTENTE »), langue ; « Ajouter », « Tester l'alerte ».
 
-ÉCRAN 10 — Démarrer un trajet
-- Modèles en puces : « Je rentre chez moi », « Rendez-vous », « Transport » ;
-  destination ; heure d'arrivée estimée ; mode (marche, voiture, tap-tap, taxi, moto) ;
-  contacts qui suivent ; bouton « Démarrer le trajet protégé » (exige un PIN : afficher
-  le pavé de PIN dans une variante).
+ÉCRAN 10 — Démarrer un trajet : puces de modèles (« Je rentre chez moi », « Rendez-vous »,
+« Transport »), destination, heure, mode (marche, voiture, tap-tap, taxi, moto), contacts
+qui suivent, « Démarrer le trajet protégé » (pavé PIN en variante).
 
-ÉCRAN 11 — Journal local (style console sobre)
-- Lignes horodatées en JetBrains Mono : « 20:12 DÉTECTION · NON CONFIRMÉE · AUCUNE
-  DONNÉE ENVOYÉE » ; filtres en puces ; mention « Ce journal reste sur ton téléphone ».
+ÉCRAN 11 — Journal : grand moniteur console, lignes horodatées vertes, filtres, mention
+« CE JOURNAL RESTE SUR TON TÉLÉPHONE · CHAÎNE INTACTE ✓ ».
 
-ÉCRAN 12 — Coffre-fort des preuves (après empreinte)
-- Liste d'enregistrements chiffrés (icône cadenas, durée, date, « suppression dans
-  18 h »), actions conserver / supprimer / exporter.
+ÉCRAN 12 — Coffre-fort des preuves : moniteur verrouillé (cadenas lumineux), liste
+d'enregistrements chiffrés avec « suppression dans 18 h ».
 
-ÉCRAN 13 — Page web de suivi pour un proche (mobile web, sans compte)
-- « Naïka a peut-être besoin d'aide » ; carte avec la dernière position et son âge
-  (« il y a 2 min ») ; raison et heure ; chronologie ; boutons « Appeler Naïka »,
-  « J'ai pris contact », « Appeler le 114 » ; mention « Installe Cercle Rouge pour
-  écouter les enregistrements » ; lien valable jusqu'à 02:14.
+ÉCRAN 13 — Page web pour un proche (mobile web, sans compte), même style : « Naïka a
+peut-être besoin d'aide », carte tactique, chronologie, boutons « Appeler Naïka »,
+« J'ai pris contact », « Appeler le 114 », « Installe Cercle Rouge pour écouter les
+enregistrements ».
 
-ÉCRAN 14 — Notification persistante Android + widget d'écran d'accueil
-- Notification : « Cercle Rouge · Écoute IA active » avec les actions [SOS] [Désactiver].
-- Widget 2×2 : bouton SOS + état.
+ÉCRAN 14 — Notification Android (« Cercle Rouge · Écoute IA active », actions SOS et
+Désactiver) et widget 2×2 en forme de mini-moniteur avec le bouton SOS.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-6. COMPOSANTS (planche dédiée)
+6. COMPOSANTS (planche)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Bouton SOS (repos, pressé, progression, désactivé) · bouton satellite · puce d'état
-(désactivé, protégé, vigilance, alerte, hors ligne) · panneau HUD à coins en équerre ·
-ligne de journal · carte contact · pavé PIN · feuille de vérification · barre de
-navigation · champ téléphone +509 · cartes radio · bandeau hors ligne (« Hors ligne —
-l'alerte partira par SMS »). Chaque composant avec ses états pressé, focus,
-désactivé et chargement.
+Moniteur (repos, actif avec lueur, alerte, ambre, désactivé) · en-tête de moniteur ·
+bouton SOS (repos, appui, progression, désactivé) · satellite · voyant d'état · puce ·
+ligne de console · carte tactique · carte-contact · pavé PIN · feuille de vérification ·
+barre de navigation · champ +509 · carte de choix · bandeau hors ligne (« HORS LIGNE ·
+L'ALERTE PARTIRA PAR SMS »). États pressé, focus, désactivé et chargement pour chacun.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 7. CONTRAINTES NON NÉGOCIABLES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Une seule action principale par écran ; le SOS est toujours atteignable en 1 geste.
-- Lisible avec une police à 200 % (montrer une variante de l'écran 1) ; libellés sur
-  toutes les icônes ; état jamais signalé par la couleur seule.
-- Pas de texte sous 14 dp ; contraste AA vérifié ; zones sûres Android respectées.
-- Aucune donnée visible sur l'écran de verrouillage (notification neutre).
-- Ton des textes : tutoiement, phrases courtes, simple (lisible par un enfant de 12 ans),
-  jamais alarmiste ; ne jamais promettre « nous détectons tout danger ».
+- Le SOS reste l'élément le plus visible de chaque écran principal, atteignable en 1 geste.
+- Une seule action principale par écran malgré la densité du mur de moniteurs.
+- Lisible avec une police à 200 % (variante de l'écran 1 où les moniteurs s'empilent).
+- Aucune donnée sensible sur l'écran de verrouillage.
+- Ton : tutoiement, phrases courtes, lisible par un enfant de 12 ans, jamais alarmiste ; ne
+  jamais promettre « nous détectons tout danger ».
 - Contenus fictifs uniquement (prénoms haïtiens inventés, numéros +509 fictifs).
 ```
 
 ## Après génération : vérifier
 
-- [ ] L'écran 1 n'affiche **aucune** carte ni position (protection désactivée).
-- [ ] Le SOS est présent et atteignable sur les écrans 1, 2, 3, 9, 10 et 11.
-- [ ] Les variantes « réduire les animations » et « discret » existent.
-- [ ] Les contrastes sont vérifiés (plugin de contraste) et les accents sont bien rendus (é, ò).
-- [ ] Revue `/review-animations` et `/emil-design-eng` sur la planche des animations.
+- [ ] L'écran 1 n'affiche **aucun** point de position sur la carte (protection désactivée).
+- [ ] Le SOS domine visuellement chaque écran principal, malgré la densité.
+- [ ] Les variantes « réduire les animations » et « mode discret » existent pour chaque écran.
+- [ ] Contrastes vérifiés (texte ≥ 4,5:1), accents bien rendus (é, ò, ç), aucun réticule ni mot alarmiste.
+- [ ] Revue `/review-animations` et `/emil-design-eng` sur la planche des animations et des effets.

@@ -32,7 +32,7 @@ Méthode : STRIDE par acteur, centrée sur les personnes. Les mesures renvoient 
 | T2 | L'agresseur éteint le téléphone ou tue l'app | Dernier message à l'extinction ; perte de contact détectée par le serveur ; preuves déjà envoyées | R-TRIP-05, module 9 |
 | T3 | L'agresseur supprime les preuves locales | Envoi progressif dès le niveau 2 ; la racine de la chaîne est sur le serveur | R-EVD-04 |
 | T4 | **Détournement en outil de surveillance (stalkerware)** | Armement uniquement par le détenteur ; indicateur micro et notification permanents ; pas de mode caché ; pas de suivi en dehors des alertes ou trajets ; attestation à l'onboarding ; contacts limités à l'alerte active | N2, N9, R-DASH-01 |
-| T5 | Révéler l'usage de l'app | Mode leurre ; notifications neutres sur l'écran de verrouillage ; ❓ alias d'icône neutre | R-SEC-05/06 |
+| T5 | Révéler l'usage de l'app | Notifications neutres sur l'écran de verrouillage ; `FLAG_SECURE` ; mode discret. ⚠ Nom et icône fixes, mode leurre en V2 (ADR-0017) : **risque résiduel accepté pour le MVP** | R-SEC-05/06 |
 | T6 | Contact malveillant qui suit ou annule | Liens à durée limitée ; « Alerte fausse » d'un proche ne clôt pas l'alerte ; consultations journalisées et visibles par l'utilisateur ; retrait d'un contact effectif immédiatement | R-DASH-02/03, R-ESC-03 |
 | T7 | Lien de suivi fuité | Jeton ≥ 128 bits, TTL ≤ 6 h, révocable ; ❓ code SMS séparé ; `noindex`, `no-referrer` | R-DASH-04 |
 | T8 | Interception réseau | TLS 1.2+ avec épinglage ; requêtes signées par une clé du Keystore ; SMS : contenu minimal (le SMS n'est pas chiffré, c'est une limite connue) | R-NET-07, R-SY-02 |
@@ -49,3 +49,4 @@ Méthode : STRIDE par acteur, centrée sur les personnes. Les mesures renvoient 
 - Le SMS circule en clair sur le réseau de l'opérateur.
 - Un arrêt forcé de l'app n'est pas détectable localement ; on ne le détecte que par l'absence de battement, avec un délai.
 - La détection audio peut manquer un danger réel.
+- Le nom et l'icône « Cercle Rouge » sont visibles sur le téléphone (pas d'icône neutre ni de mode leurre dans le MVP).

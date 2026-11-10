@@ -26,7 +26,7 @@ Références : [conformite/vie-privee-donnees.md](../conformite/vie-privee-donne
 | Donnée | Téléphone | Serveur |
 |---|---|---|
 | Audio d'analyse | 0 (mémoire seulement) | 0 |
-| Preuves | 24 h après clôture (7 j ou 30 j en option) | Identique |
+| Preuves | Choix de l'onboarding : 24 h, 7 j, 30 j ou à la clôture (24 h tant que rien n'est choisi) | Identique |
 | Positions d'un trajet sans alerte | Points supprimés à la fin ; résumé conservé 30 j | Supprimées ≤ 1 h après la fin |
 | Journal local des détections | 30 j | — |
 | Racines de chaîne et événements d'alerte (sans contenu) | 30 j | 90 j (❓ obligation légale ou défense en justice) |

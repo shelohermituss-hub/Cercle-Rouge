@@ -15,8 +15,8 @@
 | ~~Q4~~ ✅ | PIN en trajet | **Obligatoire pour démarrer un trajet** ; biométrie autorisée (ADR-0015) | — |
 | ~~Q5~~ ✅ | PIN de contrainte | **Non retenu** pour le MVP (ADR-0015) | — |
 | ~~Q6~~ ✅ | SOS vers un contact non consenti | **Oui, SOS manuel uniquement**, avec lien STOP (ADR-0015) | — |
-| Q7 | Nombre maximal de contacts et de destinataires simultanés | 10 et 5 | contacts-engine |
-| Q8 | Mode leurre : interne à l'app seulement, ou aussi un alias d'icône neutre ? | Interne + alias neutre honnête (déclaré) | module 9 |
+| ~~Q7~~ ✅ | Limites de contacts | **5 au total, 3 alertés au niveau 2** (ADR-0017) | — |
+| ~~Q8~~ ✅ | Mode leurre et icône neutre | **V2** (ADR-0017) | — |
 | ~~Q9~~ ✅ | Vidéo de preuve | **V2** (ADR-0010) | — |
 
 ## Technique

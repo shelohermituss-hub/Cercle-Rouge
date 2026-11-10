@@ -14,8 +14,8 @@
 | S3 | Alertes serveur + page des proches | Notification push, SMS serveur, lien de suivi, « J'ai pris contact » | 2 sem. |
 | S4 | Trajet protégé | Détour → vérification → alerte avec carte ; téléphone éteint → perte de contact | 2 sem. |
 | S5 | Écoute IA locale | « Anmwe ! » → vérification ; phrase secrète → alerte silencieuse | 2 sem. |
-| S6 | Preuves | Audio chiffré après alerte, écouté par le proche, supprimé à 24 h | 2 sem. |
-| S7 | Sécurité | Biométrie, leurre, effacement ; audit sans faille haute | 2 sem. |
+| S6 | Preuves | Audio chiffré après alerte, écouté par le proche, supprimé à l'échéance choisie | 2 sem. |
+| S7 | Sécurité | Biométrie, effacement d'urgence ; audit sans faille haute | 2 sem. |
 | S8 | Tests terrain et lancement | 20 à 50 téléphones, bêta fermée, pilote Haïti | 3 sem. |
 
 **≈ 20 semaines** avec 2 développeurs + Claude Code (≈ 7 mois avec 1 seul développeur).
@@ -28,10 +28,10 @@
 
 | Étape | Faire | Vérifier |
 |---|---|---|
-| S0.01 | Choisir le **nom définitif** (vérifier la marque à Haïti et la disponibilité sur Play) | Nom inscrit dans un ADR |
+| S0.01 | ✅ Nom : **« Cercle Rouge »**, fixe (ADR-0017) ; vérifier la disponibilité de la marque à Haïti et sur Play | Recherche de marque faite |
 | S0.02 | ✅ **Niveau de protection par défaut** (ADR-0015) : recommandé « Désactivé » + SOS toujours visible + proposition « Trajet protégé » au 1er trajet | ADR |
-| S0.03 | Contacts et canaux : 10 contacts maximum, 5 alertés à la fois ; push + SMS ; Q6 (SOS vers un contact non consenti) ; Q3c ✅ (adulte référent ajouté par défaut) | `questions-ouvertes.md` à jour |
-| S0.04 | Conservation : confirmer 24 h par défaut (7 j, 30 j, à la clôture) ; côté serveur, identique | ✅ déjà décidé, à relire |
+| S0.03 | ✅ Contacts : **5 maximum, 3 alertés** (ADR-0017) ; push + SMS ; SOS vers les non-consentis (ADR-0015) ; adulte référent par défaut (ADR-0013) | — |
+| S0.04 | ✅ Conservation **choisie à l'onboarding**, sans présélection ; 24 h tant que rien n'est choisi (ADR-0017) | — |
 | S0.05 | ✅ Partage des preuves (Q12) : de bout en bout, app obligatoire (ADR-0016) | ADR |
 | S0.06 | ✅ Épinglage TLS (Q28) → ADR-0014 ; relever la chaîne réelle de `<projet>.supabase.co` après S0.08 | Broches listées |
 | S0.07 | Relire et signer ADR-0008 à 0013 (formule, Haïti 12 ans et +, MVP, Supabase, MVVM, consentement parental) | Statut « Acceptée » |
@@ -47,7 +47,7 @@
 | S0.12 | **Juriste** : enregistrement de tiers, mineurs de 12 ans et +, consentement parental, conditions d'utilisation, réquisitions | Questions envoyées, date de retour |
 | S0.13 | **Numéros d'urgence** 114, 115 et 116 confirmés (PNH, Protection civile) | Tableau officiel dans `docs/` |
 | S0.14 | **Atelier mots-clés créole** (5 à 10 locuteurs, dont des 12–17 ans) + protocole de collecte audio consentie (formulaire parental pour les mineurs) | `docs/ia/mots-cles.md`, `docs/ia/collecte-donnees.md` |
-| S0.15 | **Maquettes Figma** : inscription OTP, âge, consentement parental (côté jeune **et** côté parent), onboarding, accueil (7 états × normal, discret, leurre), SOS, vérification, trajet, contacts, coffre, page des proches | Prototype cliquable |
+| S0.15 | **Maquettes Figma** : inscription OTP, âge, consentement parental (côté jeune **et** côté parent), onboarding, accueil (7 états × normal, discret), écran de choix de la conservation, SOS, vérification, trajet, contacts, coffre, page des proches | Prototype cliquable |
 | S0.16 | Tester les maquettes avec 5 personnes : 2 jeunes de 12 à 17 ans, 1 parent, 2 adultes | Retours intégrés dans Figma |
 | S0.17 | Réunir les appareils de test : au moins 4 (entrée de gamme Android 10, Tecno ou Infinix, Samsung A, Pixel récent) | Matrice dans `docs/plan/appareils.md` |
 
@@ -116,7 +116,7 @@
 | S1.22 | **Parcours jeune 12–15 ans** : saisie du numéro d'un parent ou adulte de confiance + lien déclaré → `request_guardian_consent` → écran d'attente en mode restreint (SOS manuel seulement) [Renvoyer] [Changer] | Démo |
 | S1.23 | **Parcours adulte référent** : inscription OTP avec le numéro invité → attestation 18 ans et + → écran « Demande de Prénom » (ce que tu verras / ne verras jamais) → confirmation par PIN ou biométrie → `confirm_guardian_consent` | Le jeune est débloqué en < 5 s (Realtime + push) |
 | S1.24 | Retrait du consentement (parent ou jeune) → retour en mode restreint, notification aux deux | Test |
-| S1.25 | Onboarding : écrans explicatifs, consentements séparés et historisés (local + table `consents`), permissions en contexte, tout refuser → l'app reste utilisable | Test UI avec tout refusé |
+| S1.25 | Onboarding : écran **choix de la conservation** (sans présélection), écrans explicatifs, consentements séparés et historisés (local + table `consents`), permissions en contexte, tout refuser → l'app reste utilisable | Test UI avec tout refusé |
 | S1.26 | Écran d'accueil (états, statut), bouton SOS (appui long, annulation de 5 s → `EMERGENCY_MODE` + journal), notifications locales (3 canaux, contenu neutre sur l'écran de verrouillage) | Démo |
 
 **Démo S1** : un jeune de 13 ans s'inscrit → il est en mode restreint → son parent s'inscrit sur un autre téléphone et confirme → le jeune est débloqué ; SOS → l'état d'urgence est inscrit au journal.
@@ -130,7 +130,7 @@
 |---|---|---|
 | S2.01 | `contacts-engine` : sélecteur système (aucune permission), E.164 (+509), groupes, rôles (1 répondant principal), langue, canaux | Tests ; numéro invalide refusé |
 | S2.02a | ➕ SOS manuel aussi vers les contacts **non encore consentis**, avec mention et lien STOP (ADR-0015) ; alertes automatiques réservées aux consentis | Tests de table |
-| S2.02 | Ordre d'alerte : glisser-déposer ; `resolveRecipients` pur (niveau 2 : principal + backups ≤ 5 ; deux canaux indépendants ; GSM d'abord si pas de données) | Tests de table |
+| S2.02 | Ordre d'alerte : glisser-déposer ; `resolveRecipients` pur (niveau 2 : principal + backups ≤ 3 ; deux canaux indépendants ; GSM d'abord si pas de données) | Tests de table |
 | S2.03 | Adulte référent ajouté par défaut comme contact (Q3c) ; retrait silencieux, sans retrait du consentement (R-PAR-07) | Test : aucune notification envoyée à l'adulte |
 | S2.04 | `ProtectionService` unique : service de premier plan, notification persistante [SOS] [Désactiver] ; état persisté **avant** les effets ; restauration après la mort du processus ; « Réarmer » après un redémarrage | Survit 30 min écran éteint ; restauration testée |
 | S2.05 | Exécuteur d'effets : vibrations codées, notifications, minuteries robustes en veille (`setExactAndAllowWhileIdle` + coroutine) | Vérification déclenchée à l'heure en mode Doze (test adb) |
@@ -139,7 +139,7 @@
 | S2.08 | Gabarits de messages FR, HT et EN (version SMS courte + coordonnées brutes) ; langue du destinataire | Relecture créole |
 | S2.09 | Position ponctuelle pour l'alerte (dernière connue + fraîche en 10 s) ; « position non partagée » si refusée | Tests |
 | S2.10 | **Vérification** « Es-tu en sécurité ? » (10, 20 ou 30 s) ; [Je vais bien] + PIN ; [J'ai besoin d'aide] | Pas de réponse → niveau 2 envoyé |
-| S2.11 | Anti-spam : 1 alerte par contact toutes les 2 min, 20 SMS maximum par alerte | Tests |
+| S2.11 | Anti-spam : 1 alerte par contact toutes les 2 min, 12 SMS maximum par alerte ; 5 contacts maximum | Tests |
 | S2.12 | Test d'alerte (« TEST », 3 par jour et par contact) | Démo |
 | S2.13 | SOS en 1 geste : widget Glance, tuile de réglages rapides, action dans la notification | Démo écran verrouillé |
 | S2.14 | « Appeler les secours » → composeur avec le 114 | Démo |
@@ -224,7 +224,7 @@
 | S6.05 | Priorités d'envoi : position > métadonnées > audio ; Wi-Fi seulement hors urgence | Tests |
 | S6.06 | Partage de bout en bout (ADR-0016) : clé de l'alerte enveloppée pour chaque proche qui a l'app (`evidence_key_wraps`) ; lecture déchiffrée dans l'app du proche ; page web : « Installe Cercle Rouge pour écouter » ; écran « Vérifier l'empreinte de sécurité » | Le proche (avec l'app) écoute ; un tiers avec le lien ne peut pas ; le serveur ne voit que des données chiffrées |
 | S6.07 | Coffre-fort : biométrie ou PIN, liste, lecture, conserver (≤ 90 j), supprimer, `FLAG_SECURE` | Test UI |
-| S6.08 | Rétention 24 h, 7 j, 30 j ou à la clôture : WorkManager toutes les heures + au démarrage ; crypto-shredding ; `purge_expired` sur le Storage | Horloge accélérée → plus rien nulle part |
+| S6.08 | Rétention choisie à l'onboarding (24 h, 7 j, 30 j ou à la clôture ; 24 h si rien n'est choisi) : WorkManager toutes les heures + au démarrage ; crypto-shredding ; `purge_expired` sur le Storage | Horloge accélérée → plus rien nulle part |
 | S6.09 | Export chiffré + code à usage unique ; outil de vérification de la chaîne | Vérification d'un export OK |
 | — | Vidéo | V2 |
 
@@ -237,7 +237,7 @@
 | S7.01 | 5 PIN erronés pendant une alerte → message « tentatives de désactivation » aux proches ; désarmement pendant un trajet → notification (PIN de contrainte : V2, ADR-0015) | Démo « agresseur » |
 | S7.02 | Biométrie (classe Strong) ; désactivable pour annuler une alerte | Tests |
 | S7.03 | Fermeture forcée : détection serveur (S4.08) + « Protection interrompue à HH:MM » au redémarrage | Test |
-| S7.04 | Mode leurre (écran neutre), écran de verrouillage neutre, ❓ alias d'icône (Q8) | Captures d'écran vérifiées |
+| S7.04 | Écran de verrouillage neutre ; `FLAG_SECURE` sur le coffre et les écrans d'alerte (mode leurre : V2, ADR-0017) | Captures d'écran vérifiées |
 | S7.05 | Effacement d'urgence (geste + PIN) | < 2 s avec 500 Mo |
 | S7.06 | Guides système : Urgence SOS d'Android ; liste blanche batterie par fabricant (Tecno, Infinix, Itel, Samsung, Xiaomi) | Testés sur la matrice |
 | S7.07 | Console admin minimale (`web/admin`) : santé des envois, abus, support par code ; rôle `admin` ou `support` via `is_admin()` ; aucun accès au contenu ; MFA | Tests RLS admin |

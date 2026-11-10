@@ -26,15 +26,17 @@ Modules logiciels : `evidence-engine`, `sync-engine`, `privacy-engine`. Cryptogr
 
 ## Conservation
 
+**Choix fait par l'utilisateur pendant l'onboarding, sans option présélectionnée** (ADR-0017).
+
 | Option | Effet |
 |---|---|
-| **24 heures (défaut)** | Suppression automatique 24 h après la **clôture** de l'alerte |
+| 24 heures | Suppression automatique 24 h après la **clôture** de l'alerte. Appliquée aussi tant que l'utilisateur n'a rien choisi |
 | 7 jours | — |
 | 30 jours | Maximum |
 | Suppression à la clôture | Supprimé dès que l'utilisateur clôt l'alerte |
 | « Conserver cette preuve » | Action manuelle, par preuve, avec une durée explicite (au maximum 90 jours, renouvelable, avec rappel) : utile pour une plainte |
 
-Jamais de conservation illimitée par défaut (N6).
+Jamais de conservation illimitée (N6).
 
 ## Coffre-fort de preuves
 

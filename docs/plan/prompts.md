@@ -189,7 +189,7 @@ clair, même temporaire (MediaCodec → Ogg → flux chiffrant).
 Chaîne d'intégrité SHA-256, racine signée et envoyée au serveur. Stockage interne
 privé, exclu des sauvegardes. File d'attente hors ligne (sync-engine) : position >
 métadonnées > audio, morceaux reprenables, envoi automatique au retour du réseau.
-Rétention configurable (24 h par défaut, 7 j, 30 j, à la clôture), purge par
+Rétention choisie à l'onboarding (24 h, 7 j, 30 j, à la clôture ; 24 h si rien n'est choisi), purge par
 crypto-shredding (WorkManager toutes les heures + au démarrage), même règle côté
 serveur. Coffre-fort par biométrie ou PIN ; export chiffré.
 

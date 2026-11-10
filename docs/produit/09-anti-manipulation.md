@@ -16,7 +16,7 @@ Modules logiciels : `privacy-engine`, `alert-engine`, `ui-mobile`, `backend-api`
 | **Triple pression sur l'alimentation → SOS** | ❌ pour une app tierce | Non accessible aux applications. En revanche, **Urgence SOS d'Android** (Android 12+ selon le fabricant : 5 pressions) existe : l'onboarding guide l'utilisateur pour l'activer et y mettre ses contacts |
 | **Détection de l'arrêt de l'application** | ⚠ Partielle | Un arrêt forcé ou une désinstallation ne peuvent pas être interceptés. Mesures : extinction détectée via `ACTION_SHUTDOWN` → dernier message aux proches ; perte du battement côté serveur → « perte de contact » (R-TRIP-05) |
 | **Notification de dernière activité** | ✅ (serveur) | Pendant un trajet ou une alerte, le serveur informe les proches si le battement s'arrête, avec la dernière position connue |
-| **Mode leurre** | ✅ | Écran neutre (ex. calculatrice ou météo) au lieu de l'interface ; l'alerte continue. ⚠ L'icône et le nom de l'application ne peuvent pas être masqués de manière fiable sans enfreindre les règles Play (pas de nom ni d'icône trompeurs) → ❓ seulement un mode leurre **dans** l'application, et un alias d'icône neutre déclaré à Play |
+| **Mode leurre** | V2 | **Reporté en V2** (ADR-0017) : écran neutre interne et icône neutre déclarée à Play |
 | **Effacement d'urgence** | ✅ | Geste dédié + PIN → suppression des clés (preuves, journal, contacts locaux) en < 2 s. Les preuves déjà envoyées au serveur restent accessibles aux proches désignés (c'est voulu) |
 | **Journal anti-effacement** | ✅ | Chaque armement, désarmement, changement de réglage sensible ou échec de PIN est horodaté dans une chaîne de hachages ; la racine est envoyée au serveur si une alerte ou un trajet est actif |
 
@@ -28,5 +28,5 @@ Modules logiciels : `privacy-engine`, `alert-engine`, `ui-mobile`, `backend-api`
 | R-SEC-02 | **DOIT** : après 5 PIN erronés pendant une alerte, l'alerte est maintenue et les proches reçoivent « Tentatives de désactivation ». |
 | R-SEC-03 | **DOIT** : désarmer pendant un trajet ou une alerte notifie les proches suivants (R-SM-06). |
 | R-SEC-04 | **DOIT** : l'application ne demande pas les droits d'administrateur de l'appareil et ne bloque pas sa propre désinstallation (politique Play + N9). |
-| R-SEC-05 | **DOIT** : l'interface n'apparaît pas dans les captures d'écran ni dans l'aperçu des applications récentes en mode leurre et dans le coffre (`FLAG_SECURE`). |
+| R-SEC-05 | **DOIT** : le coffre-fort et les écrans d'alerte n'apparaissent ni dans les captures d'écran ni dans l'aperçu des applications récentes (`FLAG_SECURE`). |
 | R-SEC-06 | **DOIT** : les notifications sur l'écran de verrouillage n'affichent aucun contenu sensible (visibilité `PRIVATE` ou `SECRET`, avec une version publique neutre). |

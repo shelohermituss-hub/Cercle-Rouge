@@ -14,7 +14,7 @@
 | **KWS** | Keyword spotting : détection de mots-clés |
 | **LiteRT** | Nouveau nom de TensorFlow Lite, moteur d'inférence embarqué de Google |
 | **Mode discret** | Présentation sans son ni texte d'alerte ; vibrations codées |
-| **Mode leurre** | Écran neutre qui masque l'interface de Cercle Rouge |
+| **Mode leurre** | Écran neutre qui masque l'interface de Cercle Rouge (V2) |
 | **Niveau (0 à 4)** | Degré d'escalade : information, vérification, proches, élargie, autorités |
 | **Phrase secrète** | Phrase personnelle qui déclenche une alerte silencieuse |
 | **PIN de contrainte** | PIN alternatif qui semble désarmer mais alerte en silence (V2, non retenu pour le MVP) |

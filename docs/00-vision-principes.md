@@ -9,7 +9,7 @@ Réduire le temps entre le moment où une personne est en danger et celui où qu
 | Profil | Besoin principal | Points d'attention |
 |---|---|---|
 | Adulte en trajet (nuit, taxi, moto-taxi, transport en commun) | Que quelqu'un sache s'il n'arrive pas | Faux positifs dans le bruit urbain |
-| Personne en rendez-vous ou en sortie | Alerte discrète, sans montrer l'application | Mode discret, mode leurre |
+| Personne en rendez-vous ou en sortie | Alerte discrète, sans montrer l'application | Mode discret (mode leurre en V2) |
 | Personne isolée ou vulnérable | Alerte même sans pouvoir toucher le téléphone | Phrase secrète, détection audio |
 | Jeune et adolescent·e (12–17 ans) | Rassurer les parents sans être surveillé·e en permanence | Âge minimum 12 ans ; consentement d'un parent ou tuteur pour les 12–15 ans (ADR-0009) ; autonomie |
 | Contact de confiance (proche) | Comprendre vite et agir | Message clair, pas de panique inutile |
@@ -44,7 +44,7 @@ Réduire le temps entre le moment où une personne est en danger et celui où qu
 | P2 | **IA locale d'abord** | Aucun octet audio ne quitte le téléphone hors des niveaux d'alerte ≥ 2 **et** si l'utilisateur a activé le partage d'extraits audio. Vérifiable par un test réseau. |
 | P3 | **Escalade progressive** | Détection → vibration/notification → vérification → proches → autorités (si configuré). Aucun saut de niveau, sauf le SOS manuel, la phrase secrète et l'« urgence automatique » configurée explicitement. |
 | P4 | **Données minimales** | La position est collectée seulement dans `ARMED_FULL`, `TRIP_ACTIVE`, `ALERT_*` et `EMERGENCY_MODE`. Elle est partagée seulement à partir du niveau 2. Les liens de suivi expirent (2 à 6 h). |
-| P5 | **Preuves chiffrées** | Chiffrées avant écriture sur disque. Rétention de 24 h par défaut, et au maximum 30 jours. Suppression automatique vérifiée par une tâche planifiée. |
+| P5 | **Preuves chiffrées** | Chiffrées avant écriture sur disque. Rétention **choisie à l'onboarding** (24 h, 7 j, 30 j ou à la clôture ; 24 h tant que rien n'est choisi), et au maximum 30 jours. Suppression automatique vérifiée par une tâche planifiée. |
 | P6 | **Dégradation gracieuse** | Sans réseau : file d'attente persistante, SMS en secours, envoi à la reconnexion. Sans GPS : alertes audio et SOS toujours disponibles. |
 | P7 | **Transparence** | Chaque détection, même non confirmée, est inscrite dans un journal **local** lisible par l'utilisateur (« Détection à 20 h 12, non confirmée, aucune donnée envoyée »). |
 | P8 | **Résistance à la contrainte** | Désarmer pendant une alerte exige le PIN ou la biométrie s'ils existent ; démarrer un trajet exige un PIN (ADR-0015). Toute désactivation pendant un trajet ou une alerte est notifiée aux proches et horodatée. (PIN de contrainte : V2.) |

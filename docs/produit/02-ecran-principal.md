@@ -32,4 +32,4 @@ Modules logiciels : `ui-mobile`, `alert-engine`, `location-engine`, `sensor-engi
 
 ## États visuels
 
-Un composant par état (`OFF`, `ARMED_AUDIO_ONLY`, `ARMED_FULL`, `TRIP_ACTIVE`, `ALERT_PENDING`, `ALERT_SENT`, `EMERGENCY_MODE`), chacun avec ses variantes **normale**, **discrète** et **leurre** (module 9). Les couleurs et typographies seront fixées par le design system (❓ identité visuelle à définir).
+Un composant par état (`OFF`, `ARMED_AUDIO_ONLY`, `ARMED_FULL`, `TRIP_ACTIVE`, `ALERT_PENDING`, `ALERT_SENT`, `EMERGENCY_MODE`), chacun avec ses variantes **normale** et **discrète** (le mode leurre est en V2, ADR-0017). Les couleurs et typographies seront fixées par le design system (❓ identité visuelle à définir).

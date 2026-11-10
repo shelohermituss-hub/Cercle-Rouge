@@ -2,7 +2,7 @@
 
 ## Responsabilité
 
-Écrans Compose, widget, tuile de réglages rapides, notifications, mode urgence, mode discret, mode leurre, onboarding, vue « proche ». Il **affiche** l'état et **émet des intentions** ; il ne décide de rien.
+Écrans Compose, widget, tuile de réglages rapides, notifications, mode urgence, mode discret, onboarding, vue « proche ». Il **affiche** l'état et **émet des intentions** ; il ne décide de rien.
 
 ## Surfaces
 
@@ -13,7 +13,7 @@
 | Notification de vérification | « Es-tu en sécurité ? » [Je vais bien] [J'ai besoin d'aide] | Canal « vérification » avec vibration personnalisée ; ⚠ pas de `USE_FULL_SCREEN_INTENT` (réservé aux appels et alarmes depuis Android 14) |
 | Widget | Bouton SOS + état + armer/désarmer | Glance ; ⚠ armer l'écoute depuis le widget est une action utilisateur visible, donc autorisée à démarrer le service micro |
 | Tuile de réglages rapides | Activer/désactiver la protection ; appui long → app | `TileService` |
-| Mode leurre | Écran neutre plein écran | `FLAG_SECURE` |
+| Mode leurre | **V2** (ADR-0017) | — |
 
 ## Exigences UX et accessibilité
 
@@ -33,4 +33,4 @@ MVVM / UDF : `ViewModel` expose `StateFlow<UiState>` dérivé d'`alert-engine` e
 
 ## Tests
 
-Tests Compose (sémantique, accessibilité) ; captures de référence (screenshot tests) par état × variante (normale, discrète, leurre) × langue × thème.
+Tests Compose (sémantique, accessibilité) ; captures de référence (screenshot tests) par état × variante (normale, discrète) × langue × thème.

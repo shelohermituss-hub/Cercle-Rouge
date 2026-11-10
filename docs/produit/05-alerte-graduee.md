@@ -66,5 +66,5 @@ En SMS : version courte ≤ 160 caractères GSM-7 si possible (les accents impos
 | R-ALR-03 | **DOIT** : les proches qui ont reçu une alerte reçoivent aussi sa clôture (« Prénom va bien », « Fausse alerte », « Alerte terminée »). |
 | R-ALR-04 | **DOIT** : l'envoi est **local d'abord**. Le SMS depuis le téléphone ne dépend pas du serveur ; le serveur est un canal supplémentaire, pas un point unique de défaillance. |
 | R-ALR-05 | **DOIT** : un « test d'alerte » utilise exactement le même chemin, avec un marqueur « TEST » visible en tête de chaque message. |
-| R-ALR-06 | **DOIT** : limitation anti-spam : au maximum 1 alerte réelle par contact toutes les 2 min (hors mises à jour de la même alerte), et au maximum 20 SMS par alerte. |
+| R-ALR-06 | **DOIT** : limitation anti-spam : au maximum 1 alerte réelle par contact toutes les 2 min (hors mises à jour de la même alerte), et au maximum 12 SMS par alerte. |
 | R-ALR-07 | **DOIT** : les gabarits de messages sont traduits dans les 3 langues ; chaque proche reçoit la langue qu'il a choisie au consentement. |

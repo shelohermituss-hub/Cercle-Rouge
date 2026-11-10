@@ -37,8 +37,8 @@
 | **S3** | Alertes via Supabase + page des proches | Push, SMS serveur, lien de suivi, « J'ai pris contact » |
 | **S4** | Trajet protégé | Détour → vérification → alerte avec carte ; perte de contact |
 | **S5** | Écoute IA locale | Mots-clés FR et HT, phrase secrète ; faux positifs mesurés |
-| **S6** | Preuves | Audio chiffré, écouté par le proche, supprimé à 24 h |
-| **S7** | Sécurité | Biométrie, leurre, effacement ; audit |
+| **S6** | Preuves | Audio chiffré, écouté par le proche, supprimé à l'échéance choisie |
+| **S7** | Sécurité | Biométrie, effacement d'urgence ; audit |
 | **S8** (3 sem.) | Tests terrain et lancement | 20 à 50 téléphones, bêta, pilote Haïti |
 
 **≈ 20 semaines** avec 2 développeurs + Claude Code (≈ 7 mois avec 1 seul).

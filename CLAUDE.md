@@ -9,6 +9,7 @@ Cercle Rouge (nom provisoire) : application Android de sécurité personnelle. E
 - Android natif : Kotlin + Jetpack Compose, minSdk 29, `com.cerclerouge.app`. IA locale : LiteRT. Langues : FR (défaut), créole haïtien (`ht`), EN.
 - Lancement : Haïti, utilisateurs dès 12 ans (ADR-0009). Périmètre MVP : ADR-0010. Plan : `docs/plan/` (sprints S0–S8, prompts).
 - Backend : **Supabase** (ADR-0011) dans `supabase/` (migrations, Edge Functions, `tests/security.sql`) ; FCM + SMS de secours. iOS en phase 2.
+- Nom fixe « Cercle Rouge » ; 5 contacts maximum, 3 alertés au niveau 2 ; mode leurre en V2 (ADR-0017).
 - Consentement 12–15 ans : confirmation dans l'app par un adulte référent inscrit (parent ou adulte de confiance), ajouté par défaut comme contact (ADR-0013).
 
 ## Règles absolues (détail dans `docs/00-vision-principes.md`)
@@ -17,7 +18,7 @@ Cercle Rouge (nom provisoire) : application Android de sécurité personnelle. E
 2. **Aucun audio brut** ne quitte le téléphone en fonctionnement normal.
 3. **Escalade progressive** (`docs/01-etats-et-escalade.md`). L'IA ne décide jamais seule d'appeler les secours ; les numéros d'urgence passent toujours par le composeur.
 4. Données minimales : position et médias partagés seulement pendant un trajet protégé ou une alerte ; liens de suivi de 2 à 6 h.
-5. Preuves chiffrées avant écriture (Keystore + Tink), rétention de 24 h par défaut et de 30 j au maximum, crypto-shredding.
+5. Preuves chiffrées avant écriture (Keystore + Tink), rétention choisie à l'onboarding (24 h si rien n'est choisi), 30 j au maximum, crypto-shredding.
 6. Local d'abord : file persistante, SMS de secours, idempotence.
 7. Ne jamais prétendre prédire un danger. Probabilités calibrées, versions des modèles journalisées.
 8. Toute exigence a un identifiant `R-XXX-nn` ; le code et les tests y font référence. Toute nouvelle permission → `docs/conformite/android-permissions-play.md`.

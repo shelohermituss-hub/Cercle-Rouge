@@ -35,7 +35,7 @@ Un proche **ne reçoit pas d'alertes réelles** avant d'avoir accepté.
 | ID | Règle |
 |---|---|
 | R-CON-01 | **DOIT** : au moins 1 contact accepté pour armer les niveaux ≥ 2 automatiques. Sinon, un avertissement s'affiche : la protection peut quand même être armée, avec un journal local et le SOS vers le composeur. |
-| R-CON-02 | **DOIT** : jusqu'à 10 contacts ; jusqu'à 5 alertés simultanément au niveau 2 (❓ limite à confirmer). |
+| R-CON-02 | **DOIT** : jusqu'à **5 contacts** (adulte référent compris) ; jusqu'à **3 alertés simultanément au niveau 2**, tous au niveau 3 (ADR-0017). |
 | R-CON-03 | **DOIT** : un contact peut se retirer à tout moment via un lien ou en répondant STOP par SMS. Le retrait est effectif en < 1 min côté serveur. |
 | R-CON-04 | **DOIT** : le serveur ne stocke que ce qui est nécessaire pour joindre le contact (numéro E.164, langue, canaux, statut). Le numéro est chiffré au repos. Pas de copie du répertoire de l'utilisateur. |
 | R-CON-05 | **DOIT** : « Contacts joignables » sur l'écran principal = contacts acceptés ayant ≥ 1 canal utilisable dans les conditions actuelles (ex. SMS sans données). |

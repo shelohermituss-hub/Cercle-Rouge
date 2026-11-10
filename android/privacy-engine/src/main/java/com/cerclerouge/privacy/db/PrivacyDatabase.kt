@@ -93,11 +93,13 @@ abstract class PrivacyDatabase : RoomDatabase() {
          * PBKDF2 de SQLCipher à chaque ouverture, inutile ici et coûteuse sur les téléphones d'entrée de gamme.
          */
         fun open(context: Context): PrivacyDatabase {
-            System.loadLibrary("sqlcipher")
-            val key = DatabaseKey.getOrCreate(context)
-            val rawKey = "x'" + key.joinToString("") { "%02x".format(it) } + "'"
-            key.fill(0)
-            val factory = SupportOpenHelperFactory(rawKey.toByteArray(Charsets.US_ASCII))
+            val factory = LazyOpenHelper.Factory {
+                System.loadLibrary("sqlcipher")
+                val key = DatabaseKey.getOrCreate(context)
+                val rawKey = "x'" + key.joinToString("") { "%02x".format(it) } + "'"
+                key.fill(0)
+                SupportOpenHelperFactory(rawKey.toByteArray(Charsets.US_ASCII))
+            }
             return Room.databaseBuilder(context, PrivacyDatabase::class.java, NAME)
                 .openHelperFactory(factory)
                 .build()

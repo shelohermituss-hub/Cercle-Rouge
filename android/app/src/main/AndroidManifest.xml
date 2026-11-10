@@ -4,6 +4,8 @@
 
     <!-- Toute permission ajoutée ici doit figurer dans docs/conformite/android-permissions-play.md (R-PLAY-01). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application

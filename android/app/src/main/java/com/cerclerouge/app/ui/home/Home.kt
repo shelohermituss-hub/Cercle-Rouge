@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -46,6 +45,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -133,9 +134,12 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit) {
 
     fun dial114() = context.startActivity(Intent(Intent.ACTION_DIAL, "tel:114".toUri())) // R-HOME-07 : toujours le composeur
 
-    val micLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (!granted) toast(context, resources.getString(R.string.mic_needed))
-        vm.controller.send { Input.PermissionsChanged(it, mic = granted, location = state.locationGranted) }
+    // Activation : micro (écoute) et position (point sur la carte, trajet) demandés ensemble, en contexte (R-PLAY-02).
+    val armLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+        val mic = result[Manifest.permission.RECORD_AUDIO] == true
+        val location = result[Manifest.permission.ACCESS_FINE_LOCATION] == true
+        if (!mic) toast(context, resources.getString(R.string.mic_needed))
+        vm.controller.send { Input.PermissionsChanged(it, mic = mic, location = location) }
         vm.controller.send { Input.Arm(it) }
     }
 
@@ -163,7 +167,13 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit) {
 
     fun toggleProtection() {
         if (state.protection == com.cerclerouge.domain.ProtectionState.OFF) {
-            micLauncher.launch(Manifest.permission.RECORD_AUDIO) // demandé en contexte (R-PLAY-02)
+            armLauncher.launch(
+                arrayOf(
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
         } else {
             guarded(Guarded.DISARM)
         }
@@ -191,7 +201,8 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit) {
                     NavItem(stringResource(R.string.nav_map), PixelIcon.PIN) { toast(context, soon) },
                     NavItem(stringResource(R.string.nav_trip), PixelIcon.ARROW_RIGHT) { toast(context, soon) },
                     NavItem(stringResource(R.string.nav_log), PixelIcon.CLOCK, onJournal)
-                )
+                ),
+                map = { armed, showMe, modifier -> LiveMap(armed, showMe, modifier) }
             )
         }
     }
@@ -218,10 +229,13 @@ internal fun HomeConsole(
     onSoon: () -> Unit,
     onSosTrigger: () -> Unit,
     onSosTap: () -> Unit,
-    nav: List<NavItem>
+    nav: List<NavItem>,
+    map: @Composable (armed: Boolean, showMe: Boolean, modifier: Modifier) -> Unit
 ) {
     val c = Cr.colors
     val armed = state.protection.isArmed
+    // P4 : la position n'est lue que protection active et autorisation accordée.
+    val showMe = armed && state.locationGranted
     val listening = armed && state.micGranted
     val discA11y = stringResource(if (armed) R.string.home_disc_a11y_on else R.string.home_disc_a11y_off)
     // Coupée : tout est en noir et blanc. Active : la couleur revient (carte, disque, satellites).
@@ -241,18 +255,26 @@ internal fun HomeConsole(
         }
         Box(Modifier.weight(1f).fillMaxWidth()) {
             // Carte en haut, pleine largeur ; le losange et ses fonctions viennent par-dessus son bas (référence « connect »).
-            HaitiMap(
-                landColor = if (armed) c.lime.copy(alpha = 0.18f) else c.ink.copy(alpha = 0.08f),
-                coastColor = if (armed) c.lime.copy(alpha = 0.6f) else c.ink.copy(alpha = 0.26f),
-                seaColor = c.line,
-                modifier = Modifier.fillMaxWidth().aspectRatio(1.3f)
+            map(armed, showMe, Modifier.matchParentSize())
+            // Fondus en haut et en bas : légendes, losange et textes restent lisibles par-dessus la carte.
+            Box(
+                Modifier.matchParentSize().background(
+                    Brush.verticalGradient(
+                        0f to c.surface.copy(alpha = 0.85f),
+                        0.12f to Color.Transparent,
+                        0.4f to Color.Transparent,
+                        1f to c.surface.copy(alpha = 0.92f)
+                    )
+                )
             )
-            Text(
-                stringResource(R.string.home_map_caption).uppercase(),
-                style = PxType.caption,
-                color = c.muted,
-                modifier = Modifier.padding(horizontal = 12.dp)
-            )
+            Column(Modifier.padding(horizontal = 12.dp)) {
+                Text(
+                    stringResource(if (showMe) R.string.home_map_caption_on else R.string.home_map_caption).uppercase(),
+                    style = PxType.caption,
+                    color = if (showMe) c.lime else c.muted
+                )
+                Text(MapStyle.ATTRIBUTION, style = PxType.caption.copy(fontSize = PxType.caption.fontSize * 0.85f), color = c.muted)
+            }
             Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.size(336.dp, 288.dp), contentAlignment = Alignment.Center) {
                     // Losange qui relie le disque aux quatre fonctions (repris de la référence « connect »).
@@ -293,7 +315,7 @@ internal fun HomeConsole(
                     Satellite(
                         PixelIcon.PIN,
                         stringResource(R.string.home_row_position),
-                        stringResource(R.string.sat_position_off),
+                        stringResource(if (showMe) R.string.sat_position_on else R.string.sat_position_off),
                         armed,
                         onSoon,
                         Modifier.align(Alignment.TopEnd)

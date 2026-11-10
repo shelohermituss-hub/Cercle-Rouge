@@ -127,6 +127,8 @@
     <string name="sat_position_off">Private</string>
     <string name="sat_contacts">%1$d / 5</string>
     <string name="sat_trip_none">None</string>
-    <string name="home_map_caption">Haiti · no position shown</string>
+    <string name="home_map_caption">Location hidden</string>
     <string name="home_tap_activate">Tap to activate</string>
+    <string name="home_map_caption_on">Your location stays on your phone</string>
+    <string name="sat_position_on">Here only</string>
 </resources>

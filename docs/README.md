@@ -81,5 +81,6 @@ Cercle Rouge **ne prédit pas** un enlèvement ou une agression. Elle détecte d
 | SMS, région, TLS | Vonage ; `us-east-1` ; épinglage prudent | [ADR-0014](decisions/ADR-0014-epinglage-tls.md) |
 | Défauts et PIN | Désactivé + SOS ; SOS manuel vers les contacts non consentis ; PIN obligatoire en trajet ; biométrie | [ADR-0015](decisions/ADR-0015-defauts-et-pin.md) |
 | Preuves partagées | Chiffrement de bout en bout, app obligatoire pour écouter | [ADR-0016](decisions/ADR-0016-preuves-chiffrement-bout-en-bout.md) |
+| Carte d'accueil | MapLibre + OpenFreeMap ; point de position seulement protection active | [ADR-0018](decisions/ADR-0018-carte-accueil-maplibre-openfreemap.md) |
 | Nom, leurre, contacts, conservation | « Cercle Rouge » fixe ; leurre en V2 ; 5 contacts dont 3 alertés ; conservation choisie à l'onboarding | [ADR-0017](decisions/ADR-0017-nom-leurre-contacts-retention.md) |
 | Périmètre MVP | SOS, contacts, push et SMS, trajet, audio chiffré après alerte, mots-clés, vérification, hors ligne, page des proches | [ADR-0010](decisions/ADR-0010-perimetre-mvp.md) |

@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.biometric)
+    implementation(libs.maplibre)
     testImplementation(libs.kotlin.test)
     // Rendu des écrans sur la JVM (captures PNG dans build/screenshots), sans émulateur.
     testImplementation(libs.robolectric)

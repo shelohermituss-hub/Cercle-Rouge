@@ -1,12 +1,17 @@
 package com.cerclerouge.app.ui
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
@@ -56,10 +61,24 @@ class ScreenshotTest {
         NavItem("Journal", PixelIcon.CLOCK) {}
     )
 
-    @Test fun homeOff() = capture("home-off") { HomeConsole(EngineState(), {}, {}, {}, {}, nav) }
+    /**
+     * MapLibre est natif : sur la JVM, la carte est remplacée par build/map-preview-{on,off}.png si ces captures existent
+     * (rendu navigateur du même style), sinon par un fond uni.
+     */
+    private val fakeMap: @Composable (Boolean, Boolean, Modifier) -> Unit = { armed, _, modifier ->
+        val file = File("build/map-preview-${if (armed) "on" else "off"}.png")
+        if (file.exists()) {
+            Image(BitmapFactory.decodeFile(file.path).asImageBitmap(), null, modifier, contentScale = ContentScale.Crop)
+        } else {
+            Box(modifier.background(if (armed) Color(0xFF14200F) else Color(0xFF16181B)))
+        }
+    }
+
+    @Test fun homeOff() = capture("home-off") { HomeConsole(EngineState(), {}, {}, {}, {}, nav, fakeMap) }
 
     @Test fun homeOn() = capture("home-on") {
-        HomeConsole(EngineState(protection = ProtectionState.ARMED_AUDIO_ONLY, micGranted = true), {}, {}, {}, {}, nav)
+        HomeConsole(EngineState(protection = ProtectionState.ARMED_FULL, micGranted = true, locationGranted = true), {
+        }, {}, {}, {}, nav, fakeMap)
     }
 
     @Test fun sosHold() = capture("sos-hold") { SosHoldScreen({}, {}) }

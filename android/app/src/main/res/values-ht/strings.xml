@@ -128,6 +128,8 @@
     <string name="sat_position_off">Prive</string>
     <string name="sat_contacts">%1$d / 5</string>
     <string name="sat_trip_none">Okenn</string>
-    <string name="home_map_caption">Ayiti · pa gen pozisyon</string>
+    <string name="home_map_caption">Pozisyon kache</string>
     <string name="home_tap_activate">Touche pou aktive</string>
+    <string name="home_map_caption_on">Pozisyon ou rete sou telefòn ou</string>
+    <string name="sat_position_on">Isit sèlman</string>
 </resources>

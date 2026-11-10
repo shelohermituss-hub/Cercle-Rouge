@@ -28,7 +28,7 @@
 | Q11 🔴 | Exception Play `SEND_SMS` : soumettre ? Variante APK hors Play ? | Soumettre tôt ; plan B serveur | ADR-0005 |
 | ~~Q12~~ ✅ | Partage des preuves | **App obligatoire pour écouter** : chiffrement de bout en bout (ADR-0016) | — |
 | Q13 | Fournisseurs SMS et téléphonie couvrant Digicel et Natcom | À évaluer (coût, fiabilité, délai) | backend-api |
-| Q14 | Fournisseur de cartes (V1.1) : Mapbox, Google, OSM auto-hébergé ? | OSM ou MapLibre pour la vie privée, à évaluer | location-engine |
+| Q14 | ~~Fournisseur de cartes~~ | ✅ **MapLibre + OpenFreeMap** ([ADR-0018](decisions/ADR-0018-carte-accueil-maplibre-openfreemap.md)) | location-engine |
 | Q15 | Appareils sans Google Play Services (FCM, Fused Location) : à supporter ? | Repli `LocationManager` + SMS ; pas de push | sync, location |
 | Q16 | `IGNORE_BATTERY_OPTIMIZATIONS` et `USE_EXACT_ALARM` : acceptables pour Play ? | Demander avec justification « safety » | alert-engine |
 | Q17 | Kotlin Multiplatform pour `core-domain` (iOS phase 2) ? | Garder du Kotlin pur maintenant, décider en phase 2 | — |

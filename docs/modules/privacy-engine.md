@@ -12,7 +12,7 @@ Références : [conformite/vie-privee-donnees.md](../conformite/vie-privee-donne
 |---|---|
 | `permissions: StateFlow<PermissionSnapshot>` | État réel de chaque permission, relu à chaque `onResume` (l'utilisateur peut les retirer dans les réglages système) |
 | `consents` | Enregistrement et révocation historisés (`Consent` de core-domain) |
-| `pin` | `setPin`, `verify(pin) → OK, DURESS ou FAIL(retryAfter)`, temporisation progressive |
+| `pin` | `setPin`, `verify(pin) → OK ou FAIL(retryAfter)` (pas de PIN de contrainte en MVP, ADR-0015), temporisation progressive |
 | `authenticate(reason)` | `BiometricPrompt` ou PIN |
 | `keys` | Accès aux clés maîtresses (Keystore) pour les autres modules ; jamais exportées |
 | `eventLog` | Journal chaîné append-only (implémentation du port `EventLog`) |

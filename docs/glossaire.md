@@ -17,7 +17,8 @@
 | **Mode leurre** | Écran neutre qui masque l'interface de Cercle Rouge |
 | **Niveau (0 à 4)** | Degré d'escalade : information, vérification, proches, élargie, autorités |
 | **Phrase secrète** | Phrase personnelle qui déclenche une alerte silencieuse |
-| **PIN de contrainte** | PIN alternatif qui semble désarmer mais alerte en silence |
+| **PIN de contrainte** | PIN alternatif qui semble désarmer mais alerte en silence (V2, non retenu pour le MVP) |
+| **Empreinte de sécurité** | Code comparable entre deux téléphones pour vérifier la clé de chiffrement d'un proche |
 | **Pré-tampon** | Les 5 dernières secondes d'audio, gardées en mémoire et attachées à une alerte |
 | **Service de premier plan** | Service Android visible (notification) qui peut fonctionner écran éteint ; typé (`microphone`, `location`, `camera`) |
 | **Signal** | Sortie d'un moteur (probabilité d'un événement), pas une décision |

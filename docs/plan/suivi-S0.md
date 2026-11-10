@@ -11,12 +11,14 @@ Démarré le 2026-11-10. Légende : ✅ fait · 🔄 en cours · ⏳ à faire ·
 | — | Q10b : fournisseur SMS et région | ✅ | Vonage ; `us-east-1` (ADR-0011) |
 | S0.06 | Q28 : épinglage TLS | ✅ | Prudent, autorités de certification + secours, expiration de 6 mois (ADR-0014) |
 | S0.01 | Nom définitif | ⏳ | — |
-| S0.02 | Niveau de protection par défaut | ⏳ | Recommandé : « Désactivé » + SOS + proposition de trajet |
-| S0.03 | Q6 : SOS vers un contact non consenti ; Q7 : limites de contacts | ⏳ | Recommandé : oui (SOS manuel) ; 10 / 5 |
+| S0.02 | Niveau de protection par défaut | ✅ | Désactivé + SOS (ADR-0015) |
+| S0.03 | Q6 : SOS vers un contact non consenti | ✅ | Oui, SOS manuel seulement (ADR-0015) |
+| S0.03b | Q7 : limites de contacts | ⏳ | Recommandé : 10 au total / 5 alertés à la fois |
 | S0.04 | Conservation (24 h par défaut) | ⏳ à relire | — |
-| S0.05 | Q12 : partage des preuves | ⏳ | Recommandé : option B (clé dans le fragment du lien) |
-| S0.07 | Relecture des ADR 0008 à 0014 | ⏳ | — |
-| — | Q4 (PIN obligatoire en trajet ?), Q5 (PIN de contrainte), Q8 (alias d'icône) | ⏳ | — |
+| S0.05 | Q12 : partage des preuves | ✅ | De bout en bout, app obligatoire pour écouter (ADR-0016) |
+| S0.07 | Relecture des ADR 0008 à 0016 | ⏳ | — |
+| — | Q4 PIN en trajet ; Q5 PIN de contrainte | ✅ | Obligatoire en trajet + biométrie ; pas de PIN de contrainte (ADR-0015) |
+| — | Q8 : alias d'icône neutre | ⏳ | — |
 
 ## Comptes et démarches (👤)
 

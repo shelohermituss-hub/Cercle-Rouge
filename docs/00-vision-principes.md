@@ -47,7 +47,7 @@ Réduire le temps entre le moment où une personne est en danger et celui où qu
 | P5 | **Preuves chiffrées** | Chiffrées avant écriture sur disque. Rétention de 24 h par défaut, et au maximum 30 jours. Suppression automatique vérifiée par une tâche planifiée. |
 | P6 | **Dégradation gracieuse** | Sans réseau : file d'attente persistante, SMS en secours, envoi à la reconnexion. Sans GPS : alertes audio et SOS toujours disponibles. |
 | P7 | **Transparence** | Chaque détection, même non confirmée, est inscrite dans un journal **local** lisible par l'utilisateur (« Détection à 20 h 12, non confirmée, aucune donnée envoyée »). |
-| P8 | **Résistance à la contrainte** | Désarmer pendant une alerte exige le PIN ou la biométrie. Un « PIN de contrainte » optionnel semble désarmer tout en alertant silencieusement (❓ à valider). Toute désactivation est horodatée. |
+| P8 | **Résistance à la contrainte** | Désarmer pendant une alerte exige le PIN ou la biométrie s'ils existent ; démarrer un trajet exige un PIN (ADR-0015). Toute désactivation pendant un trajet ou une alerte est notifiée aux proches et horodatée. (PIN de contrainte : V2.) |
 
 ## Ordre de priorité en cas de conflit
 

@@ -18,7 +18,7 @@ Modules logiciels : `backend-api`, `ui-mobile` (vue « proche » dans l'applicat
 | Carte | Dernière position connue + trace de l'alerte en cours seulement ; précision et âge affichés (« il y a 2 min ») |
 | Statut | En sécurité · Alerte potentielle · Alerte active · Hors ligne |
 | Chronologie | Événements de l'alerte : détection, vérification sans réponse, alerte envoyée, positions, preuves disponibles |
-| Preuves partagées | Seulement celles que l'utilisateur a choisi de partager (extrait audio, enregistrement), lisibles en streaming, sans téléchargement par défaut |
+| Preuves partagées | **Uniquement dans l'application** du proche (chiffrement de bout en bout, ADR-0016). La page web indique « Installe Cercle Rouge pour écouter les enregistrements » |
 | Appel direct | `tel:` vers l'utilisateur |
 | « J'ai pris contact » | Arrête l'escalade vers le niveau 3 et informe les autres proches |
 | « Alerte fausse » | Signale aux autres proches ; **ne clôt pas** l'alerte côté utilisateur, qui doit confirmer avec son PIN (sinon un agresseur proche pourrait l'annuler) |

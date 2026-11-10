@@ -15,14 +15,14 @@ Modules logiciels : `ui-mobile`, `privacy-engine`, `contacts-engine`.
 | 5 | Canaux d'alerte | Notification · SMS · Appel automatisé · WhatsApp · E-mail, avec pour chacun ce qu'il exige (réseau, permission) | Non |
 | 6 | Permissions | Demandes **séparées**, une par besoin, au moment où la fonction est activée (voir ci-dessous) | Non |
 | 7 | Confidentialité | Politique lisible, exemples concrets, lien vers la version complète | Oui (lecture, pas d'acceptation globale forcée) |
-| 8 | PIN | Création du PIN de désactivation ; biométrie optionnelle | Fortement recommandé ; ❓ obligatoire en mode trajet ? |
+| 8 | PIN | Création du PIN de désactivation ; biométrie autorisée | Recommandé ; **obligatoire avant le premier trajet protégé** (ADR-0015) |
 | 9 | Test | Proposition d'une alerte de test (voir module 7) | Non |
 
 ### Niveaux de protection proposés
 
 | Niveau | État cible | Usage | Par défaut ? |
 |---|---|---|---|
-| Désactivé | `OFF` | SOS manuel seul | Oui |
+| Désactivé | `OFF` | SOS manuel seul ; l'app propose « Trajet protégé » au premier trajet | **Oui** (ADR-0015) |
 | Trajet protégé | `TRIP_ACTIVE` | Le temps d'un trajet déclaré | — |
 | Mode discret | `ARMED_*` + présentation discrète | Rendez-vous, situation tendue | — |
 | Urgence permanente | `ARMED_FULL` prolongé | Menace connue (ex. harcèlement) | — |

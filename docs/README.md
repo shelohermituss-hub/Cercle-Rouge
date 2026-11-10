@@ -79,4 +79,6 @@ Cercle Rouge **ne prédit pas** un enlèvement ou une agression. Elle détecte d
 | Architecture UI | MVVM + flux unidirectionnel | [ADR-0012](decisions/ADR-0012-mvvm-udf.md) |
 | Consentement parental | Confirmation dans l'app d'un adulte référent inscrit (parent ou adulte de confiance), ajouté par défaut comme contact | [ADR-0013](decisions/ADR-0013-consentement-parental.md) |
 | SMS, région, TLS | Vonage ; `us-east-1` ; épinglage prudent | [ADR-0014](decisions/ADR-0014-epinglage-tls.md) |
+| Défauts et PIN | Désactivé + SOS ; SOS manuel vers les contacts non consentis ; PIN obligatoire en trajet ; biométrie | [ADR-0015](decisions/ADR-0015-defauts-et-pin.md) |
+| Preuves partagées | Chiffrement de bout en bout, app obligatoire pour écouter | [ADR-0016](decisions/ADR-0016-preuves-chiffrement-bout-en-bout.md) |
 | Périmètre MVP | SOS, contacts, push et SMS, trajet, audio chiffré après alerte, mots-clés, vérification, hors ligne, page des proches | [ADR-0010](decisions/ADR-0010-perimetre-mvp.md) |

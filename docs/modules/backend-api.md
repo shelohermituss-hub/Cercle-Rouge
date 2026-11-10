@@ -40,6 +40,8 @@ pg_cron ─► heartbeat_watchdog() chaque minute · purge_expired() chaque heur
 | `tracking_links` | `id`, `token_hash`, `alert_id?`, `trip_id?`, `contact_id`, `expires_at` CHECK ≤ +6 h, `revoked_at` | Propriétaire (lecture, révocation via RPC) |
 | `link_views`, `contact_actions` | Consultations ; « J'ai pris contact », « Alerte fausse », « Secours » | Propriétaire en lecture ; écriture par l'Edge Function `track` |
 | `deliveries` | `alert_id`, `contact_id`, `channel`, `status`, `provider_ref`, `attempts` | Propriétaire en lecture |
+| `user_public_keys` | `user_id`, `public_keyset` (Tink hybride), `signature`, `created_at`, `revoked_at` | Lecture par les utilisateurs qui sont contacts ou propriétaires ; écriture par RPC `publish_public_key` |
+| `evidence_key_wraps` | `alert_id`, `recipient_id`, `wrapped_key` | Le destinataire lit **sa** ligne ; le propriétaire écrit via RPC |
 | `evidence_objects` | `alert_id`, `storage_path`, `sha256`, `prev_hash`, `size`, `retention_until` | Propriétaire ; contacts si partagée |
 | `chain_roots` | `alert_id`, `root_hash`, `signature`, `received_at` | Propriétaire en lecture |
 | `consents` | `user_id`, `scope`, `granted`, `text_version`, `locale`, `at` | Propriétaire ; append-only |

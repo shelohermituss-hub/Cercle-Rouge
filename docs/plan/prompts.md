@@ -163,8 +163,9 @@ Chaque niveau a des délais, des canaux et des conditions configurables dans
 AlertPolicy, avec des bornes (R-ESC-04). Anti-faux positifs : deux signaux
 indépendants, hystérésis, période réfractaire, contextes à ignorer, score
 Risk = w1A + w2B + w3C + w4D + w5E avec les garde-fous R-RISK-01..03.
-« Je vais bien » et désarmement : PIN requis (R-SM-04) ; PIN de contrainte →
-alerte silencieuse. Tout est journalisé dans le journal local chiffré et chaîné
+« Je vais bien » et désarmement : PIN ou biométrie requis s'ils existent (R-SM-04) ;
+PIN obligatoire pour démarrer un trajet ; pas de PIN de contrainte en MVP (ADR-0015).
+Tout est journalisé dans le journal local chiffré et chaîné
 (R-SM-02, R-AL-06), avec les composantes du score.
 
 TDD : écris d'abord la table de toutes les transitions et les tests de propriétés

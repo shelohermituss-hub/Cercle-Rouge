@@ -40,7 +40,7 @@ Références : [01-etats-et-escalade.md](../01-etats-et-escalade.md), [module 5]
 | R-AL-02 | **DOIT** : l'état est persisté avant l'exécution des effets (R-SM-01) ; les effets sont rejouables sans double envoi (idempotence via `sync-engine`). |
 | R-AL-03 | **DOIT** : les minuteries de vérification et d'escalade survivent à la mise en veille (Doze) : `setExactAndAllowWhileIdle`, ou une coroutine dans le service de premier plan. ⚠ Sur Android 12+, `SCHEDULE_EXACT_ALARM` n'est pas nécessaire tant que le service de premier plan est actif ; ❓ `USE_EXACT_ALARM` est-il acceptable par Play pour une app de sécurité ? |
 | R-AL-04 | **DOIT** : aucun effet `OpenDialer(emergency)` sans `UserIntent` ou sans consentement préalable de niveau 4 (R-ESC-02). |
-| R-AL-05 | **DOIT** : la décision « silencieuse » (phrase secrète, PIN de contrainte, mode discret) supprime tous les effets visibles et sonores sur le téléphone. |
+| R-AL-05 | **DOIT** : la décision « silencieuse » (phrase secrète, mode discret) supprime tous les effets visibles et sonores sur le téléphone. |
 | R-AL-06 | **DOIT** : chaque décision est inscrite au journal avec les composantes du score (A à E), les seuils utilisés et la version des modèles, pour l'explicabilité et le réglage. |
 
 ## Tests

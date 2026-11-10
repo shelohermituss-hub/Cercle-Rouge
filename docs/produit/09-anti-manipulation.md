@@ -9,8 +9,8 @@ Modules logiciels : `privacy-engine`, `alert-engine`, `ui-mobile`, `backend-api`
 | Fonction | Faisabilité | Spécification |
 |---|---|---|
 | **PIN de désactivation** | ✅ | 4 à 8 chiffres ; requis pour désarmer, terminer un trajet ou annuler une alerte. Stocké comme hachage dérivé (Argon2id ou PBKDF2 ≥ 310 000 itérations, avec sel) ; temporisation progressive après des échecs |
-| **PIN de contrainte** | ✅ | ❓ Second PIN qui *semble* désarmer, mais déclenche une alerte silencieuse de niveau 2. Fortement recommandé |
-| **Biométrie** | ✅ | `BiometricPrompt` (classe Strong), comme alternative au PIN. ⚠ Elle peut être forcée physiquement (doigt de la victime) : désactivable pour annuler une alerte |
+| **PIN de contrainte** | ✅ | **Non retenu pour le MVP** (ADR-0015) ; option V2 |
+| **Biométrie** | ✅ | **Autorisée** (ADR-0015). `BiometricPrompt` (classe Strong), comme alternative au PIN. ⚠ Elle peut être forcée physiquement (doigt de la victime) : désactivable pour annuler une alerte |
 | **Phrase secrète de détresse** | ✅ (si l'écoute est active) | → `EMERGENCY_MODE` silencieux (module 3) |
 | **Bouton volume : appui long → SOS** | ⚠ Limité | Une application ne reçoit pas les touches de volume en arrière-plan. Seul un `AccessibilityService` le permet, et la politique Play réserve l'API d'accessibilité aux usages d'accessibilité → **risque de rejet**. Alternative V1 : la tuile de réglages rapides, le widget et l'action SOS sur la notification persistante. ❓ |
 | **Triple pression sur l'alimentation → SOS** | ❌ pour une app tierce | Non accessible aux applications. En revanche, **Urgence SOS d'Android** (Android 12+ selon le fabricant : 5 pressions) existe : l'onboarding guide l'utilisateur pour l'activer et y mettre ses contacts |
@@ -24,7 +24,7 @@ Modules logiciels : `privacy-engine`, `alert-engine`, `ui-mobile`, `backend-api`
 
 | ID | Règle |
 |---|---|
-| R-SEC-01 | **DOIT** : sans PIN configuré, désarmer reste possible en 1 geste (aucun piège pour l'utilisateur). Le PIN est fortement recommandé, mais pas imposé ❓. |
+| R-SEC-01 | **DOIT** : sans PIN configuré, désarmer reste possible en 1 geste **hors trajet**. Démarrer un trajet protégé exige un PIN (ADR-0015). Biométrie autorisée en alternative. |
 | R-SEC-02 | **DOIT** : après 5 PIN erronés pendant une alerte, l'alerte est maintenue et les proches reçoivent « Tentatives de désactivation ». |
 | R-SEC-03 | **DOIT** : désarmer pendant un trajet ou une alerte notifie les proches suivants (R-SM-06). |
 | R-SEC-04 | **DOIT** : l'application ne demande pas les droits d'administrateur de l'appareil et ne bloque pas sa propre désinstallation (politique Play + N9). |

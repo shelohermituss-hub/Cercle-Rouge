@@ -20,7 +20,7 @@
 |---|---|---|
 | Machine à états au Sprint 4 | Les sprints 2 (IA) et 3 (trajet) produisent des alertes, mais rien ne les traite encore | ↪ La machine à états passe au **Sprint 1** : c'est le cœur, tout le reste s'y branche |
 | Backend au Sprint 6 | Les notifications push, le lien de suivi et la carte des sprints 3 et 4 en ont besoin | ↪ Le backend passe au **Sprint 3**, juste après les alertes locales |
-| PIN au Sprint 7 | « Je vais bien » (Sprint 4) sans PIN permet à un agresseur d'annuler l'alerte | ↪ PIN de base au **Sprint 1** ; PIN de contrainte et biométrie restent au Sprint 7 |
+| PIN au Sprint 7 | « Je vais bien » (Sprint 4) sans PIN permet à un agresseur d'annuler l'alerte | ↪ PIN au **Sprint 1** (obligatoire en trajet) ; biométrie et durcissement au Sprint 7 ; PIN de contrainte en V2 |
 | File hors-ligne au Sprint 5 | Le SMS doit déjà fonctionner hors ligne au moment des alertes | ↪ File d'attente au **Sprint 2** ; le Sprint 6 l'étend aux fichiers audio |
 | IA au Sprint 2 | Tâche la plus risquée, et sans aucun chemin d'alerte pour en tirer de la valeur | ↪ IA au **Sprint 5**. Le risque technique (batterie, micro en arrière-plan) est quand même vérifié au **Sprint 0** par un prototype |
 | Appel automatisé au Sprint 4 | Ta définition du MVP le met en V2 | **V2** ; seul l'appel manuel (composeur) reste |
@@ -38,7 +38,7 @@
 | **S4** | Trajet protégé | Détour → vérification → alerte avec carte ; perte de contact |
 | **S5** | Écoute IA locale | Mots-clés FR et HT, phrase secrète ; faux positifs mesurés |
 | **S6** | Preuves | Audio chiffré, écouté par le proche, supprimé à 24 h |
-| **S7** | Sécurité | PIN de contrainte, leurre, effacement ; audit |
+| **S7** | Sécurité | Biométrie, leurre, effacement ; audit |
 | **S8** (3 sem.) | Tests terrain et lancement | 20 à 50 téléphones, bêta, pilote Haïti |
 
 **≈ 20 semaines** avec 2 développeurs + Claude Code (≈ 7 mois avec 1 seul).

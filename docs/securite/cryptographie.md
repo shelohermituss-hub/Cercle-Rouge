@@ -9,7 +9,8 @@ Android Keystore (matériel : TEE, ou StrongBox si disponible), non exportable
  ├── KEK_db      AES-256-GCM   → enveloppe la phrase de passe SQLCipher (Room)
  ├── KEK_evid    AES-256-GCM   → enveloppe les clés de données des preuves (une par alerte)
  ├── KEK_prefs   AES-256-GCM   → enveloppe le keyset Tink des réglages sensibles (DataStore chiffré)
- └── K_device    ECDSA P-256   → signe les racines de chaîne de preuves
+ ├── K_device    ECDSA P-256   → signe les racines de chaîne de preuves et la clé publique de partage
+ └── KEK_share   AES-256-GCM   → enveloppe le keyset Tink hybride (clé privée de partage des preuves, ADR-0016)
 ```
 
 | Élément | Choix | Raison |
@@ -32,10 +33,10 @@ Android Keystore (matériel : TEE, ou StrongBox si disponible), non exportable
 | Option | Description | Statut |
 |---|---|---|
 | A — Chiffrement serveur | L'app envoie les preuves chiffrées avec une clé partagée avec le serveur ; le serveur les déchiffre pour le lien du proche | Simple, mais le serveur voit le contenu |
-| B — Clé dans le lien | Clé de lecture dans le **fragment** de l'URL (`#k=…`, jamais envoyé au serveur) ; la page web déchiffre localement (WebCrypto) | **Recommandée en V1** : le serveur ne voit jamais le contenu |
-| C — Signal Protocol | Chiffrement de bout en bout entre applications (libsignal) | V2, si les proches utilisent l'app |
+| B — Clé dans le lien | Clé de lecture dans le **fragment** de l'URL ; la page web déchiffre localement | Écartée (une fuite du lien expose l'audio) |
+| C — De bout en bout entre applications | Tink `HybridEncrypt` (ECIES P-256) : clé de données de l'alerte enveloppée pour chaque proche qui a l'app ; empreinte de sécurité vérifiable | ✅ **Retenue** (ADR-0016) ; Signal Protocol complet en V2 |
 
-❓ Décision à prendre ; la recommandation est **B** (le SMS du lien porte alors la clé : risque assumé et documenté, compensé par la durée limitée).
+Décision : **C** (ADR-0016). Les proches sans l'app ne peuvent pas écouter les preuves.
 
 ## Suppression
 

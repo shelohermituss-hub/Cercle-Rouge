@@ -13,7 +13,7 @@
 8. Vérification avant alerte (« Es-tu en sécurité ? »).
 9. Hors ligne avec envoi différé.
 10. Tableau de bord minimal des proches (lien web temporaire).
-11. **Ajouté au MVP** : PIN de désactivation (+ PIN de contrainte) et journal local, car sans eux le bouton « Je vais bien » permet à un agresseur d'annuler l'alerte.
+11. **Ajouté au MVP** : PIN de désactivation (obligatoire en trajet, ADR-0015) et journal local, car sans eux le bouton « Je vais bien » permet à un agresseur d'annuler l'alerte.
 
 ## Hors MVP (V2)
 Classification audio avancée (cris, vitres, chocs, alarmes : YAMNet), vidéo, analyse émotionnelle, **appels automatisés** (y compris l'appel automatique du contact n° 1 au niveau 3), WhatsApp automatique, intégration aux autorités, iOS.

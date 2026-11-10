@@ -15,6 +15,7 @@ Spécification produit : [module 6](../produit/06-preuves.md). Crypto : [securit
 | `list(): Flow<List<EvidenceSummary>>` | Pour le coffre-fort (après authentification) |
 | `open(evidenceId): DecryptedStream` | Lecture, après `BiometricPrompt` ou PIN |
 | `extend(evidenceId, until)` / `delete(evidenceId)` | Conservation manuelle ou suppression |
+| `shareWith(alertId, recipients)` | Enveloppe la clé de données de l'alerte pour chaque proche qui a l'app (Tink `HybridEncrypt`, ADR-0016) |
 | `exportEncrypted(evidenceIds, recipient)` | Archive chiffrée |
 | `purgeExpired()` | Appelé par WorkManager (toutes les heures) et au démarrage de l'app |
 | `wipeAll()` | Effacement d'urgence |

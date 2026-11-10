@@ -15,7 +15,7 @@
 | S4 | Trajet protégé | Détour → vérification → alerte avec carte ; téléphone éteint → perte de contact | 2 sem. |
 | S5 | Écoute IA locale | « Anmwe ! » → vérification ; phrase secrète → alerte silencieuse | 2 sem. |
 | S6 | Preuves | Audio chiffré après alerte, écouté par le proche, supprimé à 24 h | 2 sem. |
-| S7 | Sécurité | PIN de contrainte, leurre, effacement ; audit sans faille haute | 2 sem. |
+| S7 | Sécurité | Biométrie, leurre, effacement ; audit sans faille haute | 2 sem. |
 | S8 | Tests terrain et lancement | 20 à 50 téléphones, bêta fermée, pilote Haïti | 3 sem. |
 
 **≈ 20 semaines** avec 2 développeurs + Claude Code (≈ 7 mois avec 1 seul développeur).
@@ -29,10 +29,10 @@
 | Étape | Faire | Vérifier |
 |---|---|---|
 | S0.01 | Choisir le **nom définitif** (vérifier la marque à Haïti et la disponibilité sur Play) | Nom inscrit dans un ADR |
-| S0.02 | **Niveau de protection par défaut** : recommandé « Désactivé » + SOS toujours visible + proposition « Trajet protégé » au 1er trajet | ADR |
+| S0.02 | ✅ **Niveau de protection par défaut** (ADR-0015) : recommandé « Désactivé » + SOS toujours visible + proposition « Trajet protégé » au 1er trajet | ADR |
 | S0.03 | Contacts et canaux : 10 contacts maximum, 5 alertés à la fois ; push + SMS ; Q6 (SOS vers un contact non consenti) ; Q3c ✅ (adulte référent ajouté par défaut) | `questions-ouvertes.md` à jour |
 | S0.04 | Conservation : confirmer 24 h par défaut (7 j, 30 j, à la clôture) ; côté serveur, identique | ✅ déjà décidé, à relire |
-| S0.05 | Partage des preuves (Q12) : option B recommandée (clé dans le fragment du lien) | ADR |
+| S0.05 | ✅ Partage des preuves (Q12) : de bout en bout, app obligatoire (ADR-0016) | ADR |
 | S0.06 | ✅ Épinglage TLS (Q28) → ADR-0014 ; relever la chaîne réelle de `<projet>.supabase.co` après S0.08 | Broches listées |
 | S0.07 | Relire et signer ADR-0008 à 0013 (formule, Haïti 12 ans et +, MVP, Supabase, MVVM, consentement parental) | Statut « Acceptée » |
 
@@ -93,7 +93,8 @@
 | S1.10 | Clés Keystore (KEK_db, KEK_evid, KEK_prefs, K_device), StrongBox si disponible | Test instrumenté sur 2 appareils |
 | S1.11 | Room + SQLCipher ; DataStore + Tink ; stockage chiffré de la session Supabase | Base illisible sans clé (test) |
 | S1.12 | Journal local chaîné (append-only) + écran « Journal » | Rupture de chaîne détectée (test) |
-| S1.13 | ↪ PIN de base : Argon2id, temporisation progressive | Tests ; PIN jamais envoyé au serveur |
+| S1.13 | ↪ PIN : Argon2id, temporisation progressive ; **obligatoire avant le 1er trajet** ; biométrie autorisée (ADR-0015) | Tests ; PIN jamais envoyé au serveur |
+| S1.13b | ➕ Paire de clés de partage (Tink hybride), keyset enveloppé par KEK_share, publication signée via `publish_public_key` (ADR-0016) | Clé publique visible côté serveur, clé privée jamais exportée |
 
 ### Bloc D — Supabase (socle serveur)
 
@@ -128,6 +129,7 @@
 | Étape | Faire | Vérifier |
 |---|---|---|
 | S2.01 | `contacts-engine` : sélecteur système (aucune permission), E.164 (+509), groupes, rôles (1 répondant principal), langue, canaux | Tests ; numéro invalide refusé |
+| S2.02a | ➕ SOS manuel aussi vers les contacts **non encore consentis**, avec mention et lien STOP (ADR-0015) ; alertes automatiques réservées aux consentis | Tests de table |
 | S2.02 | Ordre d'alerte : glisser-déposer ; `resolveRecipients` pur (niveau 2 : principal + backups ≤ 5 ; deux canaux indépendants ; GSM d'abord si pas de données) | Tests de table |
 | S2.03 | Adulte référent ajouté par défaut comme contact (Q3c) ; retrait silencieux, sans retrait du consentement (R-PAR-07) | Test : aucune notification envoyée à l'adulte |
 | S2.04 | `ProtectionService` unique : service de premier plan, notification persistante [SOS] [Désactiver] ; état persisté **avant** les effets ; restauration après la mort du processus ; « Réarmer » après un redémarrage | Survit 30 min écran éteint ; restauration testée |
@@ -220,7 +222,7 @@
 | S6.03 | Chaîne SHA-256, racine signée par `K_device` → RPC `register_chain_root` | Altération d'1 octet détectée |
 | S6.04 | Storage : bucket privé `evidence`, politiques RLS sur `storage.objects` (propriétaire ; contacts si partagée), envoi reprenable TUS | Coupure en plein envoi → reprise |
 | S6.05 | Priorités d'envoi : position > métadonnées > audio ; Wi-Fi seulement hors urgence | Tests |
-| S6.06 | Partage au proche : clé dans le fragment du lien ; déchiffrement WebCrypto dans la page | Le proche écoute ; le serveur ne voit que des données chiffrées |
+| S6.06 | Partage de bout en bout (ADR-0016) : clé de l'alerte enveloppée pour chaque proche qui a l'app (`evidence_key_wraps`) ; lecture déchiffrée dans l'app du proche ; page web : « Installe Cercle Rouge pour écouter » ; écran « Vérifier l'empreinte de sécurité » | Le proche (avec l'app) écoute ; un tiers avec le lien ne peut pas ; le serveur ne voit que des données chiffrées |
 | S6.07 | Coffre-fort : biométrie ou PIN, liste, lecture, conserver (≤ 90 j), supprimer, `FLAG_SECURE` | Test UI |
 | S6.08 | Rétention 24 h, 7 j, 30 j ou à la clôture : WorkManager toutes les heures + au démarrage ; crypto-shredding ; `purge_expired` sur le Storage | Horloge accélérée → plus rien nulle part |
 | S6.09 | Export chiffré + code à usage unique ; outil de vérification de la chaîne | Vérification d'un export OK |
@@ -232,7 +234,7 @@
 
 | Étape | Faire | Vérifier |
 |---|---|---|
-| S7.01 | PIN de contrainte (semble désarmer → alerte silencieuse niveau 2) ; 5 échecs → message aux proches | Démo « agresseur » |
+| S7.01 | 5 PIN erronés pendant une alerte → message « tentatives de désactivation » aux proches ; désarmement pendant un trajet → notification (PIN de contrainte : V2, ADR-0015) | Démo « agresseur » |
 | S7.02 | Biométrie (classe Strong) ; désactivable pour annuler une alerte | Tests |
 | S7.03 | Fermeture forcée : détection serveur (S4.08) + « Protection interrompue à HH:MM » au redémarrage | Test |
 | S7.04 | Mode leurre (écran neutre), écran de verrouillage neutre, ❓ alias d'icône (Q8) | Captures d'écran vérifiées |

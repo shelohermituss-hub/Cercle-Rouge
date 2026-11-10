@@ -12,9 +12,9 @@
 | ~~Q3b~~ ✅ | Consentement parental | **Décidé** : confirmation dans l'app, sur le téléphone du parent inscrit (ADR-0013, produit 11) | — |
 | ~~Q3c~~ ✅ | Adulte référent comme contact | **Décidé** : ajouté par défaut comme contact de confiance, retirable par le jeune sans que l'adulte en soit averti (ADR-0013) | — |
 | ~~Q3d~~ ✅ | Pas de parent avec smartphone | **Décidé** : tout adulte inscrit (tuteur, enseignant, voisin…) peut confirmer comme « adulte référent » (ADR-0013) | — |
-| Q4 | PIN obligatoire en mode trajet ? | Fortement recommandé, pas obligatoire (R-SEC-01) | module 9 |
-| Q5 | PIN de contrainte (désarmement simulé + alerte silencieuse) | Oui | module 9 |
-| Q6 | Un contact non consenti peut-il recevoir un SOS manuel ? | Oui, SOS manuel uniquement, avec lien de blocage | contacts-engine |
+| ~~Q4~~ ✅ | PIN en trajet | **Obligatoire pour démarrer un trajet** ; biométrie autorisée (ADR-0015) | — |
+| ~~Q5~~ ✅ | PIN de contrainte | **Non retenu** pour le MVP (ADR-0015) | — |
+| ~~Q6~~ ✅ | SOS vers un contact non consenti | **Oui, SOS manuel uniquement**, avec lien STOP (ADR-0015) | — |
 | Q7 | Nombre maximal de contacts et de destinataires simultanés | 10 et 5 | contacts-engine |
 | Q8 | Mode leurre : interne à l'app seulement, ou aussi un alias d'icône neutre ? | Interne + alias neutre honnête (déclaré) | module 9 |
 | ~~Q9~~ ✅ | Vidéo de preuve | **V2** (ADR-0010) | — |
@@ -26,7 +26,7 @@
 | ~~Q10~~ ✅ | Backend | **Supabase** (ADR-0011). Reste Q10b | — |
 | ~~Q10b~~ ✅ | Région et fournisseur SMS | **Décidé** : `us-east-1` ; **Vonage** (OTP Supabase Auth + SMS d'alerte), remise à mesurer en S0 (ADR-0011) | — |
 | Q11 🔴 | Exception Play `SEND_SMS` : soumettre ? Variante APK hors Play ? | Soumettre tôt ; plan B serveur | ADR-0005 |
-| Q12 | Partage des preuves avec les proches : option A, B ou C | B (clé dans le fragment de l'URL) | crypto, backend |
+| ~~Q12~~ ✅ | Partage des preuves | **App obligatoire pour écouter** : chiffrement de bout en bout (ADR-0016) | — |
 | Q13 | Fournisseurs SMS et téléphonie couvrant Digicel et Natcom | À évaluer (coût, fiabilité, délai) | backend-api |
 | Q14 | Fournisseur de cartes (V1.1) : Mapbox, Google, OSM auto-hébergé ? | OSM ou MapLibre pour la vie privée, à évaluer | location-engine |
 | Q15 | Appareils sans Google Play Services (FCM, Fused Location) : à supporter ? | Repli `LocationManager` + SMS ; pas de push | sync, location |

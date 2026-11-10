@@ -28,7 +28,7 @@ Un proche **ne reçoit pas d'alertes réelles** avant d'avoir accepté.
 3. La page d'acceptation explique ce qu'il recevra, quand, et comment se retirer. Il choisit sa langue et ses canaux.
 4. Statut côté utilisateur : *En attente* · *Accepté* · *Refusé* · *Retiré*.
 
-❓ **Exception à arbitrer** : un contact non consenti peut-il recevoir un SOS **manuel** en cas d'urgence réelle ? Recommandation : oui, uniquement pour le SOS manuel, avec la mention « Tu n'es pas inscrit·e ; message envoyé par Prénom » et un lien pour bloquer.
+✅ **Exception décidée (ADR-0015)** : un contact non consenti peut recevoir un **SOS manuel** (et seulement celui-là), avec la mention « Tu n'es pas inscrit·e ; message envoyé par Prénom » et un lien STOP ou blocage.
 
 ## Règles
 

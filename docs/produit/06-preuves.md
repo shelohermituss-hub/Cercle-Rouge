@@ -41,7 +41,8 @@ Jamais de conservation illimitée par défaut (N6).
 - Accès par PIN ou biométrie (`BiometricPrompt`, classe Strong ou identifiants de l'appareil).
 - Liste des preuves : date, type, durée, statut d'envoi, date de suppression prévue.
 - Actions : écouter ou voir, conserver plus longtemps, supprimer, **exporter chiffré** vers un contact de confiance.
-- Export chiffré : archive chiffrée avec une clé dérivée d'un code à usage unique communiqué séparément (oralement ou par SMS) ; ❓ ou chiffrement de bout en bout vers la clé publique du proche s'il a l'application.
+- Partage aux proches : **chiffrement de bout en bout vers l'application** du proche (ADR-0016). Un proche sans l'app ne peut pas écouter.
+- Export chiffré : archive chiffrée avec une clé dérivée d'un code à usage unique communiqué séparément (oralement ou par SMS), pour un avocat ou la police.
 
 ## Règles
 

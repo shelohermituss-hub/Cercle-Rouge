@@ -131,4 +131,19 @@
     <string name="home_tap_activate">Tap to activate</string>
     <string name="home_map_caption_on">Your location stays on your phone</string>
     <string name="sat_position_on">Here only</string>
+    <string name="journal_today">Today</string>
+    <string name="journal_week">Last 7 days</string>
+    <string name="journal_kpi_on">Activations</string>
+    <string name="journal_kpi_alerts">Alerts</string>
+    <string name="journal_chart">Activations and alerts per day</string>
+    <string name="journal_ready">Readiness</string>
+    <string name="ready_mic">Mic</string>
+    <string name="ready_location">Location</string>
+    <string name="ready_notif">Notifs</string>
+    <string name="ready_contacts">Contacts</string>
+    <string name="ready_log">Log</string>
+    <plurals name="journal_events">
+        <item quantity="one">%1$d event</item>
+        <item quantity="other">%1$d events</item>
+    </plurals>
 </resources>

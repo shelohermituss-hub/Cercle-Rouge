@@ -4,8 +4,12 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,10 +19,23 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.unit.dp
 import com.cerclerouge.alert.EngineState
+import com.cerclerouge.app.ui.components.BarChart
+import com.cerclerouge.app.ui.components.FacePhase
+import com.cerclerouge.app.ui.components.FaceUnlock
+import com.cerclerouge.app.ui.components.GradientOrb
 import com.cerclerouge.app.ui.components.NavItem
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.Poster
+import com.cerclerouge.app.ui.components.RadarChart
+import com.cerclerouge.app.ui.components.TERM_BG
+import com.cerclerouge.app.ui.components.TERM_RED
+import com.cerclerouge.app.ui.components.TERM_TEAL
+import com.cerclerouge.app.ui.components.TERM_VIOLET
+import com.cerclerouge.app.ui.components.TraceLine
+import com.cerclerouge.app.ui.components.TraceRow
+import com.cerclerouge.app.ui.components.TraceStatus
 import com.cerclerouge.app.ui.components.pixelGrid
 import com.cerclerouge.app.ui.home.CountdownScreen
 import com.cerclerouge.app.ui.home.HomeConsole
@@ -42,6 +59,8 @@ class ScreenshotTest {
     @get:Rule val rule = createComposeRule()
 
     private fun capture(name: String, content: @Composable () -> Unit) {
+        // Les orbes animent sans fin : horloge manuelle, sinon Compose n'est jamais « au repos ».
+        rule.mainClock.autoAdvance = false
         rule.setContent {
             CercleRougeTheme {
                 Box(Modifier.fillMaxSize().background(Cr.colors.surface).pixelGrid(Cr.colors.grid)) { content() }
@@ -87,5 +106,44 @@ class ScreenshotTest {
 
     @Test fun poster() = capture("poster-1") {
         Poster(1, 3, PixelIcon.SHIELD, "Tu n'es pas seul.", "Cercle Rouge prévient tes proches quand tu es en danger.", "Continuer", {}, {})
+    }
+
+    /** Galerie des visualiseurs (orbe, biométrie, graphiques, terminal). */
+    @Test fun visualizers() = capture("visualizers") {
+        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                GradientOrb(active = true, size = 110.dp)
+                GradientOrb(active = false, size = 110.dp)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { FacePhase.entries.forEach { FaceUnlock(it, 56.dp) } }
+            BarChart(
+                listOf("Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"),
+                listOf(listOf(2, 3, 1, 0, 4, 2, 1), listOf(0, 1, 0, 0, 1, 0, 0)),
+                listOf(Color(0xFFA0E705), Color(0xFFFFD23F))
+            )
+            RadarChart(listOf("Micro", "Position", "Notifs", "Contacts", "Journal"), listOf(1f, 1f, 0.1f, 0.6f, 1f), Color(0xFFA0E705))
+            Column(Modifier.background(TERM_BG)) {
+                TraceLine(
+                    TraceRow(
+                        1,
+                        0,
+                        'J',
+                        TERM_VIOLET,
+                        "Aujourd'hui",
+                        "4 événements",
+                        start = 0.3f,
+                        length = 0.4f,
+                        duration = "2h10",
+                        status = TraceStatus.ERROR
+                    ),
+                    false
+                )
+                TraceLine(
+                    TraceRow(2, 1, 'P', TERM_TEAL, "Protection activée", "state", listOf("08:12:40"), 0.34f, 0.2f, "1h05", TraceStatus.OK),
+                    false
+                )
+                TraceLine(TraceRow(3, 1, 'A', TERM_RED, "Alerte SOS", "state", listOf("09:40:02"), 0.4f, 0f, "—", TraceStatus.ERROR), true)
+            }
+        }
     }
 }

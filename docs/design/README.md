@@ -4,7 +4,9 @@
 
 Demande du porteur du projet : **revenir exactement** à l'accueil Pixel Lime avec la carte en direct en style **plan** (commit `f32f70f`), **vert lime `#A0E705`**, et **déplacer les quatre boutons** (Écoute IA, Position, Contacts, Trajet) **dans le coin supérieur droit, empilés verticalement**, au lieu de les placer autour du losange.
 
-- Les styles v4 (tableau de bord), v5 et la carte satellite sont abandonnés, ainsi que les visualiseurs (orbe dégradée, biométrie, terminal, graphiques, orbes OrbMotion).
+- Les styles v4 (tableau de bord), v5 et la carte satellite sont abandonnés.
+- **Visualiseurs remis** (demande du même jour), adaptés au lime : orbe dégradée de l'écoute IA derrière le bouton ON (visible quand la protection est active), animation biométrique du PIN, terminal AgentPrism (journal, urgence), histogramme 7 jours, radar de préparation et chiffres qui montent (journal), orbes à points (compte à rebours, alerte envoyée, attente de l'adulte référent, démarrage).
+- Les quatre boutons de droite sont des carrés de 52 dp (icône + voyant d'état) ; TalkBack lit « étiquette : valeur ».
 - Le losange et le bouton ON/OFF restent centrés en bas de la carte ; le point de position est recentré dans la zone libre (marges de carte : haut 40 dp, droite 168 dp, bas 240 dp).
 - Seule différence volontaire avec `f32f70f` : les chiffres du compte à rebours SOS sont en **Silkscreen**, car dans Pixelify le 5 ressemble à un S.
 

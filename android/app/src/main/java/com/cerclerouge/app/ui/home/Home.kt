@@ -31,6 +31,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -74,8 +76,12 @@ import com.cerclerouge.alert.RejectReason
 import com.cerclerouge.app.R
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.protection.UiEvent
+import com.cerclerouge.app.ui.components.FacePhase
+import com.cerclerouge.app.ui.components.FaceUnlock
+import com.cerclerouge.app.ui.components.GradientOrb
 import com.cerclerouge.app.ui.components.Led
 import com.cerclerouge.app.ui.components.NavItem
+import com.cerclerouge.app.ui.components.Orb
 import com.cerclerouge.app.ui.components.PinPad
 import com.cerclerouge.app.ui.components.PixelDisc
 import com.cerclerouge.app.ui.components.PixelIcon
@@ -85,16 +91,18 @@ import com.cerclerouge.app.ui.components.PxNavBar
 import com.cerclerouge.app.ui.components.PxPanel
 import com.cerclerouge.app.ui.components.PxVariant
 import com.cerclerouge.app.ui.components.SosBar
+import com.cerclerouge.app.ui.components.TERM_BG
 import com.cerclerouge.app.ui.components.TopBar
+import com.cerclerouge.app.ui.components.TraceLine
 import com.cerclerouge.app.ui.components.pixelGrid
-import com.cerclerouge.app.ui.journal.humanize
+import com.cerclerouge.app.ui.journal.traceRows
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
 import com.cerclerouge.privacy.log.ChainedEntry
 import com.cerclerouge.privacy.log.EventLog
 import com.cerclerouge.privacy.pin.PinRepository
+import com.valentinerutto.orbmotion.orbs.OrbState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -209,14 +217,12 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit) {
     pinFor?.let { action ->
         PinDialog(
             onDismiss = { pinFor = null },
-            onPin = { pin ->
-                pinFor = null
-                scope.launch {
-                    val auth = vm.controller.authFor(pin)
-                    vm.controller.send { if (action == Guarded.DISARM) Input.Disarm(it, auth) else Input.ImSafe(it, auth) }
-                    if (auth == Auth.FAILED) toast(context, resources.getString(R.string.pin_wrong))
-                }
-            }
+            verify = { pin ->
+                val auth = vm.controller.authFor(pin)
+                vm.controller.send { if (action == Guarded.DISARM) Input.Disarm(it, auth) else Input.ImSafe(it, auth) }
+                auth != Auth.FAILED
+            },
+            onDone = { pinFor = null }
         )
     }
 }
@@ -322,6 +328,8 @@ internal fun HomeConsole(
                         pts.forEachIndexed { i, p -> drawLine(col, p, pts[(i + 1) % 4], stroke) }
                         pts.forEach { drawRect(col, it - Offset(4.dp.toPx(), 4.dp.toPx()), Size(8.dp.toPx(), 8.dp.toPx())) }
                     }
+                    // Visualiseur de l'écoute IA : l'orbe dégradée « respire » derrière le disque tant que le micro tourne.
+                    if (armed) GradientOrb(active = listening, size = 220.dp)
                     PixelDisc(
                         size = 120.dp,
                         cells = 16,
@@ -481,15 +489,18 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit) {
         TopBar(stringResource(R.string.sos), null)
         Column(Modifier.fillMaxWidth().padding(top = 28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(R.string.countdown_label).uppercase(), style = PxType.label, color = c.danger)
-            Text(
-                "$seconds",
-                style = PxType.digits,
-                color = c.danger,
-                modifier = Modifier.padding(top = 8.dp).semantics {
-                    liveRegion = LiveRegionMode.Assertive
-                    contentDescription = a11y
-                }
-            )
+            Box(Modifier.padding(top = 8.dp), contentAlignment = Alignment.Center) {
+                Orb(OrbState.CONNECTING, 220.dp, c.danger)
+                Text(
+                    "$seconds",
+                    style = PxType.digits,
+                    color = c.danger,
+                    modifier = Modifier.semantics {
+                        liveRegion = LiveRegionMode.Assertive
+                        contentDescription = a11y
+                    }
+                )
+            }
             Text(stringResource(R.string.countdown_seconds).uppercase(), style = PxType.display, modifier = Modifier.padding(top = 12.dp))
             Text(
                 stringResource(R.string.countdown_body),
@@ -510,12 +521,12 @@ private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, onSafe: () ->
     val c = Cr.colors
     val resources = LocalResources.current
     var lines by remember { mutableStateOf(emptyList<ChainedEntry>()) }
-    LaunchedEffect(state) { lines = vm.log.latest(4) }
+    LaunchedEffect(state) { lines = vm.log.latest(6) }
     val time = remember { DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault()) }
     Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         PxPanel(Modifier.fillMaxWidth(), border = c.danger) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Led(c.danger, blink = true, size = 12.dp)
+                Orb(OrbState.SEARCHING, 48.dp, c.danger)
                 Column {
                     Text(stringResource(R.string.urgent_sent).uppercase(), style = PxType.display, color = c.danger)
                     state.alert?.let { Text(time.format(it.openedAt), style = PxType.caption, color = c.muted) }
@@ -529,38 +540,56 @@ private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, onSafe: () ->
                 Text(stringResource(R.string.emergency_no_contacts), style = PxType.body)
             }
         }
-        PxPanel(Modifier.fillMaxWidth(), fill = c.surface, padding = PaddingValues(8.dp)) {
-            Column {
-                Text(
-                    stringResource(R.string.nav_log).uppercase(),
-                    style = PxType.label,
-                    color = c.muted,
-                    modifier = Modifier.padding(bottom = 6.dp)
-                )
-                lines.forEach { e ->
-                    Text(
-                        "${time.format(Instant.ofEpochMilli(e.utcMillis))} ... ${resources.getString(humanize(e))}".uppercase(),
-                        style = PxType.caption
-                    )
-                }
-            }
+        Text(stringResource(R.string.nav_log).uppercase(), style = PxType.label, color = c.muted)
+        // Terminal du journal (référence AgentPrism).
+        Column(Modifier.weight(1f).fillMaxWidth().background(TERM_BG).padding(horizontal = 8.dp).verticalScroll(rememberScrollState())) {
+            val rows = traceRows(lines, resources)
+            rows.forEachIndexed { i, row -> TraceLine(row, last = i == rows.lastIndex) }
         }
-        Spacer(Modifier.weight(1f))
         PxButton(stringResource(R.string.urgent_safe), onSafe, icon = PixelIcon.CHECK, tall = true)
         PxButton(stringResource(R.string.home_sat_call), onCall, variant = PxVariant.DARK_DANGER, icon = PixelIcon.PHONE)
     }
 }
 
+/**
+ * PIN avec l'animation biométrique : visage au repos, cercle qui tourne pendant la vérification, puis coche (fermeture)
+ * ou croix (nouvel essai).
+ */
 @Composable
-private fun PinDialog(onDismiss: () -> Unit, onPin: (String) -> Unit) {
+private fun PinDialog(onDismiss: () -> Unit, verify: suspend (String) -> Boolean, onDone: () -> Unit) {
+    val c = Cr.colors
+    val scope = rememberCoroutineScope()
     var pin by remember { mutableStateOf("") }
+    var phase by remember { mutableStateOf(FacePhase.IDLE) }
     Dialog(onDismissRequest = onDismiss) {
-        PxPanel(border = Cr.colors.lime, fill = Cr.colors.surface, padding = PaddingValues(16.dp)) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                FaceUnlock(phase, 64.dp)
                 Text(stringResource(R.string.pin_enter).uppercase(), style = PxType.title)
+                if (phase == FacePhase.ERROR) {
+                    Text(
+                        stringResource(R.string.pin_wrong),
+                        style = PxType.label,
+                        color = c.danger,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+                    )
+                }
                 PinPad(pin, { v ->
+                    if (phase == FacePhase.SCANNING || phase == FacePhase.SUCCESS) return@PinPad
                     pin = v
-                    if (v.length == 4) onPin(v)
+                    if (phase == FacePhase.ERROR) phase = FacePhase.IDLE
+                    if (v.length == 4) {
+                        phase = FacePhase.SCANNING
+                        scope.launch {
+                            val ok = verify(v)
+                            phase = if (ok) FacePhase.SUCCESS else FacePhase.ERROR
+                            pin = ""
+                            if (ok) {
+                                delay(650)
+                                onDone()
+                            }
+                        }
+                    }
                 }, maxLength = 4)
                 PxButton(stringResource(R.string.action_cancel), onDismiss, variant = PxVariant.OUTLINE)
             }

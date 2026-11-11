@@ -28,9 +28,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,6 +55,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
@@ -68,6 +69,8 @@ import androidx.compose.ui.unit.dp
 import com.cerclerouge.app.R
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
+import com.valentinerutto.orbmotion.orbs.AnimatedThinkingOrb
+import com.valentinerutto.orbmotion.orbs.OrbState
 import kotlin.math.hypot
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -441,24 +444,6 @@ fun PxNavBar(items: List<NavItem>, selected: Int) {
     }
 }
 
-/** Ligne de journal « heure ······ événement ». */
-@Composable
-fun LeaderLine(time: String, text: String, color: Color) {
-    val c = Cr.colors
-    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(time, style = PxType.caption, color = c.muted)
-        Canvas(Modifier.weight(1f).height(10.dp)) {
-            var x = 0f
-            val dot = 2.dp.toPx()
-            while (x < size.width) {
-                drawRect(c.line, Offset(x, size.height - dot), Size(dot, dot))
-                x += dot * 2
-            }
-        }
-        Text(text.uppercase(), style = PxType.label, color = color, textAlign = TextAlign.End, modifier = Modifier.widthIn(max = 220.dp))
-    }
-}
-
 /** Case à cocher carrée de 28 dp (zone tactile : toute la ligne). */
 @Composable
 fun PxCheck(checked: Boolean) {
@@ -580,4 +565,20 @@ fun PinPad(value: String, onChange: (String) -> Unit, maxLength: Int = 8) {
             }
         }
     }
+}
+
+/**
+ * Orbe à points (bibliothèque OrbMotion) : activité en cours (envoi, attente, démarrage).
+ * Décorative pour TalkBack ; figée si « réduire les animations ». La bibliothèque dessine en pixels.
+ */
+@Composable
+fun Orb(state: OrbState, size: Dp, color: Color, modifier: Modifier = Modifier, speed: Float = 1f) {
+    val px = with(androidx.compose.ui.platform.LocalDensity.current) { size.toPx() }
+    AnimatedThinkingOrb(
+        modifier = modifier.requiredSize(size).clearAndSetSemantics {},
+        state = state,
+        size = px,
+        speed = if (reduceMotion()) 0f else speed,
+        color = color
+    )
 }

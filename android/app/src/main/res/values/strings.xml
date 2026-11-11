@@ -132,4 +132,19 @@
     <string name="home_tap_activate">Toucher pour activer</string>
     <string name="home_map_caption_on">Ta position reste sur ton téléphone</string>
     <string name="sat_position_on">Ici seulement</string>
+    <string name="journal_today">Aujourd\'hui</string>
+    <string name="journal_week">7 derniers jours</string>
+    <string name="journal_kpi_on">Activations</string>
+    <string name="journal_kpi_alerts">Alertes</string>
+    <string name="journal_chart">Activations et alertes par jour</string>
+    <string name="journal_ready">Préparation</string>
+    <string name="ready_mic">Micro</string>
+    <string name="ready_location">Position</string>
+    <string name="ready_notif">Notifs</string>
+    <string name="ready_contacts">Contacts</string>
+    <string name="ready_log">Journal</string>
+    <plurals name="journal_events">
+        <item quantity="one">%1$d événement</item>
+        <item quantity="other">%1$d événements</item>
+    </plurals>
 </resources>

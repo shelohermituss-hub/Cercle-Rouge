@@ -75,7 +75,7 @@ val PixelLime = CrColors(
 /** Titres en pixels (toujours en capitales). */
 val Pixel = FontFamily(Font(R.font.pixelify_sans_bold, FontWeight.Bold))
 
-/** Chiffres du compte à rebours : Silkscreen (dans Pixelify, le 5 ressemble à un S). */
+/** Chiffres (compte à rebours, chiffres clés) : Silkscreen (dans Pixelify, le 5 ressemble à un S). */
 val Digit = FontFamily(Font(R.font.silkscreen_bold, FontWeight.Bold))
 
 /** Tout le reste : Space Mono. */
@@ -91,6 +91,9 @@ object PxType {
     val title = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 28.sp)
     val brand = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 24.sp, letterSpacing = 0.04.em)
     val digits = TextStyle(fontFamily = Digit, fontWeight = FontWeight.Bold, fontSize = 96.sp, lineHeight = 100.sp)
+
+    /** Chiffres clés (journal) : Silkscreen, comme le compte à rebours. */
+    val count = TextStyle(fontFamily = Digit, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 32.sp)
     val body = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 22.sp)
     val bodyBold = body.copy(fontWeight = FontWeight.Bold, lineHeight = 20.sp)
 

@@ -132,4 +132,19 @@
     <string name="home_tap_activate">Touche pou aktive</string>
     <string name="home_map_caption_on">Pozisyon ou rete sou telefòn ou</string>
     <string name="sat_position_on">Isit sèlman</string>
+    <string name="journal_today">Jodi a</string>
+    <string name="journal_week">7 dènye jou</string>
+    <string name="journal_kpi_on">Aktivasyon</string>
+    <string name="journal_kpi_alerts">Alèt</string>
+    <string name="journal_chart">Aktivasyon ak alèt pa jou</string>
+    <string name="journal_ready">Preparasyon</string>
+    <string name="ready_mic">Mikwo</string>
+    <string name="ready_location">Pozisyon</string>
+    <string name="ready_notif">Notif</string>
+    <string name="ready_contacts">Kontak</string>
+    <string name="ready_log">Jounal</string>
+    <plurals name="journal_events">
+        <item quantity="one">%1$d evènman</item>
+        <item quantity="other">%1$d evènman</item>
+    </plurals>
 </resources>

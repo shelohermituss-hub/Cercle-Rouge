@@ -511,7 +511,12 @@ fun Poster(
             }
             Column(Modifier.padding(horizontal = 24.dp, vertical = 12.dp)) {
                 PxPanel(Modifier.width(96.dp), fill = c.surface) {
-                    PixelIconView(icon, 48.dp, c.lime, Modifier.align(Alignment.Center))
+                    // L'icône « bouclier » de la 1re affiche est remplacée par le logo de l'application.
+                    if (icon == PixelIcon.SHIELD) {
+                        LogoMark(48.dp, Modifier.align(Alignment.Center))
+                    } else {
+                        PixelIconView(icon, 48.dp, c.lime, Modifier.align(Alignment.Center))
+                    }
                 }
                 Spacer(Modifier.height(24.dp))
                 Text(title.uppercase(), style = PxType.poster, color = c.onLime, modifier = Modifier.semantics { heading() })
@@ -581,4 +586,16 @@ fun Orb(state: OrbState, size: Dp, color: Color, modifier: Modifier = Modifier, 
         speed = if (reduceMotion()) 0f else speed,
         color = color
     )
+}
+
+/** Rouge du logo Cercle Rouge. */
+val LogoRed = Color(0xFFED1B24)
+
+/** Logo de l'application : anneau rouge (trait ≈ 10 % du diamètre). Décoratif : le nom voisin porte le sens. */
+@Composable
+fun LogoMark(size: Dp, modifier: Modifier = Modifier, color: Color = LogoRed) {
+    Canvas(modifier.size(size)) {
+        val w = this.size.minDimension * 0.1f
+        drawCircle(color, radius = this.size.minDimension / 2 - w / 2, style = androidx.compose.ui.graphics.drawscope.Stroke(w))
+    }
 }

@@ -80,6 +80,7 @@ import com.cerclerouge.app.ui.components.FacePhase
 import com.cerclerouge.app.ui.components.FaceUnlock
 import com.cerclerouge.app.ui.components.GradientOrb
 import com.cerclerouge.app.ui.components.Led
+import com.cerclerouge.app.ui.components.LogoMark
 import com.cerclerouge.app.ui.components.NavItem
 import com.cerclerouge.app.ui.components.Orb
 import com.cerclerouge.app.ui.components.PinPad
@@ -247,7 +248,7 @@ internal fun HomeConsole(
     val accent = if (armed) c.lime else c.muted
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            PixelIconView(PixelIcon.SHIELD, 24.dp, accent)
+            LogoMark(26.dp)
             Spacer(Modifier.width(10.dp))
             Text(stringResource(R.string.app_name).uppercase(), style = PxType.brand, color = accent, modifier = Modifier.weight(1f))
             PxPanel(Modifier.width(56.dp), padding = PaddingValues(8.dp)) {

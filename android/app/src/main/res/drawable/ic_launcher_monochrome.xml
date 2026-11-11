@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Même anneau pour les icônes thématiques (Android 13+). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M54,27.9a26.1,26.1 0 1,0 0.001,0z"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="5.8" />
+</vector>

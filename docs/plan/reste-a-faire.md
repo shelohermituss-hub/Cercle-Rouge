@@ -14,7 +14,7 @@ Légende : 🧑 action du porteur du projet · 🤖 développement · 📱 test 
 | S4 Trajet protégé | 🟡 partie téléphone faite ; partie serveur (battement, perte de contact) reste |
 | S5 Écoute IA | 🟡 phrase secrète faite ; mots-clés en créole attendent des enregistrements |
 | S6 Preuves chiffrées | 🟡 partie téléphone faite ; envoi et partage aux proches restent |
-| S7 Sécurité | ⏳ pas commencé |
+| S7 Sécurité | 🟡 fait le 2026-11-11 : PIN faux → proches, biométrie, captures bloquées, effacement d'urgence, guides batterie ; console admin et audit restent |
 | S8 Tests terrain et lancement | ⏳ pas commencé |
 
 **Le plus gros risque aujourd'hui** : rien n'a encore été vérifié sur un vrai téléphone (SMS, écran éteint, micro, GPS, batterie).
@@ -60,7 +60,7 @@ Légende : 🧑 action du porteur du projet · 🤖 développement · 📱 test 
 ## Phase 3 — Terminer les sprints 3, 4, 6 (≈ 3 semaines de dev) 🤖
 
 ### Dès maintenant (sans compte supplémentaire)
-- **Écran Réglages** : supprimer mon compte (serveur prêt), exporter mes données, langue, durée de conservation, interrupteurs (écoute, enregistrement), sensibilité.
+- ~~**Écran Réglages**~~ ✅ fait (suppression du compte, export, langue, conservation, interrupteurs, biométrie, effacement d'urgence, batterie). Sensibilité de l'écoute : avec les mots-clés.
 - **Trajet suivi par le serveur** (S4.07, S4.08) : table `trips`, battement toutes les 2 min (opt-in), **chien de garde `pg_cron`** → alerte « perte de contact » si le téléphone se tait 10 min. C'est la protection quand le téléphone est éteint ou cassé.
 - **Carte dans la page des proches pendant un trajet** (S4.10).
 - **Dernier message à l'extinction** du téléphone (S4.09), si tu le veux (opt-in).
@@ -82,7 +82,7 @@ Légende : 🧑 action du porteur du projet · 🤖 développement · 📱 test 
 - Détection des mots-clés FR + HT entraînée (S5.04, S5.05) ← enregistrements Q19.
 - Banc de sons d'Haïti (tap-tap, marché, rara, pluie sur tôle, église) (S5.10).
 - Calibration terrain 20 h (S5.12) et seuils de la phrase secrète sur de vraies voix.
-- Mode dégradé : surchauffe, batterie < 10 % (S5.13) 🤖 faisable maintenant.
+- ~~Mode dégradé : surchauffe, batterie < 10 % (S5.13)~~ ✅ fait.
 - Contextes à ignorer (« Je suis en concert »…) et sensibilité (S5.09) 🤖 faisable maintenant.
 - **Jalon** : si trop de fausses alertes → écoute « bêta », désactivée par défaut.
 

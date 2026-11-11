@@ -23,7 +23,7 @@ Mis à jour le 2026-11-11. Légende : ✅ fait et vérifié · 🟡 fait, non v�
 | S5.10 Banc `tools/audio-eval/` (ambiances d'Haïti) | ⏸ | Q19 |
 | S5.11 Test « aucun audio ne sort » | 🟡 | Par construction (aucun accès réseau ni fichier dans la chaîne) ; **mesure de 10 min à faire sur téléphone** |
 | S5.12 Calibration terrain (20 h) | ⏸ | 👤 |
-| S5.13 Mode dégradé, pause micro pris | 🟡 (pause) / ⏳ (dégradé) | Pause « micro pris » branchée ; surchauffe et batterie < 10 % plus tard |
+| S5.13 Mode dégradé, pause micro pris | 🟡 | Pause « micro pris » ; batterie < 10 % (reprise à 15 %) ou surchauffe sévère → écoute en pause, enregistrement d'alerte maintenu (ADR-0023) |
 
 ## À vérifier sur un vrai téléphone (👤)
 

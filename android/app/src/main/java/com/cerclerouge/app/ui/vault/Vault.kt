@@ -1,9 +1,9 @@
 package com.cerclerouge.app.ui.vault
 
-import android.app.Activity
 import android.media.MediaDataSource
 import android.media.MediaPlayer
 import android.view.WindowManager
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -212,7 +212,7 @@ private fun Instant.short(): String = WHEN.format(atZone(ZoneId.systemDefault())
 fun VaultScreen(vm: VaultViewModel, onBack: () -> Unit) {
     val c = Cr.colors
     val ui by vm.ui.collectAsState()
-    val activity = LocalContext.current as? Activity
+    val activity = LocalActivity.current
     DisposableEffect(Unit) {
         activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         onDispose {
@@ -349,8 +349,8 @@ private fun EvidenceCard(item: EvidenceSummary, ui: VaultUi, vm: VaultViewModel,
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(stringResource(R.string.vault_keep).uppercase(), style = PxType.title)
                     Text(stringResource(R.string.vault_keep_ex), style = PxType.caption, color = c.muted)
-                    listOf(30L, 90L).forEach { d ->
-                        PxButton(stringResource(R.string.vault_keep_days, d.toInt()), {
+                    listOf(30L to R.string.vault_keep_30, 90L to R.string.vault_keep_90).forEach { (d, label) ->
+                        PxButton(stringResource(label), {
                             keepMenu = false
                             vm.keep(item.alertId, d)
                         }, variant = PxVariant.OUTLINE)

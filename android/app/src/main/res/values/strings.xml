@@ -266,7 +266,8 @@
     <string name="vault_verified_ko">Altération détectée : l\'enregistrement a été modifié ou abîmé.</string>
     <string name="vault_keep">Conserver</string>
     <string name="vault_keep_ex">Pour une plainte : garde l\'enregistrement plus longtemps (90 jours au plus).</string>
-    <string name="vault_keep_days">%1$d jours</string>
+    <string name="vault_keep_30">30 jours</string>
+    <string name="vault_keep_90">90 jours</string>
     <string name="vault_delete">Supprimer</string>
     <string name="vault_delete_confirm">La clé de chiffrement est détruite puis le fichier effacé. Impossible de revenir en arrière.</string>
     <string name="vault_deleted">Enregistrement supprimé.</string>

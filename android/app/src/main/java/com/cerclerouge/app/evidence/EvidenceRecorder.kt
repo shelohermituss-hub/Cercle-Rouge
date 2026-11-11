@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import android.os.storage.StorageManager
 import com.cerclerouge.app.audio.AudioListener
 import com.cerclerouge.evidence.RecordingPolicy
 import com.cerclerouge.privacy.log.EventLog
@@ -50,7 +51,7 @@ class EvidenceRecorder @Inject constructor(
             log.append("evidence", "audio_disabled_by_user")
             return@launch
         }
-        if (!audio.granted || !RecordingPolicy.canRecordAudio(context.filesDir.usableSpace)) {
+        if (!audio.granted || !RecordingPolicy.canRecordAudio(freeBytes())) {
             log.append("evidence", "audio_unavailable")
             return@launch
         }
@@ -73,6 +74,12 @@ class EvidenceRecorder @Inject constructor(
         s.stopRequested = true
         s.queue.offer(END)
     }
+
+    /** Place disponible, cache effaçable compris (R-EVD-08). */
+    private fun freeBytes(): Long = runCatching {
+        val sm = context.getSystemService(StorageManager::class.java)
+        sm.getAllocatableBytes(sm.getUuidForPath(context.filesDir))
+    }.getOrDefault(0L)
 
     /** Une session : encodeur AAC alimenté par la file des blocs PCM du micro. */
     private inner class Session(val alertId: String) {

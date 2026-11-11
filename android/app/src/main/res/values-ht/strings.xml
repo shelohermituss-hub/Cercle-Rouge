@@ -266,7 +266,8 @@
     <string name="vault_verified_ko">Gen chanjman : anrejistreman an modifye oswa li gate.</string>
     <string name="vault_keep">Kenbe</string>
     <string name="vault_keep_ex">Pou yon plent : kenbe anrejistreman an pi lontan (90 jou pou pi plis).</string>
-    <string name="vault_keep_days">%1$d jou</string>
+    <string name="vault_keep_30">30 jou</string>
+    <string name="vault_keep_90">90 jou</string>
     <string name="vault_delete">Efase</string>
     <string name="vault_delete_confirm">Kle chifman an detwi, apre sa fichye a efase. Ou pa ka retounen.</string>
     <string name="vault_deleted">Anrejistreman an efase.</string>

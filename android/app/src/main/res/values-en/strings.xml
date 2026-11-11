@@ -265,7 +265,8 @@
     <string name="vault_verified_ko">Tampering detected: the recording was changed or damaged.</string>
     <string name="vault_keep">Keep</string>
     <string name="vault_keep_ex">For a complaint: keep the recording longer (90 days at most).</string>
-    <string name="vault_keep_days">%1$d days</string>
+    <string name="vault_keep_30">30 days</string>
+    <string name="vault_keep_90">90 days</string>
     <string name="vault_delete">Delete</string>
     <string name="vault_delete_confirm">The encryption key is destroyed, then the file is erased. This cannot be undone.</string>
     <string name="vault_deleted">Recording deleted.</string>

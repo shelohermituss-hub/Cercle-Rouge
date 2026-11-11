@@ -31,7 +31,13 @@ private class Scenario(
         var state = monitor.start()
         val out = mutableListOf<TripEvent>()
         for (fix in Gpx.parse(Gpx.write(name, fixes))) {
-            declareStopAtSec?.let { (sec, minutes) -> if (fix.time == t0.plusSeconds(sec)) state = monitor.declareStop(state, fix.time, minutes) }
+            declareStopAtSec?.let { (sec, minutes) ->
+                if (fix.time ==
+                    t0.plusSeconds(sec)
+                ) {
+                    state = monitor.declareStop(state, fix.time, minutes)
+                }
+            }
             val step = monitor.onFix(state, fix)
             state = step.state
             out += step.events

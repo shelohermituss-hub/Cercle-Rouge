@@ -34,8 +34,10 @@ class TripMonitor(private val plan: TripPlan) {
     fun start() = MonitorState()
 
     /** « Je fais un arrêt » : suspend la détection d'arrêt, pas les autres ; durée bornée entre 5 et 60 min. */
-    fun declareStop(state: MonitorState, now: Instant, minutes: Int) =
-        state.copy(stopUntil = now.plus(Duration.ofMinutes(minutes.coerceIn(MIN_STOP_MINUTES, MAX_STOP_MINUTES).toLong())), stoppedSince = null)
+    fun declareStop(state: MonitorState, now: Instant, minutes: Int) = state.copy(
+        stopUntil = now.plus(Duration.ofMinutes(minutes.coerceIn(MIN_STOP_MINUTES, MAX_STOP_MINUTES).toLong())),
+        stoppedSince = null
+    )
 
     fun onFix(state: MonitorState, fix: TrackFix): Step {
         if (state.arrived) return Step(state, emptyList())
@@ -81,7 +83,11 @@ class TripMonitor(private val plan: TripPlan) {
             ref = toDestination
             active.remove(TripEventType.WRONG_DIRECTION)
         }
-        if (increasingSince != null && Duration.between(increasingSince, fix.time) >= WRONG_DIRECTION_AFTER) emit(TripEventType.WRONG_DIRECTION, toDestination)
+        if (increasingSince != null &&
+            Duration.between(increasingSince, fix.time) >= WRONG_DIRECTION_AFTER
+        ) {
+            emit(TripEventType.WRONG_DIRECTION, toDestination)
+        }
 
         // Retour au départ : revenu à moins de 150 m après s'en être éloigné de plus de 500 m, sans fin de trajet.
         if (farthest >= RETURN_FAR_M && toOrigin <= RETURN_RADIUS_M) emit(TripEventType.RETURN_TO_ORIGIN, toOrigin)
@@ -93,7 +99,11 @@ class TripMonitor(private val plan: TripPlan) {
         val plannedStop = state.stopUntil?.let { fix.time < it } == true
         if (stationary && !plannedStop && !plan.approximateOnly) {
             stoppedSince = stoppedSince ?: fix.time
-            if (Duration.between(stoppedSince, fix.time) >= Duration.ofMinutes(plan.mode.stopMinutes.toLong())) emit(TripEventType.PROLONGED_STOP)
+            if (Duration.between(stoppedSince, fix.time) >=
+                Duration.ofMinutes(plan.mode.stopMinutes.toLong())
+            ) {
+                emit(TripEventType.PROLONGED_STOP)
+            }
         } else {
             stoppedSince = null
             active.remove(TripEventType.PROLONGED_STOP)
@@ -131,7 +141,10 @@ class TripMonitor(private val plan: TripPlan) {
         val active = state.active.toMutableSet()
         val planned = Duration.between(plan.startedAt, plan.plannedArrival)
         val elapsed = Duration.between(plan.startedAt, now)
-        if (elapsed > planned.multipliedBy(3).dividedBy(2) && elapsed > planned.plus(OVERDUE_MARGIN) && active.add(TripEventType.TOO_LONG)) {
+        if (elapsed > planned.multipliedBy(3).dividedBy(2) &&
+            elapsed > planned.plus(OVERDUE_MARGIN) &&
+            active.add(TripEventType.TOO_LONG)
+        ) {
             events += TripEvent(TripEventType.TOO_LONG, now)
         }
         if (now >= plan.plannedArrival.plus(OVERDUE_MARGIN) && active.add(TripEventType.ARRIVAL_OVERDUE)) {

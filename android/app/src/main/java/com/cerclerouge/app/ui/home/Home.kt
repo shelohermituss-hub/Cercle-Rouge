@@ -69,11 +69,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.cerclerouge.alert.Auth
 import com.cerclerouge.alert.EngineState
 import com.cerclerouge.alert.Input
 import com.cerclerouge.alert.RejectReason
 import com.cerclerouge.app.R
+import com.cerclerouge.app.contacts.ContactsRepository
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.protection.UiEvent
 import com.cerclerouge.app.ui.components.FacePhase
@@ -99,6 +101,7 @@ import com.cerclerouge.app.ui.components.pixelGrid
 import com.cerclerouge.app.ui.journal.traceRows
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
+import com.cerclerouge.contacts.ContactStatus
 import com.cerclerouge.privacy.log.ChainedEntry
 import com.cerclerouge.privacy.log.EventLog
 import com.cerclerouge.privacy.pin.PinRepository
@@ -111,8 +114,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(val controller: ProtectionController, private val pins: PinRepository, val log: EventLog) :
-    ViewModel() {
+class HomeViewModel @Inject constructor(
+    val controller: ProtectionController,
+    private val pins: PinRepository,
+    val log: EventLog,
+    val contacts: ContactsRepository
+) : ViewModel() {
+    init {
+        viewModelScope.launch { contacts.load() }
+    }
+
     suspend fun pinConfigured() = pins.isConfigured()
 }
 
@@ -122,20 +133,19 @@ private enum class Guarded { DISARM, IM_SAFE }
 /** Sous-écrans du parcours SOS (maquettes « SOS · appui long » et « SOS · compte à rebours »). */
 private enum class SosStep { NONE, HOLD, COUNTDOWN }
 
-/** Contacts de confiance : la gestion arrive au Sprint 2. */
-private const val CONTACTS_READY = 0
-
 /**
  * Accueil « Pixel Lime » (maquettes Accueil · veille / actif / écoute) et parcours SOS.
  * L'écran d'urgence remplace l'accueil tant qu'une alerte est ouverte.
  */
 @Composable
-fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit) {
+fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit, onContacts: () -> Unit) {
     val c = Cr.colors
     val context = LocalContext.current
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
     val state by vm.controller.state.collectAsState()
+    val book by vm.contacts.book.collectAsState()
+    val contactsReady = book.contacts.count { it.status == ContactStatus.ACCEPTED }
     var sos by remember { mutableStateOf(SosStep.NONE) }
     var pinFor by remember { mutableStateOf<Guarded?>(null) }
     val soon = stringResource(R.string.home_soon)
@@ -202,6 +212,8 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit) {
                 state = state,
                 onToggle = ::toggleProtection,
                 onSoon = { toast(context, soon) },
+                contactsReady = contactsReady,
+                onContacts = onContacts,
                 onSosTrigger = { sos = SosStep.COUNTDOWN },
                 onSosTap = { sos = SosStep.HOLD },
                 nav = listOf(
@@ -233,6 +245,8 @@ internal fun HomeConsole(
     state: EngineState,
     onToggle: () -> Unit,
     onSoon: () -> Unit,
+    contactsReady: Int,
+    onContacts: () -> Unit,
     onSosTrigger: () -> Unit,
     onSosTap: () -> Unit,
     nav: List<NavItem>,
@@ -306,9 +320,9 @@ internal fun HomeConsole(
                 Satellite(
                     PixelIcon.USERS,
                     stringResource(R.string.home_row_contacts),
-                    stringResource(R.string.sat_contacts, CONTACTS_READY),
+                    stringResource(R.string.sat_contacts, contactsReady),
                     armed,
-                    onSoon
+                    onContacts
                 )
                 Satellite(
                     PixelIcon.ARROW_RIGHT,

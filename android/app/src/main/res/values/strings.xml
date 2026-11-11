@@ -151,4 +151,26 @@
     <string name="crash_body">Voici la trace de l\'arrêt de l\'application. Appuie sur « Partager » pour me l\'envoyer ; rien n\'est envoyé sans ton geste.</string>
     <string name="crash_share">Partager</string>
     <string name="crash_close">Fermer</string>
+    <string name="contacts_title">Contacts</string>
+    <string name="contacts_intro">5 personnes de confiance au maximum. Le SOS prévient tout le monde, même ceux qui n\'ont pas encore accepté. Les alertes automatiques ne vont qu\'à ceux qui ont accepté.</string>
+    <string name="contacts_count">%1$d / 5 contacts</string>
+    <string name="contacts_empty">Aucun contact. Ajoute au moins une personne de confiance.</string>
+    <string name="contacts_pick">Choisir dans mes contacts</string>
+    <string name="contacts_manual">Saisir un numéro</string>
+    <string name="contacts_name">Prénom</string>
+    <string name="contacts_phone">Numéro (ex. 3712 3456)</string>
+    <string name="contacts_add">Ajouter</string>
+    <string name="contacts_status_pending">En attente</string>
+    <string name="contacts_status_accepted">Accepté</string>
+    <string name="contacts_status_declined">Refusé</string>
+    <string name="contacts_status_withdrawn">Retiré</string>
+    <string name="contacts_primary">Répondant principal</string>
+    <string name="contacts_move_up">Monter dans l\'ordre d\'alerte</string>
+    <string name="contacts_move_down">Descendre dans l\'ordre d\'alerte</string>
+    <string name="contacts_remove">Retirer ce contact</string>
+    <string name="contacts_invalid_phone">Numéro invalide. Un numéro haïtien a 8 chiffres.</string>
+    <string name="contacts_full">5 contacts au maximum.</string>
+    <string name="contacts_duplicate">Ce numéro est déjà dans ta liste.</string>
+    <string name="contacts_simulate">Simuler accepté</string>
+    <string name="contacts_guardian">Adulte référent</string>
 </resources>

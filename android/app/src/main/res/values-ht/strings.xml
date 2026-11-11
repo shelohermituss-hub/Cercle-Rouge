@@ -151,4 +151,26 @@
     <string name="crash_body">Men tras sa a. Peze « Pataje » pou voye l ban mwen ; anyen pa voye san ou pa fè sa.</string>
     <string name="crash_share">Pataje</string>
     <string name="crash_close">Fèmen</string>
+    <string name="contacts_title">Kontak</string>
+    <string name="contacts_intro">5 moun ou fè konfyans maksimòm. SOS la avèti tout moun, menm sa yo ki poko aksepte. Alèt otomatik yo ale sèlman bay sa yo ki aksepte.</string>
+    <string name="contacts_count">%1$d / 5 kontak</string>
+    <string name="contacts_empty">Pa gen kontak. Ajoute omwen yon moun ou fè konfyans.</string>
+    <string name="contacts_pick">Chwazi nan kontak mwen yo</string>
+    <string name="contacts_manual">Antre yon nimewo</string>
+    <string name="contacts_name">Non</string>
+    <string name="contacts_phone">Nimewo (egz. 3712 3456)</string>
+    <string name="contacts_add">Ajoute</string>
+    <string name="contacts_status_pending">Ap tann</string>
+    <string name="contacts_status_accepted">Aksepte</string>
+    <string name="contacts_status_declined">Refize</string>
+    <string name="contacts_status_withdrawn">Retire</string>
+    <string name="contacts_primary">Moun prensipal la</string>
+    <string name="contacts_move_up">Monte nan lòd alèt la</string>
+    <string name="contacts_move_down">Desann nan lòd alèt la</string>
+    <string name="contacts_remove">Retire kontak sa a</string>
+    <string name="contacts_invalid_phone">Nimewo pa bon. Yon nimewo ayisyen gen 8 chif.</string>
+    <string name="contacts_full">5 kontak maksimòm.</string>
+    <string name="contacts_duplicate">Nimewo sa a deja nan lis ou a.</string>
+    <string name="contacts_simulate">Simile aksepte</string>
+    <string name="contacts_guardian">Granmoun responsab</string>
 </resources>

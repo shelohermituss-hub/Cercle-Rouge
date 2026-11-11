@@ -42,6 +42,7 @@ import com.cerclerouge.app.BuildConfig
 import com.cerclerouge.app.R
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.account.GuardianStatus
+import com.cerclerouge.app.contacts.ContactsRepository
 import com.cerclerouge.app.ui.components.Orb
 import com.cerclerouge.app.ui.components.PinPad
 import com.cerclerouge.app.ui.components.PixelIcon
@@ -55,6 +56,9 @@ import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.components.pixelGrid
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
+import com.cerclerouge.contacts.Language
+import com.cerclerouge.contacts.Phone
+import com.cerclerouge.contacts.PhoneResult
 import com.cerclerouge.domain.AgeBand
 import com.cerclerouge.domain.Consent
 import com.cerclerouge.domain.ConsentScope
@@ -106,6 +110,7 @@ class OnboardingViewModel @Inject constructor(
     private val settings: Settings,
     private val consents: ConsentRepository,
     private val pins: PinRepository,
+    private val contacts: ContactsRepository,
     private val clock: Clock
 ) : ViewModel() {
     private val _ui = MutableStateFlow(OnboardingUi())
@@ -128,6 +133,17 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun simulateGuardian() = viewModelScope.launch {
+        // S2.03 : l'adulte référent devient contact de confiance par défaut (retirable ensuite, sans l'en avertir).
+        val phone = Phone.normalize(_ui.value.guardianPhone)
+        if (phone is PhoneResult.Valid) {
+            contacts.addGuardian(
+                _ui.value.relationship.replaceFirstChar {
+                    it.uppercase()
+                },
+                phone.number,
+                Language.FR
+            )
+        }
         account.simulateGuardianConfirmation()
         edit { copy(guardian = GuardianStatus.CONFIRMED) }
     }

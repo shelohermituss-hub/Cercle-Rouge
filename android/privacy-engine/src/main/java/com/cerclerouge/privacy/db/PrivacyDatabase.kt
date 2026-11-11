@@ -9,7 +9,10 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.Transaction
 import androidx.room.Upsert
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.cerclerouge.privacy.crypto.DatabaseKey
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
@@ -36,6 +39,25 @@ data class ConsentEntity(
 /** Réglages sensibles (PIN haché, conservation…) : clé/valeur dans la base chiffrée. */
 @Entity(tableName = "settings")
 data class SettingEntity(@PrimaryKey val key: String, val value: String)
+
+/**
+ * Contact de confiance (module produit 7). Chiffré avec le reste de la base ; jamais de copie du répertoire (R-CON-04).
+ * `grp` plutôt que `group` : GROUP est un mot réservé de SQL.
+ */
+@Entity(tableName = "contacts")
+data class ContactEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val phone: String,
+    val grp: String,
+    val role: String,
+    val language: String,
+    val channels: String,
+    val status: String,
+    val position: Int,
+    val isGuardian: Boolean,
+    val hasApp: Boolean
+)
 
 @Dao
 interface EventLogDao {
@@ -76,7 +98,29 @@ interface SettingDao {
     suspend fun remove(key: String)
 }
 
-@Database(entities = [EventLogEntity::class, ConsentEntity::class, SettingEntity::class], version = 1, exportSchema = false)
+@Dao
+interface ContactDao {
+    @Query("SELECT * FROM contacts ORDER BY position")
+    suspend fun all(): List<ContactEntity>
+
+    @Insert suspend fun insertAll(contacts: List<ContactEntity>)
+
+    @Query("DELETE FROM contacts")
+    suspend fun clear()
+
+    /** Remplace tout le carnet d'un coup : l'ordre et les statuts restent cohérents même si le processus meurt en route. */
+    @Transaction
+    suspend fun replaceAll(contacts: List<ContactEntity>) {
+        clear()
+        insertAll(contacts)
+    }
+}
+
+@Database(
+    entities = [EventLogEntity::class, ConsentEntity::class, SettingEntity::class, ContactEntity::class],
+    version = 2,
+    exportSchema = false
+)
 abstract class PrivacyDatabase : RoomDatabase() {
     abstract fun eventLog(): EventLogDao
 
@@ -84,8 +128,22 @@ abstract class PrivacyDatabase : RoomDatabase() {
 
     abstract fun settings(): SettingDao
 
+    abstract fun contacts(): ContactDao
+
     companion object {
         const val NAME = "cercle-rouge.db"
+
+        /** v1 → v2 : table des contacts de confiance (Sprint 2). Le journal, les consentements et le PIN sont conservés. */
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `contacts` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `phone` TEXT NOT NULL, " +
+                        "`grp` TEXT NOT NULL, `role` TEXT NOT NULL, `language` TEXT NOT NULL, `channels` TEXT NOT NULL, " +
+                        "`status` TEXT NOT NULL, `position` INTEGER NOT NULL, `isGuardian` INTEGER NOT NULL, " +
+                        "`hasApp` INTEGER NOT NULL, PRIMARY KEY(`id`))"
+                )
+            }
+        }
 
         /**
          * Base Room chiffrée par SQLCipher (AES-256), clé issue de [DatabaseKey].
@@ -102,6 +160,7 @@ abstract class PrivacyDatabase : RoomDatabase() {
             }
             return Room.databaseBuilder(context, PrivacyDatabase::class.java, NAME)
                 .openHelperFactory(factory)
+                .addMigrations(MIGRATION_1_2)
                 .build()
         }
     }

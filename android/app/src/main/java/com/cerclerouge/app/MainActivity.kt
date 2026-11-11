@@ -34,6 +34,8 @@ import com.cerclerouge.alert.Input
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.ui.components.Orb
+import com.cerclerouge.app.ui.contacts.ContactsScreen
+import com.cerclerouge.app.ui.contacts.ContactsViewModel
 import com.cerclerouge.app.ui.home.HomeScreen
 import com.cerclerouge.app.ui.home.HomeViewModel
 import com.cerclerouge.app.ui.journal.JournalScreen
@@ -57,13 +59,14 @@ class AppViewModel @Inject constructor(
     val controller: ProtectionController
 ) : ViewModel()
 
-private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL }
+private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS }
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val app: AppViewModel by viewModels()
     private val onboarding: OnboardingViewModel by viewModels()
     private val home: HomeViewModel by viewModels()
+    private val contacts: ContactsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,7 +87,11 @@ class MainActivity : ComponentActivity() {
                             onSos = { app.controller.send { Input.Sos(it) } },
                             onDone = { screen = Screen.HOME }
                         )
-                        Screen.HOME -> HomeScreen(home, onJournal = { screen = Screen.JOURNAL })
+                        Screen.HOME -> HomeScreen(home, onJournal = { screen = Screen.JOURNAL }, onContacts = { screen = Screen.CONTACTS })
+                        Screen.CONTACTS -> {
+                            BackHandler { screen = Screen.HOME }
+                            Box(Modifier.safeDrawingPadding()) { ContactsScreen(contacts) { screen = Screen.HOME } }
+                        }
                         Screen.JOURNAL -> {
                             BackHandler { screen = Screen.HOME }
                             Box(Modifier.safeDrawingPadding()) { JournalScreen(app.log) { screen = Screen.HOME } }

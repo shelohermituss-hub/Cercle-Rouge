@@ -150,4 +150,26 @@
     <string name="crash_body">Here is the trace of the app stopping. Tap "Share" to send it to me; nothing is sent without your action.</string>
     <string name="crash_share">Share</string>
     <string name="crash_close">Close</string>
+    <string name="contacts_title">Contacts</string>
+    <string name="contacts_intro">Up to 5 trusted people. SOS alerts everyone, even those who have not accepted yet. Automatic alerts only go to those who accepted.</string>
+    <string name="contacts_count">%1$d / 5 contacts</string>
+    <string name="contacts_empty">No contacts. Add at least one trusted person.</string>
+    <string name="contacts_pick">Choose from my contacts</string>
+    <string name="contacts_manual">Enter a number</string>
+    <string name="contacts_name">First name</string>
+    <string name="contacts_phone">Number (e.g. 3712 3456)</string>
+    <string name="contacts_add">Add</string>
+    <string name="contacts_status_pending">Pending</string>
+    <string name="contacts_status_accepted">Accepted</string>
+    <string name="contacts_status_declined">Declined</string>
+    <string name="contacts_status_withdrawn">Removed</string>
+    <string name="contacts_primary">Primary responder</string>
+    <string name="contacts_move_up">Move up in the alert order</string>
+    <string name="contacts_move_down">Move down in the alert order</string>
+    <string name="contacts_remove">Remove this contact</string>
+    <string name="contacts_invalid_phone">Invalid number. A Haitian number has 8 digits.</string>
+    <string name="contacts_full">5 contacts maximum.</string>
+    <string name="contacts_duplicate">This number is already in your list.</string>
+    <string name="contacts_simulate">Simulate accepted</string>
+    <string name="contacts_guardian">Guardian adult</string>
 </resources>

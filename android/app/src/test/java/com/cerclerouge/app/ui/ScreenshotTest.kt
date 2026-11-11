@@ -97,11 +97,20 @@ class ScreenshotTest {
         }
     }
 
-    @Test fun homeOff() = capture("home-off") { HomeConsole(EngineState(), {}, {}, {}, {}, nav, fakeMap) }
+    @Test fun homeOff() = capture("home-off") { HomeConsole(EngineState(), {}, {}, 0, {}, {}, {}, nav, fakeMap) }
 
     @Test fun homeOn() = capture("home-on") {
-        HomeConsole(EngineState(protection = ProtectionState.ARMED_FULL, micGranted = true, locationGranted = true), {
-        }, {}, {}, {}, nav, fakeMap)
+        HomeConsole(
+            EngineState(protection = ProtectionState.ARMED_FULL, micGranted = true, locationGranted = true),
+            {},
+            {},
+            2,
+            {},
+            {},
+            {},
+            nav,
+            fakeMap
+        )
     }
 
     @Test fun sosHold() = capture("sos-hold") { SosHoldScreen({}, {}) }
@@ -183,7 +192,7 @@ class ScreenshotTest {
             CercleRougeTheme {
                 Box(Modifier.fillMaxSize().background(Cr.colors.surface)) {
                     when (step.intValue) {
-                        0 -> HomeConsole(EngineState(), {}, {}, {}, { step.intValue = 1 }, nav, fakeMap)
+                        0 -> HomeConsole(EngineState(), {}, {}, 0, {}, {}, { step.intValue = 1 }, nav, fakeMap)
                         1 -> SosHoldScreen({ step.intValue = 0 }, { step.intValue = 2 })
                         else -> CountdownScreen({ step.intValue = 0 }, {})
                     }
@@ -216,6 +225,8 @@ class ScreenshotTest {
                         0 -> HomeConsole(
                             EngineState(),
                             {},
+                            {},
+                            0,
                             {},
                             { step.intValue = 2 },
                             { step.intValue = 1 },

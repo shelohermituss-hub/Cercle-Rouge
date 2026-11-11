@@ -239,7 +239,7 @@ fun HomeScreen(
                 nav = listOf(
                     NavItem(stringResource(R.string.nav_home), PixelIcon.HOME) {},
                     NavItem(stringResource(R.string.nav_map), PixelIcon.PIN) { toast(context, soon) },
-                    NavItem(stringResource(R.string.nav_trip), PixelIcon.ARROW_RIGHT) { toast(context, soon) },
+                    NavItem(stringResource(R.string.nav_trip), PixelIcon.ARROW_RIGHT, onTrip),
                     NavItem(stringResource(R.string.nav_log), PixelIcon.CLOCK, onJournal)
                 ),
                 map = { armed, showMe, modifier -> LiveMap(armed, showMe, modifier) }
@@ -267,11 +267,11 @@ internal fun HomeConsole(
     onSoon: () -> Unit,
     contactsReady: Int,
     onContacts: () -> Unit,
-    onTrip: () -> Unit = onSoon,
     onSosTrigger: () -> Unit,
     onSosTap: () -> Unit,
     nav: List<NavItem>,
-    map: @Composable (armed: Boolean, showMe: Boolean, modifier: Modifier) -> Unit
+    map: @Composable (armed: Boolean, showMe: Boolean, modifier: Modifier) -> Unit,
+    onTrip: () -> Unit = onSoon
 ) {
     val c = Cr.colors
     val armed = state.protection.isArmed

@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -220,9 +221,10 @@ private fun km(meters: Double): String = String.format(Locale.ROOT, "%.1f", mete
 fun TripScreen(vm: TripViewModel, onBack: () -> Unit) {
     val trip by vm.trip.collectAsState()
     val context = LocalContext.current
+    val resources = LocalResources.current
     LaunchedEffect(Unit) {
         vm.controller.events.collect { e ->
-            if (e is UiEvent.Rejected) Toast.makeText(context, context.getString(e.reason.message()), Toast.LENGTH_LONG).show()
+            if (e is UiEvent.Rejected) Toast.makeText(context, resources.getString(e.reason.message()), Toast.LENGTH_LONG).show()
         }
     }
     Column(Modifier.fillMaxSize()) {

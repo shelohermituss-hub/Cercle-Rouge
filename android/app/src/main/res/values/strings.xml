@@ -244,7 +244,7 @@
     <string name="listen_test_ok">Phrase reconnue. Rien n\'a été envoyé : c\'était un test.</string>
     <string name="listen_test_ko">Pas reconnue. Réessaie, ou réenregistre la phrase dans un endroit calme.</string>
     <string name="listen_deleted">Phrase supprimée.</string>
-    <string name="listen_confidence">Ressemblance : %1$d %%</string>
+    <string name="listen_confidence">Similarité : %1$d %%</string>
     <string name="listen_keywords_title">Mots-clés de détresse</string>
     <string name="listen_keywords_intro">Bientôt : leur détection demande des enregistrements en créole, en cours de collecte. Liste prévue :</string>
 </resources>

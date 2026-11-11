@@ -223,15 +223,6 @@ language sql stable security definer set search_path = public as $$
   group by l.id, l.label
 $$;
 
--- Suppression du compte (S3.12) : toutes les données en cascade, puis le compte Auth lui-même.
-create function public.delete_my_account()
-returns void language plpgsql security definer set search_path = public as $$
-declare v_uid uuid := (select auth.uid());
-begin
-  if v_uid is null then raise exception 'not_authenticated'; end if;
-  insert into public.audit_logs (actor, action, target) values (null, 'account.deleted', null);
-  delete from auth.users where id = v_uid;
-end $$;
 
 -- ---------------------------------------------------------------------------
 -- Fonctions pour l'Edge Function `track` (service_role uniquement, schéma private non exposé)
@@ -291,7 +282,7 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
--- Tâches planifiées (S3.11)
+-- Tâches planifiées (S3.11) : purge et suppression de compte dans 20261111000300_s3_purge.sql
 -- ---------------------------------------------------------------------------
 
 -- Alerte ouverte depuis 24 h → expirée, liens révoqués.
@@ -310,25 +301,7 @@ begin
   return n;
 end $$;
 
--- Minimisation (R-BE-03) : positions 24 h après la clôture ; alertes (et tout ce qui en dépend) 30 jours après.
-create function private.purge_expired() returns void
-language plpgsql security definer set search_path = public as $$
-begin
-  delete from public.alert_positions p using public.alerts a
-  where p.alert_id = a.id and a.status <> 'open' and a.closed_at < now() - interval '24 hours';
-  delete from public.alerts where status <> 'open' and closed_at < now() - interval '30 days';
-  delete from public.rate_limits where day < current_date - 7;
-end $$;
 
--- pg_cron existe sur Supabase ; absent du PostgreSQL nu des tests locaux, d'où la condition.
-do $$
-begin
-  if exists (select 1 from pg_available_extensions where name = 'pg_cron') then
-    create extension if not exists pg_cron;
-    perform cron.schedule('cr-expire-alerts', '*/15 * * * *', 'select private.expire_alerts()');
-    perform cron.schedule('cr-purge-expired', '17 * * * *', 'select private.purge_expired()');
-  end if;
-end $$;
 
 -- ---------------------------------------------------------------------------
 -- RLS et droits
@@ -367,8 +340,7 @@ grant execute on function
   public.close_alert(uuid, text),
   public.create_tracking_link(uuid, text, int),
   public.revoke_tracking_link(uuid),
-  public.alert_feedback(uuid),
-  public.delete_my_account()
+  public.alert_feedback(uuid)
 to authenticated;
 grant execute on function private.is_admin() to authenticated;
 grant usage on schema private to service_role;

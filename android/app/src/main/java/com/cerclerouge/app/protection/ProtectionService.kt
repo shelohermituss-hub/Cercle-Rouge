@@ -8,6 +8,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.IBinder
 import androidx.core.content.ContextCompat
 import com.cerclerouge.alert.Input
@@ -42,7 +43,12 @@ class ProtectionService : Service() {
         getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(CHANNEL, getString(R.string.channel_status), NotificationManager.IMPORTANCE_LOW)
         )
-        startForeground(NOTIFICATION_ID, build(alert = false), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        // Le type « special use » n'existe qu'à partir d'Android 14 ; avant, passer un type inconnu ferait planter le démarrage.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(NOTIFICATION_ID, build(alert = false), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        } else {
+            startForeground(NOTIFICATION_ID, build(alert = false))
+        }
         scope.launch {
             controller.ensureRestored()
             controller.state.map { it.protection }.collect { p ->

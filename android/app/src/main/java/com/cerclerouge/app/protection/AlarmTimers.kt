@@ -4,7 +4,6 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import com.cerclerouge.alert.Timer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Instant
@@ -15,8 +14,9 @@ import javax.inject.Singleton
  * Alarmes système des minuteries d'alerte (vérification, escalade, expiration), en plus des coroutines : l'alarme réveille
  * l'application même après la mort du processus ou en mode Doze (R-AL-03).
  *
- * Sans l'autorisation d'alarmes exactes (❓ Q16 : acceptable pour Play ?), on utilise `setAndAllowWhileIdle`, inexacte mais
- * qui traverse le Doze. Tant que le service de premier plan tourne, la coroutine reste la voie exacte.
+ * Volontairement `setAndAllowWhileIdle` (inexacte, traverse le Doze) et jamais `setExactAndAllowWhileIdle` : cette dernière exige
+ * `SCHEDULE_EXACT_ALARM` ou `USE_EXACT_ALARM`, dont l'acceptation par Play est ouverte (❓ Q16). La voie exacte est la coroutine du
+ * service de premier plan ; l'alarme n'est que le filet si le processus meurt.
  */
 @Singleton
 class AlarmTimers @Inject constructor(@ApplicationContext private val context: Context) {
@@ -24,13 +24,7 @@ class AlarmTimers @Inject constructor(@ApplicationContext private val context: C
 
     fun schedule(timer: Timer, at: Instant) {
         val pending = pending(timer, at.toEpochMilli(), create = true) ?: return
-        // canScheduleExactAlarms n'existe qu'à partir d'Android 12 ; avant, les alarmes exactes sont libres.
-        val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || manager.canScheduleExactAlarms()
-        if (exact) {
-            manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.toEpochMilli(), pending)
-        } else {
-            manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.toEpochMilli(), pending)
-        }
+        manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.toEpochMilli(), pending)
     }
 
     fun cancel(timer: Timer) {

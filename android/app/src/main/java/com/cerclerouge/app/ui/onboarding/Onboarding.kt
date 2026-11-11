@@ -42,6 +42,7 @@ import com.cerclerouge.app.BuildConfig
 import com.cerclerouge.app.R
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.account.GuardianStatus
+import com.cerclerouge.app.ui.components.Orb
 import com.cerclerouge.app.ui.components.PinPad
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.Poster
@@ -62,6 +63,7 @@ import com.cerclerouge.privacy.Settings
 import com.cerclerouge.privacy.consent.ConsentRepository
 import com.cerclerouge.privacy.pin.PinRepository
 import com.cerclerouge.privacy.pin.PinRules
+import com.valentinerutto.orbmotion.orbs.OrbState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.Year
@@ -356,7 +358,7 @@ private fun CheckLine(text: String, checked: Boolean, onChange: (Boolean) -> Uni
 }
 
 @Composable
-private fun GuardianStep(ui: OnboardingUi, vm: OnboardingViewModel, onSos: () -> Unit) {
+private fun ColumnScope.GuardianStep(ui: OnboardingUi, vm: OnboardingViewModel, onSos: () -> Unit) {
     val c = Cr.colors
     Intro(R.string.guardian_title, R.string.guardian_body)
     when (ui.guardian) {
@@ -392,6 +394,7 @@ private fun GuardianStep(ui: OnboardingUi, vm: OnboardingViewModel, onSos: () ->
             )
         }
         GuardianStatus.PENDING -> {
+            Orb(OrbState.SEARCHING, 72.dp, c.warn, Modifier.align(Alignment.CenterHorizontally))
             Note(PixelIcon.CLOCK, stringResource(R.string.guardian_waiting), warn = true)
             Text(stringResource(R.string.guardian_waiting_sos), style = PxType.body, color = c.muted)
             SosBar(onTrigger = onSos, onTap = {})

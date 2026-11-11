@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -42,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -52,9 +52,11 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
@@ -68,6 +70,8 @@ import androidx.compose.ui.unit.dp
 import com.cerclerouge.app.R
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
+import com.valentinerutto.orbmotion.orbs.AnimatedThinkingOrb
+import com.valentinerutto.orbmotion.orbs.OrbState
 import kotlin.math.hypot
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -224,18 +228,17 @@ fun PxButton(
 /**
  * Barre SOS de l'accueil : appui long de 1,5 s (la barre se remplit), puis vibration et compte à rebours (R-HOME-01).
  * Un appui court ouvre l'écran SOS. TalkBack : l'action « activer » déclenche directement.
+ * `tile` : version écran d'accueil (moniteur 4 de la grille), contenu empilé, taille donnée par `modifier`.
  */
 @Composable
-fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifier) {
+fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifier, tile: Boolean = false) {
     val c = Cr.colors
     val progress = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     val a11y = stringResource(R.string.sos_a11y)
     PxPanel(
-        modifier
-            .fillMaxWidth()
-            .height(72.dp)
+        (if (tile) modifier else modifier.fillMaxWidth().height(72.dp))
             .semantics {
                 role = Role.Button
                 contentDescription = a11y
@@ -263,19 +266,28 @@ fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifi
                     }
                 }
             },
-        border = c.danger,
-        fill = c.danger,
+        border = c.sos,
+        fill = c.sos,
         padding = PaddingValues(0.dp)
     ) {
         // Remplissage par paliers de 1/12, comme les 12 carrés de l'écran SOS.
         val steps = (progress.value * 12).toInt() / 12f
-        Box(Modifier.fillMaxHeight().fillMaxWidth(steps).background(c.onLime.copy(alpha = 0.25f)))
-        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            PixelIconView(PixelIcon.ALERT, 28.dp, c.onLime)
-            Spacer(Modifier.width(14.dp))
-            Text(stringResource(R.string.sos), style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.28f), color = c.onLime)
-            Spacer(Modifier.width(14.dp))
-            Text(stringResource(R.string.sos_hint_two_lines), style = PxType.label, color = c.onLime)
+        if (tile) {
+            Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().fillMaxHeight(steps).background(c.void.copy(alpha = 0.3f)))
+            Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                PixelIconView(PixelIcon.ALERT, 28.dp, c.onSos)
+                Text(stringResource(R.string.sos), style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.4f), color = c.onSos)
+                Text(stringResource(R.string.sos_hint_two_lines), style = PxType.label, color = c.onSos, textAlign = TextAlign.Center)
+            }
+        } else {
+            Box(Modifier.fillMaxHeight().fillMaxWidth(steps).background(c.void.copy(alpha = 0.3f)))
+            Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                PixelIconView(PixelIcon.ALERT, 28.dp, c.onSos)
+                Spacer(Modifier.width(14.dp))
+                Text(stringResource(R.string.sos), style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.28f), color = c.onSos)
+                Spacer(Modifier.width(14.dp))
+                Text(stringResource(R.string.sos_hint_two_lines), style = PxType.label, color = c.onSos)
+            }
         }
     }
 }
@@ -284,7 +296,7 @@ fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifi
 // Disque, orbite, indicateurs
 // ---------------------------------------------------------------------------
 
-/** Disque en pixels (ON/OFF de l'accueil, SOS) avec halo qui pulse par paliers quand `glow`. */
+/** Disque en pixels (ON/OFF de l'accueil, SOS) : halo qui pulse par paliers quand `glow`, orbe animée autour quand `orb`. */
 @Composable
 fun PixelDisc(
     size: Dp,
@@ -292,7 +304,8 @@ fun PixelDisc(
     fill: Color,
     modifier: Modifier = Modifier,
     glow: Color? = null,
-    orbit: Boolean = false,
+    orb: OrbState? = null,
+    orbColor: Color? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val c = Cr.colors
@@ -307,16 +320,7 @@ fun PixelDisc(
                 )
             }
         }
-        if (orbit) {
-            val turn = stepTick(1000) % 8
-            Box(Modifier.size(size + 32.dp).rotate(turn * 45f)) {
-                val dot = Modifier.size(6.dp).background(c.lime)
-                Box(dot.align(Alignment.TopCenter))
-                Box(dot.align(Alignment.CenterEnd))
-                Box(dot.align(Alignment.BottomCenter))
-                Box(dot.align(Alignment.CenterStart))
-            }
-        }
+        orb?.let { Orb(it, size * 1.6f, orbColor ?: c.lime) }
         Column(
             Modifier.size(size).clip(shape).background(fill),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -331,6 +335,23 @@ fun PixelDisc(
 fun Led(color: Color, blink: Boolean, modifier: Modifier = Modifier, size: Dp = 8.dp) {
     val on = stepTick(500, enabled = blink) % 2 == 0
     Box(modifier.size(size).background(if (on) color else Color.Transparent))
+}
+
+/**
+ * Orbe animée (bibliothèque OrbMotion) : activité en cours (écoute, envoi, attente).
+ * Décorative pour TalkBack ; figée si « réduire les animations » est actif. La taille est convertie en pixels
+ * (la bibliothèque dessine en pixels).
+ */
+@Composable
+fun Orb(state: OrbState, size: Dp, color: Color, modifier: Modifier = Modifier, speed: Float = 1f) {
+    val px = with(LocalDensity.current) { size.toPx() }
+    AnimatedThinkingOrb(
+        modifier = modifier.requiredSize(size).clearAndSetSemantics {},
+        state = state,
+        size = px,
+        speed = if (reduceMotion()) 0f else speed,
+        color = color
+    )
 }
 
 /** Égaliseur de 5 barres : l'écoute est active (aucun contenu audio n'est affiché). */
@@ -349,6 +370,7 @@ fun EqBars() {
 // ---------------------------------------------------------------------------
 
 enum class PixelIcon(val rows: String) {
+    EXPAND("###..###/#......#/#......#/......../......../#......#/#......#/###..###"),
     SHIELD("########/#......#/#......#/#......#/.#....#./.#....#./..#..#../...##..."),
     POWER("...##.../.#.##.#./#..##..#/#......#/#......#/.#....#./..####../........"),
     MIC("..####../..#..#../..#..#../#.#..#.#/#..##..#/.#....#./..####../...##..."),

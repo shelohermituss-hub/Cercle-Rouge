@@ -19,10 +19,13 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -77,6 +80,7 @@ import com.cerclerouge.app.protection.UiEvent
 import com.cerclerouge.app.ui.components.EqBars
 import com.cerclerouge.app.ui.components.Led
 import com.cerclerouge.app.ui.components.NavItem
+import com.cerclerouge.app.ui.components.Orb
 import com.cerclerouge.app.ui.components.PinPad
 import com.cerclerouge.app.ui.components.PixelDisc
 import com.cerclerouge.app.ui.components.PixelIcon
@@ -94,6 +98,7 @@ import com.cerclerouge.app.ui.theme.PxType
 import com.cerclerouge.privacy.log.ChainedEntry
 import com.cerclerouge.privacy.log.EventLog
 import com.cerclerouge.privacy.pin.PinRepository
+import com.valentinerutto.orbmotion.orbs.OrbState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.time.ZoneId
@@ -130,6 +135,7 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit) {
     val state by vm.controller.state.collectAsState()
     var sos by remember { mutableStateOf(SosStep.NONE) }
     var pinFor by remember { mutableStateOf<Guarded?>(null) }
+    var mapFull by remember { mutableStateOf(false) }
     val soon = stringResource(R.string.home_soon)
 
     fun dial114() = context.startActivity(Intent(Intent.ACTION_DIAL, "tel:114".toUri())) // R-HOME-07 : toujours le composeur
@@ -182,6 +188,7 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit) {
     Box(Modifier.fillMaxSize().background(c.surface).pixelGrid(c.grid).safeDrawingPadding()) {
         when {
             state.protection.isAlert -> EmergencyScreen(vm, state, onSafe = { guarded(Guarded.IM_SAFE) }, onCall = ::dial114)
+            mapFull -> FullMap(state.protection.isArmed, state.protection.isArmed && state.locationGranted) { mapFull = false }
             sos == SosStep.HOLD -> SosHoldScreen(onBack = { sos = SosStep.NONE }, onTrigger = { sos = SosStep.COUNTDOWN })
             sos == SosStep.COUNTDOWN -> CountdownScreen(
                 onCancel = { sos = SosStep.NONE },
@@ -196,6 +203,7 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit) {
                 onSoon = { toast(context, soon) },
                 onSosTrigger = { sos = SosStep.COUNTDOWN },
                 onSosTap = { sos = SosStep.HOLD },
+                onExpandMap = { mapFull = true },
                 nav = listOf(
                     NavItem(stringResource(R.string.nav_home), PixelIcon.HOME) {},
                     NavItem(stringResource(R.string.nav_map), PixelIcon.PIN) { toast(context, soon) },
@@ -229,16 +237,16 @@ internal fun HomeConsole(
     onSoon: () -> Unit,
     onSosTrigger: () -> Unit,
     onSosTap: () -> Unit,
+    onExpandMap: () -> Unit,
     nav: List<NavItem>,
     map: @Composable (armed: Boolean, showMe: Boolean, modifier: Modifier) -> Unit
 ) {
     val c = Cr.colors
     val armed = state.protection.isArmed
+    val listening = armed && state.micGranted
     // P4 : la position n'est lue que protection active et autorisation accordée.
     val showMe = armed && state.locationGranted
-    val listening = armed && state.micGranted
-    val discA11y = stringResource(if (armed) R.string.home_disc_a11y_on else R.string.home_disc_a11y_off)
-    // Coupée : tout est en noir et blanc. Active : la couleur revient (carte, disque, satellites).
+    // Coupée : tout est en noir et blanc. Active : la couleur revient (carte, moniteurs).
     val accent = if (armed) c.lime else c.muted
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -253,133 +261,183 @@ internal fun HomeConsole(
                 )
             }
         }
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            // Carte en haut, pleine largeur ; le losange et ses fonctions viennent par-dessus son bas (référence « connect »).
-            map(armed, showMe, Modifier.matchParentSize())
-            // Fondus en haut et en bas : légendes, losange et textes restent lisibles par-dessus la carte.
-            Box(
-                Modifier.matchParentSize().background(
-                    Brush.verticalGradient(
-                        0f to c.surface.copy(alpha = 0.85f),
-                        0.12f to Color.Transparent,
-                        0.4f to Color.Transparent,
-                        1f to c.surface.copy(alpha = 0.92f)
-                    )
-                )
-            )
-            Column(Modifier.padding(horizontal = 12.dp)) {
-                Text(
-                    stringResource(if (showMe) R.string.home_map_caption_on else R.string.home_map_caption).uppercase(),
-                    style = PxType.caption,
-                    color = if (showMe) c.lime else c.muted
-                )
-                Text(MapStyle.ATTRIBUTION, style = PxType.caption.copy(fontSize = PxType.caption.fontSize * 0.85f), color = c.muted)
-            }
-            Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(Modifier.size(336.dp, 288.dp), contentAlignment = Alignment.Center) {
-                    // Losange qui relie le disque aux quatre fonctions (repris de la référence « connect »).
-                    Canvas(Modifier.size(260.dp)) {
-                        val w = size.width
-                        val stroke = 2.dp.toPx()
-                        val col = if (armed) c.lime.copy(alpha = 0.5f) else c.line
-                        val pts = listOf(Offset(w / 2, 0f), Offset(w, w / 2), Offset(w / 2, w), Offset(0f, w / 2))
-                        pts.forEachIndexed { i, p -> drawLine(col, p, pts[(i + 1) % 4], stroke) }
-                        pts.forEach { drawRect(col, it - Offset(4.dp.toPx(), 4.dp.toPx()), Size(8.dp.toPx(), 8.dp.toPx())) }
-                    }
-                    PixelDisc(
-                        size = 144.dp,
-                        cells = 18,
-                        fill = if (armed) c.lime else c.ink,
-                        glow = if (armed) c.lime else null,
-                        orbit = armed,
-                        modifier = Modifier.semantics {
-                            role = Role.Switch
-                            contentDescription = discA11y
-                            onClick {
-                                onToggle()
-                                true
-                            }
-                        }.clickable(onClick = onToggle)
-                    ) {
-                        PixelIconView(PixelIcon.POWER, 32.dp, c.onLime)
-                        Text(stringResource(if (armed) R.string.home_on else R.string.home_off), style = PxType.display, color = c.onLime)
-                    }
-                    Satellite(
-                        PixelIcon.MIC,
-                        stringResource(R.string.home_row_listen),
-                        stringResource(if (listening) R.string.sat_on else R.string.sat_off),
-                        armed,
-                        onToggle,
-                        Modifier.align(Alignment.TopStart)
-                    ) { if (listening) EqBars() else Led(c.line, blink = false) }
-                    Satellite(
-                        PixelIcon.PIN,
-                        stringResource(R.string.home_row_position),
-                        stringResource(if (showMe) R.string.sat_position_on else R.string.sat_position_off),
-                        armed,
-                        onSoon,
-                        Modifier.align(Alignment.TopEnd)
-                    )
-                    Satellite(
-                        PixelIcon.USERS,
-                        stringResource(R.string.home_row_contacts),
-                        stringResource(R.string.sat_contacts, CONTACTS_READY),
-                        armed,
-                        onSoon,
-                        Modifier.align(Alignment.BottomStart)
-                    )
-                    Satellite(
-                        PixelIcon.ARROW_RIGHT,
-                        stringResource(R.string.home_row_trip),
-                        stringResource(R.string.sat_trip_none),
-                        armed,
-                        onSoon,
-                        Modifier.align(Alignment.BottomEnd)
-                    )
-                }
-                Text(stringResource(if (armed) R.string.home_protected else R.string.home_standby), style = PxType.label, color = accent)
-                Text(
-                    stringResource(if (listening) R.string.home_listen_on else R.string.home_tap_activate).uppercase(),
-                    style = PxType.caption,
-                    color = c.muted,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 4.dp, start = 24.dp, end = 24.dp)
-                )
+        // Moitié haute : la carte, agrandissable en plein écran.
+        Box(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 12.dp)) {
+            PxPanel(Modifier.matchParentSize(), border = if (armed) c.lime else c.line, fill = c.void, padding = PaddingValues(0.dp)) {
+                map(armed, showMe, Modifier.matchParentSize())
+                MapCaptions(showMe)
+                PxPanel(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                        .size(48.dp)
+                        .clickable(role = Role.Button, onClickLabel = stringResource(R.string.map_expand), onClick = onExpandMap),
+                    border = c.lineControl,
+                    fill = c.surface,
+                    padding = PaddingValues(0.dp)
+                ) { PixelIconView(PixelIcon.EXPAND, 20.dp, c.ink, Modifier.align(Alignment.Center)) }
             }
         }
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SosBar(onTrigger = onSosTrigger, onTap = onSosTap)
-            PxNavBar(nav, selected = 0)
+        // Moitié basse : quatre moniteurs (écoute IA, position, contacts, SOS).
+        Column(Modifier.weight(1f).fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ListenMonitor(armed, listening, onToggle, Modifier.weight(1f).fillMaxHeight())
+                Monitor(
+                    "02",
+                    stringResource(R.string.home_row_position),
+                    armed,
+                    onSoon,
+                    Modifier.weight(1f).fillMaxHeight(),
+                    indicator = { Led(if (showMe) c.lime else c.line, blink = showMe) }
+                ) {
+                    PixelIconView(PixelIcon.PIN, 32.dp, accent)
+                    Text(
+                        stringResource(if (showMe) R.string.sat_position_on else R.string.sat_position_off).uppercase(),
+                        style = PxType.bodyBold,
+                        color = if (armed) c.ink else c.muted
+                    )
+                }
+            }
+            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Monitor(
+                    "03",
+                    stringResource(R.string.home_row_contacts),
+                    armed,
+                    onSoon,
+                    Modifier.weight(1f).fillMaxHeight(),
+                    indicator = { Led(c.line, blink = false) }
+                ) {
+                    PixelIconView(PixelIcon.USERS, 32.dp, accent)
+                    Text(stringResource(R.string.sat_contacts, CONTACTS_READY), style = PxType.title, color = if (armed) c.ink else c.muted)
+                }
+                SosBar(onTrigger = onSosTrigger, onTap = onSosTap, modifier = Modifier.weight(1f).fillMaxHeight(), tile = true)
+            }
+        }
+        Box(Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp)) { PxNavBar(nav, selected = 0) }
+    }
+}
+
+/** Légendes de la carte : état de la position et attribution OpenStreetMap (obligatoire). */
+@Composable
+private fun BoxScope.MapCaptions(showMe: Boolean) {
+    val c = Cr.colors
+    Box(Modifier.matchParentSize().background(Brush.verticalGradient(0f to c.void.copy(alpha = 0.85f), 0.25f to Color.Transparent)))
+    Column(Modifier.padding(10.dp)) {
+        Text(
+            stringResource(if (showMe) R.string.home_map_caption_on else R.string.home_map_caption).uppercase(),
+            style = PxType.caption,
+            color = if (showMe) c.lime else c.muted
+        )
+        Text(MapStyle.ATTRIBUTION, style = PxType.caption.copy(fontSize = PxType.caption.fontSize * 0.85f), color = c.muted)
+    }
+}
+
+/** Moniteur 01 : écoute IA, avec le bouton ON / OFF (disque) qui active ou coupe la protection. */
+@Composable
+private fun ListenMonitor(armed: Boolean, listening: Boolean, onToggle: () -> Unit, modifier: Modifier) {
+    val c = Cr.colors
+    val a11y = stringResource(if (armed) R.string.home_disc_a11y_on else R.string.home_disc_a11y_off)
+    Monitor(
+        "01",
+        stringResource(R.string.home_row_listen),
+        armed,
+        onToggle,
+        modifier.semantics(mergeDescendants = true) {
+            role = Role.Switch
+            contentDescription = a11y
+        },
+        indicator = { if (listening) EqBars() else Led(c.line, blink = false) }
+    ) {
+        PixelDisc(
+            size = 60.dp,
+            cells = 12,
+            fill = if (armed) c.lime else c.ink,
+            glow = if (armed) c.lime else null,
+            orb = if (listening) {
+                OrbState.LISTENING
+            } else if (armed) {
+                OrbState.BREATHING
+            } else {
+                null
+            }
+        ) {
+            PixelIconView(PixelIcon.POWER, 20.dp, c.onLime)
+            Text(stringResource(if (armed) R.string.home_on else R.string.home_off), style = PxType.label, color = c.onLime)
         }
     }
 }
 
-/** Fonction autour du disque : icône, étiquette, valeur courte ; grise quand la protection est coupée. */
+/**
+ * Moniteur de la grille d'accueil : bandeau « CH.0x · TITRE » + voyant, écran sombre à lignes de balayage.
+ * Gris quand la protection est coupée, bordure lime quand elle est active.
+ */
 @Composable
-private fun Satellite(
-    icon: PixelIcon,
-    label: String,
-    value: String,
+private fun Monitor(
+    channel: String,
+    title: String,
     armed: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    trailing: @Composable () -> Unit = {}
+    indicator: @Composable () -> Unit = {},
+    content: @Composable ColumnScope.() -> Unit
 ) {
     val c = Cr.colors
     PxPanel(
-        modifier.width(112.dp).clickable(role = Role.Button, onClick = onClick),
+        modifier.clickable(role = Role.Button, onClick = onClick),
         border = if (armed) c.lime else c.lineControl,
-        padding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+        fill = c.void,
+        padding = PaddingValues(0.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                PixelIconView(icon, 20.dp, if (armed) c.lime else c.muted)
-                Spacer(Modifier.weight(1f))
-                trailing()
+        Canvas(Modifier.matchParentSize()) {
+            val step = 3.dp.toPx()
+            var y = 0f
+            while (y < size.height) {
+                drawRect(c.ink.copy(alpha = 0.03f), Offset(0f, y), Size(size.width, 1.dp.toPx()))
+                y += step
             }
-            Text(label.uppercase(), style = PxType.label, color = c.muted, maxLines = 1)
-            Text(value.uppercase(), style = PxType.label, color = if (armed) c.ink else c.muted, maxLines = 1)
         }
+        Column(Modifier.fillMaxSize()) {
+            Row(
+                Modifier.fillMaxWidth().background(c.raised).padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "CH.$channel · ${title.uppercase()}",
+                    style = PxType.caption,
+                    color = c.muted,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f)
+                )
+                indicator()
+            }
+            Column(
+                Modifier.fillMaxSize().padding(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
+                content = content
+            )
+        }
+    }
+}
+
+/** Carte en plein écran : même carte, bouton pour revenir à l'accueil. */
+@Composable
+private fun FullMap(armed: Boolean, showMe: Boolean, onClose: () -> Unit) {
+    val c = Cr.colors
+    BackHandler(onBack = onClose)
+    Box(Modifier.fillMaxSize()) {
+        LiveMap(armed, showMe, Modifier.matchParentSize())
+        MapCaptions(showMe)
+        PxPanel(
+            Modifier
+                .align(Alignment.TopEnd)
+                .padding(12.dp)
+                .size(48.dp)
+                .clickable(role = Role.Button, onClickLabel = stringResource(R.string.map_close), onClick = onClose),
+            border = c.lineControl,
+            fill = c.surface,
+            padding = PaddingValues(0.dp)
+        ) { PixelIconView(PixelIcon.CROSS, 20.dp, c.ink, Modifier.align(Alignment.Center)) }
     }
 }
 
@@ -403,14 +461,14 @@ internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit) {
                         Modifier
                             .offset((130 * Math.cos(angle)).dp, (130 * Math.sin(angle)).dp)
                             .size(12.dp)
-                            .background(c.danger.copy(alpha = if (i < lit) 1f else 0.2f))
+                            .background(c.sos.copy(alpha = if (i < lit) 1f else 0.2f))
                     )
                 }
                 PixelDisc(
                     size = 200.dp,
                     cells = 25,
-                    fill = c.danger,
-                    glow = c.danger,
+                    fill = c.sos,
+                    glow = c.sos,
                     modifier = Modifier
                         .semantics {
                             role = Role.Button
@@ -437,11 +495,11 @@ internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit) {
                             }
                         }
                 ) {
-                    PixelIconView(PixelIcon.ALERT, 40.dp, c.onLime)
+                    PixelIconView(PixelIcon.ALERT, 40.dp, c.onSos)
                     Text(
                         stringResource(R.string.sos),
                         style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.7f),
-                        color = c.onLime
+                        color = c.onSos
                     )
                 }
             }
@@ -478,15 +536,18 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit) {
         TopBar(stringResource(R.string.sos), null)
         Column(Modifier.fillMaxWidth().padding(top = 28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(R.string.countdown_label).uppercase(), style = PxType.label, color = c.danger)
-            Text(
-                "$seconds",
-                style = PxType.digits,
-                color = c.danger,
-                modifier = Modifier.padding(top = 8.dp).semantics {
-                    liveRegion = LiveRegionMode.Assertive
-                    contentDescription = a11y
-                }
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Orb(OrbState.CONNECTING, 200.dp, c.danger)
+                Text(
+                    "$seconds",
+                    style = PxType.digits,
+                    color = c.danger,
+                    modifier = Modifier.semantics {
+                        liveRegion = LiveRegionMode.Assertive
+                        contentDescription = a11y
+                    }
+                )
+            }
             Text(stringResource(R.string.countdown_seconds).uppercase(), style = PxType.display, modifier = Modifier.padding(top = 12.dp))
             Text(
                 stringResource(R.string.countdown_body),
@@ -512,7 +573,7 @@ private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, onSafe: () ->
     Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         PxPanel(Modifier.fillMaxWidth(), border = c.danger) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Led(c.danger, blink = true, size = 12.dp)
+                Orb(OrbState.SEARCHING, 44.dp, c.danger)
                 Column {
                     Text(stringResource(R.string.urgent_sent).uppercase(), style = PxType.display, color = c.danger)
                     state.alert?.let { Text(time.format(it.openedAt), style = PxType.caption, color = c.muted) }

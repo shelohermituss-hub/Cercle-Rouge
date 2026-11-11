@@ -83,13 +83,9 @@
     <string name="poster3_body">Tu choisis qui reçoit le SMS et ta position.</string>
     <string name="home_on">ON</string>
     <string name="home_off">OFF</string>
-    <string name="home_protected">[ > PROTÉGÉ &lt; ]</string>
-    <string name="home_standby">[ - VEILLE - ]</string>
     <string name="home_row_listen">Écoute IA</string>
-    <string name="home_listen_on">Sur ton téléphone · rien n\'est envoyé</string>
     <string name="home_row_position">Position</string>
     <string name="home_row_contacts">Contacts</string>
-    <string name="home_row_trip">Trajet</string>
     <string name="home_disc_a11y_on">Protection active. Toucher pour désactiver.</string>
     <string name="home_disc_a11y_off">Protection désactivée. Toucher pour activer.</string>
     <string name="nav_home">Accueil</string>
@@ -123,13 +119,11 @@
     <string name="profile_screen_title">Ton profil</string>
     <string name="guardian_screen_title">Ton adulte référent</string>
     <string name="notif_screen_title">Notifications</string>
-    <string name="sat_on">Active</string>
-    <string name="sat_off">Arrêtée</string>
     <string name="sat_position_off">Privée</string>
     <string name="sat_contacts">%1$d / 5</string>
-    <string name="sat_trip_none">Aucun</string>
     <string name="home_map_caption">Position masquée</string>
-    <string name="home_tap_activate">Toucher pour activer</string>
     <string name="home_map_caption_on">Ta position reste sur ton téléphone</string>
     <string name="sat_position_on">Ici seulement</string>
+    <string name="map_expand">Agrandir la carte</string>
+    <string name="map_close">Réduire la carte</string>
 </resources>

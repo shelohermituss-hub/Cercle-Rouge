@@ -5,7 +5,8 @@
 Maquettes du porteur du projet (canevas « Cercle Rouge — Maquettes », page « v3 · Pixel Lime », 20 écrans 360×800), puis deux retouches demandées :
 
 1. **Fond noir-gris neutre** (comme la référence « Pixel VPN »), pas de vert dans le fond. Le lime reste la seule couleur d'action.
-2. **Accueil = carte en arrière-plan + gros bouton central**, fonctions autour (référence « connect ») : en veille tout est **monochrome** (disque blanc-gris, carte grise) ; protection active, **la couleur revient** (disque lime avec halo et orbite, carte lime, satellites lime).
+2. **Accueil en deux moitiés** (demande du 2026-11-11) : **en haut la carte réelle**, avec un bouton pour l'agrandir en plein écran ; **en bas quatre « moniteurs »** (CH.01 écoute IA avec le bouton ON/OFF, CH.02 position, CH.03 contacts, et le **SOS en rouge franc** `#E5202B`, texte blanc 4,6:1). La grande barre SOS du bas est supprimée : le moniteur SOS garde l'appui long de 1,5 s (un geste, R-HOME-01) et l'appui court vers l'écran SOS. En veille tout est **monochrome** (carte noir et blanc, disque blanc-gris) ; protection active, **la couleur revient**.
+3. **Orbes animées** ([OrbMotion](https://github.com/valentineRutto/OrbMotionKMPLibrary), MIT) pour les activités en cours : écoute (`LISTENING`) autour du bouton ON, respiration sans micro, compte à rebours (`CONNECTING`, rouge), alerte envoyée (`SEARCHING`), attente de l'adulte référent, démarrage. Figées si « réduire les animations », ignorées par TalkBack.
 
 | Token | Valeur | Usage |
 |---|---|---|
@@ -14,14 +15,15 @@ Maquettes du porteur du projet (canevas « Cercle Rouge — Maquettes », page �
 | lime / onLime | `#A0E705` / `#0E1012` | action, état protégé ; texte sur lime ou rouge |
 | ink / muted | `#E6E8EA` / `#9BA1A8` | texte (15:1 et 7,1:1 sur surface) |
 | line / lineControl | `#3A3F45` / `#6B7279` | bordure décorative ; bordure de contrôle (≥ 3,4:1) |
-| danger / warn | `#FF6B5A` / `#FFD23F` | SOS, alerte ; vérification |
+| danger / warn | `#FF6B5A` / `#FFD23F` | texte et voyants d'alerte ; vérification |
+| sos / onSos | `#E5202B` / `#FFFFFF` | boutons SOS (rouge franc) |
 
 Typo : Pixelify Sans (titres, capitales), Space Mono (texte). Angles crénelés de 4 dp, disques en pixels, icônes 8×8, animations par paliers (désactivées si « réduire les animations »).
 
 Revue visuelle sans émulateur : `./gradlew :app:testDebugUnitTest --tests '*ScreenshotTest*'` rend l'accueil (veille / actif ; carte remplacée par `build/map-preview-*.png` si présent, MapLibre étant natif), le SOS, le compte à rebours et une affiche en PNG dans `android/app/build/screenshots/` (Robolectric, rendu natif).
 
 Garde-fous conservés :
-- **Carte réelle en direct** (MapLibre + OpenFreeMap, style maison gris / lime, [ADR-0018](../decisions/ADR-0018-carte-accueil-maplibre-openfreemap.md)) : en veille, carte noir et blanc centrée sur Port-au-Prince **sans point**, GPS coupé ; protection active, carte en couleurs avec **ton point en direct**, placé au-dessus du losange. La position reste sur le téléphone (P4).
+- **Carte réelle en direct** (MapLibre + OpenFreeMap, style maison gris / lime, [ADR-0018](../decisions/ADR-0018-carte-accueil-maplibre-openfreemap.md)) : en veille, carte noir et blanc centrée sur Port-au-Prince **sans point**, GPS coupé ; protection active, carte en couleurs avec **ton point en direct**. La position reste sur le téléphone (P4).
 - SOS toujours en rouge, même en veille monochrome ; appui long 1,5 s (un seul geste) ou appui court vers l'écran SOS.
 - Écarts assumés avec les maquettes : 4ᵉ onglet « Journal » (pas encore d'écran Réglages) ; consentement 12–15 ans = notre parcours « adulte référent » (ADR-0013) habillé en Pixel Lime ; données réelles affichées (0 / 5 contacts au Sprint 1).
 

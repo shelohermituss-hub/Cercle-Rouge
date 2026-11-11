@@ -42,7 +42,7 @@ private suspend fun MapView.awaitMap(): MapLibreMap = suspendCancellableCoroutin
  */
 @SuppressLint("MissingPermission") // showMe n'est vrai que si ACCESS_FINE_LOCATION est accordée (EngineState.locationGranted).
 @Composable
-fun LiveMap(armed: Boolean, showMe: Boolean, modifier: Modifier = Modifier, coveredBottom: Dp = 340.dp, coveredTop: Dp = 40.dp) {
+fun LiveMap(armed: Boolean, showMe: Boolean, modifier: Modifier = Modifier, coveredBottom: Dp = 0.dp, coveredTop: Dp = 40.dp) {
     val density = LocalDensity.current
     val context = LocalContext.current
     val c = Cr.colors
@@ -80,7 +80,7 @@ fun LiveMap(armed: Boolean, showMe: Boolean, modifier: Modifier = Modifier, cove
             isAttributionEnabled = false // attribution OpenStreetMap affichée en texte sur l'accueil
             isCompassEnabled = false
         }
-        // Le losange couvre le bas de la carte : le centre (et donc ton point) est placé dans la partie visible, au-dessus.
+        // Les légendes couvrent le haut de la carte : le centre (et donc ton point) est placé sous elles.
         with(density) { map.setPadding(0, coveredTop.roundToPx(), 0, coveredBottom.roundToPx()) }
         map.setStyle(Style.Builder().fromJson(MapStyle.json(armed))) { style ->
             val location = map.locationComponent

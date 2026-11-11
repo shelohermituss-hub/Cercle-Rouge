@@ -45,8 +45,11 @@ data class CrColors(
     /** Bordure des contrôles cliquables (≥ 3:1 sur surface et raised). */
     val lineControl: Color,
     val grid: Color,
-    /** SOS et alertes. */
+    /** Texte et voyants d'alerte (corail, lisible sur fond sombre). */
     val danger: Color,
+    /** Boutons SOS : rouge franc, texte blanc (4,6:1). */
+    val sos: Color,
+    val onSos: Color,
     /** Vérification, attente, hors ligne. */
     val warn: Color,
     val scrim: Color
@@ -68,6 +71,8 @@ val PixelLime = CrColors(
     lineControl = Color(0xFF6B7279),
     grid = Color(0x1F6B7279),
     danger = Color(0xFFFF6B5A),
+    sos = Color(0xFFE5202B),
+    onSos = Color(0xFFFFFFFF),
     warn = Color(0xFFFFD23F),
     scrim = Color(0xCC0A0B0C)
 )

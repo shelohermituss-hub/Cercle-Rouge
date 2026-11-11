@@ -83,13 +83,9 @@
     <string name="poster3_body">Se ou ki chwazi kiyès ki resevwa SMS la ak pozisyon w.</string>
     <string name="home_on">ON</string>
     <string name="home_off">OFF</string>
-    <string name="home_protected">[ > PWOTEJE &lt; ]</string>
-    <string name="home_standby">[ - AN VÈY - ]</string>
     <string name="home_row_listen">Koute IA</string>
-    <string name="home_listen_on">Sou telefòn ou · anyen pa voye</string>
     <string name="home_row_position">Pozisyon</string>
     <string name="home_row_contacts">Kontak</string>
-    <string name="home_row_trip">Wout</string>
     <string name="home_disc_a11y_on">Pwoteksyon aktif. Touche pou dezaktive.</string>
     <string name="home_disc_a11y_off">Pwoteksyon dezaktive. Touche pou aktive.</string>
     <string name="nav_home">Akèy</string>
@@ -123,13 +119,11 @@
     <string name="profile_screen_title">Pwofil ou</string>
     <string name="guardian_screen_title">Granmoun referans ou</string>
     <string name="notif_screen_title">Notifikasyon</string>
-    <string name="sat_on">Aktif</string>
-    <string name="sat_off">Kanpe</string>
     <string name="sat_position_off">Prive</string>
     <string name="sat_contacts">%1$d / 5</string>
-    <string name="sat_trip_none">Okenn</string>
     <string name="home_map_caption">Pozisyon kache</string>
-    <string name="home_tap_activate">Touche pou aktive</string>
     <string name="home_map_caption_on">Pozisyon ou rete sou telefòn ou</string>
     <string name="sat_position_on">Isit sèlman</string>
+    <string name="map_expand">Agrandi kat la</string>
+    <string name="map_close">Redui kat la</string>
 </resources>

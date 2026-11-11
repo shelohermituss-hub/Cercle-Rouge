@@ -42,6 +42,8 @@ class ScreenshotTest {
     @get:Rule val rule = createComposeRule()
 
     private fun capture(name: String, content: @Composable () -> Unit) {
+        // Les orbes animent sans fin : horloge manuelle, sinon Compose n'est jamais « au repos ».
+        rule.mainClock.autoAdvance = false
         rule.setContent {
             CercleRougeTheme {
                 Box(Modifier.fillMaxSize().background(Cr.colors.surface).pixelGrid(Cr.colors.grid)) { content() }
@@ -74,11 +76,19 @@ class ScreenshotTest {
         }
     }
 
-    @Test fun homeOff() = capture("home-off") { HomeConsole(EngineState(), {}, {}, {}, {}, nav, fakeMap) }
+    @Test fun homeOff() = capture("home-off") { HomeConsole(EngineState(), {}, {}, {}, {}, {}, nav, fakeMap) }
 
     @Test fun homeOn() = capture("home-on") {
-        HomeConsole(EngineState(protection = ProtectionState.ARMED_FULL, micGranted = true, locationGranted = true), {
-        }, {}, {}, {}, nav, fakeMap)
+        HomeConsole(
+            EngineState(protection = ProtectionState.ARMED_FULL, micGranted = true, locationGranted = true),
+            {},
+            {},
+            {},
+            {},
+            {},
+            nav,
+            fakeMap
+        )
     }
 
     @Test fun sosHold() = capture("sos-hold") { SosHoldScreen({}, {}) }

@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.cerclerouge.alert.Input
 import com.cerclerouge.app.account.AccountRepository
+import com.cerclerouge.app.evidence.EvidencePurge
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.sos.SosIntents
 import com.cerclerouge.app.trip.TripController
@@ -50,6 +51,8 @@ import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
 import com.cerclerouge.app.ui.trip.TripScreen
 import com.cerclerouge.app.ui.trip.TripViewModel
+import com.cerclerouge.app.ui.vault.VaultScreen
+import com.cerclerouge.app.ui.vault.VaultViewModel
 import com.cerclerouge.privacy.Settings
 import com.cerclerouge.privacy.log.EventLog
 import com.valentinerutto.orbmotion.orbs.OrbState
@@ -64,10 +67,11 @@ class AppViewModel @Inject constructor(
     val log: EventLog,
     val controller: ProtectionController,
     // Instancié dès le démarrage : il suit l'état de la protection.
-    val trips: TripController
+    val trips: TripController,
+    val purge: EvidencePurge
 ) : ViewModel()
 
-private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN }
+private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN, VAULT }
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -77,6 +81,7 @@ class MainActivity : ComponentActivity() {
     private val contacts: ContactsViewModel by viewModels()
     private val trip: TripViewModel by viewModels()
     private val listen: ListenViewModel by viewModels()
+    private val vault: VaultViewModel by viewModels()
     private val sosRequested = androidx.compose.runtime.mutableStateOf(false)
 
     override fun onNewIntent(intent: Intent) {
@@ -96,6 +101,8 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(Unit) {
                     app.account.load()
                     app.controller.ensureRestored() // état persisté (alerte en cours, protection interrompue…)
+                    app.purge.schedule()
+                    app.purge.run() // rattrapage des suppressions de preuves (R-EVD-03)
                     screen = if (app.settings.onboardingDone()) Screen.HOME else Screen.ONBOARDING
                 }
                 CrashReport()
@@ -113,6 +120,7 @@ class MainActivity : ComponentActivity() {
                             onContacts = { screen = Screen.CONTACTS },
                             onTrip = { screen = Screen.TRIP },
                             onListen = { screen = Screen.LISTEN },
+                            onVault = { screen = Screen.VAULT },
                             sosRequested = sosRequested.value,
                             onSosConsumed = { sosRequested.value = false }
                         )
@@ -127,6 +135,10 @@ class MainActivity : ComponentActivity() {
                         Screen.LISTEN -> {
                             BackHandler { screen = Screen.HOME }
                             Box(Modifier.safeDrawingPadding()) { ListenScreen(listen) { screen = Screen.HOME } }
+                        }
+                        Screen.VAULT -> {
+                            BackHandler { screen = Screen.HOME }
+                            Box(Modifier.safeDrawingPadding()) { VaultScreen(vault) { screen = Screen.HOME } }
                         }
                         Screen.JOURNAL -> {
                             BackHandler { screen = Screen.HOME }

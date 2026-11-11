@@ -14,6 +14,7 @@ import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.alert.AlertDispatcher
 import com.cerclerouge.app.audio.AudioListener
 import com.cerclerouge.app.audio.PhraseRepository
+import com.cerclerouge.app.evidence.EvidenceRecorder
 import com.cerclerouge.app.location.LocationTracker
 import com.cerclerouge.audio.AudioSignal
 import com.cerclerouge.location.TrackingProfile
@@ -65,6 +66,7 @@ class ProtectionController @Inject constructor(
     private val tracker: LocationTracker,
     private val audio: AudioListener,
     private val phrases: PhraseRepository,
+    private val recorder: EvidenceRecorder,
     db: PrivacyDatabase
 ) {
     private val settings = db.settings()
@@ -179,7 +181,9 @@ class ProtectionController @Inject constructor(
                     null -> tracker.stop()
                 }
             }
-            is Effect.StartRecording, is Effect.StopRecording,
+            // Preuves (S6.01) : niveau 2 ou SOS seulement ; l'enregistreur respecte l'interrupteur de l'utilisateur.
+            is Effect.StartRecording -> recorder.start(effect.alertId)
+            is Effect.StopRecording -> recorder.stop(effect.alertId)
             is Effect.ShowVerification, Effect.DismissVerification
             -> Unit
         }

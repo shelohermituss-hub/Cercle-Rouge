@@ -56,6 +56,7 @@ dependencies {
     implementation(project(":contacts-engine"))
     implementation(project(":location-engine"))
     implementation(project(":audio-engine"))
+    implementation(project(":evidence-engine"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
@@ -68,6 +69,7 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.biometric)
+    implementation(libs.tink.android)
     implementation(libs.maplibre)
     // Position fusionnée de Google (batterie, précision) ; repli LocationManager sans services Google (Q15, ADR-0019).
     implementation(libs.play.services.location)

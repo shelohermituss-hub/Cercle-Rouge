@@ -48,7 +48,7 @@
 
 | # | Question |
 |---|---|
-| Q23 🔴 | Légalité de l'enregistrement de tiers et valeur probante, par pays |
+| Q23 🔴 | Légalité de l'enregistrement de tiers et valeur probante, par pays — **provisoire (2026-11-11)** : enregistrement selon la spec avec avis à l'onboarding et interrupteur (ADR-0021) ; **avis juridique requis avant le lancement** |
 | Q24 | Loi haïtienne sur les données personnelles et obligations des opérateurs |
 | Q25 | Procédure de réquisition des autorités |
 | Q26 | Conditions d'utilisation : limites de responsabilité (non-détection, fausses alertes) |

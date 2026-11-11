@@ -52,6 +52,9 @@
         <receiver
             android:name=".alert.SmsStatusReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".evidence.PurgeReceiver"
+            android:exported="false" />
         <!-- SOS en un geste (S2.13) : tuile de réglages rapides et widget ouvrent le compte à rebours de 5 s. -->
         <service
             android:name=".sos.SosTileService"

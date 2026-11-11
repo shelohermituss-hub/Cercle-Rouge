@@ -7,7 +7,7 @@
 | Donnée | Collectée quand | Où | Partagée avec | Rétention | Base (RGPD si UE) |
 |---|---|---|---|---|---|
 | Audio d'analyse | État armé | Mémoire du téléphone | Personne | 0 | Consentement |
-| Extrait audio et enregistrements | Niveau ≥ 2 ou à la demande | Téléphone (chiffré) ; serveur si partagé | Proches désignés | 24 h par défaut (7 ou 30 j en option) | Consentement ; intérêts vitaux en urgence |
+| Extrait audio et enregistrements | Niveau ≥ 2 ou SOS (interrupteur ; avis à l'onboarding, Q23) | Téléphone (chiffré par alerte, ADR-0021) ; serveur si partagé (Sprint 3) | Proches désignés | 24 h par défaut (7 ou 30 j en option) | Consentement ; intérêts vitaux en urgence |
 | Vidéo | Sur demande ou niveau 3 si activée | Idem | Idem | Idem | Consentement |
 | Position | Armé Full, trajet, alerte | Téléphone ; serveur pendant un trajet suivi ou une alerte | Proches (alerte ou trajet partagé) | Trajet : ≤ 1 h après la fin sur le serveur ; alerte : rétention des preuves | Consentement |
 | Lieux favoris (trajet) | Ajout par l'utilisateur | Téléphone seulement (base chiffrée) | Personne | Jusqu'à suppression | Consentement |

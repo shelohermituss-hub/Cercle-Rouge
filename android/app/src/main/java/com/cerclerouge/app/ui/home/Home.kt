@@ -145,6 +145,7 @@ fun HomeScreen(
     onContacts: () -> Unit,
     onTrip: () -> Unit = {},
     onListen: () -> Unit = {},
+    onVault: () -> Unit = {},
     sosRequested: Boolean = false,
     onSosConsumed: () -> Unit = {}
 ) {
@@ -240,7 +241,7 @@ fun HomeScreen(
                 onSosTap = { sos = SosStep.HOLD },
                 nav = listOf(
                     NavItem(stringResource(R.string.nav_home), PixelIcon.HOME) {},
-                    NavItem(stringResource(R.string.nav_map), PixelIcon.PIN) { toast(context, soon) },
+                    NavItem(stringResource(R.string.nav_vault), PixelIcon.LOCK, onVault),
                     NavItem(stringResource(R.string.nav_trip), PixelIcon.ARROW_RIGHT, onTrip),
                     NavItem(stringResource(R.string.nav_log), PixelIcon.CLOCK, onJournal)
                 ),

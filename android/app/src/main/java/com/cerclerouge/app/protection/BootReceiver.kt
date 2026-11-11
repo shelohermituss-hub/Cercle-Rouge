@@ -17,12 +17,16 @@ import kotlinx.coroutines.launch
 class BootReceiver : BroadcastReceiver() {
     @Inject lateinit var controller: ProtectionController
 
+    @Inject lateinit var purge: com.cerclerouge.app.evidence.EvidencePurge
+
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
         val pending = goAsync()
         CoroutineScope(Dispatchers.Default).launch {
             try {
                 controller.ensureRestored()
+                purge.schedule()
+                purge.run() // rattrapage des suppressions manquées pendant que le téléphone était éteint (R-EVD-03)
             } finally {
                 pending.finish()
             }

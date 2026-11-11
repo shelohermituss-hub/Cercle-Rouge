@@ -75,6 +75,83 @@ data class OutboxEntity(
     val state: String
 )
 
+/**
+ * Alerte enregistrée (Sprint 6). `wrappedKey` : keyset Tink `StreamingAead` de l'alerte, chiffré par une clé du Keystore.
+ * Le mettre à null détruit les preuves (crypto-shredding, R-EE-02), même si un fichier traîne encore.
+ */
+@Entity(tableName = "evidence_alerts")
+data class EvidenceAlertEntity(
+    @PrimaryKey val alertId: String,
+    val openedAtMillis: Long,
+    val closedAtMillis: Long?,
+    val lastWriteMillis: Long,
+    val keptUntilMillis: Long?,
+    val wrappedKey: ByteArray?
+) {
+    override fun equals(other: Any?): Boolean =
+        other is EvidenceAlertEntity && other.alertId == alertId && other.lastWriteMillis == lastWriteMillis
+
+    override fun hashCode(): Int = alertId.hashCode()
+}
+
+/** Segment chiffré (30 s) et son entrée dans la chaîne d'intégrité. `bytes` : taille du contenu en clair. */
+@Entity(tableName = "evidence_segments", primaryKeys = ["alertId", "seq"])
+data class EvidenceSegmentEntity(
+    val alertId: String,
+    val seq: Int,
+    val startedAtMillis: Long,
+    val durationMs: Long,
+    val bytes: Long,
+    val sha256: String,
+    val prevHash: String,
+    val entryHash: String
+)
+
+@Dao
+interface EvidenceDao {
+    @Query("SELECT * FROM evidence_alerts ORDER BY openedAtMillis DESC")
+    suspend fun alerts(): List<EvidenceAlertEntity>
+
+    @Query("SELECT * FROM evidence_alerts WHERE alertId = :id")
+    suspend fun alert(id: String): EvidenceAlertEntity?
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAlert(a: EvidenceAlertEntity): Long
+
+    @Query("UPDATE evidence_alerts SET closedAtMillis = :at WHERE alertId = :id AND closedAtMillis IS NULL")
+    suspend fun close(id: String, at: Long)
+
+    @Query("UPDATE evidence_alerts SET keptUntilMillis = :until WHERE alertId = :id")
+    suspend fun keep(id: String, until: Long)
+
+    @Query("UPDATE evidence_alerts SET wrappedKey = NULL WHERE alertId = :id")
+    suspend fun shredKey(id: String)
+
+    @Query("SELECT * FROM evidence_segments WHERE alertId = :id ORDER BY seq")
+    suspend fun segments(id: String): List<EvidenceSegmentEntity>
+
+    @Insert suspend fun insertSegment(s: EvidenceSegmentEntity)
+
+    @Query("UPDATE evidence_alerts SET lastWriteMillis = :at WHERE alertId = :id")
+    suspend fun touch(id: String, at: Long)
+
+    /** Ajoute le segment et met à jour la date de dernière écriture, d'un bloc. */
+    @Transaction
+    suspend fun addSegment(s: EvidenceSegmentEntity, at: Long) {
+        insertSegment(s)
+        touch(s.alertId, at)
+    }
+
+    @Query("DELETE FROM evidence_segments WHERE alertId = :id")
+    suspend fun deleteSegments(id: String)
+
+    @Query("DELETE FROM evidence_alerts WHERE alertId = :id")
+    suspend fun deleteAlert(id: String)
+
+    @Query("UPDATE evidence_alerts SET wrappedKey = NULL")
+    suspend fun shredAll()
+}
+
 @Dao
 interface EventLogDao {
     @Insert suspend fun insert(entry: EventLogEntity)
@@ -152,8 +229,11 @@ interface OutboxDao {
 }
 
 @Database(
-    entities = [EventLogEntity::class, ConsentEntity::class, SettingEntity::class, ContactEntity::class, OutboxEntity::class],
-    version = 3,
+    entities = [
+        EventLogEntity::class, ConsentEntity::class, SettingEntity::class, ContactEntity::class, OutboxEntity::class,
+        EvidenceAlertEntity::class, EvidenceSegmentEntity::class
+    ],
+    version = 4,
     exportSchema = false
 )
 abstract class PrivacyDatabase : RoomDatabase() {
@@ -167,8 +247,26 @@ abstract class PrivacyDatabase : RoomDatabase() {
 
     abstract fun outbox(): OutboxDao
 
+    abstract fun evidence(): EvidenceDao
+
     companion object {
         const val NAME = "cercle-rouge.db"
+
+        /** v3 → v4 : preuves chiffrées (Sprint 6). Tout le reste est conservé. */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `evidence_alerts` (`alertId` TEXT NOT NULL, `openedAtMillis` INTEGER NOT NULL, " +
+                        "`closedAtMillis` INTEGER, `lastWriteMillis` INTEGER NOT NULL, `keptUntilMillis` INTEGER, `wrappedKey` BLOB, " +
+                        "PRIMARY KEY(`alertId`))"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `evidence_segments` (`alertId` TEXT NOT NULL, `seq` INTEGER NOT NULL, " +
+                        "`startedAtMillis` INTEGER NOT NULL, `durationMs` INTEGER NOT NULL, `bytes` INTEGER NOT NULL, " +
+                        "`sha256` TEXT NOT NULL, `prevHash` TEXT NOT NULL, `entryHash` TEXT NOT NULL, PRIMARY KEY(`alertId`, `seq`))"
+                )
+            }
+        }
 
         /** v2 → v3 : file d'attente des envois (Sprint 2). Tout le reste est conservé. */
         val MIGRATION_2_3 = object : Migration(2, 3) {
@@ -208,7 +306,7 @@ abstract class PrivacyDatabase : RoomDatabase() {
             }
             return Room.databaseBuilder(context, PrivacyDatabase::class.java, NAME)
                 .openHelperFactory(factory)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build()
         }
     }

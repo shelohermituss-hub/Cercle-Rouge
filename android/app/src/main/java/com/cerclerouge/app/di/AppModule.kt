@@ -1,8 +1,10 @@
 package com.cerclerouge.app.di
 
 import android.content.Context
+import com.cerclerouge.app.evidence.EvidenceStore
 import com.cerclerouge.privacy.Settings
 import com.cerclerouge.privacy.consent.ConsentRepository
+import com.cerclerouge.privacy.crypto.EvidenceKeys
 import com.cerclerouge.privacy.db.PrivacyDatabase
 import com.cerclerouge.privacy.log.EventLog
 import com.cerclerouge.privacy.pin.PinRepository
@@ -11,6 +13,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.io.File
 import java.time.Clock
 import javax.inject.Singleton
 
@@ -34,4 +37,9 @@ object AppModule {
 
     @Provides @Singleton
     fun settings(db: PrivacyDatabase) = Settings(db.settings())
+
+    /** Preuves : stockage interne privé, clé maîtresse dans le Keystore (ADR-0007, ADR-0021). */
+    @Provides @Singleton
+    fun evidenceStore(@ApplicationContext context: Context, db: PrivacyDatabase) =
+        EvidenceStore(File(context.filesDir, "evidence"), db.evidence(), EvidenceKeys.android(context))
 }

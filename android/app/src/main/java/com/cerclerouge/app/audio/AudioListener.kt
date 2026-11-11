@@ -12,7 +12,9 @@ import android.media.MediaRecorder
 import com.cerclerouge.audio.AudioSignal
 import com.cerclerouge.audio.Listener
 import com.cerclerouge.audio.PhraseTemplate
+import com.cerclerouge.audio.RingBuffer
 import com.cerclerouge.audio.Vad
+import com.cerclerouge.evidence.RecordingPolicy
 import com.cerclerouge.privacy.db.PrivacyDatabase
 import com.cerclerouge.privacy.db.SettingEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -56,17 +58,60 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
 
     @Volatile private var running = false
     private var template: PhraseTemplate? = null
+    private var wantListen = false
+    private var wantRecord = false
     private var thread: Thread? = null
     private var record: AudioRecord? = null
     private var callback: AudioManager.AudioRecordingCallback? = null
 
+    /** Les 5 dernières secondes, en mémoire seulement : le pré-tampon des preuves (S6.01, R-AE-01). */
+    private val preBuffer = RingBuffer(RATE * RecordingPolicy.PRE_BUFFER_SECONDS)
+
+    /** Reçoit chaque bloc de 20 ms pendant un enregistrement de preuve (le receveur copie ce qu'il garde). */
+    @Volatile private var tap: ((ShortArray) -> Unit)? = null
+
     val granted: Boolean
         get() = context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 
-    @SuppressLint("MissingPermission") // vérifiée par `granted`
+    /** Écoute de la phrase secrète (moteur, protection active). */
     @Synchronized
     fun start(template: PhraseTemplate?) {
         this.template = template
+        wantListen = true
+        if (running) restartMic() else ensureMic() // micro déjà ouvert pour une preuve : relancé avec la phrase
+    }
+
+    /** Fin de l'écoute ; le micro reste ouvert si un enregistrement de preuve est en cours. */
+    @Synchronized
+    fun stop() {
+        wantListen = false
+        if (wantRecord) restartMic() else shutdownMic()
+    }
+
+    /**
+     * Enregistrement de preuve (alerte de niveau 2 ou SOS) : envoie à `sink` le pré-tampon des 5 dernières secondes (vide si
+     * le micro était fermé), puis chaque bloc jusqu'à [stopRecording]. Rend la taille du pré-tampon.
+     */
+    @Synchronized
+    fun startRecording(sink: (ShortArray) -> Unit): Int {
+        val pre = preBuffer.last(preBuffer.size)
+        sink(pre) // d'abord le pré-tampon, puis les blocs en direct : l'ordre est garanti
+        pre.fill(0)
+        tap = sink
+        wantRecord = true
+        ensureMic()
+        return pre.size
+    }
+
+    @Synchronized
+    fun stopRecording() {
+        tap = null
+        wantRecord = false
+        if (!wantListen) shutdownMic()
+    }
+
+    @SuppressLint("MissingPermission") // vérifiée par `granted`
+    private fun ensureMic() {
         if (running || !granted) return
         val min = AudioRecord.getMinBufferSize(RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         val r = runCatching {
@@ -77,7 +122,7 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
                 AudioFormat.ENCODING_PCM_16BIT,
                 maxOf(
                     min,
-                    Vad.BLOCK * 2 * 8
+                    Vad.BLOCK * 16
                 )
             )
         }.getOrNull()
@@ -98,7 +143,8 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
         running = true
         r.startRecording()
         _status.value = AudioStatus.RUNNING
-        val listener = Listener(template)
+        // La phrase secrète n'est cherchée que si l'écoute est voulue (pas pendant un simple enregistrement).
+        val listener = Listener(if (wantListen) template else null)
         thread = Thread({ loop(r, listener) }, "cr-audio").apply {
             priority = Thread.NORM_PRIORITY + 1
             start()
@@ -111,6 +157,8 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
             while (running) {
                 val n = r.read(block, 0, block.size)
                 if (n < block.size) continue
+                preBuffer.write(block)
+                tap?.invoke(block)
                 listener.push(block)?.let { _signals.tryEmit(it) }
             }
         } finally {
@@ -119,9 +167,13 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
         }
     }
 
+    private fun restartMic() {
+        shutdownMic(keepPreBuffer = true)
+        ensureMic()
+    }
+
     /** Arrêt : le fil sort de `read` dès que l'enregistrement s'arrête ; tampons mis à zéro (R-AE-01). */
-    @Synchronized
-    fun stop() {
+    private fun shutdownMic(keepPreBuffer: Boolean = false) {
         if (!running) return
         running = false
         record?.let { r ->
@@ -133,16 +185,15 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
         record = null
         callback = null
         thread = null
+        if (!keepPreBuffer) preBuffer.clear()
         _status.value = AudioStatus.STOPPED
     }
 
     /** Relance avec une nouvelle empreinte (après l'enrôlement ou la suppression), si l'écoute tournait. */
     @Synchronized
     fun restartWith(template: PhraseTemplate?) {
-        val wasRunning = running
-        stop()
         this.template = template
-        if (wasRunning) start(template)
+        if (running) restartMic()
     }
 
     /**
@@ -153,12 +204,9 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
     @SuppressLint("MissingPermission")
     fun recordUtterance(timeoutMs: Long, level: (Double) -> Unit): ShortArray? {
         if (!granted) return null
-        val wasRunning: Boolean
-        val keep: PhraseTemplate?
         synchronized(this) {
-            wasRunning = running
-            keep = template
-            stop()
+            if (wantRecord) return null // jamais pendant l'enregistrement d'une preuve
+            shutdownMic()
         }
         val min = AudioRecord.getMinBufferSize(RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         val r =
@@ -189,7 +237,7 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
             r.release()
             block.fill(0)
             vad.reset()
-            if (wasRunning) start(keep)
+            synchronized(this) { if (wantListen) ensureMic() }
         }
         return result
     }

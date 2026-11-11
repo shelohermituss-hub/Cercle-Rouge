@@ -455,6 +455,10 @@ private fun RetentionStep(ui: OnboardingUi, vm: OnboardingViewModel) {
             }
         }
     }
+    // Q23 : avis sur l'enregistrement (autres voix possibles, valeur en justice non garantie, interrupteur au coffre-fort).
+    PxPanel(Modifier.fillMaxWidth(), border = c.warn) {
+        Text(stringResource(R.string.retention_recording_notice), style = PxType.caption)
+    }
     // ADR-0017 : aucune option présélectionnée, « Continuer » reste désactivé tant que rien n'est choisi.
     PxButton(stringResource(R.string.action_continue), { vm.goTo(Step.PIN) }, icon = PixelIcon.ARROW_RIGHT, enabled = ui.retention != null)
 }

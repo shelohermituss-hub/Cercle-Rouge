@@ -10,6 +10,8 @@
 | Extrait audio et enregistrements | Niveau ≥ 2 ou à la demande | Téléphone (chiffré) ; serveur si partagé | Proches désignés | 24 h par défaut (7 ou 30 j en option) | Consentement ; intérêts vitaux en urgence |
 | Vidéo | Sur demande ou niveau 3 si activée | Idem | Idem | Idem | Consentement |
 | Position | Armé Full, trajet, alerte | Téléphone ; serveur pendant un trajet suivi ou une alerte | Proches (alerte ou trajet partagé) | Trajet : ≤ 1 h après la fin sur le serveur ; alerte : rétention des preuves | Consentement |
+| Lieux favoris (trajet) | Ajout par l'utilisateur | Téléphone seulement (base chiffrée) | Personne | Jusqu'à suppression | Consentement |
+| Texte de recherche d'adresse | Recherche, **après accord** | Transit | Google (géocodeur Android), jamais la position | Selon Google | Consentement (ADR-0019) |
 | Contacts de confiance | Configuration | Téléphone + serveur (numéro chiffré) | Passerelles SMS et appel (sous-traitants) | Jusqu'à suppression | Consentement de l'utilisateur **et** du contact |
 | Phrase secrète (empreinte) | Enrôlement | Téléphone seulement (chiffré) | Personne | Jusqu'à suppression | Consentement |
 | Profil (prénom, langue, pays, profil de vulnérabilité) | Onboarding | Téléphone ; serveur (prénom, langue) | Proches (prénom) | Durée du compte | Contrat ou consentement |
@@ -21,7 +23,7 @@
 
 ## Sous-traitants prévus (❓ à choisir)
 
-Supabase (hébergement, base, stockage, région à confirmer) · passerelle SMS (couverture Digicel et Natcom) · téléphonie (appel automatisé) · Firebase Cloud Messaging (Google) · OpenFreeMap (tuiles de carte : voit l'IP et la zone affichée, jamais la position ; ADR-0018) · ❓ autorité d'horodatage · ❓ WhatsApp Business Platform (Meta).
+Supabase (hébergement, base, stockage, région à confirmer) · passerelle SMS (couverture Digicel et Natcom) · téléphonie (appel automatisé) · Firebase Cloud Messaging (Google) · OpenFreeMap (tuiles de carte : voit l'IP et la zone affichée, jamais la position ; ADR-0018) · Google, géocodeur Android (texte tapé dans la recherche d'adresse, seulement après accord ; ADR-0019) · ❓ autorité d'horodatage · ❓ WhatsApp Business Platform (Meta).
 
 Chaque sous-traitant doit faire l'objet d'un contrat de traitement des données, et ses transferts hors UE doivent être identifiés.
 

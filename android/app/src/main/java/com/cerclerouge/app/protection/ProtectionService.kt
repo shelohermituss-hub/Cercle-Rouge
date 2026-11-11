@@ -1,5 +1,6 @@
 package com.cerclerouge.app.protection
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -7,6 +8,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
@@ -43,12 +45,7 @@ class ProtectionService : Service() {
         getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(CHANNEL, getString(R.string.channel_status), NotificationManager.IMPORTANCE_LOW)
         )
-        // Le type « special use » n'existe qu'à partir d'Android 14 ; avant, passer un type inconnu ferait planter le démarrage.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(NOTIFICATION_ID, build(alert = false), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        } else {
-            startForeground(NOTIFICATION_ID, build(alert = false))
-        }
+        startForegroundTyped()
         scope.launch {
             controller.ensureRestored()
             controller.state.map { it.protection }.collect { p ->
@@ -58,6 +55,29 @@ class ProtectionService : Service() {
                     getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, build(alert = p.isAlert))
                 }
             }
+        }
+    }
+
+    /**
+     * Type de service selon la version d'Android et les autorisations. Depuis Android 14, démarrer un service de type `location`
+     * sans autorisation de position lève une SecurityException : on n'ajoute le type qu'avec l'autorisation. Le type « special use »
+     * n'existe qu'à partir d'Android 14 ; avant, un type inconnu ferait planter le démarrage.
+     */
+    private fun startForegroundTyped() {
+        val notification = build(alert = false)
+        val location = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE -> {
+                val type = if (location) {
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                } else {
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                }
+                startForeground(NOTIFICATION_ID, notification, type)
+            }
+            location -> startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+            else -> startForeground(NOTIFICATION_ID, notification)
         }
     }
 

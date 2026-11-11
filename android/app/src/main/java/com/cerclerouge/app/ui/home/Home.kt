@@ -143,6 +143,7 @@ fun HomeScreen(
     vm: HomeViewModel,
     onJournal: () -> Unit,
     onContacts: () -> Unit,
+    onTrip: () -> Unit = {},
     sosRequested: Boolean = false,
     onSosConsumed: () -> Unit = {}
 ) {
@@ -232,6 +233,7 @@ fun HomeScreen(
                 onSoon = { toast(context, soon) },
                 contactsReady = contactsReady,
                 onContacts = onContacts,
+                onTrip = onTrip,
                 onSosTrigger = { sos = SosStep.COUNTDOWN },
                 onSosTap = { sos = SosStep.HOLD },
                 nav = listOf(
@@ -265,6 +267,7 @@ internal fun HomeConsole(
     onSoon: () -> Unit,
     contactsReady: Int,
     onContacts: () -> Unit,
+    onTrip: () -> Unit = onSoon,
     onSosTrigger: () -> Unit,
     onSosTap: () -> Unit,
     nav: List<NavItem>,
@@ -275,6 +278,7 @@ internal fun HomeConsole(
     // P4 : la position n'est lue que protection active et autorisation accordée.
     val showMe = armed && state.locationGranted
     val listening = armed && state.micGranted
+    val trip = state.protection == com.cerclerouge.domain.ProtectionState.TRIP_ACTIVE
     val discA11y = stringResource(if (armed) R.string.home_disc_a11y_on else R.string.home_disc_a11y_off)
     // Coupée : tout est en noir et blanc. Active : la couleur revient (carte, disque, satellites).
     val accent = if (armed) c.lime else c.muted
@@ -345,9 +349,10 @@ internal fun HomeConsole(
                 Satellite(
                     PixelIcon.ARROW_RIGHT,
                     stringResource(R.string.home_row_trip),
-                    stringResource(R.string.sat_trip_none),
+                    stringResource(if (trip) R.string.sat_trip_active else R.string.sat_trip_none),
                     armed,
-                    onSoon
+                    onTrip,
+                    active = trip
                 )
             }
             Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -589,7 +594,7 @@ private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, onSafe: () ->
  * ou croix (nouvel essai).
  */
 @Composable
-private fun PinDialog(onDismiss: () -> Unit, verify: suspend (String) -> Boolean, onDone: () -> Unit) {
+internal fun PinDialog(onDismiss: () -> Unit, verify: suspend (String) -> Boolean, onDone: () -> Unit) {
     val c = Cr.colors
     val scope = rememberCoroutineScope()
     var pin by remember { mutableStateOf("") }
@@ -632,7 +637,7 @@ private fun PinDialog(onDismiss: () -> Unit, verify: suspend (String) -> Boolean
 
 private fun toast(context: Context, text: String) = Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
 
-private fun RejectReason.message(): Int = when (this) {
+internal fun RejectReason.message(): Int = when (this) {
     RejectReason.CONSENT_REQUIRED -> R.string.reject_consent
     RejectReason.NO_SENSOR -> R.string.reject_sensor
     RejectReason.PIN_REQUIRED -> R.string.reject_pin

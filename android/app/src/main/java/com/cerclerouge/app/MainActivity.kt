@@ -34,6 +34,7 @@ import com.cerclerouge.alert.Input
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.sos.SosIntents
+import com.cerclerouge.app.trip.TripController
 import com.cerclerouge.app.ui.components.Orb
 import com.cerclerouge.app.ui.contacts.ContactsScreen
 import com.cerclerouge.app.ui.contacts.ContactsViewModel
@@ -45,6 +46,8 @@ import com.cerclerouge.app.ui.onboarding.OnboardingViewModel
 import com.cerclerouge.app.ui.theme.CercleRougeTheme
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
+import com.cerclerouge.app.ui.trip.TripScreen
+import com.cerclerouge.app.ui.trip.TripViewModel
 import com.cerclerouge.privacy.Settings
 import com.cerclerouge.privacy.log.EventLog
 import com.valentinerutto.orbmotion.orbs.OrbState
@@ -57,10 +60,12 @@ class AppViewModel @Inject constructor(
     val settings: Settings,
     val account: AccountRepository,
     val log: EventLog,
-    val controller: ProtectionController
+    val controller: ProtectionController,
+    // Instancié dès le démarrage : il suit l'état de la protection.
+    val trips: TripController
 ) : ViewModel()
 
-private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS }
+private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP }
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -68,6 +73,7 @@ class MainActivity : ComponentActivity() {
     private val onboarding: OnboardingViewModel by viewModels()
     private val home: HomeViewModel by viewModels()
     private val contacts: ContactsViewModel by viewModels()
+    private val trip: TripViewModel by viewModels()
     private val sosRequested = androidx.compose.runtime.mutableStateOf(false)
 
     override fun onNewIntent(intent: Intent) {
@@ -102,12 +108,17 @@ class MainActivity : ComponentActivity() {
                             home,
                             onJournal = { screen = Screen.JOURNAL },
                             onContacts = { screen = Screen.CONTACTS },
+                            onTrip = { screen = Screen.TRIP },
                             sosRequested = sosRequested.value,
                             onSosConsumed = { sosRequested.value = false }
                         )
                         Screen.CONTACTS -> {
                             BackHandler { screen = Screen.HOME }
                             Box(Modifier.safeDrawingPadding()) { ContactsScreen(contacts) { screen = Screen.HOME } }
+                        }
+                        Screen.TRIP -> {
+                            BackHandler { screen = Screen.HOME }
+                            Box(Modifier.safeDrawingPadding()) { TripScreen(trip) { screen = Screen.HOME } }
                         }
                         Screen.JOURNAL -> {
                             BackHandler { screen = Screen.HOME }

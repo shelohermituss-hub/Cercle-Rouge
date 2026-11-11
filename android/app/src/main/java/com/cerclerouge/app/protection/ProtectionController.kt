@@ -6,11 +6,14 @@ import com.cerclerouge.alert.Effect
 import com.cerclerouge.alert.EngineState
 import com.cerclerouge.alert.EngineStateCodec
 import com.cerclerouge.alert.Input
+import com.cerclerouge.alert.LocationProfile
 import com.cerclerouge.alert.Policy
 import com.cerclerouge.alert.RejectReason
 import com.cerclerouge.alert.Timer
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.alert.AlertDispatcher
+import com.cerclerouge.app.location.LocationTracker
+import com.cerclerouge.location.TrackingProfile
 import com.cerclerouge.privacy.db.PrivacyDatabase
 import com.cerclerouge.privacy.db.SettingEntity
 import com.cerclerouge.privacy.log.EventLog
@@ -56,6 +59,7 @@ class ProtectionController @Inject constructor(
     private val clock: Clock,
     private val alarms: AlarmTimers,
     private val dispatcher: AlertDispatcher,
+    private val tracker: LocationTracker,
     db: PrivacyDatabase
 ) {
     private val settings = db.settings()
@@ -142,7 +146,16 @@ class ProtectionController @Inject constructor(
                 // L'envoi (position jusqu'à 10 s, SMS, nouvelles tentatives) ne bloque ni le moteur ni les autres effets.
                 scope.launch { dispatcher.onDispatch(effect.alert, effect.kind) }
             }
-            is Effect.ConfigureEngines -> log.append("engines", "audio=${effect.audio} location=${effect.location}")
+            is Effect.ConfigureEngines -> {
+                log.append("engines", "audio=${effect.audio} location=${effect.location}")
+                // Le suivi de position n'existe que dans les états qui l'autorisent (R-TRIP-01) : arrêté dans tous les autres.
+                when (effect.location) {
+                    LocationProfile.ARMED -> tracker.start(TrackingProfile.ARMED)
+                    LocationProfile.TRIP -> tracker.start(TrackingProfile.TRIP)
+                    LocationProfile.EMERGENCY -> tracker.start(TrackingProfile.EMERGENCY)
+                    null -> tracker.stop()
+                }
+            }
             is Effect.StartRecording, is Effect.StopRecording,
             is Effect.ShowVerification, Effect.DismissVerification
             -> Unit

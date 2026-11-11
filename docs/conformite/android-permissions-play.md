@@ -10,7 +10,7 @@
 | `FOREGROUND_SERVICE` | Normale | `ProtectionService` | — |
 | `FOREGROUND_SERVICE_SPECIAL_USE` | Normale (API 34+) | Type provisoire du `ProtectionService` au Sprint 2 (aucun micro ni position encore) ; remplacé par `microphone` et `location` aux Sprints 4 et 5 | Déclaration du type « usage spécial » et de sa justification (propriété `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`) dans la Play Console, à retirer ensuite |
 | `FOREGROUND_SERVICE_MICROPHONE` | Normale (API 34+) | Type de service `microphone` | Déclaration des types de service dans la Play Console |
-| `FOREGROUND_SERVICE_LOCATION` | Normale (API 34+) | Type de service `location` | Idem |
+| `FOREGROUND_SERVICE_LOCATION` | Normale (API 34+) | Type de service `location` : **déclaré au Sprint 4** (`specialUse\|location`), demandé au démarrage du service seulement si la localisation est accordée ; suivi du trajet écran éteint sans position en arrière-plan (ADR-0019) | Déclaration du type `location` dans la Play Console, avec vidéo du trajet protégé |
 | `FOREGROUND_SERVICE_CAMERA` | Normale (API 34+) | Vidéo de preuve | Idem |
 | `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION` | Dangereuses | Trajet, position d'alerte ; point sur la carte d'accueil, protection active et premier plan seulement (ADR-0018) | Formulaire de déclaration de la localisation si nécessaire |
 | `POST_NOTIFICATIONS` | Dangereuse (API 33+) | Vérification, état | — |
@@ -20,6 +20,7 @@
 | `VIBRATE`, `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED` | Normales | Vibration ; minuteries ; rappel « réarmer » après redémarrage | — |
 | `USE_BIOMETRIC` | Normale | Coffre-fort, désarmement | — |
 | `INTERNET`, `ACCESS_NETWORK_STATE` | Normales | Sync ; tuiles de la carte d'accueil (OpenFreeMap) | — |
+| Google Play Services (`play-services-location`) | Bibliothèque, pas une permission | Fused Location ; repli `LocationManager` sans Play Services (ADR-0019) | Section « Sécurité des données » : SDK Google déclaré |
 | ~~`ACCESS_BACKGROUND_LOCATION`~~ | — | **Non demandée** (ADR-0006) | — |
 | ~~`READ_CONTACTS`~~ | — | Remplacée par le sélecteur système | — |
 | ~~`SYSTEM_ALERT_WINDOW`, accessibilité, admin d'appareil~~ | — | **Interdites** dans ce projet (N9, R-SEC-04) | — |

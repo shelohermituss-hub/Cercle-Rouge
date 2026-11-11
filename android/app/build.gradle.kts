@@ -54,6 +54,7 @@ dependencies {
     implementation(project(":alert-engine"))
     implementation(project(":privacy-engine"))
     implementation(project(":contacts-engine"))
+    implementation(project(":location-engine"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
@@ -67,6 +68,8 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.biometric)
     implementation(libs.maplibre)
+    // Position fusionnée de Google (batterie, précision) ; repli LocationManager sans services Google (Q15, ADR-0019).
+    implementation(libs.play.services.location)
     // Orbes animées (MIT, portage de « Thinking Orbs »). NON transitive : sa description tire Compose Multiplatform et
     // Material3 1.5 alpha, qui écrasaient nos versions et faisaient planter les champs de texte (NoSuchElementException).
     implementation(libs.orbmotion) { isTransitive = false }

@@ -21,6 +21,7 @@ androidxTestRunner = "1.7.0"
 ktlint = "14.2.0"
 robolectric = "4.17"
 maplibre = "13.7.1"
+playServicesLocation = "21.4.0"
 orbmotion = "1.0.1"
 
 [libraries]
@@ -51,6 +52,7 @@ coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", ve
 serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 junit = { module = "junit:junit", version.ref = "junit" }
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 orbmotion = { module = "io.github.valentinerutto:orbmotion", version.ref = "orbmotion" }
 maplibre = { module = "org.maplibre.gl:android-sdk", version.ref = "maplibre" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }

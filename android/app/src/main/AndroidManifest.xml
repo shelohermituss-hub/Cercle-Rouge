@@ -19,6 +19,8 @@
     <!-- Service de premier plan de la protection (S2.04) ; type « special use » jusqu'aux moteurs micro et position (S4, S5). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Suivi de position du trajet en arrière-plan (S4.02) ; jamais d'ACCESS_BACKGROUND_LOCATION (ADR-0006). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <!-- Après un redémarrage : restaurer l'état et inviter à réarmer (R-SM-08). -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
@@ -38,7 +40,7 @@
         <service
             android:name=".protection.ProtectionService"
             android:exported="false"
-            android:foregroundServiceType="specialUse">
+            android:foregroundServiceType="specialUse|location">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Protection de sécurité personnelle : maintient l'application active pour envoyer l'alerte et gérer les minuteries de vérification" />

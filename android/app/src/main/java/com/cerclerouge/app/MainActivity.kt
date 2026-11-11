@@ -33,6 +33,7 @@ import androidx.lifecycle.ViewModel
 import com.cerclerouge.alert.Input
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.protection.ProtectionController
+import com.cerclerouge.app.sos.SosIntents
 import com.cerclerouge.app.ui.components.Orb
 import com.cerclerouge.app.ui.contacts.ContactsScreen
 import com.cerclerouge.app.ui.contacts.ContactsViewModel
@@ -67,10 +68,19 @@ class MainActivity : ComponentActivity() {
     private val onboarding: OnboardingViewModel by viewModels()
     private val home: HomeViewModel by viewModels()
     private val contacts: ContactsViewModel by viewModels()
+    private val sosRequested = androidx.compose.runtime.mutableStateOf(false)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra(SosIntents.EXTRA_SOS, false)) sosRequested.value = true
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        setShowWhenLocked(true) // le SOS de la tuile, du widget ou de la notification s'ouvre par-dessus l'écran verrouillé
+        sosRequested.value = intent.getBooleanExtra(SosIntents.EXTRA_SOS, false)
         setContent {
             CercleRougeTheme {
                 var screen by remember { mutableStateOf(Screen.LOADING) }
@@ -88,7 +98,13 @@ class MainActivity : ComponentActivity() {
                             onSos = { app.controller.send { Input.Sos(it) } },
                             onDone = { screen = Screen.HOME }
                         )
-                        Screen.HOME -> HomeScreen(home, onJournal = { screen = Screen.JOURNAL }, onContacts = { screen = Screen.CONTACTS })
+                        Screen.HOME -> HomeScreen(
+                            home,
+                            onJournal = { screen = Screen.JOURNAL },
+                            onContacts = { screen = Screen.CONTACTS },
+                            sosRequested = sosRequested.value,
+                            onSosConsumed = { sosRequested.value = false }
+                        )
                         Screen.CONTACTS -> {
                             BackHandler { screen = Screen.HOME }
                             Box(Modifier.safeDrawingPadding()) { ContactsScreen(contacts) { screen = Screen.HOME } }

@@ -11,9 +11,9 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.content.ContextCompat
-import com.cerclerouge.alert.Input
 import com.cerclerouge.app.MainActivity
 import com.cerclerouge.app.R
+import com.cerclerouge.app.sos.SosIntents
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -61,10 +61,7 @@ class ProtectionService : Service() {
         }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_SOS) controller.send { Input.Sos(it) }
-        return START_STICKY
-    }
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
 
     override fun onDestroy() {
         scope.cancel()
@@ -73,12 +70,7 @@ class ProtectionService : Service() {
 
     private fun build(alert: Boolean): Notification {
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
-        val sos = PendingIntent.getService(
-            this,
-            1,
-            Intent(this, ProtectionService::class.java).setAction(ACTION_SOS),
-            PendingIntent.FLAG_IMMUTABLE
-        )
+        val sos = SosIntents.pending(this, 13) // compte à rebours de 5 s, annulable : pas d'envoi direct
         // Écran verrouillé : version publique neutre, sans le mot « protection » ni « alerte » (R-SEC-06).
         val public = Notification.Builder(
             this,
@@ -100,7 +92,6 @@ class ProtectionService : Service() {
     companion object {
         private const val CHANNEL = "protection_service"
         private const val NOTIFICATION_ID = 4100
-        private const val ACTION_SOS = "com.cerclerouge.app.SOS"
 
         /** À appeler depuis l'application au premier plan (Android 12+ interdit de démarrer un service depuis l'arrière-plan). */
         fun start(context: Context) = ContextCompat.startForegroundService(context, Intent(context, ProtectionService::class.java))

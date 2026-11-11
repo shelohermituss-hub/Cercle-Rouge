@@ -41,7 +41,7 @@ class OutboxTest {
 
     @Test fun jobsNotYetDueOrFinishedAreSkipped() {
         val waiting = Outbox.failed(job("a"), t0) // prochaine tentative dans 2 s
-        val done = Outbox.succeeded(job("b"))
+        val done = Outbox.succeeded(job("b"), t0)
         assertEquals(emptyList(), Outbox.due(listOf(waiting, done), t0.plusSeconds(1)))
         assertEquals(listOf("a"), Outbox.due(listOf(waiting, done), t0.plusSeconds(2)).map { it.contactId })
     }
@@ -61,9 +61,21 @@ class OutboxTest {
 
     @Test fun nextWakeUpIsTheEarliestPendingAttempt() {
         assertNull(Outbox.nextWakeUp(emptyList()))
-        assertNull(Outbox.nextWakeUp(listOf(Outbox.succeeded(job()))))
+        assertNull(Outbox.nextWakeUp(listOf(Outbox.succeeded(job(), t0))))
         val q = listOf(Outbox.failed(job("a"), t0), job("b", at = t0.plusSeconds(1)))
         assertEquals(t0.plusSeconds(1), Outbox.nextWakeUp(q))
+    }
+
+    @Test fun successKeepsTheSendTimeForAntiSpam() {
+        assertEquals(t0.plusSeconds(9), Outbox.succeeded(job(), t0.plusSeconds(9)).nextAttemptAt)
+    }
+
+    @Test fun reopenedAfterSentFailureWaitsThenRetries() {
+        val sent = Outbox.succeeded(job(), t0)
+        val r = Outbox.reopened(sent, t0.plusSeconds(3))
+        assertEquals(JobState.PENDING, r.state)
+        assertEquals(t0.plusSeconds(5), r.nextAttemptAt)
+        assertEquals(JobState.GAVE_UP, Outbox.gaveUp(job()).state)
     }
 
     @Test fun keyIsStablePerAlertContactChannelAndKind() {

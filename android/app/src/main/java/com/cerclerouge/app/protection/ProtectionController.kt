@@ -10,6 +10,7 @@ import com.cerclerouge.alert.Policy
 import com.cerclerouge.alert.RejectReason
 import com.cerclerouge.alert.Timer
 import com.cerclerouge.app.account.AccountRepository
+import com.cerclerouge.app.alert.AlertDispatcher
 import com.cerclerouge.privacy.db.PrivacyDatabase
 import com.cerclerouge.privacy.db.SettingEntity
 import com.cerclerouge.privacy.log.EventLog
@@ -54,6 +55,7 @@ class ProtectionController @Inject constructor(
     private val notifier: Notifier,
     private val clock: Clock,
     private val alarms: AlarmTimers,
+    private val dispatcher: AlertDispatcher,
     db: PrivacyDatabase
 ) {
     private val settings = db.settings()
@@ -135,7 +137,11 @@ class ProtectionController @Inject constructor(
             is Effect.OpenEmergencyDialer -> _events.emit(UiEvent.OpenEmergencyDialer)
             is Effect.Rejected -> _events.emit(UiEvent.Rejected(effect.reason))
             // Envoi aux proches (S2–S3), moteurs micro et position (S2, S4, S5), preuves (S6) : journalisés en attendant.
-            is Effect.Dispatch -> log.append("dispatch", "${effect.kind} ${effect.alert?.id.orEmpty()}")
+            is Effect.Dispatch -> {
+                log.append("dispatch", "${effect.kind} ${effect.alert?.id.orEmpty()}")
+                // L'envoi (position jusqu'à 10 s, SMS, nouvelles tentatives) ne bloque ni le moteur ni les autres effets.
+                scope.launch { dispatcher.onDispatch(effect.alert, effect.kind) }
+            }
             is Effect.ConfigureEngines -> log.append("engines", "audio=${effect.audio} location=${effect.location}")
             is Effect.StartRecording, is Effect.StopRecording,
             is Effect.ShowVerification, Effect.DismissVerification

@@ -141,6 +141,9 @@ interface OutboxDao {
     @Query("SELECT * FROM outbox ORDER BY createdAtMillis, `key`")
     suspend fun all(): List<OutboxEntity>
 
+    @Query("SELECT * FROM outbox WHERE `key` = :key")
+    suspend fun get(key: String): OutboxEntity?
+
     @Query("UPDATE outbox SET attempts = :attempts, nextAttemptAtMillis = :next, state = :state WHERE `key` = :key")
     suspend fun update(key: String, attempts: Int, next: Long, state: String)
 

@@ -52,7 +52,14 @@ object Outbox {
         .filter { it.state == JobState.PENDING && it.nextAttemptAt <= now }
         .sortedWith(compareBy<OutboxJob> { it.priority }.thenBy { it.createdAt }.thenBy { it.key })
 
-    fun succeeded(job: OutboxJob) = job.copy(state = JobState.DONE)
+    /** Envoi réussi : `nextAttemptAt` garde l'heure d'envoi, qui sert à l'anti-spam. */
+    fun succeeded(job: OutboxJob, now: Instant) = job.copy(state = JobState.DONE, nextAttemptAt = now)
+
+    /** Abandon immédiat (plafond atteint : inutile de réessayer). */
+    fun gaveUp(job: OutboxJob) = job.copy(state = JobState.GAVE_UP)
+
+    /** Le rapport d'envoi de l'opérateur annonce un échec après coup : l'envoi redevient à faire, avec attente. */
+    fun reopened(job: OutboxJob, now: Instant) = failed(job.copy(state = JobState.PENDING), now)
 
     /** Échec : on programme la tentative suivante, ou on abandonne après [MAX_ATTEMPTS]. */
     fun failed(job: OutboxJob, now: Instant): OutboxJob {

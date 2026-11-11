@@ -139,7 +139,13 @@ private enum class SosStep { NONE, HOLD, COUNTDOWN }
  * L'écran d'urgence remplace l'accueil tant qu'une alerte est ouverte.
  */
 @Composable
-fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit, onContacts: () -> Unit) {
+fun HomeScreen(
+    vm: HomeViewModel,
+    onJournal: () -> Unit,
+    onContacts: () -> Unit,
+    sosRequested: Boolean = false,
+    onSosConsumed: () -> Unit = {}
+) {
     val c = Cr.colors
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -162,6 +168,13 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit, onContacts: () -> Unit)
         vm.controller.send { Input.Arm(it) }
     }
 
+    // SOS demandé par la tuile, le widget ou la notification : on passe directement au compte à rebours de 5 s, annulable.
+    LaunchedEffect(sosRequested) {
+        if (sosRequested) {
+            sos = SosStep.COUNTDOWN
+            onSosConsumed()
+        }
+    }
     // Le service de premier plan tourne tant que la protection n'est pas OFF (il s'arrête seul au retour à OFF).
     LaunchedEffect(state.protection) {
         if (state.protection != com.cerclerouge.domain.ProtectionState.OFF) ProtectionService.start(context)

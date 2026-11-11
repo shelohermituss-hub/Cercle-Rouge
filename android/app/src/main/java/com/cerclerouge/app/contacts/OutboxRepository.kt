@@ -27,12 +27,19 @@ class OutboxRepository @Inject constructor(db: PrivacyDatabase) {
     /** Envois à tenter maintenant, les plus urgents d'abord. */
     suspend fun due(now: Instant): List<OutboxJob> = Outbox.due(all(), now)
 
-    suspend fun succeeded(job: OutboxJob) = save(Outbox.succeeded(job))
+    suspend fun succeeded(job: OutboxJob, now: Instant) = save(Outbox.succeeded(job, now))
 
     suspend fun failed(job: OutboxJob, now: Instant) = save(Outbox.failed(job, now))
 
     /** Prochain réveil nécessaire pour vider la file, ou null. */
     suspend fun nextWakeUp(): Instant? = Outbox.nextWakeUp(all())
+
+    suspend fun gaveUp(job: OutboxJob) = save(Outbox.gaveUp(job))
+
+    /** Rapport d'envoi négatif reçu après coup : l'envoi redevient à faire. */
+    suspend fun reopen(key: String, now: Instant) {
+        dao.get(key)?.toJob()?.let { save(Outbox.reopened(it, now)) }
+    }
 
     suspend fun all(): List<OutboxJob> = dao.all().map { it.toJob() }
 

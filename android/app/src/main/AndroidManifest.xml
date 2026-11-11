@@ -13,6 +13,9 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- SMS d'alerte envoyé par le téléphone (S2.07). Permission restreinte par Play (ADR-0005) : repli SMS pré-rempli si absente. -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
     <!-- Service de premier plan de la protection (S2.04) ; type « special use » jusqu'aux moteurs micro et position (S4, S5). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
@@ -43,6 +46,30 @@
         <receiver
             android:name=".protection.TimerReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".alert.SmsStatusReceiver"
+            android:exported="false" />
+        <!-- SOS en un geste (S2.13) : tuile de réglages rapides et widget ouvrent le compte à rebours de 5 s. -->
+        <service
+            android:name=".sos.SosTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_notification"
+            android:label="@string/sos"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        <receiver
+            android:name=".sos.SosWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/sos_widget_info" />
+        </receiver>
         <receiver
             android:name=".protection.BootReceiver"
             android:exported="true">

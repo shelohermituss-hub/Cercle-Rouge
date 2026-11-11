@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https://tile.openstreetmap.org; connect-src https://lvxdpmjyeelrxfbrtvay.supabase.co; base-uri 'none'; form-action 'none'">
+<meta name="theme-color" content="#121416">
+<title>Cercle Rouge · Suivi</title>
+<link rel="stylesheet" href="vendor/leaflet.css">
+<link rel="stylesheet" href="track.css">
+</head>
+<body>
+<header class="top">
+  <span class="logo" aria-hidden="true"></span>
+  <strong>Cercle Rouge</strong>
+  <nav class="langs" aria-label="Langue">
+    <button type="button" data-lang="fr">FR</button>
+    <button type="button" data-lang="ht">HT</button>
+    <button type="button" data-lang="en">EN</button>
+  </nav>
+</header>
+
+<main id="app">
+  <section id="banner" class="banner wait" role="status" aria-live="polite">
+    <h1 id="title" data-i18n="loading">Chargement…</h1>
+    <p id="subtitle"></p>
+  </section>
+
+  <section id="live" hidden>
+    <div id="map" class="map" role="img" aria-labelledby="pos-text"></div>
+    <p id="pos-text" class="muted"></p>
+    <p><a id="open-map" target="_blank" rel="noopener noreferrer" data-i18n="openMap">Ouvrir dans une application de carte</a></p>
+
+    <div class="actions">
+      <button type="button" id="act-contact" class="btn lime" data-i18n="tookContact">J'ai pris contact</button>
+      <a id="act-114" class="btn danger" href="tel:114" data-i18n="call114">Appeler les secours (114)</a>
+      <button type="button" id="act-false" class="btn outline" data-i18n="falseAlarm">C'est une fausse alerte</button>
+    </div>
+    <p id="act-msg" class="muted" role="status" aria-live="polite"></p>
+  </section>
+
+  <section id="history" hidden>
+    <h2 data-i18n="timeline">Chronologie</h2>
+    <ol id="events"></ol>
+  </section>
+
+  <p class="muted small" data-i18n="privacy">Ce lien est personnel et expire tout seul. La position n'est visible que pendant l'alerte.</p>
+</main>
+
+<script src="vendor/leaflet.js"></script>
+<script src="track.js"></script>
+</body>
+</html>

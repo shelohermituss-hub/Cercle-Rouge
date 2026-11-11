@@ -1,0 +1,58 @@
+:root {
+  --bg: #121416;
+  --raised: #1b1e21;
+  --ink: #e6e8ea;
+  --muted: #9ba1a8;
+  --line: #3a3f45;
+  --lime: #a0e705;
+  --on-lime: #0e1012;
+  --danger: #ff6b5a;
+  --warn: #ffd23f;
+  --red: #ed1b24;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body {
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  max-width: 640px; margin: 0 auto; padding: 0 16px 32px;
+}
+.top { display: flex; align-items: center; gap: 10px; padding: 14px 0; }
+.logo { width: 22px; height: 22px; border-radius: 50%; border: 4px solid var(--red); }
+.langs { margin-left: auto; display: flex; gap: 4px; }
+.langs button {
+  min-width: 44px; min-height: 44px; background: transparent; color: var(--muted);
+  border: 2px solid var(--line); font-weight: 700; cursor: pointer;
+}
+.langs button[aria-pressed="true"] { color: var(--lime); border-color: var(--lime); }
+.banner { padding: 16px; border: 2px solid var(--line); background: var(--raised); margin-bottom: 16px; }
+.banner h1 { font-size: 1.35rem; margin: 0 0 4px; line-height: 1.3; }
+.banner p { margin: 0; color: var(--muted); }
+.banner.alert { border-color: var(--danger); }
+.banner.alert h1 { color: var(--danger); }
+.banner.verify { border-color: var(--warn); }
+.banner.verify h1 { color: var(--warn); }
+.banner.done { border-color: var(--lime); }
+.banner.done h1 { color: var(--lime); }
+.map { height: 300px; border: 2px solid var(--line); background: #222; }
+.muted { color: var(--muted); }
+.small { font-size: .875rem; }
+a { color: var(--lime); }
+.actions { display: grid; gap: 10px; margin: 16px 0 8px; }
+.btn {
+  display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 16px;
+  font: inherit; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; text-align: center;
+  text-decoration: none; border: 2px solid transparent; cursor: pointer;
+}
+.btn:focus-visible, .langs button:focus-visible, a:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
+.btn.lime { background: var(--lime); color: var(--on-lime); }
+.btn.danger { background: var(--danger); color: var(--on-lime); }
+.btn.outline { background: var(--raised); color: var(--ink); border-color: var(--line); }
+.btn[disabled] { opacity: .5; cursor: default; }
+h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 24px 0 8px; }
+#events { list-style: none; padding: 0; margin: 0; border-left: 2px solid var(--line); }
+#events li { padding: 4px 0 4px 12px; }
+#events time { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 8px; }
+@media (prefers-reduced-motion: no-preference) {
+  .banner.alert { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 50% { border-color: var(--line); } }
+}

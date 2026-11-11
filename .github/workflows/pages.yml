@@ -1,0 +1,35 @@
+# Page de suivi des proches (S3.08) publiée sur GitHub Pages : https://shelohermituss-hub.github.io/Cercle-Rouge/#t=<jeton>
+# Le jeton est dans le fragment (#) : il n'est jamais envoyé à GitHub. Activer une fois : Settings → Pages → Source « GitHub Actions ».
+name: pages
+on:
+  push:
+    branches: [main, ccr-38a56721-9a8jjx]
+    paths: [web/track/**, .github/workflows/pages.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Taille de la page (< 200 Ko hors tuiles de carte)
+        run: |
+          size=$(du -cb web/track/index.html web/track/track.js web/track/track.css web/track/vendor/leaflet.js web/track/vendor/leaflet.css | tail -1 | cut -f1)
+          gz=$(cat web/track/index.html web/track/track.js web/track/track.css web/track/vendor/leaflet.js web/track/vendor/leaflet.css | gzip -9 | wc -c)
+          echo "brut=$size octets, gzip=$gz octets"
+          test "$gz" -lt 204800
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/track
+      - id: deployment
+        uses: actions/deploy-pages@v4

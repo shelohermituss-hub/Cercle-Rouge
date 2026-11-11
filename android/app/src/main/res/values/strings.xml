@@ -347,4 +347,23 @@
     <string name="contacts_invite_stopped">Ce numéro a demandé à ne plus recevoir de messages de Cercle Rouge.</string>
     <string name="contacts_invite_wait">Invitation déjà envoyée il y a peu. Réessaie dans une heure.</string>
     <string name="contacts_invite_failed">Envoi impossible. Vérifie la connexion et réessaie.</string>
+    <string name="guardian_err_phone">Numéro invalide.</string>
+    <string name="guardian_err_own">Ce numéro est le tien : choisis celui d\'un adulte.</string>
+    <string name="guardian_err_rate">Trop de demandes aujourd\'hui. Réessaie demain.</string>
+    <string name="guardian_err_network">Envoi impossible. Vérifie la connexion et réessaie.</string>
+    <string name="guardian_not_yet">Pas encore confirmé. L\'adulte doit installer Cercle Rouge et accepter.</string>
+    <string name="guardian_check">Vérifier la confirmation</string>
+    <string name="guardian_req_section">Adulte référent</string>
+    <string name="guardian_req_need_phone">Pour recevoir la demande d\'un jeune, vérifie d\'abord ton numéro (ci-dessus).</string>
+    <string name="guardian_req_load">Voir les demandes reçues</string>
+    <string name="guardian_req_reload">Actualiser</string>
+    <string name="guardian_req_none">Aucune demande pour ton numéro.</string>
+    <string name="guardian_req_item">%1$s te demande d\'être son adulte de confiance</string>
+    <string name="guardian_req_explain">Tu acceptes que sa protection automatique fonctionne. Tu ne verras aucune de ses données et tu pourras retirer ton accord.</string>
+    <string name="guardian_req_accept">Accepter</string>
+    <string name="guardian_req_refuse">Refuser</string>
+    <string name="guardian_req_accepted">Accord enregistré.</string>
+    <string name="guardian_req_refused">Refus enregistré.</string>
+    <string name="guardian_req_must_be_adult">Il faut être majeur (18 ans et plus) pour accepter.</string>
+    <string name="guardian_req_limit">Tu es déjà adulte référent de 6 jeunes au maximum.</string>
 </resources>

@@ -76,6 +76,7 @@ import com.cerclerouge.alert.EngineState
 import com.cerclerouge.alert.Input
 import com.cerclerouge.alert.RejectReason
 import com.cerclerouge.app.R
+import com.cerclerouge.app.account.GuardianSync
 import com.cerclerouge.app.contacts.ContactsRepository
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.protection.ProtectionService
@@ -126,12 +127,14 @@ class HomeViewModel @Inject constructor(
     val log: EventLog,
     val contacts: ContactsRepository,
     val server: ServerSync,
-    val security: SecuritySettings
+    val security: SecuritySettings,
+    private val guardians: GuardianSync
 ) : ViewModel() {
     init {
         viewModelScope.launch {
             contacts.load()
             contacts.applyServerStatuses(server.contactStatuses()) // accord des proches (accepté, refusé, STOP)
+            guardians.refresh() // 12–15 ans : l'adulte référent a-t-il confirmé ?
         }
     }
 

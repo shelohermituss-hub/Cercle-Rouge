@@ -334,6 +334,21 @@ select tests.expect(private.contact_invite_decide((select v from s3 where k = 'i
 select tests.expect(private.contact_invite_create(:'stranger', 'contact-0003', null, '+50932000002') is null, 'plus aucune invitation vers un numéro STOP');
 select tests.expect(not private.server_sms_allowed(:'guardian', (select v::uuid from s3 where k = 'g_alert'), '+50932000002'), 'plus aucun SMS serveur vers un numéro STOP');
 
+-- ===== S1.17 · Invitation SMS de l'adulte référent =====
+select tests.as_user(:'minor'); set local role authenticated;
+select tests.expect_error(format('select * from private.guardian_invite_target(%L)', :'minor'), '%permission denied%');
+reset role;
+select set_config('request.jwt.claims', '', true);
+update public.guardian_links set status = 'expired', guardian_phone = null where minor_id = :'minor' and status = 'pending';
+delete from public.rate_limits where user_id = :'minor' and action = 'guardian_invite';
+select tests.as_user(:'minor'); set local role authenticated;
+select public.request_guardian_consent('+50933000001', 'parent');
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect((select phone from private.guardian_invite_target(:'minor')) = '+50933000001', 'le SMS d''invitation part vers le numéro donné');
+select tests.expect(not exists (select 1 from private.guardian_invite_target(:'minor')), 'un seul SMS par demande');
+select tests.expect(not exists (select 1 from private.guardian_invite_target(:'stranger')), 'rien pour un compte sans demande');
+
 -- ===== Fonctions : jamais exécutables par anon ni par PUBLIC =====
 select tests.expect(
   not exists (

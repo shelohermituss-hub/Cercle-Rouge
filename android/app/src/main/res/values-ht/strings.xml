@@ -347,4 +347,23 @@
     <string name="contacts_invite_stopped">Nimewo sa a mande pou l pa resevwa mesaj Cercle Rouge ankò.</string>
     <string name="contacts_invite_wait">Ou fèk voye yon envitasyon. Eseye ankò nan inèdtan.</string>
     <string name="contacts_invite_failed">Pa ka voye l. Tcheke koneksyon an epi eseye ankò.</string>
+    <string name="guardian_err_phone">Nimewo a pa bon.</string>
+    <string name="guardian_err_own">Se nimewo pa w : chwazi nimewo yon granmoun.</string>
+    <string name="guardian_err_rate">Twòp demann jodi a. Eseye ankò demen.</string>
+    <string name="guardian_err_network">Pa ka voye l. Tcheke koneksyon an epi eseye ankò.</string>
+    <string name="guardian_not_yet">Poko konfime. Granmoun nan dwe enstale Cercle Rouge epi aksepte.</string>
+    <string name="guardian_check">Verifye konfimasyon an</string>
+    <string name="guardian_req_section">Granmoun referan</string>
+    <string name="guardian_req_need_phone">Pou w resevwa demann yon jèn, verifye nimewo w anvan (anwo a).</string>
+    <string name="guardian_req_load">Wè demann ou resevwa yo</string>
+    <string name="guardian_req_reload">Mete ajou</string>
+    <string name="guardian_req_none">Pa gen demann pou nimewo w.</string>
+    <string name="guardian_req_item">%1$s mande w pou w se granmoun li fè konfyans</string>
+    <string name="guardian_req_explain">Ou dakò pou pwoteksyon otomatik li mache. Ou p ap wè okenn done li epi ou ka retire dakò w.</string>
+    <string name="guardian_req_accept">Aksepte</string>
+    <string name="guardian_req_refuse">Refize</string>
+    <string name="guardian_req_accepted">Dakò a anrejistre.</string>
+    <string name="guardian_req_refused">Refi a anrejistre.</string>
+    <string name="guardian_req_must_be_adult">Fòk ou majè (18 an oswa plis) pou w aksepte.</string>
+    <string name="guardian_req_limit">Ou deja granmoun referan 6 jèn, se maksimòm nan.</string>
 </resources>

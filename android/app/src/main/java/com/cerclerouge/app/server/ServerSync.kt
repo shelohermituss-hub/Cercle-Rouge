@@ -30,6 +30,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONArray
 import org.json.JSONObject
 
+/** Demande d'accord reçue par un adulte référent. */
+data class GuardianRequest(val linkId: String, val minorName: String, val ageBand: String, val relationship: String)
+
 /** Réponse d'un proche, vue dans l'écran d'urgence. */
 data class ContactFeedback(val action: String, val label: String?, val at: Instant)
 
@@ -192,6 +195,56 @@ class ServerSync @Inject constructor(
                 else -> ContactStatus.PENDING
             }
         }
+    }
+
+    /**
+     * Jeune de 12 à 15 ans : demande l'accord d'un adulte référent (RPC request_guardian_consent) puis lui envoie le SMS
+     * d'invitation (Vonage). Null si c'est parti, sinon un code (`invalid_phone`, `own_phone`, `rate_limited`, `network`…).
+     */
+    suspend fun requestGuardian(phoneE164: String, relationship: String, lang: String): String? {
+        if (!api.configured) return "not_configured"
+        return try {
+            pushProfile()
+            api.rpc("request_guardian_consent", JSONObject().put("p_guardian_phone", phoneE164).put("p_relationship", relationship))
+            api.function("guardian-invite", JSONObject().put("lang", lang))
+            log.append("guardian", "request_sent")
+            null
+        } catch (e: ServerException) {
+            log.append("guardian", "request_failed ${e.code}")
+            e.code
+        }
+    }
+
+    /** Jeune : vrai si l'adulte référent a confirmé (protection automatique permise), null si le serveur est injoignable. */
+    suspend fun guardianConfirmed(): Boolean? {
+        if (!api.configured) return null
+        return quietly("guardian_status") { api.rpc("protection_allowed", JSONObject()) }?.trim()?.toBooleanStrictOrNull()
+    }
+
+    /** Adulte : demandes d'accord adressées à son numéro vérifié. */
+    suspend fun guardianRequests(): List<GuardianRequest>? {
+        if (!api.configured) return null
+        val body = quietly("guardian_requests") { api.rpc("pending_guardian_requests", JSONObject()) } ?: return null
+        val arr = JSONArray(body)
+        return (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            GuardianRequest(
+                o.getString("link_id"),
+                o.getString("minor_display_name"),
+                o.getString("minor_age_band"),
+                o.getString("relationship")
+            )
+        }
+    }
+
+    /** Adulte : accepte ou refuse (son profil d'adulte est d'abord envoyé au serveur). Null si c'est fait, sinon un code. */
+    suspend fun answerGuardian(linkId: String, accept: Boolean): String? = try {
+        pushProfile()
+        api.rpc("confirm_guardian_consent", JSONObject().put("p_link_id", linkId).put("p_accept", accept))
+        log.append("guardian", if (accept) "confirmed_by_me" else "refused_by_me")
+        null
+    } catch (e: ServerException) {
+        e.code
     }
 
     /** Suppression du compte serveur et de toutes ses données (S3.12). */

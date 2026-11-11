@@ -52,6 +52,8 @@ import com.cerclerouge.app.evidence.EvidenceSettings
 import com.cerclerouge.app.security.Biometric
 import com.cerclerouge.app.security.SecureScreen
 import com.cerclerouge.app.security.SecuritySettings
+import com.cerclerouge.app.server.GuardianRequest
+import com.cerclerouge.app.server.ServerSync
 import com.cerclerouge.app.server.SupabaseApi
 import com.cerclerouge.app.settings.DataControl
 import com.cerclerouge.app.ui.components.PixelIcon
@@ -85,7 +87,9 @@ data class SettingsUi(
     val message: Int? = null,
     val phone: String? = null,
     /** Numéro en attente du code reçu par SMS. */
-    val pendingPhone: String? = null
+    val pendingPhone: String? = null,
+    /** Demandes d'accord reçues en tant qu'adulte référent ; null = pas encore chargées. */
+    val guardianRequests: List<GuardianRequest>? = null
 )
 
 @HiltViewModel
@@ -95,6 +99,7 @@ class SettingsViewModel @Inject constructor(
     private val security: SecuritySettings,
     private val pins: PinRepository,
     private val api: SupabaseApi,
+    private val server: ServerSync,
     val data: DataControl
 ) : ViewModel() {
     private val _ui = MutableStateFlow(SettingsUi())
@@ -186,6 +191,43 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun cancelPhone() = _ui.update { it.copy(pendingPhone = null, message = null) }
+
+    /** Adulte référent : demandes reçues sur son numéro vérifié. */
+    fun loadGuardianRequests() = viewModelScope.launch {
+        _ui.update { it.copy(busy = true) }
+        val list = server.guardianRequests()
+        _ui.update {
+            it.copy(
+                busy = false,
+                guardianRequests = list ?: emptyList(),
+                message = if (list ==
+                    null
+                ) {
+                    R.string.settings_phone_failed
+                } else {
+                    null
+                }
+            )
+        }
+    }
+
+    fun answerGuardian(linkId: String, accept: Boolean) = viewModelScope.launch {
+        _ui.update { it.copy(busy = true) }
+        val error = server.answerGuardian(linkId, accept)
+        _ui.update {
+            it.copy(
+                busy = false,
+                message = when {
+                    error == null && accept -> R.string.guardian_req_accepted
+                    error == null -> R.string.guardian_req_refused
+                    error.contains("guardian_must_be_adult") -> R.string.guardian_req_must_be_adult
+                    error.contains("guardian_limit_reached") -> R.string.guardian_req_limit
+                    else -> R.string.settings_phone_failed
+                }
+            )
+        }
+        loadGuardianRequests()
+    }
 }
 
 private enum class Guarded { WIPE, DELETE, BIOMETRIC_ALERTS }
@@ -203,6 +245,7 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
     val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
     var guarded by remember { mutableStateOf<Guarded?>(null) }
+    var guardianAccept by remember { mutableStateOf<String?>(null) }
     var confirm by remember { mutableStateOf<Guarded?>(null) }
     var bioAvailable by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { bioAvailable = Biometric.available(activity) }
@@ -258,6 +301,9 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
 
             Section(R.string.settings_section_phone)
             PhoneSection(ui, vm)
+
+            Section(R.string.guardian_req_section)
+            GuardianRequests(ui, vm, onAccept = { guardianAccept = it })
 
             Section(R.string.settings_section_security)
             if (bioAvailable) {
@@ -330,6 +376,14 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
         }
     }
 
+    // Accepter d'être adulte référent : confirmé par le PIN (décision engageante).
+    guardianAccept?.let { linkId ->
+        PinDialog(onDismiss = { guardianAccept = null }, verify = { vm.pinOk(it) }, onDone = {
+            guardianAccept = null
+            vm.answerGuardian(linkId, accept = true)
+        })
+    }
+
     guarded?.let { what ->
         PinDialog(
             onDismiss = { guarded = null },
@@ -384,6 +438,41 @@ private fun PhoneSection(ui: SettingsUi, vm: SettingsViewModel) {
             PxButton(stringResource(R.string.action_cancel), { vm.cancelPhone() }, variant = PxVariant.OUTLINE)
         }
     }
+}
+
+/** Adulte référent (ADR-0013) : demandes reçues sur son numéro vérifié ; il ne verra aucune donnée du jeune. */
+@Composable
+private fun GuardianRequests(ui: SettingsUi, vm: SettingsViewModel, onAccept: (String) -> Unit) {
+    val c = Cr.colors
+    if (ui.phone == null) {
+        Text(stringResource(R.string.guardian_req_need_phone), style = PxType.caption, color = c.muted)
+        return
+    }
+    val list = ui.guardianRequests
+    if (list == null) {
+        PxButton(stringResource(R.string.guardian_req_load), { vm.loadGuardianRequests() }, variant = PxVariant.OUTLINE, enabled = !ui.busy)
+        return
+    }
+    if (list.isEmpty()) Text(stringResource(R.string.guardian_req_none), style = PxType.body, color = c.muted)
+    list.forEach { r ->
+        PxPanel(Modifier.fillMaxWidth(), border = c.warn) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.guardian_req_item, r.minorName), style = PxType.bodyBold)
+                Text(stringResource(R.string.guardian_req_explain), style = PxType.caption, color = c.muted)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        PxButton(stringResource(R.string.guardian_req_accept), { onAccept(r.linkId) }, enabled = !ui.busy)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        PxButton(stringResource(R.string.guardian_req_refuse), {
+                            vm.answerGuardian(r.linkId, accept = false)
+                        }, variant = PxVariant.OUTLINE, enabled = !ui.busy)
+                    }
+                }
+            }
+        }
+    }
+    PxButton(stringResource(R.string.guardian_req_reload), { vm.loadGuardianRequests() }, variant = PxVariant.OUTLINE, enabled = !ui.busy)
 }
 
 @Composable

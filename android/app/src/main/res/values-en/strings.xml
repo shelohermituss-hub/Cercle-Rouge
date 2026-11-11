@@ -346,4 +346,23 @@
     <string name="contacts_invite_stopped">This number asked to stop receiving messages from Cercle Rouge.</string>
     <string name="contacts_invite_wait">An invitation was just sent. Try again in an hour.</string>
     <string name="contacts_invite_failed">Could not send. Check the connection and try again.</string>
+    <string name="guardian_err_phone">Invalid number.</string>
+    <string name="guardian_err_own">That\'s your own number: choose an adult\'s.</string>
+    <string name="guardian_err_rate">Too many requests today. Try again tomorrow.</string>
+    <string name="guardian_err_network">Could not send. Check the connection and try again.</string>
+    <string name="guardian_not_yet">Not confirmed yet. The adult must install Cercle Rouge and accept.</string>
+    <string name="guardian_check">Check confirmation</string>
+    <string name="guardian_req_section">Trusted adult</string>
+    <string name="guardian_req_need_phone">To receive a young person\'s request, verify your number first (above).</string>
+    <string name="guardian_req_load">See requests received</string>
+    <string name="guardian_req_reload">Refresh</string>
+    <string name="guardian_req_none">No request for your number.</string>
+    <string name="guardian_req_item">%1$s asks you to be their trusted adult</string>
+    <string name="guardian_req_explain">You agree that their automatic protection can work. You will not see any of their data and you can withdraw your consent.</string>
+    <string name="guardian_req_accept">Accept</string>
+    <string name="guardian_req_refuse">Decline</string>
+    <string name="guardian_req_accepted">Consent recorded.</string>
+    <string name="guardian_req_refused">Refusal recorded.</string>
+    <string name="guardian_req_must_be_adult">You must be an adult (18 or over) to accept.</string>
+    <string name="guardian_req_limit">You are already the trusted adult of 6 young people, the maximum.</string>
 </resources>

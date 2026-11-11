@@ -42,6 +42,7 @@ import com.cerclerouge.app.BuildConfig
 import com.cerclerouge.app.R
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.account.GuardianStatus
+import com.cerclerouge.app.account.GuardianSync
 import com.cerclerouge.app.contacts.ContactsRepository
 import com.cerclerouge.app.ui.components.Orb
 import com.cerclerouge.app.ui.components.PinPad
@@ -56,9 +57,7 @@ import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.components.pixelGrid
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
-import com.cerclerouge.contacts.Language
 import com.cerclerouge.contacts.Phone
-import com.cerclerouge.contacts.PhoneResult
 import com.cerclerouge.domain.AgeBand
 import com.cerclerouge.domain.Consent
 import com.cerclerouge.domain.ConsentScope
@@ -93,7 +92,9 @@ data class OnboardingUi(
     val retention: Retention? = null,
     val pin: String = "",
     val pinFirst: String? = null,
-    val pinError: Int? = null
+    val pinError: Int? = null,
+    val guardianError: Int? = null,
+    val guardianBusy: Boolean = false
 ) {
     val band: AgeBand? get() {
         val y = year.toIntOrNull() ?: return null
@@ -111,6 +112,7 @@ class OnboardingViewModel @Inject constructor(
     private val consents: ConsentRepository,
     private val pins: PinRepository,
     private val contacts: ContactsRepository,
+    private val guardians: GuardianSync,
     private val clock: Clock
 ) : ViewModel() {
     private val _ui = MutableStateFlow(OnboardingUi())
@@ -127,24 +129,44 @@ class OnboardingViewModel @Inject constructor(
         goTo(if (band.needsGuardian) Step.GUARDIAN else Step.RETENTION)
     }
 
+    /** Envoie la demande au serveur, qui prévient l'adulte par SMS (S1.17, S1.22). */
     fun requestGuardian() = viewModelScope.launch {
-        account.requestGuardian(_ui.value.guardianPhone.filter { it.isDigit() || it == '+' })
-        edit { copy(guardian = GuardianStatus.PENDING) }
+        edit { copy(guardianBusy = true, guardianError = null) }
+        val error = guardians.request(_ui.value.guardianPhone, _ui.value.relationship)
+        edit {
+            if (error == null) {
+                copy(guardianBusy = false, guardian = GuardianStatus.PENDING)
+            } else {
+                copy(
+                    guardianBusy = false,
+                    guardianError = when (error) {
+                        "invalid_phone" -> R.string.guardian_err_phone
+                        "own_phone" -> R.string.guardian_err_own
+                        "rate_limited" -> R.string.guardian_err_rate
+                        else -> R.string.guardian_err_network
+                    }
+                )
+            }
+        }
+    }
+
+    /** L'adulte a-t-il confirmé ? (bouton « Vérifier » de l'écran d'attente) */
+    fun checkGuardian() = viewModelScope.launch {
+        edit { copy(guardianBusy = true) }
+        val confirmed = guardians.refresh()
+        edit {
+            copy(
+                guardianBusy = false,
+                guardian = if (confirmed) GuardianStatus.CONFIRMED else guardian,
+                guardianError = if (confirmed) null else R.string.guardian_not_yet
+            )
+        }
     }
 
     fun simulateGuardian() = viewModelScope.launch {
-        // S2.03 : l'adulte référent devient contact de confiance par défaut (retirable ensuite, sans l'en avertir).
-        val phone = Phone.normalize(_ui.value.guardianPhone)
-        if (phone is PhoneResult.Valid) {
-            contacts.addGuardian(
-                _ui.value.relationship.replaceFirstChar {
-                    it.uppercase()
-                },
-                phone.number,
-                Language.FR
-            )
-        }
-        account.simulateGuardianConfirmation()
+        // Builds de test : même effet qu'une vraie confirmation (contact ajouté, protection débloquée).
+        if (account.pendingGuardian() == null) account.requestGuardian(_ui.value.guardianPhone, _ui.value.relationship)
+        guardians.confirmLocally()
         edit { copy(guardian = GuardianStatus.CONFIRMED) }
     }
 
@@ -402,11 +424,12 @@ private fun ColumnScope.GuardianStep(ui: OnboardingUi, vm: OnboardingViewModel, 
                         }
                     }
             }
+            ui.guardianError?.let { Note(PixelIcon.ALERT, stringResource(it), warn = true) }
             PxButton(
                 stringResource(R.string.guardian_send),
                 { vm.requestGuardian() },
                 icon = PixelIcon.ARROW_RIGHT,
-                enabled = ui.guardianPhone.count(Char::isDigit) in 8..15
+                enabled = !ui.guardianBusy && ui.guardianPhone.count(Char::isDigit) in 8..15
             )
         }
         GuardianStatus.PENDING -> {
@@ -414,6 +437,10 @@ private fun ColumnScope.GuardianStep(ui: OnboardingUi, vm: OnboardingViewModel, 
             Note(PixelIcon.CLOCK, stringResource(R.string.guardian_waiting), warn = true)
             Text(stringResource(R.string.guardian_waiting_sos), style = PxType.body, color = c.muted)
             SosBar(onTrigger = onSos, onTap = {})
+            ui.guardianError?.let { Note(PixelIcon.CLOCK, stringResource(it), warn = true) }
+            PxButton(stringResource(R.string.guardian_check), {
+                vm.checkGuardian()
+            }, variant = PxVariant.OUTLINE, enabled = !ui.guardianBusy)
             PxButton(stringResource(R.string.guardian_change), {
                 vm.edit { copy(guardian = GuardianStatus.NONE) }
             }, variant = PxVariant.OUTLINE)

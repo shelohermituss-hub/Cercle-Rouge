@@ -66,11 +66,9 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.biometric)
     implementation(libs.maplibre)
-    // Orbes animées (MIT, portage de « Thinking Orbs ») ; on retire les outils de debug qu'elle tire en dépendance.
-    implementation(libs.orbmotion) {
-        exclude(group = "org.jetbrains.compose.ui", module = "ui-tooling")
-        exclude(group = "androidx.compose.ui", module = "ui-tooling")
-    }
+    // Orbes animées (MIT, portage de « Thinking Orbs »). NON transitive : sa description tire Compose Multiplatform et
+    // Material3 1.5 alpha, qui écrasaient nos versions et faisaient planter les champs de texte (NoSuchElementException).
+    implementation(libs.orbmotion) { isTransitive = false }
     testImplementation(libs.kotlin.test)
     // Rendu des écrans sur la JVM (captures PNG dans build/screenshots), sans émulateur.
     testImplementation(libs.robolectric)

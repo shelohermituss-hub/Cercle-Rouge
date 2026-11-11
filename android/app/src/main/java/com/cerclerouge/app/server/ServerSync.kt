@@ -92,7 +92,10 @@ class ServerSync @Inject constructor(
         val token = withTimeoutOrNull(LINK_TIMEOUT_MS) {
             val id = ensureAlert(alert) ?: return@withTimeoutOrNull null
             quietly("link") {
-                api.rpc("create_tracking_link", JSONObject().put("p_alert_id", id).put("p_label", contactName.take(40)).put("p_ttl_minutes", LINK_TTL_MIN))
+                api.rpc(
+                    "create_tracking_link",
+                    JSONObject().put("p_alert_id", id).put("p_label", contactName.take(40)).put("p_ttl_minutes", LINK_TTL_MIN)
+                )
                     .trim('"')
             }
         }
@@ -112,7 +115,9 @@ class ServerSync @Inject constructor(
                     mutex.withLock { current = alert }
                     val id = ensureAlert(alert) ?: return@launch
                     if (kind == DispatchKind.ESCALATE) {
-                        quietly("escalate") { api.rpc("update_alert", JSONObject().put("p_alert_id", id).put("p_level", alert.level.value)) }
+                        quietly("escalate") {
+                            api.rpc("update_alert", JSONObject().put("p_alert_id", id).put("p_level", alert.level.value))
+                        }
                     }
                     startFollowing(alert)
                 }
@@ -149,7 +154,13 @@ class ServerSync @Inject constructor(
                         val arr = JSONArray(body)
                         val list = (0 until arr.length()).map { i ->
                             val o = arr.getJSONObject(i)
-                            ContactFeedback(o.getString("action"), o.optString("label").ifEmpty { null }, Instant.parse(normalize(o.getString("at"))))
+                            ContactFeedback(
+                                o.getString("action"),
+                                o.optString("label").ifEmpty {
+                                    null
+                                },
+                                Instant.parse(normalize(o.getString("at")))
+                            )
                         }
                         val previous = _feedback.value
                         _feedback.value = list

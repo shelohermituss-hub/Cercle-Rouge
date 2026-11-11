@@ -76,10 +76,10 @@ import com.cerclerouge.alert.Input
 import com.cerclerouge.alert.RejectReason
 import com.cerclerouge.app.R
 import com.cerclerouge.app.contacts.ContactsRepository
-import com.cerclerouge.app.server.ServerSync
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.protection.ProtectionService
 import com.cerclerouge.app.protection.UiEvent
+import com.cerclerouge.app.server.ServerSync
 import com.cerclerouge.app.ui.components.FacePhase
 import com.cerclerouge.app.ui.components.FaceUnlock
 import com.cerclerouge.app.ui.components.GradientOrb
@@ -592,7 +592,10 @@ private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, onSafe: () ->
                 Column {
                     when {
                         book.contacts.isEmpty() -> Text(stringResource(R.string.emergency_no_contacts), style = PxType.body)
-                        feedback.isEmpty() -> Text(pluralStringResource(R.plurals.urgent_notified, book.contacts.size, book.contacts.size), style = PxType.body)
+                        feedback.isEmpty() -> Text(
+                            pluralStringResource(R.plurals.urgent_notified, book.contacts.size, book.contacts.size),
+                            style = PxType.body
+                        )
                         else -> feedback.sortedByDescending { it.at }.forEach { f ->
                             val who = f.label ?: stringResource(R.string.urgent_fb_someone)
                             val text = when (f.action) {

@@ -53,8 +53,13 @@ class SupabaseApi @Inject constructor(db: PrivacyDatabase, private val clock: Cl
         val expires = settings.get(EXPIRES)?.toLongOrNull() ?: 0
         if (!forceRefresh && access != null && expires - SKEW_S > clock.instant().epochSecond) return@withLock access
         val refresh = settings.get(REFRESH)
-        val session = refresh?.let { runCatching { post("/auth/v1/token?grant_type=refresh_token", JSONObject().put("refresh_token", it).toString(), null) }.getOrNull() }
-            ?: post("/auth/v1/signup", JSONObject().put("data", JSONObject()).toString(), null) // compte anonyme
+        val session =
+            refresh?.let {
+                runCatching {
+                    post("/auth/v1/token?grant_type=refresh_token", JSONObject().put("refresh_token", it).toString(), null)
+                }.getOrNull()
+            }
+                ?: post("/auth/v1/signup", JSONObject().put("data", JSONObject()).toString(), null) // compte anonyme
         save(JSONObject(session))
     }
 

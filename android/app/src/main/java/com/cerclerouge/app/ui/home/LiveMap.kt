@@ -48,7 +48,7 @@ fun LiveMap(
     modifier: Modifier = Modifier,
     coveredBottom: Dp = 240.dp,
     coveredTop: Dp = 40.dp,
-    coveredEnd: Dp = 168.dp
+    coveredEnd: Dp = 72.dp
 ) {
     val density = LocalDensity.current
     val context = LocalContext.current

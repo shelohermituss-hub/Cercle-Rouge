@@ -333,17 +333,6 @@ fun Led(color: Color, blink: Boolean, modifier: Modifier = Modifier, size: Dp = 
     Box(modifier.size(size).background(if (on) color else Color.Transparent))
 }
 
-/** Égaliseur de 5 barres : l'écoute est active (aucun contenu audio n'est affiché). */
-@Composable
-fun EqBars() {
-    val c = Cr.colors
-    val t = stepTick(300)
-    val levels = listOf(0.2f, 1f, 0.45f, 0.8f)
-    Row(Modifier.height(24.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.Bottom) {
-        repeat(5) { i -> Box(Modifier.width(6.dp).fillMaxHeight(levels[(t + i * 3) % 4]).background(c.lime)) }
-    }
-}
-
 // ---------------------------------------------------------------------------
 // Icônes en pixels (grilles 8 × 8 des maquettes)
 // ---------------------------------------------------------------------------

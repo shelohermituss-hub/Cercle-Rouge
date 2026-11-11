@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -75,7 +74,6 @@ import com.cerclerouge.alert.RejectReason
 import com.cerclerouge.app.R
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.protection.UiEvent
-import com.cerclerouge.app.ui.components.EqBars
 import com.cerclerouge.app.ui.components.Led
 import com.cerclerouge.app.ui.components.NavItem
 import com.cerclerouge.app.ui.components.PinPad
@@ -269,7 +267,7 @@ internal fun HomeConsole(
                 )
             )
             // Légendes en haut à gauche (la colonne de boutons occupe la droite).
-            Column(Modifier.padding(start = 12.dp, end = 172.dp)) {
+            Column(Modifier.padding(start = 12.dp, end = 76.dp)) {
                 Text(
                     stringResource(if (showMe) R.string.home_map_caption_on else R.string.home_map_caption).uppercase(),
                     style = PxType.caption,
@@ -287,14 +285,16 @@ internal fun HomeConsole(
                     stringResource(R.string.home_row_listen),
                     stringResource(if (listening) R.string.sat_on else R.string.sat_off),
                     armed,
-                    onToggle
-                ) { if (listening) EqBars() else Led(c.line, blink = false) }
+                    onToggle,
+                    active = listening
+                )
                 Satellite(
                     PixelIcon.PIN,
                     stringResource(R.string.home_row_position),
                     stringResource(if (showMe) R.string.sat_position_on else R.string.sat_position_off),
                     armed,
-                    onSoon
+                    onSoon,
+                    active = showMe
                 )
                 Satellite(
                     PixelIcon.USERS,
@@ -358,7 +358,10 @@ internal fun HomeConsole(
     }
 }
 
-/** Bouton de fonction de la colonne de droite : icône, étiquette, valeur courte ; gris quand la protection est coupée. */
+/**
+ * Bouton carré de la colonne de droite (52 dp) : icône seule, voyant d'état dans le coin.
+ * TalkBack lit l'étiquette et la valeur. Gris quand la protection est coupée.
+ */
 @Composable
 private fun Satellite(
     icon: PixelIcon,
@@ -367,22 +370,19 @@ private fun Satellite(
     armed: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    trailing: @Composable () -> Unit = {}
+    active: Boolean = false
 ) {
     val c = Cr.colors
     PxPanel(
-        modifier.width(156.dp).heightIn(min = 48.dp).clickable(role = Role.Button, onClick = onClick),
+        modifier
+            .size(52.dp)
+            .semantics(mergeDescendants = true) { contentDescription = "$label : $value" }
+            .clickable(role = Role.Button, onClick = onClick),
         border = if (armed) c.lime else c.lineControl,
-        padding = PaddingValues(horizontal = 8.dp, vertical = 5.dp)
+        padding = PaddingValues(0.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PixelIconView(icon, 20.dp, if (armed) c.lime else c.muted)
-            Column(Modifier.weight(1f)) {
-                Text(label.uppercase(), style = PxType.label, color = c.muted, maxLines = 1)
-                Text(value.uppercase(), style = PxType.label, color = if (armed) c.ink else c.muted, maxLines = 1)
-            }
-            trailing()
-        }
+        PixelIconView(icon, 24.dp, if (armed) c.lime else c.muted, Modifier.align(Alignment.Center))
+        Led(if (active) c.lime else c.line, blink = active, modifier = Modifier.align(Alignment.TopEnd).padding(5.dp), size = 6.dp)
     }
 }
 

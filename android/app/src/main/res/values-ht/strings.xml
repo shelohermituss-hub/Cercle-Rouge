@@ -147,4 +147,8 @@
         <item quantity="one">%1$d evènman</item>
         <item quantity="other">%1$d evènman</item>
     </plurals>
+    <string name="crash_title">Dènye plantaj la</string>
+    <string name="crash_body">Men tras sa a. Peze « Pataje » pou voye l ban mwen ; anyen pa voye san ou pa fè sa.</string>
+    <string name="crash_share">Pataje</string>
+    <string name="crash_close">Fèmen</string>
 </resources>

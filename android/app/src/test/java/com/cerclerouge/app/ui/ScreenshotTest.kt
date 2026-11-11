@@ -19,6 +19,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import com.cerclerouge.alert.EngineState
 import com.cerclerouge.app.ui.components.BarChart
@@ -40,10 +41,13 @@ import com.cerclerouge.app.ui.components.pixelGrid
 import com.cerclerouge.app.ui.home.CountdownScreen
 import com.cerclerouge.app.ui.home.HomeConsole
 import com.cerclerouge.app.ui.home.SosHoldScreen
+import com.cerclerouge.app.ui.journal.JournalContent
 import com.cerclerouge.app.ui.theme.CercleRougeTheme
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.domain.ProtectionState
+import com.cerclerouge.privacy.log.ChainedEntry
 import java.io.File
+import kotlin.test.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -145,5 +149,98 @@ class ScreenshotTest {
                 TraceLine(TraceRow(3, 1, 'A', TERM_RED, "Alerte SOS", "state", listOf("09:40:02"), 0.4f, 0f, "—", TraceStatus.ERROR), true)
             }
         }
+    }
+
+    private fun lateTonight() = java.time.LocalDate.now().atTime(23, 50).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+    /** Journal avec des entrées réalistes sur plusieurs jours : ne doit pas planter. */
+    @Test fun journal() = capture("journal") {
+        val now = System.currentTimeMillis()
+        val day = 86_400_000L
+        fun e(seq: Long, ago: Long, type: String, payload: String) = ChainedEntry(seq, now - ago, type, payload, "p", "h")
+        JournalContent(
+            listOf(
+                e(1, 3 * day, "state", "OFF → ARMED_AUDIO_ONLY : Arm"),
+                e(2, 3 * day - 3_600_000, "state", "ARMED_AUDIO_ONLY → OFF : Disarm"),
+                e(3, day, "state", "OFF → ARMED_FULL : Arm"),
+                e(4, day - 600_000, "state", "ARMED_FULL → EMERGENCY_MODE : Sos"),
+                e(5, day - 500_000, "dispatch", "sms"),
+                e(6, 3_600_000, "state", "OFF → ARMED_FULL : Arm"),
+                e(7, 1_000_000, "engines", "x"),
+                // Événement tard le soir : la barre de chronologie touche le bord droit.
+                ChainedEntry(8, lateTonight(), "state", "OFF → ARMED_FULL : Arm", "p", "h")
+            ),
+            null,
+            {}
+        )
+    }
+
+    /** SOS : appui court = écran « garde appuyé » ; l'écran d'urgence et le journal doivent s'afficher. */
+    @Test fun sosFlow() {
+        rule.mainClock.autoAdvance = false
+        val step = androidx.compose.runtime.mutableIntStateOf(0)
+        rule.setContent {
+            CercleRougeTheme {
+                Box(Modifier.fillMaxSize().background(Cr.colors.surface)) {
+                    when (step.intValue) {
+                        0 -> HomeConsole(EngineState(), {}, {}, {}, { step.intValue = 1 }, nav, fakeMap)
+                        1 -> SosHoldScreen({ step.intValue = 0 }, { step.intValue = 2 })
+                        else -> CountdownScreen({ step.intValue = 0 }, {})
+                    }
+                }
+            }
+        }
+        rule.mainClock.advanceTimeBy(300)
+        step.intValue = 1
+        rule.mainClock.advanceTimeBy(1000)
+        step.intValue = 2
+        rule.mainClock.advanceTimeBy(3000)
+    }
+
+    /** Ligne de terminal en fin de journée (start proche de 1) : la barre ne doit pas planter. */
+    @Test fun traceLineLateInDay() = capture("trace-late") {
+        Column {
+            TraceLine(TraceRow(1, 1, 'P', TERM_TEAL, "Protection activée", "state", listOf("23:50:00"), 0.99f, 0f, "—"), true)
+            TraceLine(TraceRow(2, 1, 'P', TERM_TEAL, "Protection activée", "state", listOf("23:59:59"), 1.0f, 0.5f, "1h"), true)
+        }
+    }
+
+    /** Vrai geste sur la tuile SOS de l'accueil : appui court → « garde appuyé », puis appui long → compte à rebours. */
+    @Test fun sosTileGestures() {
+        rule.mainClock.autoAdvance = true
+        val step = androidx.compose.runtime.mutableIntStateOf(0)
+        rule.setContent {
+            CercleRougeTheme {
+                Box(Modifier.fillMaxSize().background(Cr.colors.surface)) {
+                    when (step.intValue) {
+                        0 -> HomeConsole(
+                            EngineState(),
+                            {},
+                            {},
+                            { step.intValue = 2 },
+                            { step.intValue = 1 },
+                            nav,
+                            fakeMap
+                        )
+                        1 -> SosHoldScreen({ step.intValue = 0 }, { step.intValue = 2 })
+                        else -> CountdownScreen({ step.intValue = 0 }, {})
+                    }
+                }
+            }
+        }
+        val sos = androidx.compose.ui.test.hasContentDescription("SOS", substring = true)
+        rule.onNode(sos).performTouchInput {
+            down(center)
+            up()
+        } // appui court
+        rule.waitForIdle()
+        assertEquals(1, step.intValue)
+        step.intValue = 0
+        rule.waitForIdle()
+        rule.onNode(sos).performTouchInput { down(center) } // appui long
+        rule.mainClock.autoAdvance = false
+        rule.mainClock.advanceTimeBy(1700)
+        // Le compte à rebours est parti avant le relâchement : la tuile n'existe plus.
+        assertEquals(2, step.intValue)
     }
 }

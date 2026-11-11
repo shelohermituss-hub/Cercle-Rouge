@@ -147,4 +147,8 @@
         <item quantity="one">%1$d événement</item>
         <item quantity="other">%1$d événements</item>
     </plurals>
+    <string name="crash_title">Le plantage précédent</string>
+    <string name="crash_body">Voici la trace de l\'arrêt de l\'application. Appuie sur « Partager » pour me l\'envoyer ; rien n\'est envoyé sans ton geste.</string>
+    <string name="crash_share">Partager</string>
+    <string name="crash_close">Fermer</string>
 </resources>

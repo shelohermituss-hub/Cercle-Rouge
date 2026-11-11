@@ -318,8 +318,10 @@ fun TraceLine(row: TraceRow, last: Boolean, modifier: Modifier = Modifier) {
                     .clip(RectangleShape)
                     .background(TERM_CHIP)
                     .drawBehind {
-                        val x = size.width * row.start.coerceIn(0f, 1f)
-                        val w = (size.width * row.length).coerceIn(4.dp.toPx(), size.width - x)
+                        // La barre fait au moins 4 dp et reste dans la piste, même pour un événement en fin de journée.
+                        val minW = 4.dp.toPx()
+                        val x = (size.width * row.start).coerceIn(0f, size.width - minW)
+                        val w = (size.width * row.length).coerceIn(minW, size.width - x)
                         drawRoundRect(
                             row.color,
                             Offset(x, 0f),

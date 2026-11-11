@@ -162,17 +162,23 @@ private fun granted(context: Context, permission: String) = context.checkSelfPer
 /** Journal : chiffres clés, histogramme 7 jours, radar de préparation, terminal des événements (P7, R-PE-03). */
 @Composable
 fun JournalScreen(log: EventLog, onBack: () -> Unit) {
-    val c = Cr.colors
-    val context = LocalContext.current
-    val resources = LocalResources.current
     var entries by remember { mutableStateOf(emptyList<ChainedEntry>()) }
     var broken by remember { mutableStateOf<Long?>(null) }
-    var alertsOnly by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         // Les entrées « engines » et les transitions sans changement d'état ne parlent pas à l'utilisateur.
         entries = log.latest(500).filter { it.type != "engines" && humanize(it) != R.string.log_other }
         broken = log.firstBreak()
     }
+    JournalContent(entries, broken, onBack)
+}
+
+/** Contenu du journal, séparé du chargement pour pouvoir être testé avec des entrées fabriquées. */
+@Composable
+internal fun JournalContent(entries: List<ChainedEntry>, broken: Long?, onBack: () -> Unit) {
+    val c = Cr.colors
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    var alertsOnly by remember { mutableStateOf(false) }
     val zone = ZoneId.systemDefault()
     val days = remember { (6 downTo 0).map { LocalDate.now(zone).minusDays(it.toLong()) } }
     fun countPerDay(match: (ChainedEntry) -> Boolean) = days.map { d ->

@@ -72,11 +72,9 @@ val PixelLime = CrColors(
     scrim = Color(0xCC0A0B0C)
 )
 
-/** Titres en pixels (toujours en capitales). */
-val Pixel = FontFamily(Font(R.font.pixelify_sans_bold, FontWeight.Bold))
-
-/** Chiffres (compte à rebours, chiffres clés) : Silkscreen (dans Pixelify, le 5 ressemble à un S). */
-val Digit = FontFamily(Font(R.font.silkscreen_bold, FontWeight.Bold))
+/** Titres et chiffres en pixels : Silkscreen (lettres nettes, 5 et S distincts ; toujours en capitales). */
+val Pixel = FontFamily(Font(R.font.silkscreen_bold, FontWeight.Bold))
+val Digit = Pixel
 
 /** Tout le reste : Space Mono. */
 val Mono = FontFamily(
@@ -86,22 +84,24 @@ val Mono = FontFamily(
 
 object PxType {
     /** Grand titre d'affiche (onboarding). */
-    val poster = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 52.sp, lineHeight = 50.sp)
-    val display = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 32.sp)
-    val title = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 28.sp)
-    val brand = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 24.sp, letterSpacing = 0.04.em)
+    val poster = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 40.sp, lineHeight = 46.sp)
+    val display = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 30.sp)
+    val title = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 26.sp)
+    val brand = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 24.sp)
     val digits = TextStyle(fontFamily = Digit, fontWeight = FontWeight.Bold, fontSize = 96.sp, lineHeight = 100.sp)
 
-    /** Chiffres clés (journal) : Silkscreen, comme le compte à rebours. */
+    /** Chiffres clés (journal) : même police que le compte à rebours. */
     val count = TextStyle(fontFamily = Digit, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 32.sp)
-    val body = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 22.sp)
-    val bodyBold = body.copy(fontWeight = FontWeight.Bold, lineHeight = 20.sp)
 
-    /** Étiquettes en capitales (LB du design). */
-    val label = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.12.em)
+    /** Texte courant : Space Mono 15 sp, interligne généreux. */
+    val body = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Normal, fontSize = 15.sp, lineHeight = 24.sp)
+    val bodyBold = body.copy(fontWeight = FontWeight.Bold, lineHeight = 22.sp)
+
+    /** Étiquettes en capitales : 13 sp, espacement réduit (lisible, pas de pixel). */
+    val label = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Bold, fontSize = 13.sp, lineHeight = 18.sp, letterSpacing = 0.06.em)
     val caption =
-        TextStyle(fontFamily = Mono, fontWeight = FontWeight.Normal, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.04.em)
-    val button = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 18.sp, letterSpacing = 0.08.em)
+        TextStyle(fontFamily = Mono, fontWeight = FontWeight.Normal, fontSize = 13.sp, lineHeight = 18.sp, letterSpacing = 0.02.em)
+    val button = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 20.sp, letterSpacing = 0.06.em)
 }
 
 private val CrTypography = Typography(

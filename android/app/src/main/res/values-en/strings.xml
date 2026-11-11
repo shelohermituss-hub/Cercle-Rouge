@@ -146,4 +146,8 @@
         <item quantity="one">%1$d event</item>
         <item quantity="other">%1$d events</item>
     </plurals>
+    <string name="crash_title">The previous crash</string>
+    <string name="crash_body">Here is the trace of the app stopping. Tap "Share" to send it to me; nothing is sent without your action.</string>
+    <string name="crash_share">Share</string>
+    <string name="crash_close">Close</string>
 </resources>

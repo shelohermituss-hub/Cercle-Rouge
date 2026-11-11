@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.biometric)
+    implementation(libs.fragment)
     implementation(libs.tink.android)
     implementation(libs.maplibre)
     // Position fusionnée de Google (batterie, précision) ; repli LocationManager sans services Google (Q15, ADR-0019).

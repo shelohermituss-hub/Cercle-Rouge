@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Cercle Rouge · Confidentialité</title>
+<link rel="stylesheet" href="track.css">
+</head>
+<body>
+<header class="top"><span class="logo" aria-hidden="true"></span><strong>Cercle Rouge</strong></header>
+<main>
+<h1>Politique de confidentialité</h1>
+<p class="muted small">Version provisoire du 11 novembre 2026, en attente de validation juridique. Versions créole et anglaise à venir.</p>
+
+<h2>En bref</h2>
+<ul>
+  <li>Cercle Rouge sert à alerter <strong>tes proches</strong> quand tu es en danger. Pas de publicité, pas de revente, pas de profilage.</li>
+  <li>L'écoute de ta phrase secrète se fait <strong>sur ton téléphone</strong> : aucun son n'est envoyé.</li>
+  <li>Ta position n'est partagée <strong>que pendant une alerte</strong>, avec les proches que tu as choisis.</li>
+  <li>Tu peux tout <strong>effacer</strong> à tout moment (Réglages → Supprimer mon compte).</li>
+</ul>
+
+<h2>Ce que nous traitons, et pourquoi</h2>
+<table>
+  <tr><th>Donnée</th><th>Où</th><th>Avec qui</th><th>Combien de temps</th></tr>
+  <tr><td>Prénom, année et mois de naissance, langue</td><td>Téléphone ; serveur (prénom, langue, âge pour les règles des mineurs)</td><td>Le prénom est montré à tes proches pendant une alerte</td><td>Jusqu'à la suppression du compte</td></tr>
+  <tr><td>Contacts de confiance (nom, numéro)</td><td>Téléphone seulement (chiffré)</td><td>Ton opérateur, pour envoyer les SMS que tu déclenches</td><td>Jusqu'à ce que tu les retires</td></tr>
+  <tr><td>Position</td><td>Téléphone ; serveur pendant une alerte</td><td>Tes proches, par un lien personnel valable 2 à 6 h</td><td>Effacée du serveur 24 h après la fin de l'alerte</td></tr>
+  <tr><td>Alerte (heure, niveau, raison, réponses des proches)</td><td>Téléphone ; serveur</td><td>Tes proches pendant l'alerte</td><td>30 jours après la fin sur le serveur</td></tr>
+  <tr><td>Enregistrements audio d'une alerte</td><td>Téléphone seulement, chiffrés</td><td>Personne, sauf si tu les exportes toi-même</td><td>Durée choisie : 24 h (par défaut), 7 ou 30 jours, ou à la fin de l'alerte ; 90 jours au plus si tu choisis de les garder</td></tr>
+  <tr><td>Empreinte de ta phrase secrète (pas de son)</td><td>Téléphone seulement, chiffrée</td><td>Personne</td><td>Jusqu'à ce que tu la supprimes</td></tr>
+  <tr><td>Lieux favoris, journal des événements</td><td>Téléphone seulement, chiffrés</td><td>Personne</td><td>Jusqu'à suppression ; effacement d'urgence possible</td></tr>
+  <tr><td>Texte d'une recherche d'adresse (si tu l'as autorisée)</td><td>Transmis au service de recherche de Google</td><td>Google</td><td>Selon Google ; ta position n'est jamais envoyée</td></tr>
+</table>
+
+<h2>Enregistrement pendant une alerte</h2>
+<p>Pendant une alerte (niveau 2 ou SOS), le micro enregistre ; il peut capter la voix d'autres personnes. L'enregistrement reste chiffré sur ton téléphone. Sa valeur devant un juge n'est pas garantie. Tu peux couper cette fonction dans Réglages.</p>
+
+<h2>Mineurs (12 à 15 ans)</h2>
+<p>La protection automatique demande l'accord d'un adulte référent (parent, tuteur ou adulte de confiance). Cet adulte ne voit aucune donnée du jeune ; il peut retirer son accord à tout moment. Le SOS manuel reste toujours disponible.</p>
+
+<h2>Prestataires</h2>
+<p>Supabase (hébergement de la base, États-Unis) ; GitHub Pages (page de suivi des proches) ; OpenStreetMap et OpenFreeMap (fonds de carte : ils voient l'adresse IP et la zone affichée, jamais ta position) ; Google (recherche d'adresse, seulement si tu l'autorises). Plus tard : un fournisseur de SMS et Firebase (notifications), qui seront ajoutés ici avant leur mise en service.</p>
+
+<h2>Tes droits</h2>
+<p>Accès et portabilité : Réglages → Exporter mes données. Effacement : Réglages → Supprimer mon compte (serveur et téléphone). Retrait d'un consentement : à tout moment, dans l'app. Contact : <em>adresse à compléter</em>.</p>
+
+<h2>Sécurité</h2>
+<p>Base du téléphone chiffrée (SQLCipher, clé dans le Keystore Android) ; enregistrements chiffrés avec une clé par alerte ; règles d'accès strictes sur le serveur (chacun ne voit que ses données) ; liens de suivi aléatoires, expirant seuls.</p>
+
+<p class="muted small"><a href="./">Retour</a></p>
+</main>
+</body>
+</html>

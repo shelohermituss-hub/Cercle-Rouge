@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
@@ -79,6 +80,9 @@ import com.cerclerouge.app.contacts.ContactsRepository
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.protection.ProtectionService
 import com.cerclerouge.app.protection.UiEvent
+import com.cerclerouge.app.security.Biometric
+import com.cerclerouge.app.security.SecureScreen
+import com.cerclerouge.app.security.SecuritySettings
 import com.cerclerouge.app.server.ServerSync
 import com.cerclerouge.app.ui.components.FacePhase
 import com.cerclerouge.app.ui.components.FaceUnlock
@@ -121,7 +125,8 @@ class HomeViewModel @Inject constructor(
     private val pins: PinRepository,
     val log: EventLog,
     val contacts: ContactsRepository,
-    val server: ServerSync
+    val server: ServerSync,
+    val security: SecuritySettings
 ) : ViewModel() {
     init {
         viewModelScope.launch { contacts.load() }
@@ -148,6 +153,7 @@ fun HomeScreen(
     onTrip: () -> Unit = {},
     onListen: () -> Unit = {},
     onVault: () -> Unit = {},
+    onSettings: () -> Unit = {},
     sosRequested: Boolean = false,
     onSosConsumed: () -> Unit = {}
 ) {
@@ -160,6 +166,11 @@ fun HomeScreen(
     val contactsReady = book.contacts.count { it.status == ContactStatus.ACCEPTED }
     var sos by remember { mutableStateOf(SosStep.NONE) }
     var pinFor by remember { mutableStateOf<Guarded?>(null) }
+    // Biométrie autorisée pour désarmer ; pour « Je vais bien » (annuler une alerte) seulement si l'utilisateur l'a choisi.
+    var bioAllowed by remember { mutableStateOf(emptyMap<Guarded, Boolean>()) }
+    LaunchedEffect(pinFor) {
+        bioAllowed = mapOf(Guarded.DISARM to vm.security.biometric(), Guarded.IM_SAFE to vm.security.biometricForAlerts())
+    }
     val soon = stringResource(R.string.home_soon)
 
     fun dial114() = context.startActivity(Intent(Intent.ACTION_DIAL, "tel:114".toUri())) // R-HOME-07 : toujours le composeur
@@ -239,6 +250,7 @@ fun HomeScreen(
                 onContacts = onContacts,
                 onTrip = onTrip,
                 onListen = onListen,
+                onSettings = onSettings,
                 onSosTrigger = { sos = SosStep.COUNTDOWN },
                 onSosTap = { sos = SosStep.HOLD },
                 nav = listOf(
@@ -260,7 +272,22 @@ fun HomeScreen(
                 vm.controller.send { if (action == Guarded.DISARM) Input.Disarm(it, auth) else Input.ImSafe(it, auth) }
                 auth != Auth.FAILED
             },
-            onDone = { pinFor = null }
+            onDone = { pinFor = null },
+            onBiometric = if (bioAllowed[action] == true) {
+                {
+                    vm.controller.send {
+                        if (action ==
+                            Guarded.DISARM
+                        ) {
+                            Input.Disarm(it, Auth.VERIFIED)
+                        } else {
+                            Input.ImSafe(it, Auth.VERIFIED)
+                        }
+                    }
+                }
+            } else {
+                null
+            }
         )
     }
 }
@@ -277,7 +304,8 @@ internal fun HomeConsole(
     nav: List<NavItem>,
     map: @Composable (armed: Boolean, showMe: Boolean, modifier: Modifier) -> Unit,
     onTrip: () -> Unit = onSoon,
-    onListen: () -> Unit = onToggle
+    onListen: () -> Unit = onToggle,
+    onSettings: () -> Unit = onSoon
 ) {
     val c = Cr.colors
     val armed = state.protection.isArmed
@@ -359,6 +387,13 @@ internal fun HomeConsole(
                     armed,
                     onTrip,
                     active = trip
+                )
+                Satellite(
+                    PixelIcon.GEAR,
+                    stringResource(R.string.home_row_settings),
+                    stringResource(R.string.sat_settings),
+                    armed,
+                    onSettings
                 )
             }
             Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -562,6 +597,7 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit) {
 /** Maquette « Urgence » : bandeau d'alerte, contacts, journal, « Je suis en sécurité » et 114. */
 @Composable
 private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, onSafe: () -> Unit, onCall: () -> Unit) {
+    SecureScreen() // S7.04 : pas de capture de l'écran d'urgence
     val c = Cr.colors
     val resources = LocalResources.current
     var lines by remember { mutableStateOf(emptyList<ChainedEntry>()) }
@@ -626,9 +662,17 @@ private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, onSafe: () ->
  * ou croix (nouvel essai).
  */
 @Composable
-internal fun PinDialog(onDismiss: () -> Unit, verify: suspend (String) -> Boolean, onDone: () -> Unit) {
+internal fun PinDialog(
+    onDismiss: () -> Unit,
+    verify: suspend (String) -> Boolean,
+    onDone: () -> Unit,
+    onBiometric: (suspend () -> Unit)? = null
+) {
     val c = Cr.colors
     val scope = rememberCoroutineScope()
+    val activity = LocalActivity.current
+    val bioTitle = stringResource(R.string.bio_title)
+    val bioCancel = stringResource(R.string.bio_use_pin)
     var pin by remember { mutableStateOf("") }
     var phase by remember { mutableStateOf(FacePhase.IDLE) }
     Dialog(onDismissRequest = onDismiss) {
@@ -661,6 +705,20 @@ internal fun PinDialog(onDismiss: () -> Unit, verify: suspend (String) -> Boolea
                         }
                     }
                 }, maxLength = 4)
+                // S7.02 : empreinte ou visage, seulement si l'utilisateur l'a activé (et pour une alerte, si autorisé).
+                if (onBiometric != null && Biometric.available(activity)) {
+                    PxButton(stringResource(R.string.bio_button), {
+                        if (phase == FacePhase.SCANNING || phase == FacePhase.SUCCESS) return@PxButton
+                        scope.launch {
+                            if (Biometric.prompt(activity, bioTitle, bioCancel)) {
+                                phase = FacePhase.SUCCESS
+                                onBiometric()
+                                delay(650)
+                                onDone()
+                            }
+                        }
+                    }, variant = PxVariant.OUTLINE, icon = PixelIcon.LOCK)
+                }
                 PxButton(stringResource(R.string.action_cancel), onDismiss, variant = PxVariant.OUTLINE)
             }
         }

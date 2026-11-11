@@ -94,12 +94,12 @@ class TripController @Inject constructor(
     }
 
     /** Démarre le trajet : le PIN (s'il existe) est vérifié ici, le moteur refuse sans PIN ou sans localisation (Q4). */
-    suspend fun start(origin: GeoPoint, draft: TripDraft, pin: String?) {
+    suspend fun start(origin: GeoPoint, draft: TripDraft, pin: String?, biometricVerified: Boolean = false) {
         val now = clock.instant()
         mutex.withLock {
             pending = TripPlan(origin, draft.destination, draft.mode, now, draft.plannedArrival, draft.unsafeZones, tracker.approximateOnly)
         }
-        val auth = protection.authFor(pin)
+        val auth = if (biometricVerified) Auth.VERIFIED else protection.authFor(pin)
         protection.send { Input.StartTrip(it, auth) }
     }
 
@@ -111,8 +111,8 @@ class TripController @Inject constructor(
     }
 
     /** « Je suis arrivé » : demande le PIN s'il existe (R-SM-04). */
-    suspend fun arrived(pin: String?) {
-        val auth = protection.authFor(pin)
+    suspend fun arrived(pin: String?, biometricVerified: Boolean = false) {
+        val auth = if (biometricVerified) Auth.VERIFIED else protection.authFor(pin)
         protection.send { Input.Arrived(it, auth) }
         if (auth == Auth.FAILED) log.append("trip", "arrival_pin_refused")
     }

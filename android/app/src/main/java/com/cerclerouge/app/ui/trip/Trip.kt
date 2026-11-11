@@ -52,6 +52,7 @@ import androidx.lifecycle.viewModelScope
 import com.cerclerouge.app.R
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.protection.UiEvent
+import com.cerclerouge.app.security.SecuritySettings
 import com.cerclerouge.app.trip.AddressSearch
 import com.cerclerouge.app.trip.Place
 import com.cerclerouge.app.trip.PlacesRepository
@@ -107,6 +108,7 @@ class TripViewModel @Inject constructor(
     private val places: PlacesRepository,
     private val search: AddressSearch,
     private val pins: PinRepository,
+    private val security: SecuritySettings,
     val controller: ProtectionController,
     private val clock: Clock
 ) : ViewModel() {
@@ -160,15 +162,18 @@ class TripViewModel @Inject constructor(
 
     suspend fun pinOk(pin: String) = pins.verify(pin) == PinResult.Ok
 
+    /** S7.02 : empreinte ou visage à la place du PIN, si l'utilisateur l'a activé. */
+    suspend fun biometric() = security.biometric()
+
     suspend fun pinConfigured() = pins.isConfigured()
 
     /** Faux si la position de départ manque : l'écran l'explique. */
-    fun start(pin: String?): Boolean {
+    fun start(pin: String?, biometricVerified: Boolean = false): Boolean {
         val s = _ui.value
         val origin = s.origin ?: return false
         val dest = s.destination ?: return false
         val arrival = clock.instant().plus(Duration.ofMinutes(s.minutes.toLong()))
-        viewModelScope.launch { trips.start(origin, TripDraft(dest.point, s.mode, arrival), pin) }
+        viewModelScope.launch { trips.start(origin, TripDraft(dest.point, s.mode, arrival), pin, biometricVerified) }
         return true
     }
 
@@ -181,7 +186,7 @@ class TripViewModel @Inject constructor(
 
     fun stop(minutes: Int) = viewModelScope.launch { trips.declareStop(minutes) }
 
-    fun arrived(pin: String?) = viewModelScope.launch { trips.arrived(pin) }
+    fun arrived(pin: String?, biometricVerified: Boolean = false) = viewModelScope.launch { trips.arrived(pin, biometricVerified) }
 
     /** Durée proposée : ligne droite à la vitesse moyenne du mode, arrondie aux 5 min supérieures ; toujours modifiable. */
     private fun reestimate() = _ui.update { s ->
@@ -245,6 +250,9 @@ private fun Planner(vm: TripViewModel) {
     var naming by remember { mutableStateOf(false) }
     var consent by remember { mutableStateOf(false) }
     var lastPin by remember { mutableStateOf<String?>(null) }
+    var bioOk by remember { mutableStateOf(false) }
+    var bio by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { bio = vm.biometric() }
 
     Box(Modifier.fillMaxWidth().height(240.dp)) {
         LiveMap(
@@ -295,8 +303,14 @@ private fun Planner(vm: TripViewModel) {
             verify = { p -> vm.pinOk(p).also { ok -> if (ok) lastPin = p } },
             onDone = {
                 askPin = false
-                vm.start(lastPin)
+                vm.start(lastPin, bioOk)
                 lastPin = null
+                bioOk = false
+            },
+            onBiometric = if (bio) {
+                { bioOk = true }
+            } else {
+                null
             }
         )
     }
@@ -455,6 +469,9 @@ private fun ActiveTrip(vm: TripViewModel, t: TripUi) {
     var askPin by remember { mutableStateOf(false) }
     var stopChoice by remember { mutableStateOf(false) }
     var lastPin by remember { mutableStateOf<String?>(null) }
+    var bioOk by remember { mutableStateOf(false) }
+    var bio by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { bio = vm.biometric() }
     Box(Modifier.fillMaxWidth().height(260.dp)) {
         LiveMap(
             armed = true,
@@ -511,8 +528,14 @@ private fun ActiveTrip(vm: TripViewModel, t: TripUi) {
             verify = { p -> vm.pinOk(p).also { ok -> if (ok) lastPin = p } },
             onDone = {
                 askPin = false
-                vm.arrived(lastPin)
+                vm.arrived(lastPin, bioOk)
                 lastPin = null
+                bioOk = false
+            },
+            onBiometric = if (bio) {
+                { bioOk = true }
+            } else {
+                null
             }
         )
     }

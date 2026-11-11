@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
-enum class AudioStatus { STOPPED, RUNNING, PAUSED_MIC_BUSY, ERROR }
+enum class AudioStatus { STOPPED, RUNNING, PAUSED_MIC_BUSY, PAUSED_LOW_POWER, ERROR }
 
 /** Empreinte de la phrase secrète, dans la base chiffrée (R-AUD-09) : jamais d'audio. */
 @Singleton
@@ -57,6 +57,8 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
     val status: StateFlow<AudioStatus> = _status
 
     @Volatile private var running = false
+
+    @Volatile private var degraded = false
     private var template: PhraseTemplate? = null
     private var wantListen = false
     private var wantRecord = false
@@ -79,6 +81,21 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
         this.template = template
         wantListen = true
         if (running) restartMic() else ensureMic() // micro déjà ouvert pour une preuve : relancé avec la phrase
+    }
+
+    /**
+     * Mode dégradé (S5.13, R-AE-05) : batterie sous 10 % ou téléphone en surchauffe. L'écoute de la phrase se met en pause
+     * (« Écoute IA en pause ») pour garder de la batterie au SOS et aux SMS ; un enregistrement de preuve en cours continue.
+     */
+    @Synchronized
+    fun setDegraded(on: Boolean) {
+        if (degraded == on) return
+        degraded = on
+        if (running) {
+            restartMic()
+        } else if (wantListen) {
+            ensureMic()
+        }
     }
 
     /** Fin de l'écoute ; le micro reste ouvert si un enregistrement de preuve est en cours. */
@@ -113,6 +130,10 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
     @SuppressLint("MissingPermission") // vérifiée par `granted`
     private fun ensureMic() {
         if (running || !granted) return
+        if (degraded && !wantRecord) {
+            _status.value = if (wantListen) AudioStatus.PAUSED_LOW_POWER else AudioStatus.STOPPED
+            return
+        }
         val min = AudioRecord.getMinBufferSize(RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         val r = runCatching {
             AudioRecord(
@@ -144,7 +165,7 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
         r.startRecording()
         _status.value = AudioStatus.RUNNING
         // La phrase secrète n'est cherchée que si l'écoute est voulue (pas pendant un simple enregistrement).
-        val listener = Listener(if (wantListen) template else null)
+        val listener = Listener(if (wantListen && !degraded) template else null)
         thread = Thread({ loop(r, listener) }, "cr-audio").apply {
             priority = Thread.NORM_PRIORITY + 1
             start()

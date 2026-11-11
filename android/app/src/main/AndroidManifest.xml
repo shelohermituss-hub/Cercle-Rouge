@@ -28,6 +28,7 @@
     <application
         android:name=".CercleRougeApp"
         android:allowBackup="false"
+        android:localeConfig="@xml/locales_config"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="false"
         android:icon="@mipmap/ic_launcher"

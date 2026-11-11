@@ -104,6 +104,15 @@ class MessagesTest {
         assertTrue("terminée" in Messages.sms(input(Language.FR, kind = MessageKind.CLOSURE_ENDED)))
     }
 
+    @Test fun pinFailuresWarnContactsInEveryLanguage() { // S7.01, R-SEC-02
+        Language.entries.forEach { l ->
+            val m = Messages.sms(input(l, kind = MessageKind.PIN_FAILURES))
+            assertTrue("Marie" in m, m)
+            assertTrue(Gsm7.isGsm7(m), "GSM-7 : $m")
+            assertTrue(Gsm7.segments(m) <= 1, "un seul SMS : $m")
+        }
+    }
+
     @Test fun silentSecretPhraseNeverRevealsItself() { // le proche voit « SOS » seulement
         val m = Messages.sms(input(Language.FR, reason = Reason.SOS))
         assertFalse("phrase" in m.lowercase())

@@ -41,6 +41,7 @@ import com.cerclerouge.app.R
 import com.cerclerouge.app.evidence.EvidenceSettings
 import com.cerclerouge.app.evidence.EvidenceStore
 import com.cerclerouge.app.evidence.EvidenceSummary
+import com.cerclerouge.app.security.SecuritySettings
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PxButton
 import com.cerclerouge.app.ui.components.PxCheck
@@ -87,6 +88,7 @@ class VaultViewModel @Inject constructor(
     private val settings: Settings,
     private val evidence: EvidenceSettings,
     private val pins: PinRepository,
+    private val security: SecuritySettings,
     private val log: EventLog,
     private val clock: Clock
 ) : ViewModel() {
@@ -97,6 +99,8 @@ class VaultViewModel @Inject constructor(
     suspend fun pinConfigured() = pins.isConfigured()
 
     suspend fun pinOk(pin: String) = pins.verify(pin) == PinResult.Ok
+
+    suspend fun biometric() = security.biometric()
 
     fun unlock() = viewModelScope.launch {
         _ui.update { it.copy(unlocked = true, audioEnabled = evidence.audioEnabled()) }
@@ -221,6 +225,8 @@ fun VaultScreen(vm: VaultViewModel, onBack: () -> Unit) {
         }
     }
     var askPin by remember { mutableStateOf(false) }
+    var bio by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { bio = vm.biometric() }
     LaunchedEffect(Unit) { if (vm.pinConfigured()) askPin = true else vm.unlock() }
     var confirmDelete by remember { mutableStateOf<String?>(null) }
 
@@ -271,13 +277,22 @@ fun VaultScreen(vm: VaultViewModel, onBack: () -> Unit) {
     }
 
     if (askPin) {
-        PinDialog(onDismiss = {
-            askPin = false
-            if (!ui.unlocked) onBack()
-        }, verify = { vm.pinOk(it) }, onDone = {
-            askPin = false
-            vm.unlock()
-        })
+        PinDialog(
+            onDismiss = {
+                askPin = false
+                if (!ui.unlocked) onBack()
+            },
+            verify = { vm.pinOk(it) },
+            onDone = {
+                askPin = false
+                vm.unlock()
+            },
+            onBiometric = if (bio) {
+                {}
+            } else {
+                null
+            }
+        )
     }
     confirmDelete?.let { id ->
         Dialog(onDismissRequest = { confirmDelete = null }) {

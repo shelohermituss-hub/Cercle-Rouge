@@ -68,7 +68,8 @@ class AlertDispatcher @Inject constructor(
             DispatchKind.CLOSE_SAFE -> MessageKind.CLOSURE_SAFE
             DispatchKind.CLOSE_FALSE_ALARM -> MessageKind.CLOSURE_FALSE
             DispatchKind.CLOSE_EXPIRED -> MessageKind.CLOSURE_ENDED
-            else -> return // accusés et échecs de PIN : via le serveur, Sprint 3
+            DispatchKind.PIN_FAILURES -> MessageKind.PIN_FAILURES // S7.01 : 5 PIN faux pendant l'alerte
+            else -> return // accusés : par la page de suivi
         }
         contacts.load()
         val book = contacts.book.value
@@ -89,7 +90,7 @@ class AlertDispatcher @Inject constructor(
                     )
                 }
         } else {
-            // La clôture ne part qu'à ceux qui ont reçu l'alerte (R-ALR-03).
+            // Clôture et avertissement « PIN faux » : seulement à ceux qui ont reçu l'alerte (R-ALR-03).
             outbox.all().filter { it.alertId == alert.id && it.kind == MessageKind.ALERT && it.state == JobState.DONE }
                 .map {
                     OutboxJob(

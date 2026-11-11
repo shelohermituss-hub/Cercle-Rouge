@@ -16,6 +16,7 @@ coroutines = "1.11.0"
 serialization = "1.12.0"
 coreKtx = "1.17.0"
 biometric = "1.1.0"
+fragment = "1.8.9"
 junit = "4.13.2"
 androidxTestRunner = "1.7.0"
 ktlint = "14.2.0"
@@ -47,6 +48,7 @@ androidx-sqlite = { module = "androidx.sqlite:sqlite", version.ref = "sqlite" }
 datastore = { module = "androidx.datastore:datastore", version.ref = "datastore" }
 tink-android = { module = "com.google.crypto.tink:tink-android", version.ref = "tink" }
 biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
+fragment = { module = "androidx.fragment:fragment-ktx", version.ref = "fragment" }
 coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }

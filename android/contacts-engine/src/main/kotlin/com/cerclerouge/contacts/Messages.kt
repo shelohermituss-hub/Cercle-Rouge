@@ -5,7 +5,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-enum class MessageKind { ALERT, TEST, CLOSURE_SAFE, CLOSURE_FALSE, CLOSURE_ENDED }
+enum class MessageKind { ALERT, TEST, CLOSURE_SAFE, CLOSURE_FALSE, CLOSURE_ENDED, PIN_FAILURES }
 
 /**
  * Données d'un SMS. `alertId` : seul un identifiant court part dans le message (R-ALR-02). `unconsented` : le destinataire
@@ -46,6 +46,7 @@ object Messages {
             MessageKind.CLOSURE_SAFE -> "${t.closureSafe(m.name)} Ref $id"
             MessageKind.CLOSURE_FALSE -> "${t.closureFalse(m.name)} Ref $id"
             MessageKind.CLOSURE_ENDED -> "${t.closureEnded(m.name)} Ref $id"
+            MessageKind.PIN_FAILURES -> "${t.pinFailures(m.name)} Ref $id"
         }
         return buildString {
             if (m.test || m.kind == MessageKind.TEST) append("[TEST] ").append(t.testNote).append(' ')
@@ -75,6 +76,9 @@ private interface Texts {
     fun closureSafe(name: String): String
     fun closureFalse(name: String): String
     fun closureEnded(name: String): String
+
+    /** S7.01, R-SEC-02 : quelqu'un essaie de désactiver l'alerte avec de faux PIN. */
+    fun pinFailures(name: String): String
 
     companion object {
         fun of(l: Language): Texts = when (l) {
@@ -108,6 +112,8 @@ private object Fr : Texts {
     override fun closureSafe(name: String) = "Cercle Rouge: $name va bien. Alerte terminée."
     override fun closureFalse(name: String) = "Cercle Rouge: Fausse alerte de $name. Tout va bien."
     override fun closureEnded(name: String) = "Cercle Rouge: l'alerte de $name est terminée."
+    override fun pinFailures(name: String) =
+        "Cercle Rouge: plusieurs tentatives de désactiver l'alerte de $name avec un code faux. L'alerte continue."
 }
 
 private object Ht : Texts {
@@ -132,6 +138,7 @@ private object Ht : Texts {
     override fun closureSafe(name: String) = "Cercle Rouge: $name byen. Alèt la fini."
     override fun closureFalse(name: String) = "Cercle Rouge: Fo alèt $name. Tout bagay byen."
     override fun closureEnded(name: String) = "Cercle Rouge: alèt $name la fini."
+    override fun pinFailures(name: String) = "Cercle Rouge: yo eseye plizyè fwa fèmen alèt $name ak yon move kòd. Alèt la kontinye."
 }
 
 private object En : Texts {
@@ -156,4 +163,6 @@ private object En : Texts {
     override fun closureSafe(name: String) = "Cercle Rouge: $name is safe. Alert ended."
     override fun closureFalse(name: String) = "Cercle Rouge: False alarm from $name. All is well."
     override fun closureEnded(name: String) = "Cercle Rouge: $name's alert has ended."
+    override fun pinFailures(name: String) =
+        "Cercle Rouge: several attempts to turn off $name's alert with a wrong code. The alert continues."
 }

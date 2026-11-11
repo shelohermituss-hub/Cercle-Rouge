@@ -2,7 +2,6 @@ package com.cerclerouge.app
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -29,9 +28,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import com.cerclerouge.alert.Input
 import com.cerclerouge.app.account.AccountRepository
+import com.cerclerouge.app.audio.DeviceHealth
 import com.cerclerouge.app.evidence.EvidencePurge
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.sos.SosIntents
@@ -46,6 +47,8 @@ import com.cerclerouge.app.ui.listen.ListenScreen
 import com.cerclerouge.app.ui.listen.ListenViewModel
 import com.cerclerouge.app.ui.onboarding.OnboardingScreen
 import com.cerclerouge.app.ui.onboarding.OnboardingViewModel
+import com.cerclerouge.app.ui.settings.SettingsScreen
+import com.cerclerouge.app.ui.settings.SettingsViewModel
 import com.cerclerouge.app.ui.theme.CercleRougeTheme
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
@@ -68,13 +71,14 @@ class AppViewModel @Inject constructor(
     val controller: ProtectionController,
     // Instancié dès le démarrage : il suit l'état de la protection.
     val trips: TripController,
-    val purge: EvidencePurge
+    val purge: EvidencePurge,
+    val health: DeviceHealth
 ) : ViewModel()
 
-private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN, VAULT }
+private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN, VAULT, SETTINGS }
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() { // FragmentActivity : requis par BiometricPrompt (S7.02)
     private val app: AppViewModel by viewModels()
     private val onboarding: OnboardingViewModel by viewModels()
     private val home: HomeViewModel by viewModels()
@@ -82,6 +86,7 @@ class MainActivity : ComponentActivity() {
     private val trip: TripViewModel by viewModels()
     private val listen: ListenViewModel by viewModels()
     private val vault: VaultViewModel by viewModels()
+    private val settingsVm: SettingsViewModel by viewModels()
     private val sosRequested = androidx.compose.runtime.mutableStateOf(false)
 
     override fun onNewIntent(intent: Intent) {
@@ -101,6 +106,7 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(Unit) {
                     app.account.load()
                     app.controller.ensureRestored() // état persisté (alerte en cours, protection interrompue…)
+                    app.health.start() // mode dégradé de l'écoute (batterie, surchauffe)
                     app.purge.schedule()
                     app.purge.run() // rattrapage des suppressions de preuves (R-EVD-03)
                     screen = if (app.settings.onboardingDone()) Screen.HOME else Screen.ONBOARDING
@@ -121,6 +127,7 @@ class MainActivity : ComponentActivity() {
                             onTrip = { screen = Screen.TRIP },
                             onListen = { screen = Screen.LISTEN },
                             onVault = { screen = Screen.VAULT },
+                            onSettings = { screen = Screen.SETTINGS },
                             sosRequested = sosRequested.value,
                             onSosConsumed = { sosRequested.value = false }
                         )
@@ -139,6 +146,12 @@ class MainActivity : ComponentActivity() {
                         Screen.VAULT -> {
                             BackHandler { screen = Screen.HOME }
                             Box(Modifier.safeDrawingPadding()) { VaultScreen(vault) { screen = Screen.HOME } }
+                        }
+                        Screen.SETTINGS -> {
+                            BackHandler { screen = Screen.HOME }
+                            Box(Modifier.safeDrawingPadding()) {
+                                SettingsScreen(settingsVm, onBack = { screen = Screen.HOME }, onListen = { screen = Screen.LISTEN })
+                            }
                         }
                         Screen.JOURNAL -> {
                             BackHandler { screen = Screen.HOME }

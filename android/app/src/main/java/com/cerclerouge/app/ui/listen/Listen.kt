@@ -217,7 +217,7 @@ fun ListenScreen(vm: ListenViewModel, onBack: () -> Unit) {
                     Text(
                         stringResource(status.label()),
                         style = PxType.bodyBold,
-                        color = if (status == AudioStatus.PAUSED_MIC_BUSY) c.warn else c.ink,
+                        color = if (status == AudioStatus.PAUSED_MIC_BUSY || status == AudioStatus.PAUSED_LOW_POWER) c.warn else c.ink,
                         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
                     )
                 }
@@ -294,6 +294,7 @@ private fun AudioStatus.label(): Int = when (this) {
     AudioStatus.RUNNING -> R.string.listen_status_running
     AudioStatus.PAUSED_MIC_BUSY -> R.string.listen_status_paused
     AudioStatus.STOPPED -> R.string.listen_status_stopped
+    AudioStatus.PAUSED_LOW_POWER -> R.string.listen_status_low_power
     AudioStatus.ERROR -> R.string.listen_status_error
 }
 

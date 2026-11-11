@@ -33,3 +33,11 @@ grant execute on function auth.uid(), auth.role() to anon, authenticated, servic
 alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;
+
+-- Vault (Supabase) : coffre de secrets, imité sans chiffrement pour les tests locaux.
+alter table auth.users add column if not exists phone_confirmed_at timestamptz;
+create schema if not exists vault;
+create table if not exists vault.secrets (name text primary key, secret text not null, description text);
+create or replace view vault.decrypted_secrets as select name, secret as decrypted_secret from vault.secrets;
+create or replace function vault.create_secret(new_secret text, new_name text, new_description text default '') returns uuid
+language sql as $$ insert into vault.secrets values (new_name, new_secret, new_description); select gen_random_uuid() $$;

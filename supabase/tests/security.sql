@@ -349,6 +349,50 @@ select tests.expect((select phone from private.guardian_invite_target(:'minor'))
 select tests.expect(not exists (select 1 from private.guardian_invite_target(:'minor')), 'un seul SMS par demande');
 select tests.expect(not exists (select 1 from private.guardian_invite_target(:'stranger')), 'rien pour un compte sans demande');
 
+-- ===== S4.07, S4.08 · Trajet suivi par le serveur =====
+select tests.as_user(:'stranger'); set local role authenticated;
+select tests.expect_error($$select public.start_trip('trip-0000001', 'WALK', now() + interval '30 minutes')$$, '%phone_required%');
+reset role;
+select set_config('request.jwt.claims', '', true);
+update auth.users set phone_confirmed_at = now() where id = :'guardian';
+select tests.as_user(:'guardian'); set local role authenticated;
+insert into s3 values ('trip', public.start_trip('trip-0000001', 'WALK', now() + interval '30 minutes')::text);
+select tests.expect(public.start_trip('trip-0000001', 'WALK', now() + interval '30 minutes')::text = (select v from s3 where k = 'trip'), 'start_trip idempotent');
+select tests.expect_error($$select public.start_trip('trip-0000002', 'WALK', now() + interval '20 hours')$$, '%check constraint%');
+select tests.expect(public.set_trip_recipients((select v::uuid from s3 where k = 'trip'), array['+50934000001', '+50932000002'], array['ht', 'fr']) = 1,
+  'proches enregistrés, numéro STOP ignoré');
+select tests.expect_error($$select public.set_trip_recipients((select v::uuid from s3 where k = 'trip'), array['+1','+2','+3','+4'], array['fr','fr','fr','fr'])$$, '%invalid_recipients%');
+select public.trip_heartbeat((select v::uuid from s3 where k = 'trip'), 18.54, -72.34, 15, 80);
+select tests.expect((select count(*) from public.trips) = 1, 'le propriétaire voit son trajet');
+select tests.expect_error($$select last_lat from public.trips$$, '%permission denied%');
+reset role;
+select tests.as_user(:'stranger'); set local role authenticated;
+select tests.expect((select count(*) from public.trips) = 0, 'un tiers ne voit pas le trajet');
+select tests.expect_error($$select public.trip_heartbeat((select v::uuid from s3 where k = 'trip'), 0, 0, 1, 1)$$, '%not_found%');
+select tests.expect_error($$select private.trip_watchdog_tick()$$, '%permission denied%');
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect(not exists (select 1 from private.trip_recipients where position(convert_to('50934000001', 'UTF8') in phone_enc) > 0), 'numéros chiffrés');
+select tests.expect(private.trip_watchdog_tick() = 0, 'battement récent : rien à faire');
+update public.trips set last_heartbeat_at = now() - interval '11 minutes' where id = (select v::uuid from s3 where k = 'trip');
+select tests.expect(private.trip_watchdog_tick() = 1, 'silence de 11 min : perte de contact');
+select tests.expect((select phone from private.trip_alerts_due()) = '+50934000001', 'le SMS part vers le proche, numéro déchiffré');
+select tests.expect((select kind from private.trip_alerts_due()) = 'lost', 'message « perte de contact »');
+select private.trip_alerts_sent((select v::uuid from s3 where k = 'trip'), 'lost');
+select tests.expect(private.trip_watchdog_tick() = 0, 'une seule fois par palier (R-BE-08)');
+select tests.as_user(:'guardian'); set local role authenticated;
+select public.trip_heartbeat((select v::uuid from s3 where k = 'trip'), 18.55, -72.34, 15, 70);
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect((select kind from private.trip_alerts_due()) = 'recovered', 'retour du téléphone : message « de nouveau joignable »');
+select private.trip_alerts_sent((select v::uuid from s3 where k = 'trip'), 'recovered');
+select tests.as_user(:'guardian'); set local role authenticated;
+select public.end_trip((select v::uuid from s3 where k = 'trip'));
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect((select last_lat from public.trips where id = (select v::uuid from s3 where k = 'trip')) is null, 'fin du trajet : position effacée');
+select tests.expect(not exists (select 1 from private.trip_recipients where trip_id = (select v::uuid from s3 where k = 'trip') and phone_enc is not null), 'fin du trajet : numéros effacés');
+
 -- ===== Fonctions : jamais exécutables par anon ni par PUBLIC =====
 select tests.expect(
   not exists (

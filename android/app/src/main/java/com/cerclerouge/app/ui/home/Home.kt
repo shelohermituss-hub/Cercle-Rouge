@@ -13,7 +13,6 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -35,7 +34,6 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -102,11 +100,12 @@ import com.cerclerouge.app.ui.components.SectionHeader
 import com.cerclerouge.app.ui.components.SosBar
 import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.components.TraceLine
-import com.cerclerouge.app.ui.components.cornerTicks
 import com.cerclerouge.app.ui.components.gridBackground
+import com.cerclerouge.app.ui.components.pixelCircle
+import com.cerclerouge.app.ui.components.pixelFrame
 import com.cerclerouge.app.ui.journal.traceRows
 import com.cerclerouge.app.ui.theme.Cr
-import com.cerclerouge.app.ui.theme.DashType
+import com.cerclerouge.app.ui.theme.PxType
 import com.cerclerouge.privacy.log.ChainedEntry
 import com.cerclerouge.privacy.log.EventLog
 import com.cerclerouge.privacy.pin.PinRepository
@@ -263,12 +262,12 @@ internal fun HomeConsole(
             Spacer(Modifier.width(8.dp))
             Text(
                 stringResource(R.string.app_name).uppercase(),
-                style = DashType.title,
+                style = PxType.title,
                 color = if (armed) c.ink else c.muted,
                 modifier = Modifier.weight(1f)
             )
             Brackets(color = c.lineControl) {
-                Text(LocalConfiguration.current.locales[0].language.uppercase(), style = DashType.label)
+                Text(LocalConfiguration.current.locales[0].language.uppercase(), style = PxType.label)
             }
         }
         ClockBar(Modifier.align(Alignment.CenterHorizontally).padding(vertical = 8.dp), color = if (armed) c.green else c.lineControl)
@@ -283,8 +282,7 @@ internal fun HomeConsole(
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(start = 12.dp, end = 12.dp, top = 6.dp)
-                .background(c.screen)
-                .border(1.dp, if (armed) c.edge else c.line)
+                .pixelFrame(if (armed) c.edge else c.line, c.screen)
         ) {
             map(armed, showMe, Modifier.matchParentSize())
             MapCaptions(showMe)
@@ -293,12 +291,10 @@ internal fun HomeConsole(
                     .align(Alignment.TopEnd)
                     .padding(8.dp)
                     .size(48.dp)
-                    .background(c.scrim)
-                    .border(1.dp, c.lineControl)
+                    .pixelFrame(c.lineControl, c.scrim)
                     .clickable(role = Role.Button, onClickLabel = stringResource(R.string.map_expand), onClick = onExpandMap),
                 contentAlignment = Alignment.Center
             ) { Ico(CrIcon.EXPAND, 20.dp, c.ink) }
-            Box(Modifier.matchParentSize().cornerTicks(if (armed) c.mint else c.lineControl, 14.dp))
         }
         // Moitié basse : quatre moniteurs.
         Column(Modifier.weight(1f).fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -310,7 +306,7 @@ internal fun HomeConsole(
                     Ico(CrIcon.PIN, 30.dp, accent)
                     Text(
                         stringResource(if (showMe) R.string.sat_position_on else R.string.sat_position_off).uppercase(),
-                        style = DashType.title,
+                        style = PxType.title,
                         color = if (armed) c.ink else c.muted
                     )
                 }
@@ -322,7 +318,7 @@ internal fun HomeConsole(
                     Ico(CrIcon.USERS, 30.dp, accent)
                     Row(verticalAlignment = Alignment.Bottom) {
                         Digits("$CONTACTS_READY", active = armed)
-                        Text(" / 5", style = DashType.title, color = c.muted)
+                        Text(" / 5", style = PxType.clock.copy(fontSize = PxType.title.fontSize), color = c.muted)
                     }
                 }
                 SosBar(onTrigger = onSosTrigger, onTap = onSosTap, modifier = Modifier.weight(1f).fillMaxHeight(), tile = true)
@@ -340,13 +336,13 @@ private fun BoxScope.MapCaptions(showMe: Boolean) {
     Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.8f to Color.Transparent, 1f to c.screen.copy(alpha = 0.85f))))
     Text(
         stringResource(if (showMe) R.string.home_map_caption_on else R.string.home_map_caption).uppercase(),
-        style = DashType.label,
+        style = PxType.label,
         color = if (showMe) c.mint else c.muted,
         modifier = Modifier.padding(10.dp)
     )
     Text(
         MapStyle.ATTRIBUTION,
-        style = DashType.caption.copy(fontSize = DashType.caption.fontSize * 0.85f),
+        style = PxType.caption.copy(fontSize = PxType.caption.fontSize * 0.85f),
         color = c.muted,
         modifier = Modifier.align(Alignment.BottomStart).padding(8.dp)
     )
@@ -372,7 +368,7 @@ private fun ListenMonitor(armed: Boolean, listening: Boolean, onToggle: () -> Un
             GradientOrb(active = armed, size = 92.dp)
             Text(
                 stringResource(if (armed) R.string.home_on else R.string.home_off),
-                style = DashType.title,
+                style = PxType.title,
                 color = Color.White
             )
         }
@@ -393,9 +389,7 @@ private fun Monitor(
     val c = Cr.colors
     Box(
         modifier
-            .background(c.screen)
-            .border(1.dp, if (armed) c.edge else c.line)
-            .cornerTicks(if (armed) c.mint else c.lineControl, 8.dp)
+            .pixelFrame(if (armed) c.edge else c.line, c.screen)
             .clickable(role = Role.Button, onClick = onClick)
     ) {
         Canvas(Modifier.matchParentSize()) {
@@ -416,7 +410,7 @@ private fun Monitor(
             ) {
                 Text(
                     "CH.$channel · ${title.uppercase()}",
-                    style = DashType.label,
+                    style = PxType.label,
                     color = c.muted,
                     maxLines = 1,
                     modifier = Modifier.weight(1f)
@@ -446,8 +440,7 @@ private fun FullMap(armed: Boolean, showMe: Boolean, onClose: () -> Unit) {
                 .align(Alignment.TopEnd)
                 .padding(12.dp)
                 .size(48.dp)
-                .background(c.scrim)
-                .border(1.dp, c.lineControl)
+                .pixelFrame(c.lineControl, c.scrim)
                 .clickable(role = Role.Button, onClickLabel = stringResource(R.string.map_close), onClick = onClose),
             contentAlignment = Alignment.Center
         ) { Ico(CrIcon.CLOSE, 20.dp, c.ink) }
@@ -475,15 +468,25 @@ internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit) {
                     repeat(12) { i ->
                         val a = Math.toRadians(i * 30.0 - 90)
                         val d = Offset(kotlin.math.cos(a).toFloat(), kotlin.math.sin(a).toFloat())
-                        drawLine(if (i < lit) c.sos else c.line, o + d * r2, o + d * r1, 6.dp.toPx())
+                        val q = 12.dp.toPx()
+                        drawRect(
+                            if (i <
+                                lit
+                            ) {
+                                c.sos
+                            } else {
+                                c.line
+                            },
+                            o + d * ((r1 + r2) / 2) - Offset(q / 2, q / 2),
+                            androidx.compose.ui.geometry.Size(q, q)
+                        )
                     }
                 }
                 Column(
                     Modifier
                         .size(200.dp)
-                        .clip(CircleShape)
-                        .background(Brush.radialGradient(listOf(c.sos, c.sos.copy(alpha = 0.85f))))
-                        .border(2.dp, c.onSos.copy(alpha = 0.4f), CircleShape)
+                        .clip(remember { pixelCircle(25) })
+                        .background(c.sos)
                         .semantics {
                             role = Role.Button
                             contentDescription = a11y
@@ -514,21 +517,21 @@ internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit) {
                     Ico(CrIcon.ALERT, 40.dp, c.onSos)
                     Text(
                         stringResource(R.string.sos),
-                        style = DashType.hero.copy(fontSize = DashType.hero.fontSize * 1.3f),
+                        style = PxType.hero.copy(fontSize = PxType.hero.fontSize * 1.3f),
                         color = c.onSos
                     )
                 }
             }
             Spacer(Modifier.height(16.dp))
-            Text(stringResource(R.string.sos_hold_title).uppercase(), style = DashType.display)
+            Text(stringResource(R.string.sos_hold_title).uppercase(), style = PxType.display)
             Spacer(Modifier.height(6.dp))
-            Text(stringResource(R.string.sos_hold_body), style = DashType.body, color = c.muted, textAlign = TextAlign.Center)
+            Text(stringResource(R.string.sos_hold_body), style = PxType.body, color = c.muted, textAlign = TextAlign.Center)
         }
         Spacer(Modifier.weight(1f))
         DashPanel(Modifier.fillMaxWidth().padding(12.dp), padding = PaddingValues(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Ico(CrIcon.LOCK, 22.dp, c.mint)
-                Text(stringResource(R.string.sos_hold_note), style = DashType.body)
+                Text(stringResource(R.string.sos_hold_note), style = PxType.body)
             }
         }
     }
@@ -552,13 +555,13 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit) {
         TopBar(stringResource(R.string.sos), null)
         Column(Modifier.fillMaxWidth().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Brackets(color = c.danger) {
-                Text(stringResource(R.string.countdown_label).uppercase(), style = DashType.banner, color = c.danger)
+                Text(stringResource(R.string.countdown_label).uppercase(), style = PxType.banner, color = c.danger)
             }
             Box(Modifier.padding(top = 12.dp), contentAlignment = Alignment.Center) {
                 Orb(OrbState.CONNECTING, 230.dp, c.danger)
                 Text(
                     "$seconds",
-                    style = DashType.digitsXL,
+                    style = PxType.digitsXL,
                     color = c.danger,
                     modifier = Modifier.semantics {
                         liveRegion = LiveRegionMode.Assertive
@@ -566,10 +569,10 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit) {
                     }
                 )
             }
-            Text(stringResource(R.string.countdown_seconds).uppercase(), style = DashType.display, modifier = Modifier.padding(top = 8.dp))
+            Text(stringResource(R.string.countdown_seconds).uppercase(), style = PxType.display, modifier = Modifier.padding(top = 8.dp))
             Text(
                 stringResource(R.string.countdown_body),
-                style = DashType.body,
+                style = PxType.body,
                 color = c.muted,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
@@ -592,14 +595,13 @@ private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, onSafe: () ->
         DashPanel(
             Modifier.fillMaxWidth(),
             edge = c.danger,
-            ticks = c.danger,
             fill = Brush.verticalGradient(listOf(c.sos.copy(alpha = 0.25f), c.screen))
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Orb(OrbState.SEARCHING, 48.dp, c.danger)
                 Column {
-                    Text(stringResource(R.string.urgent_sent).uppercase(), style = DashType.display, color = c.danger)
-                    state.alert?.let { Text(time.format(it.openedAt), style = DashType.mono, color = c.muted) }
+                    Text(stringResource(R.string.urgent_sent).uppercase(), style = PxType.display, color = c.danger)
+                    state.alert?.let { Text(time.format(it.openedAt), style = PxType.mono, color = c.muted) }
                 }
             }
         }
@@ -634,14 +636,14 @@ private fun PinDialog(onDismiss: () -> Unit, verify: suspend (String) -> Boolean
     var phase by remember { mutableStateOf(FacePhase.IDLE) }
     val wrong = stringResource(R.string.pin_wrong)
     Dialog(onDismissRequest = onDismiss) {
-        DashPanel(edge = c.edge, ticks = c.mint, padding = PaddingValues(16.dp)) {
+        DashPanel(edge = c.edge, padding = PaddingValues(16.dp)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 FaceUnlock(phase, 72.dp)
-                Text(stringResource(R.string.pin_enter).uppercase(), style = DashType.title)
+                Text(stringResource(R.string.pin_enter).uppercase(), style = PxType.title)
                 if (phase == FacePhase.ERROR) {
                     Text(
                         wrong,
-                        style = DashType.label,
+                        style = PxType.label,
                         color = c.danger,
                         modifier = Modifier.semantics {
                             liveRegion = LiveRegionMode.Polite

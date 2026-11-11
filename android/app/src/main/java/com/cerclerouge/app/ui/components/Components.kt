@@ -1,7 +1,6 @@
 package com.cerclerouge.app.ui.components
 
 import android.provider.Settings
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -31,8 +30,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,16 +45,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -67,16 +69,19 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.cerclerouge.app.R
 import com.cerclerouge.app.ui.theme.Cr
-import com.cerclerouge.app.ui.theme.DashType
+import com.cerclerouge.app.ui.theme.PxType
 import com.valentinerutto.orbmotion.orbs.AnimatedThinkingOrb
 import com.valentinerutto.orbmotion.orbs.OrbState
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.math.hypot
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -133,61 +138,88 @@ fun Modifier.gridBackground(color: Color): Modifier = drawBehind {
 // Icônes (Lucide, ISC)
 // ---------------------------------------------------------------------------
 
-enum class CrIcon(@param:DrawableRes val res: Int) {
-    SHIELD(R.drawable.ic_shield),
-    POWER(R.drawable.ic_power),
-    MIC(R.drawable.ic_mic),
-    PIN(R.drawable.ic_map_pin),
-    USERS(R.drawable.ic_users),
-    ALERT(R.drawable.ic_triangle_alert),
-    HOME(R.drawable.ic_house),
-    MAP(R.drawable.ic_map),
-    ROUTE(R.drawable.ic_route),
-    HISTORY(R.drawable.ic_history),
-    EXPAND(R.drawable.ic_maximize_2),
-    CLOSE(R.drawable.ic_x),
-    BACK(R.drawable.ic_arrow_left),
-    CHECK(R.drawable.ic_check),
-    PHONE(R.drawable.ic_phone),
-    LOCK(R.drawable.ic_lock),
-    CLOCK(R.drawable.ic_clock),
-    FACE(R.drawable.ic_scan_face),
-    ACTIVITY(R.drawable.ic_activity),
-    NEXT(R.drawable.ic_chevron_right)
+enum class CrIcon(val rows: String) {
+    SHIELD("########/#......#/#......#/#......#/.#....#./.#....#./..#..#../...##..."),
+    POWER("...##.../.#.##.#./#..##..#/#......#/#......#/.#....#./..####../........"),
+    MIC("..####../..#..#../..#..#../#.#..#.#/#..##..#/.#....#./..####../...##..."),
+    PIN("..####../.#....#./.#.##.#./.#.##.#./.#....#./..#..#../...##.../........"),
+    USERS("..####../..#..#../..####../...##.../.######./##....##/#......#/#......#"),
+    ALERT("...##.../..#..#../..#..#../.#.##.#./.#.##.#./#......#/#..##..#/########"),
+    HOME("...##.../..#..#../.#....#./##....##/.#....#./.#.##.#./.#.##.#./.######."),
+    MAP("##...##./#.###..#/#.#.#..#/#.#.#..#/#.#.#..#/#.#.#..#/#..###.#/.##...##"),
+    ROUTE("##....../##....../.#....../.######./......#./......#./......##/......##"),
+    HISTORY("..####../.#....#./#..#...#/#..#...#/#..###.#/##.....#/###...#./..####.."),
+    EXPAND("###..###/#......#/#......#/......../......../#......#/#......#/###..###"),
+    CLOSE("#......#/.#....#./..#..#../...##.../...##.../..#..#../.#....#./#......#"),
+    BACK("....#.../...#..../..#...../.#######/..#...../...#..../....#.../........"),
+    CHECK("......../.......#/......##/#....##./##..##../.####.../..##..../........"),
+    PHONE(".######./.#....#./.#....#./.#....#./.#....#./.#....#./.######./...##..."),
+    LOCK("..####../.#....#./.#....#./########/##....##/##.##.##/##....##/########"),
+    CLOCK("..####../.#....#./#..#...#/#..#...#/#..###.#/#......#/.#....#./..####.."),
+    NEXT("......../...#..../....#.../#######./....#.../...#..../......../........")
 }
 
-/** Icône décorative (le texte voisin porte le sens). */
+/** Icône 8 × 8 en pixels, décorative (le texte voisin porte le sens). */
 @Composable
 fun Ico(icon: CrIcon, size: Dp, tint: Color, modifier: Modifier = Modifier) {
-    Icon(painterResource(icon.res), contentDescription = null, tint = tint, modifier = modifier.size(size))
+    val rows = remember(icon) { icon.rows.split('/') }
+    Canvas(modifier.size(size)) {
+        val cell = this.size.width / 8
+        rows.forEachIndexed { y, row ->
+            row.forEachIndexed { x, ch -> if (ch == '#') drawRect(tint, Offset(x * cell, y * cell), Size(cell, cell)) }
+        }
+    }
 }
+
+/** Angles crénelés (marches de 4 dp) des panneaux et boutons pixel. */
+class NotchShape(private val step: Dp = 4.dp) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val s = with(density) { step.toPx() }.coerceAtMost(minOf(size.width, size.height) / 2)
+        val p = Path().apply {
+            moveTo(0f, s)
+            lineTo(s, s)
+            lineTo(s, 0f)
+            lineTo(size.width - s, 0f)
+            lineTo(size.width - s, s)
+            lineTo(size.width, s)
+            lineTo(size.width, size.height - s)
+            lineTo(size.width - s, size.height - s)
+            lineTo(size.width - s, size.height)
+            lineTo(s, size.height)
+            lineTo(s, size.height - s)
+            lineTo(0f, size.height - s)
+            close()
+        }
+        return Outline.Generic(p)
+    }
+}
+
+val Notch = NotchShape()
+
+/** Cercle en escalier sur une grille de `cells` cases (disques pixel). */
+fun pixelCircle(cells: Int): Shape = GenericShape { size, _ ->
+    val cell = size.width / cells
+    val r = cells / 2f
+    for (row in 0 until cells) {
+        val cols = (0 until cells).filter { col -> hypot(col + 0.5f - r, row + 0.5f - r) <= r + 0.15f }
+        if (cols.isNotEmpty()) addRect(Rect(cols.first() * cell, row * cell, (cols.last() + 1) * cell, (row + 1) * cell))
+    }
+}
+
+/** Cadre pixel : bordure crénelée de 2 dp (`border`) et intérieur (`fill`). */
+fun Modifier.pixelFrame(border: Color, fill: Brush): Modifier = clip(Notch).background(border).padding(2.dp).clip(Notch).background(fill)
+
+fun Modifier.pixelFrame(border: Color, fill: Color): Modifier = pixelFrame(border, SolidColor(fill))
 
 // ---------------------------------------------------------------------------
 // Cadres
 // ---------------------------------------------------------------------------
 
-/** Petits coins en « L » (cadres des panneaux de données). */
-fun Modifier.cornerTicks(color: Color, length: Dp = 10.dp, width: Dp = 2.dp): Modifier = drawBehind {
-    val l = length.toPx()
-    val w = width.toPx()
-    val s = size
-    listOf(
-        Offset(0f, 0f) to Offset(1f, 1f),
-        Offset(s.width, 0f) to Offset(-1f, 1f),
-        Offset(0f, s.height) to Offset(1f, -1f),
-        Offset(s.width, s.height) to Offset(-1f, -1f)
-    ).forEach { (o, d) ->
-        drawLine(color, o, Offset(o.x + d.x * l, o.y), w)
-        drawLine(color, o, Offset(o.x, o.y + d.y * l), w)
-    }
-}
-
-/** Panneau de tableau de bord : dégradé vert sombre, bordure fine, coins marqués. */
+/** Panneau pixel : dégradé vert sombre, bordure crénelée de 2 dp. */
 @Composable
 fun DashPanel(
     modifier: Modifier = Modifier,
     edge: Color = Cr.colors.edge,
-    ticks: Color? = null,
     padding: PaddingValues = PaddingValues(12.dp),
     fill: Brush? = null,
     content: @Composable BoxScope.() -> Unit
@@ -195,9 +227,7 @@ fun DashPanel(
     val c = Cr.colors
     Box(
         modifier
-            .background(fill ?: Brush.verticalGradient(listOf(c.panelTop, c.panelBottom)))
-            .border(1.dp, edge)
-            .then(if (ticks != null) Modifier.cornerTicks(ticks) else Modifier)
+            .pixelFrame(edge, fill ?: Brush.verticalGradient(listOf(c.panelTop, c.panelBottom)))
             .padding(padding),
         content = content
     )
@@ -250,7 +280,7 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, accent: Color = 
         Spacer(Modifier.width(10.dp))
         Box(Modifier.size(10.dp).background(accent))
         Spacer(Modifier.width(12.dp))
-        Text(title.uppercase(), style = DashType.banner, color = c.ink, modifier = Modifier.weight(1f))
+        Text(title.uppercase(), style = PxType.banner, color = c.ink, modifier = Modifier.weight(1f))
         trailing()
         Spacer(Modifier.width(10.dp))
     }
@@ -272,7 +302,7 @@ fun TagTitle(title: String, modifier: Modifier = Modifier) {
                 c.green
             )
         }
-        Text(title, style = DashType.bodyStrong, color = c.ink)
+        Text(title, style = PxType.bodyStrong, color = c.ink)
         Canvas(Modifier.size(6.dp, 14.dp)) {
             drawPath(
                 Path().apply {
@@ -291,13 +321,13 @@ fun TagTitle(title: String, modifier: Modifier = Modifier) {
 @Composable
 fun ChevronTitle(title: String, modifier: Modifier = Modifier, color: Color = Cr.colors.gold) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("»", style = DashType.title, color = color)
-        Text(title.uppercase(), style = DashType.title, color = Cr.colors.ink, modifier = Modifier.semantics { heading() })
-        Text("«", style = DashType.title, color = color)
+        Text("»", style = PxType.title, color = color)
+        Text(title.uppercase(), style = PxType.title, color = Cr.colors.ink, modifier = Modifier.semantics { heading() })
+        Text("«", style = PxType.title, color = color)
     }
 }
 
-/** Barre d'horloge « [ 22:14:03 ¦ 2026.11.11 ¦ MERCREDI ] », mise à jour chaque seconde. */
+/** Barre d'horloge « [ 22:14:03 ¦ 2026.11.11 ¦ MER. ] », mise à jour chaque seconde. */
 @Composable
 fun ClockBar(modifier: Modifier = Modifier, color: Color = Cr.colors.green) {
     val locale = LocalConfiguration.current.locales[0]
@@ -310,14 +340,14 @@ fun ClockBar(modifier: Modifier = Modifier, color: Color = Cr.colors.green) {
     }
     val time = remember(now) { now.format(DateTimeFormatter.ofPattern("HH:mm:ss")) }
     val date = remember(now) { now.format(DateTimeFormatter.ofPattern("yyyy.MM.dd")) }
-    val day = remember(now, locale) { now.format(DateTimeFormatter.ofPattern("EEEE", locale)).uppercase(locale) }
+    val day = remember(now, locale) { now.format(DateTimeFormatter.ofPattern("EEE", locale)).uppercase(locale) }
     Brackets(modifier, color) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(time, style = DashType.clock)
-            Text("¦", style = DashType.clock, color = Cr.colors.muted)
-            Text(date, style = DashType.clock)
-            Text("¦", style = DashType.clock, color = Cr.colors.muted)
-            Text(day, style = DashType.clock)
+            Text(time, style = PxType.clock)
+            Text("¦", style = PxType.clock, color = Cr.colors.muted)
+            Text(date, style = PxType.clock)
+            Text("¦", style = PxType.clock, color = Cr.colors.muted)
+            Text(day, style = PxType.banner, maxLines = 1)
         }
     }
 }
@@ -328,12 +358,7 @@ fun ClockBar(modifier: Modifier = Modifier, color: Color = Cr.colors.green) {
 
 /** Chiffre en dégradé menthe (gros chiffres condensés des assets). */
 @Composable
-fun Digits(
-    text: String,
-    modifier: Modifier = Modifier,
-    style: androidx.compose.ui.text.TextStyle = DashType.digits,
-    active: Boolean = true
-) {
+fun Digits(text: String, modifier: Modifier = Modifier, style: androidx.compose.ui.text.TextStyle = PxType.digits, active: Boolean = true) {
     val c = Cr.colors
     val brush = if (active) Brush.verticalGradient(listOf(c.mintLight, c.mint)) else Brush.verticalGradient(listOf(c.ink, c.muted))
     Text(text, style = style.copy(brush = brush), modifier = modifier)
@@ -354,6 +379,7 @@ fun KpiTile(
     val accent = if (active) c.green else c.muted
     Row(
         modifier
+            .clip(Notch)
             .background(Brush.horizontalGradient(listOf(c.panelTop, c.panelBottom.copy(alpha = 0.3f))))
             .drawBehind { drawLine(accent, Offset(0f, 0f), Offset(0f, size.height), 3.dp.toPx()) }
             .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
@@ -363,10 +389,10 @@ fun KpiTile(
     ) {
         Ico(icon, 30.dp, if (active) c.mint else c.muted)
         Column {
-            Text(label.uppercase(), style = DashType.label, color = c.ink)
+            Text(label.uppercase(), style = PxType.label, color = c.ink)
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Digits(value, active = active)
-                if (unit.isNotEmpty()) Text(unit, style = DashType.label, color = c.muted, modifier = Modifier.padding(bottom = 6.dp))
+                if (unit.isNotEmpty()) Text(unit, style = PxType.label, color = c.muted, modifier = Modifier.padding(bottom = 6.dp))
             }
         }
     }
@@ -376,7 +402,7 @@ fun KpiTile(
 @Composable
 fun Led(color: Color, blink: Boolean, modifier: Modifier = Modifier, size: Dp = 8.dp) {
     val on = stepTick(500, enabled = blink) % 2 == 0
-    Box(modifier.size(size).clip(CircleShape).background(if (on) color else color.copy(alpha = 0.25f)))
+    Box(modifier.size(size).background(if (on) color else color.copy(alpha = 0.25f)))
 }
 
 /** Égaliseur de 5 barres : l'écoute est active (aucun contenu audio n'est affiché). */
@@ -422,9 +448,7 @@ fun DashButton(
             .fillMaxWidth()
             .height(if (tall) 72.dp else 56.dp)
             .offset { if (pressed) IntOffset(0, 2.dp.roundToPx()) else IntOffset.Zero }
-            .background(if (enabled) fill else Brush.verticalGradient(listOf(c.panelBottom, c.panelBottom)))
-            .border(1.dp, if (enabled) border else c.line)
-            .cornerTicks(if (enabled) border else c.line, 8.dp)
+            .pixelFrame(if (enabled) border else c.line, if (enabled) fill else SolidColor(c.panelBottom))
             .clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.Center,
@@ -434,7 +458,7 @@ fun DashButton(
             Ico(it, 22.dp, if (enabled) ink else c.muted)
             Spacer(Modifier.width(10.dp))
         }
-        Text(text.uppercase(), style = DashType.button, color = if (enabled) ink else c.muted, textAlign = TextAlign.Center)
+        Text(text.uppercase(), style = PxType.button, color = if (enabled) ink else c.muted, textAlign = TextAlign.Center)
     }
 }
 
@@ -451,8 +475,8 @@ fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifi
     val a11y = stringResource(R.string.sos_a11y)
     Box(
         (if (tile) modifier else modifier.fillMaxWidth().height(72.dp))
+            .clip(Notch)
             .background(c.sos)
-            .cornerTicks(c.onSos.copy(alpha = 0.6f), 10.dp)
             .semantics {
                 role = Role.Button
                 contentDescription = a11y
@@ -491,10 +515,10 @@ fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifi
                 Ico(CrIcon.ALERT, 30.dp, c.onSos)
                 Text(
                     stringResource(R.string.sos),
-                    style = DashType.display.copy(fontSize = DashType.display.fontSize * 1.5f),
+                    style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.5f),
                     color = c.onSos
                 )
-                Text(stringResource(R.string.sos_hint_two_lines), style = DashType.label, color = c.onSos, textAlign = TextAlign.Center)
+                Text(stringResource(R.string.sos_hint_two_lines), style = PxType.label, color = c.onSos, textAlign = TextAlign.Center)
             }
         } else {
             Box(Modifier.fillMaxHeight().fillMaxWidth(progress.value).background(Color.Black.copy(alpha = 0.3f)))
@@ -503,11 +527,11 @@ fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifi
                 Spacer(Modifier.width(14.dp))
                 Text(
                     stringResource(R.string.sos),
-                    style = DashType.display.copy(fontSize = DashType.display.fontSize * 1.3f),
+                    style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.3f),
                     color = c.onSos
                 )
                 Spacer(Modifier.width(14.dp))
-                Text(stringResource(R.string.sos_hint_two_lines), style = DashType.label, color = c.onSos)
+                Text(stringResource(R.string.sos_hint_two_lines), style = PxType.label, color = c.onSos)
             }
         }
     }
@@ -537,7 +561,7 @@ data class NavItem(val label: String, val icon: CrIcon, val onClick: () -> Unit)
 @Composable
 fun DashNavBar(items: List<NavItem>, selected: Int) {
     val c = Cr.colors
-    Row(Modifier.fillMaxWidth().height(64.dp).background(c.screen).border(1.dp, c.line)) {
+    Row(Modifier.fillMaxWidth().height(64.dp).pixelFrame(c.line, c.screen)) {
         items.forEachIndexed { i, item ->
             val active = i == selected
             Box(
@@ -559,7 +583,7 @@ fun DashNavBar(items: List<NavItem>, selected: Int) {
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Ico(item.icon, 22.dp, if (active) c.mint else c.muted)
-                    Text(item.label.uppercase(), style = DashType.label, color = if (active) c.mint else c.muted)
+                    Text(item.label.uppercase(), style = PxType.label, color = if (active) c.mint else c.muted)
                 }
             }
         }
@@ -583,13 +607,12 @@ fun FilterChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: M
     Box(
         modifier
             .heightIn(min = 48.dp)
-            .background(if (selected) c.green else c.screen)
-            .border(1.dp, if (selected) c.green else c.lineControl)
+            .pixelFrame(if (selected) c.green else c.lineControl, if (selected) c.green else c.screen)
             .semantics { this.selected = selected }
             .clickable(role = Role.Tab, onClick = onClick)
             .padding(horizontal = 14.dp),
         contentAlignment = Alignment.Center
-    ) { Text(text.uppercase(), style = DashType.label, color = if (selected) c.onAccent else c.ink) }
+    ) { Text(text.uppercase(), style = PxType.label, color = if (selected) c.onAccent else c.ink) }
 }
 
 /** Pavé PIN (touches de 72 × 56 dp). Le code n'est jamais affiché en clair. */
@@ -600,7 +623,7 @@ fun PinPad(value: String, onChange: (String) -> Unit, maxLength: Int = 8) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.height(16.dp)) {
             repeat(maxOf(4, value.length)) { i ->
-                Box(Modifier.size(12.dp).clip(CircleShape).background(if (i < value.length) c.mint else c.line))
+                Box(Modifier.size(12.dp).background(if (i < value.length) c.mint else c.line))
             }
         }
         listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf("", "0", "⌫")).forEach { row ->
@@ -612,8 +635,7 @@ fun PinPad(value: String, onChange: (String) -> Unit, maxLength: Int = 8) {
                         Box(
                             Modifier
                                 .size(72.dp, 56.dp)
-                                .background(Brush.verticalGradient(listOf(c.panelTop, c.panelBottom)))
-                                .border(1.dp, c.lineControl)
+                                .pixelFrame(c.lineControl, Brush.verticalGradient(listOf(c.panelTop, c.panelBottom)))
                                 .clickable(role = Role.Button) {
                                     if (key == "⌫") {
                                         onChange(value.dropLast(1))
@@ -624,7 +646,7 @@ fun PinPad(value: String, onChange: (String) -> Unit, maxLength: Int = 8) {
                                 .semantics { if (key == "⌫") contentDescription = delete },
                             contentAlignment = Alignment.Center
                         ) {
-                            if (key == "⌫") Ico(CrIcon.BACK, 20.dp, c.ink) else Digits(key, style = DashType.title)
+                            if (key == "⌫") Ico(CrIcon.BACK, 20.dp, c.ink) else Digits(key, style = PxType.title)
                         }
                     }
                 }

@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.cerclerouge.app.R
 
 /**
- * Tokens du design v4 « tableau de bord » (assets Data Visualization, AgentPrism, Biometric fournis par le porteur du projet).
+ * Tokens du design « Pixel » v5 : style pixel (polices, angles crénelés, icônes 8×8) avec les couleurs du tableau de bord v4.
  * Fond noir-gris neutre, panneaux verts sombres, vert d'état, chiffres menthe, or pour les valeurs mises en avant.
  * Contrastes : voir docs/design/README.md (v4).
  */
@@ -95,52 +95,44 @@ val Dashboard = CrColors(
     scrim = Color(0xCC050706)
 )
 
-/** Titres, bandeaux et chiffres : Barlow Condensed. */
-val Condensed = FontFamily(
-    Font(R.font.barlow_condensed_semibold, FontWeight.SemiBold),
-    Font(R.font.barlow_condensed_bold, FontWeight.Bold)
+/** Titres, bandeaux et chiffres : Pixelify Sans (en capitales). */
+val Pixel = FontFamily(Font(R.font.pixelify_sans_bold, FontWeight.Bold))
+
+/** Chiffres : Silkscreen (5 et S bien distincts, contrairement à Pixelify : vital pour le compte à rebours). */
+val Digit = FontFamily(Font(R.font.silkscreen_bold, FontWeight.Bold))
+
+/** Texte, terminal et horodatages : Space Mono. */
+val Mono = FontFamily(
+    Font(R.font.space_mono_regular, FontWeight.Normal),
+    Font(R.font.space_mono_bold, FontWeight.Bold)
 )
 
-/** Texte courant : Barlow. */
-val Sans = FontFamily(
-    Font(R.font.barlow_regular, FontWeight.Normal),
-    Font(R.font.barlow_medium, FontWeight.Medium),
-    Font(R.font.barlow_semibold, FontWeight.SemiBold)
-)
-
-/** Terminal, horodatages : JetBrains Mono. */
-val Mono = FontFamily(Font(R.font.jetbrains_mono_regular, FontWeight.Normal))
-
-object DashType {
+/** Typographie pixel : Pixelify Sans pour ce qui se lit de loin, Space Mono pour le reste. */
+object PxType {
     /** Grand titre (onboarding). */
-    val hero = TextStyle(fontFamily = Condensed, fontWeight = FontWeight.Bold, fontSize = 44.sp, lineHeight = 46.sp)
-    val display = TextStyle(fontFamily = Condensed, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 34.sp)
-    val title =
-        TextStyle(fontFamily = Condensed, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 26.sp, letterSpacing = 0.04.em)
-    val banner =
-        TextStyle(fontFamily = Condensed, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 22.sp, letterSpacing = 0.08.em)
-    val digits = TextStyle(fontFamily = Condensed, fontWeight = FontWeight.SemiBold, fontSize = 32.sp, lineHeight = 34.sp)
-    val digitsXL = TextStyle(fontFamily = Condensed, fontWeight = FontWeight.SemiBold, fontSize = 120.sp, lineHeight = 120.sp)
-    val clock =
-        TextStyle(fontFamily = Condensed, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, lineHeight = 22.sp, letterSpacing = 0.06.em)
-    val body = TextStyle(fontFamily = Sans, fontWeight = FontWeight.Normal, fontSize = 15.sp, lineHeight = 22.sp)
-    val bodyStrong = body.copy(fontWeight = FontWeight.SemiBold)
-    val label =
-        TextStyle(fontFamily = Sans, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.08.em)
-    val caption = TextStyle(fontFamily = Sans, fontWeight = FontWeight.Normal, fontSize = 12.sp, lineHeight = 16.sp)
-    val button =
-        TextStyle(fontFamily = Condensed, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 22.sp, letterSpacing = 0.08.em)
-    val mono = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Normal, fontSize = 12.sp, lineHeight = 16.sp)
+    val hero = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 40.sp, lineHeight = 42.sp)
+    val display = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 32.sp)
+    val title = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 24.sp, letterSpacing = 0.04.em)
+    val banner = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 16.sp, lineHeight = 20.sp, letterSpacing = 0.08.em)
+    val digits = TextStyle(fontFamily = Digit, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 32.sp)
+    val digitsXL = TextStyle(fontFamily = Digit, fontWeight = FontWeight.Bold, fontSize = 104.sp, lineHeight = 108.sp)
+    val clock = TextStyle(fontFamily = Digit, fontWeight = FontWeight.Bold, fontSize = 13.sp, lineHeight = 18.sp, letterSpacing = 0.02.em)
+    val body = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 22.sp)
+    val bodyStrong = body.copy(fontWeight = FontWeight.Bold, lineHeight = 20.sp)
+    val label = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Bold, fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.1.em)
+    val caption = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Normal, fontSize = 11.sp, lineHeight = 16.sp)
+    val button = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 18.sp, letterSpacing = 0.08.em)
+    val mono = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Normal, fontSize = 11.sp, lineHeight = 16.sp)
 }
 
 private val CrTypography = Typography(
-    headlineSmall = DashType.title,
-    titleLarge = DashType.display,
-    titleMedium = DashType.title,
-    bodyLarge = DashType.body,
-    bodyMedium = DashType.body,
-    bodySmall = DashType.caption,
-    labelLarge = DashType.button
+    headlineSmall = PxType.title,
+    titleLarge = PxType.display,
+    titleMedium = PxType.title,
+    bodyLarge = PxType.body,
+    bodyMedium = PxType.body,
+    bodySmall = PxType.caption,
+    labelLarge = PxType.button
 )
 
 val LocalCrColors = staticCompositionLocalOf { Dashboard }

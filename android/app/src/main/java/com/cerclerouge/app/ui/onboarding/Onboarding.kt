@@ -64,7 +64,7 @@ import com.cerclerouge.app.ui.components.SosBar
 import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.components.gridBackground
 import com.cerclerouge.app.ui.theme.Cr
-import com.cerclerouge.app.ui.theme.DashType
+import com.cerclerouge.app.ui.theme.PxType
 import com.cerclerouge.domain.AgeBand
 import com.cerclerouge.domain.Consent
 import com.cerclerouge.domain.ConsentScope
@@ -243,7 +243,7 @@ fun OnboardingScreen(vm: OnboardingViewModel, onSos: () -> Unit, onDone: () -> U
             Step.RETENTION -> Form(R.string.retention_screen_title, back, vm) { RetentionStep(ui, vm) }
             Step.PIN -> Form(R.string.pin_screen_title, back, vm) {
                 Intro(if (ui.pinFirst == null) R.string.pin_title else R.string.pin_confirm, R.string.pin_body)
-                ui.pinError?.let { Text(stringResource(it).uppercase(), color = c.danger, style = DashType.label) }
+                ui.pinError?.let { Text(stringResource(it).uppercase(), color = c.danger, style = PxType.label) }
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     PinPad(ui.pin, vm::pinDigit, maxLength = 4)
                 }
@@ -289,7 +289,7 @@ internal fun Poster(
                     Modifier.heightIn(min = 48.dp).clickable(role = Role.Button, onClick = onSkip).padding(horizontal = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(stringResource(R.string.action_skip).uppercase(), style = DashType.label, color = c.muted)
+                    Text(stringResource(R.string.action_skip).uppercase(), style = PxType.label, color = c.muted)
                 }
             }
         }
@@ -297,9 +297,9 @@ internal fun Poster(
         Column(Modifier.padding(horizontal = 20.dp)) {
             ChevronTitle(stringResource(R.string.app_name), color = c.gold)
             Spacer(Modifier.height(12.dp))
-            Text(title.uppercase(), style = DashType.hero, color = c.ink, modifier = Modifier.semantics { heading() })
+            Text(title.uppercase(), style = PxType.hero, color = c.ink, modifier = Modifier.semantics { heading() })
             Spacer(Modifier.height(12.dp))
-            Text(body, style = DashType.body, color = c.muted)
+            Text(body, style = PxType.body, color = c.muted)
             extra()
         }
         Spacer(Modifier.weight(1f))
@@ -314,7 +314,7 @@ private fun PosterVisual(icon: CrIcon, number: String? = null) {
     Brackets(color = c.green) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Ico(icon, 96.dp, c.mint)
-            number?.let { Digits(it, style = DashType.digitsXL) }
+            number?.let { Digits(it, style = PxType.digitsXL) }
         }
     }
 }
@@ -334,8 +334,8 @@ private fun Form(title: Int, back: Step?, vm: OnboardingViewModel, content: @Com
 
 @Composable
 private fun Intro(title: Int?, body: Int) {
-    title?.let { Text(stringResource(it).uppercase(), style = DashType.title) }
-    Text(stringResource(body), style = DashType.body, color = Cr.colors.muted)
+    title?.let { Text(stringResource(it).uppercase(), style = PxType.title) }
+    Text(stringResource(body), style = PxType.body, color = Cr.colors.muted)
 }
 
 /** Panneau d'information : icône lime et texte. */
@@ -345,7 +345,7 @@ private fun Note(icon: CrIcon, text: String, warn: Boolean = false) {
     DashPanel(Modifier.fillMaxWidth(), edge = if (warn) c.gold else c.line) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             com.cerclerouge.app.ui.components.Ico(icon, 24.dp, if (warn) c.gold else c.mint)
-            Text(text, style = DashType.body)
+            Text(text, style = PxType.body)
         }
     }
 }
@@ -362,10 +362,10 @@ private fun Field(
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
-        label = { Text(stringResource(label).uppercase(), style = DashType.label) },
+        label = { Text(stringResource(label).uppercase(), style = PxType.label) },
         keyboardOptions = KeyboardOptions(keyboardType = keyboard),
         singleLine = true,
-        textStyle = DashType.bodyStrong,
+        textStyle = PxType.bodyStrong,
         shape = RectangleShape,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = c.mint,
@@ -385,7 +385,7 @@ private fun ProfileStep(ui: OnboardingUi, vm: OnboardingViewModel) {
     val c = Cr.colors
     Intro(R.string.profile_title, R.string.profile_min_age)
     Field(ui.name, { v -> vm.edit { copy(name = v.take(40)) } }, R.string.profile_name)
-    Text(stringResource(R.string.profile_birth).uppercase(), style = DashType.label, color = c.muted)
+    Text(stringResource(R.string.profile_birth).uppercase(), style = PxType.label, color = c.muted)
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Field(ui.month, { v ->
             vm.edit { copy(month = v.filter(Char::isDigit).take(2)) }
@@ -422,7 +422,7 @@ private fun CheckLine(text: String, checked: Boolean, onChange: (Boolean) -> Uni
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             DashCheck(checked)
-            Text(text, style = DashType.body)
+            Text(text, style = PxType.body)
         }
     }
 }
@@ -436,7 +436,7 @@ private fun ColumnScope.GuardianStep(ui: OnboardingUi, vm: OnboardingViewModel, 
             Field(ui.guardianPhone, { v ->
                 vm.edit { copy(guardianPhone = v.take(20)) }
             }, R.string.guardian_phone, keyboard = KeyboardType.Phone)
-            Text(stringResource(R.string.guardian_relation).uppercase(), style = DashType.label, color = c.muted)
+            Text(stringResource(R.string.guardian_relation).uppercase(), style = PxType.label, color = c.muted)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("parent" to R.string.relation_parent, "tuteur" to R.string.relation_tutor, "autre" to R.string.relation_other)
                     .forEach { (key, label) ->
@@ -449,7 +449,7 @@ private fun ColumnScope.GuardianStep(ui: OnboardingUi, vm: OnboardingViewModel, 
                         ) {
                             Text(
                                 stringResource(label).uppercase(),
-                                style = DashType.label,
+                                style = PxType.label,
                                 color = if (on) c.onAccent else c.ink,
                                 modifier = Modifier.align(Alignment.Center)
                             )
@@ -466,7 +466,7 @@ private fun ColumnScope.GuardianStep(ui: OnboardingUi, vm: OnboardingViewModel, 
         GuardianStatus.PENDING -> {
             Orb(OrbState.SEARCHING, 72.dp, c.gold, Modifier.align(Alignment.CenterHorizontally))
             Note(CrIcon.CLOCK, stringResource(R.string.guardian_waiting), warn = true)
-            Text(stringResource(R.string.guardian_waiting_sos), style = DashType.body, color = c.muted)
+            Text(stringResource(R.string.guardian_waiting_sos), style = PxType.body, color = c.muted)
             SosBar(onTrigger = onSos, onTap = {})
             DashButton(stringResource(R.string.guardian_change), {
                 vm.edit { copy(guardian = GuardianStatus.NONE) }
@@ -503,8 +503,8 @@ private fun RetentionStep(ui: OnboardingUi, vm: OnboardingViewModel) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 DashCheck(selected)
                 Column {
-                    Text(stringResource(title).uppercase(), style = DashType.bodyStrong)
-                    Text(stringResource(example), style = DashType.caption, color = c.muted)
+                    Text(stringResource(title).uppercase(), style = PxType.bodyStrong)
+                    Text(stringResource(example), style = PxType.caption, color = c.muted)
                 }
             }
         }

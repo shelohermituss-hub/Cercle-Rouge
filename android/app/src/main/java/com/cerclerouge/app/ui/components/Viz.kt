@@ -23,8 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,7 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.cerclerouge.app.ui.theme.Cr
-import com.cerclerouge.app.ui.theme.DashType
+import com.cerclerouge.app.ui.theme.PxType
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlinx.coroutines.delay
@@ -266,32 +264,32 @@ fun TraceLine(row: TraceRow, last: Boolean, modifier: Modifier = Modifier) {
                 drawLine(c.lineControl, Offset(x, size.height / 2), Offset(size.width, size.height / 2), stroke)
             }
         }
-        Box(Modifier.size(22.dp).clip(CircleShape).background(row.color), contentAlignment = Alignment.Center) {
-            Text(row.letter.toString(), style = DashType.label.copy(letterSpacing = DashType.label.letterSpacing * 0), color = Color.White)
+        Box(Modifier.size(22.dp).clip(Notch).background(row.color), contentAlignment = Alignment.Center) {
+            Text(row.letter.toString(), style = PxType.label.copy(letterSpacing = PxType.label.letterSpacing * 0), color = Color.White)
         }
         Spacer(Modifier.width(8.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(row.title, style = DashType.bodyStrong, color = c.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(row.title, style = PxType.bodyStrong, color = c.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 row.tag?.let {
                     Text(
                         it,
-                        style = DashType.mono,
+                        style = PxType.mono,
                         color = row.color,
                         maxLines = 1,
                         modifier = Modifier.background(
                             row.color.copy(alpha = 0.16f),
-                            RoundedCornerShape(4.dp)
+                            Notch
                         ).padding(horizontal = 5.dp, vertical = 1.dp)
                     )
                 }
                 row.chips.forEach {
                     Text(
                         it,
-                        style = DashType.mono,
+                        style = PxType.mono,
                         color = c.muted,
                         maxLines = 1,
-                        modifier = Modifier.border(1.dp, c.chip, RoundedCornerShape(4.dp)).padding(horizontal = 5.dp, vertical = 1.dp)
+                        modifier = Modifier.border(1.dp, c.chip, Notch).padding(horizontal = 5.dp, vertical = 1.dp)
                     )
                 }
             }
@@ -302,7 +300,7 @@ fun TraceLine(row: TraceRow, last: Boolean, modifier: Modifier = Modifier) {
                 Modifier
                     .width(64.dp)
                     .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .clip(Notch)
                     .background(c.chip)
                     .drawBehind {
                         val x = size.width * row.start.coerceIn(0f, 1f)
@@ -315,7 +313,7 @@ fun TraceLine(row: TraceRow, last: Boolean, modifier: Modifier = Modifier) {
                         )
                     }
             )
-            Text(row.duration, style = DashType.mono, color = c.muted, modifier = Modifier.widthIn(min = 40.dp))
+            Text(row.duration, style = PxType.mono, color = c.muted, modifier = Modifier.widthIn(min = 40.dp))
         }
         Spacer(Modifier.width(8.dp))
         val dot = when (row.status) {
@@ -324,7 +322,7 @@ fun TraceLine(row: TraceRow, last: Boolean, modifier: Modifier = Modifier) {
             TraceStatus.ERROR -> c.danger
             TraceStatus.NONE -> c.chip
         }
-        Box(Modifier.size(8.dp).clip(CircleShape).background(dot))
+        Box(Modifier.size(8.dp).background(dot))
     }
 }
 
@@ -337,7 +335,7 @@ fun TraceLine(row: TraceRow, last: Boolean, modifier: Modifier = Modifier) {
 fun BarChart(labels: List<String>, series: List<List<Int>>, colors: List<Color>, modifier: Modifier = Modifier) {
     val c = Cr.colors
     val measurer = rememberTextMeasurer()
-    val axisStyle = DashType.mono.copy(color = c.muted)
+    val axisStyle = PxType.mono.copy(color = c.muted)
     val max = (series.flatten().maxOrNull() ?: 0).coerceAtLeast(4)
     val top = ((max + 3) / 4) * 4
     Canvas(modifier.fillMaxWidth().height(160.dp).clearAndSetSemantics {}) {
@@ -390,7 +388,7 @@ fun BarChart(labels: List<String>, series: List<List<Int>>, colors: List<Color>,
 fun RadarChart(labels: List<String>, values: List<Float>, color: Color, modifier: Modifier = Modifier) {
     val c = Cr.colors
     val measurer = rememberTextMeasurer()
-    val style: TextStyle = DashType.label.copy(color = c.muted)
+    val style: TextStyle = PxType.label.copy(color = c.muted)
     Canvas(modifier.size(260.dp, 210.dp).clearAndSetSemantics {}) {
         val o = Offset(size.width / 2, size.height / 2)
         val r = size.minDimension / 2 - 28.dp.toPx()
@@ -429,7 +427,7 @@ fun RadarChart(labels: List<String>, values: List<Float>, color: Color, modifier
 
 /** Nombre qui monte de 0 à `value` (chiffres des tableaux de bord) ; direct si « réduire les animations ». */
 @Composable
-fun CountUp(value: Int, modifier: Modifier = Modifier, style: TextStyle = DashType.digits, active: Boolean = true) {
+fun CountUp(value: Int, modifier: Modifier = Modifier, style: TextStyle = PxType.digits, active: Boolean = true) {
     val still = reduceMotion()
     val anim = remember { Animatable(if (still) value.toFloat() else 0f) }
     LaunchedEffect(value) {
@@ -440,7 +438,7 @@ fun CountUp(value: Int, modifier: Modifier = Modifier, style: TextStyle = DashTy
 
 /** Texte tapé caractère par caractère (lignes du terminal) ; affiché d'un coup si « réduire les animations ». */
 @Composable
-fun Typewriter(text: String, modifier: Modifier = Modifier, style: TextStyle = DashType.mono, color: Color = Cr.colors.ink) {
+fun Typewriter(text: String, modifier: Modifier = Modifier, style: TextStyle = PxType.mono, color: Color = Cr.colors.ink) {
     val still = reduceMotion()
     var shown by remember(text) { mutableIntStateOf(if (still) text.length else 0) }
     LaunchedEffect(text) {

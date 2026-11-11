@@ -1,6 +1,17 @@
 # Design — décisions
 
-## v4 « tableau de bord » (2026-11-11) — retenue, implémentée dans l'app
+## v5 « Pixel » aux couleurs du tableau de bord (2026-11-11) — retenue, implémentée dans l'app
+
+Demande du porteur du projet : **revenir au style pixel** (v3) **avec les couleurs de la v4** et **garder tous les assets** de la v4.
+
+- **Style pixel** : Pixelify Sans pour les titres (capitales), Space Mono pour le texte et le terminal, angles crénelés (marches de 4 dp, bordure de 2 dp), icônes 8 × 8, disque SOS en pixels, voyants et pastilles carrés, fond quadrillé.
+- **Chiffres en Silkscreen** : dans Pixelify, le 5 ressemble à un S (« 0 / S », compte à rebours illisible). Silkscreen garde des chiffres sans ambiguïté.
+- **Couleurs v4** : fond noir-gris `#0E1011`, panneaux verts, menthe `#4BE38C`, or `#F2B226`, SOS `#E5202B` (voir le tableau v4 ci-dessous).
+- **Assets conservés** : carte satellite (noir et blanc en veille), orbe dégradée de l'écoute IA, animation biométrique du PIN, terminal AgentPrism, histogramme et radar, tuiles KPI, horloge `[ heure ¦ date ¦ jour ]`, bandeaux de section, titres à chevrons, orbes à points.
+
+---
+
+## v4 « tableau de bord » (remplacée par la v5 pour la forme ; couleurs et assets conservés)
 
 Le porteur du projet a fourni ses références : *Data Visualization* (écrans « big screen » verts), *Visualization Axis* (axes, grilles, radar), *AgentPrism* (terminal « trace tree »), *Biometric Smart Animations* (déverrouillage par le visage) et une orbe dégradée rose / orange / bleu. Elles **remplacent le style Pixel Lime** dans toute l'app. Les assets ne sont pas embarqués : chaque visualiseur est redessiné en Compose (Canvas), d'après eux.
 

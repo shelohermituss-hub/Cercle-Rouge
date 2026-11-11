@@ -49,8 +49,8 @@ import com.cerclerouge.app.ui.components.TraceRow
 import com.cerclerouge.app.ui.components.TraceStatus
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.CrColors
-import com.cerclerouge.app.ui.theme.DashType
 import com.cerclerouge.app.ui.theme.Dashboard
+import com.cerclerouge.app.ui.theme.PxType
 import com.cerclerouge.privacy.log.ChainedEntry
 import com.cerclerouge.privacy.log.EventLog
 import java.time.Instant
@@ -193,7 +193,7 @@ fun JournalScreen(log: EventLog, onBack: () -> Unit) {
                 Brackets(color = if (broken == null) c.green else c.danger) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Ico(if (broken == null) CrIcon.LOCK else CrIcon.ALERT, 16.dp, if (broken == null) c.mint else c.danger)
-                        Text("  " + status.uppercase(), style = DashType.label, color = if (broken == null) c.mint else c.danger)
+                        Text("  " + status.uppercase(), style = PxType.label, color = if (broken == null) c.mint else c.danger)
                     }
                 }
                 SectionHeader(stringResource(R.string.journal_week))
@@ -232,7 +232,7 @@ fun JournalScreen(log: EventLog, onBack: () -> Unit) {
         item {
             Text(
                 stringResource(R.string.journal_body),
-                style = DashType.caption,
+                style = PxType.caption,
                 color = c.muted,
                 modifier = Modifier.fillMaxWidth().padding(12.dp)
             )
@@ -251,9 +251,9 @@ private fun Stat(label: String, value: Int, accent: Color, modifier: Modifier = 
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.padding(end = 6.dp).background(accent).padding(4.dp))
-            Text(label.uppercase(), style = DashType.label, color = c.ink)
+            Text(label.uppercase(), style = PxType.label, color = c.ink)
         }
         CountUp(value)
-        Text(pluralStringResource(R.plurals.journal_events, value, value), style = DashType.caption, color = c.muted)
+        Text(pluralStringResource(R.plurals.journal_events, value, value), style = PxType.caption, color = c.muted)
     }
 }

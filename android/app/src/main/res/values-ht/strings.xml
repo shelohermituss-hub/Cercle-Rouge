@@ -341,4 +341,10 @@
     <string name="settings_phone_failed">Pa ka voye kòd la. Tcheke koneksyon an epi eseye ankò.</string>
     <string name="settings_phone_wrong_code">Kòd la pa bon oswa li ekspire.</string>
     <string name="settings_phone_done">Nimewo a verifye.</string>
+    <string name="contacts_invite">Envite pa SMS</string>
+    <string name="contacts_inviting">N ap voye…</string>
+    <string name="contacts_invite_sent">Envitasyon an voye pa SMS. Estati a ap chanje lè moun nan reponn.</string>
+    <string name="contacts_invite_stopped">Nimewo sa a mande pou l pa resevwa mesaj Cercle Rouge ankò.</string>
+    <string name="contacts_invite_wait">Ou fèk voye yon envitasyon. Eseye ankò nan inèdtan.</string>
+    <string name="contacts_invite_failed">Pa ka voye l. Tcheke koneksyon an epi eseye ankò.</string>
 </resources>

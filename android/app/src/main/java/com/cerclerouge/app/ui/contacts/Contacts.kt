@@ -30,6 +30,9 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
@@ -41,6 +44,7 @@ import com.cerclerouge.app.BuildConfig
 import com.cerclerouge.app.R
 import com.cerclerouge.app.contacts.AddOutcome
 import com.cerclerouge.app.contacts.ContactsRepository
+import com.cerclerouge.app.server.ServerSync
 import com.cerclerouge.app.contacts.PickPhone
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PixelIconView
@@ -60,18 +64,45 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class ContactsViewModel @Inject constructor(private val repo: ContactsRepository) : ViewModel() {
+class ContactsViewModel @Inject constructor(private val repo: ContactsRepository, private val server: ServerSync) : ViewModel() {
     val book: StateFlow<ContactBook> = repo.book
     private val _message = MutableStateFlow<Int?>(null)
 
     /** Dernier message d'erreur à afficher (ressource de chaîne), ou null. */
     val message: StateFlow<Int?> = _message
 
+    private val _sending = MutableStateFlow<String?>(null)
+
+    /** Contact dont l'invitation est en cours d'envoi. */
+    val sending: StateFlow<String?> = _sending
+
     init {
-        viewModelScope.launch { repo.load() }
+        viewModelScope.launch {
+            repo.load()
+            refreshStatuses()
+        }
+    }
+
+    /** Relit l'accord des proches sur le serveur (accepté, refusé, STOP). */
+    suspend fun refreshStatuses() = repo.applyServerStatuses(server.contactStatuses())
+
+    /** Invitation par SMS : le proche reçoit un lien pour accepter ou refuser (S3.03). */
+    fun invite(contact: TrustedContact) = viewModelScope.launch {
+        _sending.value = contact.id
+        val error = server.inviteContact(contact)
+        _sending.value = null
+        _message.value = when (error) {
+            null -> R.string.contacts_invite_sent
+            "stopped" -> R.string.contacts_invite_stopped
+            "rate_limited" -> R.string.contacts_invite_wait
+            "already_accepted" -> null
+            else -> R.string.contacts_invite_failed
+        }
+        refreshStatuses()
     }
 
     fun add(name: String, phone: String, onAdded: () -> Unit = {}) = viewModelScope.launch {
@@ -115,6 +146,13 @@ fun ContactsScreen(vm: ContactsViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
     var manual by remember { mutableStateOf(false) }
     val picker = rememberLauncherForActivityResult(PickPhone(context)) { picked -> picked?.let { vm.add(it.name, it.number) } }
+    // Accord des proches : relu toutes les 20 s tant que l'écran est ouvert.
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(20_000)
+            vm.refreshStatuses()
+        }
+    }
     val full = book.contacts.size >= ContactBook.MAX
 
     Column(Modifier.fillMaxSize()) {
@@ -129,11 +167,8 @@ fun ContactsScreen(vm: ContactsViewModel, onBack: () -> Unit) {
                 Text(
                     stringResource(it),
                     style = PxType.label,
-                    color = c.danger,
-                    modifier = Modifier.semantics {
-                        contentDescription =
-                            ""
-                    }
+                    color = if (it == R.string.contacts_invite_sent) c.lime else c.danger,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
                 )
             }
             if (book.contacts.isEmpty()) {
@@ -185,6 +220,12 @@ private fun ContactRow(contact: TrustedContact, first: Boolean, last: Boolean, v
                 ) { vm.setPrimary(contact.id) }
                 Chip(contact.language.name) { vm.cycleLanguage(contact) }
                 Spacer(Modifier.weight(1f))
+                if (!accepted && contact.status != ContactStatus.WITHDRAWN) {
+                    val sending by vm.sending.collectAsState()
+                    Chip(stringResource(if (sending == contact.id) R.string.contacts_inviting else R.string.contacts_invite)) {
+                        if (sending == null) vm.invite(contact)
+                    }
+                }
                 if (BuildConfig.DEBUG && !accepted) Chip(stringResource(R.string.contacts_simulate)) { vm.simulateAccepted(contact.id) }
                 IconButton(PixelIcon.CROSS, stringResource(R.string.contacts_remove)) { vm.remove(contact.id) }
             }

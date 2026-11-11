@@ -340,4 +340,10 @@
     <string name="settings_phone_failed">Could not send the code. Check the connection and try again.</string>
     <string name="settings_phone_wrong_code">Wrong or expired code.</string>
     <string name="settings_phone_done">Number verified.</string>
+    <string name="contacts_invite">Invite by SMS</string>
+    <string name="contacts_inviting">Sending…</string>
+    <string name="contacts_invite_sent">Invitation sent by SMS. The status will change as soon as the contact replies.</string>
+    <string name="contacts_invite_stopped">This number asked to stop receiving messages from Cercle Rouge.</string>
+    <string name="contacts_invite_wait">An invitation was just sent. Try again in an hour.</string>
+    <string name="contacts_invite_failed">Could not send. Check the connection and try again.</string>
 </resources>

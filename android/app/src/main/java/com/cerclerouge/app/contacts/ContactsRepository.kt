@@ -107,7 +107,15 @@ class ContactsRepository @Inject constructor(db: PrivacyDatabase) {
         save(_book.value.withGuardian(UUID.randomUUID().toString(), name, phone, language))
     }
 
-    /** Builds de développement : simule l'acceptation d'un contact (le vrai circuit d'invitation arrive au Sprint 3). */
+    /** Statuts relus sur le serveur (accord, refus, STOP) : seuls les contacts connus du serveur changent. */
+    suspend fun applyServerStatuses(statuses: Map<String, ContactStatus>) = mutex.withLock {
+        if (statuses.isEmpty()) return@withLock
+        val book = _book.value
+        val updated = book.update { c -> statuses[c.id]?.let { s -> c.copy(status = s) } ?: c }
+        if (updated != book) save(updated)
+    }
+
+    /** Builds de développement : simule l'acceptation d'un contact sans passer par le SMS. */
     suspend fun simulateAccepted(id: String) = mutex.withLock {
         save(_book.value.update { c -> if (c.id == id) c.copy(status = ContactStatus.ACCEPTED) else c })
     }

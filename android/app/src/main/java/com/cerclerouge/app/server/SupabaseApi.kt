@@ -118,7 +118,10 @@ class SupabaseApi @Inject constructor(db: PrivacyDatabase, private val clock: Cl
             val code = c.responseCode
             val text = (if (code in 200..299) c.inputStream else c.errorStream)?.bufferedReader()?.use { it.readText() }.orEmpty()
             if (code !in 200..299) {
-                val msg = runCatching { JSONObject(text).optString("message").ifEmpty { JSONObject(text).optString("msg") } }.getOrNull()
+                val msg = runCatching {
+                    val o = JSONObject(text)
+                    o.optString("message").ifEmpty { o.optString("msg") }.ifEmpty { o.optString("error") }
+                }.getOrNull()
                 throw ServerException(msg?.take(64)?.ifEmpty { null } ?: "http_$code", code)
             }
             text

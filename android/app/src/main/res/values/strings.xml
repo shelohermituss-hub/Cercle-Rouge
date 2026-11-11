@@ -341,4 +341,10 @@
     <string name="settings_phone_failed">Envoi du code impossible. Vérifie la connexion et réessaie.</string>
     <string name="settings_phone_wrong_code">Code faux ou expiré.</string>
     <string name="settings_phone_done">Numéro vérifié.</string>
+    <string name="contacts_invite">Inviter par SMS</string>
+    <string name="contacts_inviting">Envoi…</string>
+    <string name="contacts_invite_sent">Invitation envoyée par SMS. Le statut changera dès que le proche répond.</string>
+    <string name="contacts_invite_stopped">Ce numéro a demandé à ne plus recevoir de messages de Cercle Rouge.</string>
+    <string name="contacts_invite_wait">Invitation déjà envoyée il y a peu. Réessaie dans une heure.</string>
+    <string name="contacts_invite_failed">Envoi impossible. Vérifie la connexion et réessaie.</string>
 </resources>

@@ -129,7 +129,10 @@ class HomeViewModel @Inject constructor(
     val security: SecuritySettings
 ) : ViewModel() {
     init {
-        viewModelScope.launch { contacts.load() }
+        viewModelScope.launch {
+            contacts.load()
+            contacts.applyServerStatuses(server.contactStatuses()) // accord des proches (accepté, refusé, STOP)
+        }
     }
 
     suspend fun pinConfigured() = pins.isConfigured()

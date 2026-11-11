@@ -4,6 +4,8 @@ import com.cerclerouge.alert.DispatchKind
 import com.cerclerouge.app.BuildConfig
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.location.LocationTracker
+import com.cerclerouge.contacts.ContactStatus
+import com.cerclerouge.contacts.TrustedContact
 import com.cerclerouge.domain.Alert
 import com.cerclerouge.privacy.db.PrivacyDatabase
 import com.cerclerouge.privacy.db.SettingEntity
@@ -150,6 +152,46 @@ class ServerSync @Inject constructor(
         } ?: false
         log.append("server", if (ok) "sms_relayed" else "sms_relay_failed")
         return ok
+    }
+
+    /**
+     * Invite un proche par SMS (S3.03) : il reçoit un lien pour accepter, refuser ou ne plus rien recevoir.
+     * Rend null si l'invitation est partie, sinon un code (`stopped`, `rate_limited`, `already_accepted`, `network`…).
+     */
+    suspend fun inviteContact(contact: TrustedContact): String? {
+        if (!api.configured) return "not_configured"
+        val args = JSONObject().put("client_ref", contact.id).put("label", contact.name.take(40)).put("to", contact.phone.value)
+            .put("lang", contact.language.name.lowercase())
+        return try {
+            try {
+                api.function("contact-invite", args)
+            } catch (e: ServerException) {
+                if (e.code != "profile_required") throw e
+                pushProfile()
+                api.function("contact-invite", args)
+            }
+            log.append("contacts", "invite_sent")
+            null
+        } catch (e: ServerException) {
+            log.append("contacts", "invite_failed ${e.code}")
+            e.code
+        }
+    }
+
+    /** Statut des invitations, par identifiant local du contact (accepté, refusé, STOP…). Vide si le serveur est injoignable. */
+    suspend fun contactStatuses(): Map<String, ContactStatus> {
+        if (!api.configured) return emptyMap()
+        val body = quietly("invites") { api.rpc("my_contact_invites", JSONObject()) } ?: return emptyMap()
+        val arr = JSONArray(body)
+        return (0 until arr.length()).associate { i ->
+            val o = arr.getJSONObject(i)
+            o.getString("client_ref") to when (o.getString("status")) {
+                "accepted" -> ContactStatus.ACCEPTED
+                "refused" -> ContactStatus.DECLINED
+                "stopped" -> ContactStatus.WITHDRAWN
+                else -> ContactStatus.PENDING
+            }
+        }
     }
 
     /** Suppression du compte serveur et de toutes ses données (S3.12). */

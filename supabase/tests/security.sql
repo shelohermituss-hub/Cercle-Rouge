@@ -304,6 +304,36 @@ end $$;
 select tests.expect((select count(*) from private.server_sms_log where alert_id = (select v::uuid from s3 where k = 'g_alert')) = 12, '12 SMS au plus par alerte');
 select tests.expect(not exists (select 1 from private.server_sms_log where phone_hash like '+%'), 'aucun numéro en clair');
 
+-- ===== S3.03 · Accord des proches =====
+set local role anon;
+select tests.expect_error($$select * from public.my_contact_invites()$$, '%permission denied%');
+reset role;
+select tests.as_user(:'stranger'); set local role authenticated;
+select tests.expect_error($$select private.contact_invite_create(auth.uid(), 'contact-0001', 'Maman', '+50932000001')$$, '%permission denied%');
+select tests.expect_error($$select private.contact_invite_decide('x', 'accept')$$, '%permission denied%');
+reset role;
+select set_config('request.jwt.claims', '', true);
+insert into s3 values ('inv', private.contact_invite_create(:'stranger', 'contact-0001', 'Maman', '+50932000001'));
+select tests.expect(char_length((select v from s3 where k = 'inv')) = 32, 'invitation : jeton de 192 bits');
+select tests.expect_error(format('select private.contact_invite_create(%L, %L, %L, %L)', :'stranger', 'contact-0001', 'Maman', '+50932000001'), '%rate_limited%');
+select tests.expect(private.contact_invite_read((select v from s3 where k = 'inv')) ->> 'name' = 'Inconnu', 'le proche voit qui l''a choisi');
+select tests.expect(private.contact_invite_read('inconnu') is null, 'jeton inconnu → rien');
+select tests.expect(not private.contact_invite_decide((select v from s3 where k = 'inv'), 'delete'), 'décision inconnue refusée');
+select tests.expect(private.contact_invite_decide((select v from s3 where k = 'inv'), 'accept'), 'le proche accepte');
+select tests.expect(not exists (select 1 from public.contact_invites where phone_hash like '+%'), 'aucun numéro en clair');
+select tests.as_user(:'stranger'); set local role authenticated;
+select tests.expect((select status from public.my_contact_invites() where client_ref = 'contact-0001') = 'accepted', 'le propriétaire voit l''accord');
+select tests.expect_error($$select phone_hash from public.contact_invites$$, '%permission denied%');
+reset role;
+select tests.as_user(:'guardian'); set local role authenticated;
+select tests.expect((select count(*) from public.my_contact_invites()) = 0, 'un tiers ne voit pas les invitations des autres');
+reset role;
+select set_config('request.jwt.claims', '', true);
+insert into s3 values ('inv2', private.contact_invite_create(:'guardian', 'contact-0002', null, '+50932000002'));
+select tests.expect(private.contact_invite_decide((select v from s3 where k = 'inv2'), 'stop'), 'STOP enregistré');
+select tests.expect(private.contact_invite_create(:'stranger', 'contact-0003', null, '+50932000002') is null, 'plus aucune invitation vers un numéro STOP');
+select tests.expect(not private.server_sms_allowed(:'guardian', (select v::uuid from s3 where k = 'g_alert'), '+50932000002'), 'plus aucun SMS serveur vers un numéro STOP');
+
 -- ===== Fonctions : jamais exécutables par anon ni par PUBLIC =====
 select tests.expect(
   not exists (

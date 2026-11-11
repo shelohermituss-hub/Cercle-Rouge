@@ -21,6 +21,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <!-- Suivi de position du trajet en arrière-plan (S4.02) ; jamais d'ACCESS_BACKGROUND_LOCATION (ADR-0006). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <!-- Après un redémarrage : restaurer l'état et inviter à réarmer (R-SM-08). -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
@@ -40,7 +41,7 @@
         <service
             android:name=".protection.ProtectionService"
             android:exported="false"
-            android:foregroundServiceType="specialUse|location">
+            android:foregroundServiceType="specialUse|location|microphone">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Protection de sécurité personnelle : maintient l'application active pour envoyer l'alerte et gérer les minuteries de vérification" />

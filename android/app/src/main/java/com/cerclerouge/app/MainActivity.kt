@@ -41,6 +41,8 @@ import com.cerclerouge.app.ui.contacts.ContactsViewModel
 import com.cerclerouge.app.ui.home.HomeScreen
 import com.cerclerouge.app.ui.home.HomeViewModel
 import com.cerclerouge.app.ui.journal.JournalScreen
+import com.cerclerouge.app.ui.listen.ListenScreen
+import com.cerclerouge.app.ui.listen.ListenViewModel
 import com.cerclerouge.app.ui.onboarding.OnboardingScreen
 import com.cerclerouge.app.ui.onboarding.OnboardingViewModel
 import com.cerclerouge.app.ui.theme.CercleRougeTheme
@@ -65,7 +67,7 @@ class AppViewModel @Inject constructor(
     val trips: TripController
 ) : ViewModel()
 
-private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP }
+private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN }
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -74,6 +76,7 @@ class MainActivity : ComponentActivity() {
     private val home: HomeViewModel by viewModels()
     private val contacts: ContactsViewModel by viewModels()
     private val trip: TripViewModel by viewModels()
+    private val listen: ListenViewModel by viewModels()
     private val sosRequested = androidx.compose.runtime.mutableStateOf(false)
 
     override fun onNewIntent(intent: Intent) {
@@ -109,6 +112,7 @@ class MainActivity : ComponentActivity() {
                             onJournal = { screen = Screen.JOURNAL },
                             onContacts = { screen = Screen.CONTACTS },
                             onTrip = { screen = Screen.TRIP },
+                            onListen = { screen = Screen.LISTEN },
                             sosRequested = sosRequested.value,
                             onSosConsumed = { sosRequested.value = false }
                         )
@@ -119,6 +123,10 @@ class MainActivity : ComponentActivity() {
                         Screen.TRIP -> {
                             BackHandler { screen = Screen.HOME }
                             Box(Modifier.safeDrawingPadding()) { TripScreen(trip) { screen = Screen.HOME } }
+                        }
+                        Screen.LISTEN -> {
+                            BackHandler { screen = Screen.HOME }
+                            Box(Modifier.safeDrawingPadding()) { ListenScreen(listen) { screen = Screen.HOME } }
                         }
                         Screen.JOURNAL -> {
                             BackHandler { screen = Screen.HOME }

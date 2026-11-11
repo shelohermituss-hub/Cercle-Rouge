@@ -29,8 +29,8 @@ import kotlinx.coroutines.launch
  * Service de premier plan unique : il garde l'application vivante tant que la protection est active et affiche la notification
  * persistante [SOS] [Désactiver] (S2.04). Il s'arrête tout seul quand la protection repasse à OFF.
  *
- * ⚠ Type `specialUse` pour le Sprint 2 : ce service ne capte encore ni micro ni position. Il passera aux types `microphone` et
- * `location` avec les moteurs (Sprints 4 et 5) ; les déclarations Play correspondantes sont dans android-permissions-play.md.
+ * Types `location` (Sprint 4) et `microphone` (Sprint 5), plus `specialUse` (Android 14+) pour les alertes sans capteur ;
+ * les déclarations Play correspondantes sont dans android-permissions-play.md.
  * Désactiver demande le PIN : le bouton ouvre donc l'application, il ne coupe jamais la protection directement (R-SM-04).
  */
 @AndroidEntryPoint
@@ -59,29 +59,33 @@ class ProtectionService : Service() {
     }
 
     /**
-     * Type de service selon la version d'Android et les autorisations. Depuis Android 14, démarrer un service de type `location`
-     * sans autorisation de position lève une SecurityException : on n'ajoute le type qu'avec l'autorisation. Le type « special use »
+     * Type de service selon la version d'Android et les autorisations. Depuis Android 14, démarrer un type `location` ou
+     * `microphone` sans l'autorisation correspondante lève une SecurityException : on n'ajoute un type qu'avec son autorisation.
+     * `microphone` ne peut être demandé que l'application visible (action de l'utilisateur) : relancé en arrière-plan (redémarrage
+     * du processus), le service retombe sur les autres types et l'écoute reste coupée (R-SM-08). Le type « special use »
      * n'existe qu'à partir d'Android 14 ; avant, un type inconnu ferait planter le démarrage.
      */
     private fun startForegroundTyped() {
         val notification = build(alert = false)
         val location = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
             checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        when {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE -> {
-                val type = if (location) {
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-                } else {
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-                }
-                startForeground(NOTIFICATION_ID, notification, type)
-            }
-            location -> startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
-            else -> startForeground(NOTIFICATION_ID, notification)
+        val mic = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        var base = 0
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) base = base or ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+        if (location) base = base or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+        val withMic = if (mic) base or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else base
+        val started = runCatching { startForeground(NOTIFICATION_ID, notification, withMic) }
+        if (started.isFailure) {
+            // Arrière-plan : le micro est refusé par Android. On garde le service (position, minuteries, alertes) sans lui.
+            startForeground(NOTIFICATION_ID, notification, base)
         }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Chaque démarrage demandé depuis l'écran met à jour les types (ex. micro accordé après le premier démarrage).
+        if (intent != null) startForegroundTyped()
+        return START_STICKY
+    }
 
     override fun onDestroy() {
         scope.cancel()

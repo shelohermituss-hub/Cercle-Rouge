@@ -144,6 +144,7 @@ fun HomeScreen(
     onJournal: () -> Unit,
     onContacts: () -> Unit,
     onTrip: () -> Unit = {},
+    onListen: () -> Unit = {},
     sosRequested: Boolean = false,
     onSosConsumed: () -> Unit = {}
 ) {
@@ -234,6 +235,7 @@ fun HomeScreen(
                 contactsReady = contactsReady,
                 onContacts = onContacts,
                 onTrip = onTrip,
+                onListen = onListen,
                 onSosTrigger = { sos = SosStep.COUNTDOWN },
                 onSosTap = { sos = SosStep.HOLD },
                 nav = listOf(
@@ -271,7 +273,8 @@ internal fun HomeConsole(
     onSosTap: () -> Unit,
     nav: List<NavItem>,
     map: @Composable (armed: Boolean, showMe: Boolean, modifier: Modifier) -> Unit,
-    onTrip: () -> Unit = onSoon
+    onTrip: () -> Unit = onSoon,
+    onListen: () -> Unit = onToggle
 ) {
     val c = Cr.colors
     val armed = state.protection.isArmed
@@ -328,7 +331,7 @@ internal fun HomeConsole(
                     stringResource(R.string.home_row_listen),
                     stringResource(if (listening) R.string.sat_on else R.string.sat_off),
                     armed,
-                    onToggle,
+                    onListen,
                     active = listening
                 )
                 Satellite(

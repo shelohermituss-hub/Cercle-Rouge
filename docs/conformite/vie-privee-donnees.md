@@ -13,7 +13,7 @@
 | Lieux favoris (trajet) | Ajout par l'utilisateur | Téléphone seulement (base chiffrée) | Personne | Jusqu'à suppression | Consentement |
 | Texte de recherche d'adresse | Recherche, **après accord** | Transit | Google (géocodeur Android), jamais la position | Selon Google | Consentement (ADR-0019) |
 | Contacts de confiance | Configuration | Téléphone + serveur (numéro chiffré) | Passerelles SMS et appel (sous-traitants) | Jusqu'à suppression | Consentement de l'utilisateur **et** du contact |
-| Phrase secrète (empreinte) | Enrôlement | Téléphone seulement (chiffré) | Personne | Jusqu'à suppression | Consentement |
+| Phrase secrète (empreinte) | Enrôlement (3 répétitions, audio effacé aussitôt) | Téléphone seulement (base chiffrée) : MFCC, pas d'audio (ADR-0020) | Personne | Jusqu'à suppression (écran Écoute IA) | Consentement |
 | Profil (prénom, langue, pays, profil de vulnérabilité) | Onboarding | Téléphone ; serveur (prénom, langue) | Proches (prénom) | Durée du compte | Contrat ou consentement |
 | Identifiant d'appareil (clé publique) | Installation | Serveur | — | Durée du compte | Contrat |
 | Jeton FCM | Installation | Serveur, Google | Google (transport) | Durée du compte | Contrat |

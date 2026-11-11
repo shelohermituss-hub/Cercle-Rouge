@@ -55,6 +55,7 @@ dependencies {
     implementation(project(":privacy-engine"))
     implementation(project(":contacts-engine"))
     implementation(project(":location-engine"))
+    implementation(project(":audio-engine"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

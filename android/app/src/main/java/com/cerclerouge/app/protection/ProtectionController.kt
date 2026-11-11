@@ -12,7 +12,10 @@ import com.cerclerouge.alert.RejectReason
 import com.cerclerouge.alert.Timer
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.alert.AlertDispatcher
+import com.cerclerouge.app.audio.AudioListener
+import com.cerclerouge.app.audio.PhraseRepository
 import com.cerclerouge.app.location.LocationTracker
+import com.cerclerouge.audio.AudioSignal
 import com.cerclerouge.location.TrackingProfile
 import com.cerclerouge.privacy.db.PrivacyDatabase
 import com.cerclerouge.privacy.db.SettingEntity
@@ -60,6 +63,8 @@ class ProtectionController @Inject constructor(
     private val alarms: AlarmTimers,
     private val dispatcher: AlertDispatcher,
     private val tracker: LocationTracker,
+    private val audio: AudioListener,
+    private val phrases: PhraseRepository,
     db: PrivacyDatabase
 ) {
     private val settings = db.settings()
@@ -71,6 +76,21 @@ class ProtectionController @Inject constructor(
     val state: StateFlow<EngineState> = _state
     private val _events = MutableSharedFlow<UiEvent>(extraBufferCapacity = 8)
     val events: SharedFlow<UiEvent> = _events
+
+    init {
+        // Phrase secrète reconnue → urgence silencieuse (S5.06), jamais d'appel automatique aux secours (R-AUD-03).
+        scope.launch {
+            audio.signals.collect { sig ->
+                if (sig.kind != AudioSignal.Kind.SECRET_PHRASE) return@collect
+                // R-AUD-04 : détection inscrite au journal (score arrondi, version du modèle, aucune donnée audio envoyée).
+                log.append(
+                    "audio",
+                    "secret_phrase confidence=${"%.2f".format(java.util.Locale.ROOT, sig.confidence)} model=${sig.modelVersion}"
+                )
+                dispatch(Input.SecretPhrase(UUID.randomUUID().toString()))
+            }
+        }
+    }
 
     fun send(make: (id: String) -> Input) {
         scope.launch { dispatch(make(UUID.randomUUID().toString())) }
@@ -148,6 +168,9 @@ class ProtectionController @Inject constructor(
             }
             is Effect.ConfigureEngines -> {
                 log.append("engines", "audio=${effect.audio} location=${effect.location}")
+                // Écoute : seulement avec une phrase secrète enregistrée (sans détecteur, le micro ne servirait à rien).
+                val phrase = if (effect.audio) phrases.load() else null
+                if (phrase != null) audio.start(phrase) else audio.stop()
                 // Le suivi de position n'existe que dans les états qui l'autorisent (R-TRIP-01) : arrêté dans tous les autres.
                 when (effect.location) {
                     LocationProfile.ARMED -> tracker.start(TrackingProfile.ARMED)

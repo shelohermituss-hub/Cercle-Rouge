@@ -31,8 +31,8 @@ end $$;
 create function tests.as_user(p_uid uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', 'authenticated')::text, true)
 $$;
-grant usage on schema tests to anon, authenticated;
-grant execute on all functions in schema tests to anon, authenticated;
+grant usage on schema tests to anon, authenticated, service_role;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
 
 -- Comptes vérifiés par OTP (Supabase stocke le E.164 sans « + »)
 insert into auth.users (id, phone) values
@@ -195,6 +195,94 @@ select tests.expect_error(
 select tests.expect_error($$update public.consents set granted = false$$, '%permission denied%');
 select tests.expect_error($$delete from public.consents$$, '%permission denied%');
 reset role;
+
+-- ===== S3 · Alertes, positions, liens de suivi =====
+set local role anon;
+select tests.expect_error($$select public.create_alert('k-anon-0001', 2, 'SOS', 'HIGH', 'SOS', false)$$, '%permission denied%');
+select tests.expect_error($$select private.track_read('x')$$, '%permission denied%');
+reset role;
+
+select tests.as_user(:'stranger'); set local role authenticated;
+create temp table s3 (k text primary key, v text) on commit drop;
+grant all on s3 to authenticated, service_role;
+insert into s3 values ('alert', public.create_alert('k-stranger-001', 2, 'SOS', 'HIGH', 'SOS', false)::text);
+select tests.expect(public.create_alert('k-stranger-001', 2, 'SOS', 'HIGH', 'SOS', false)::text = (select v from s3 where k = 'alert'),
+  'create_alert est idempotente (même clé → même alerte)');
+select tests.expect_error($$select public.create_alert('k-stranger-hb', 2, 'SOS', 'HIGH', 'HEARTBEAT_LOSS', false)$$, '%server_only_trigger%');
+select tests.expect_error($$select public.create_alert('k-stranger-bad', 9, 'SOS', 'HIGH', 'SOS', false)$$, '%check constraint%');
+select tests.expect(public.update_alert((select v::uuid from s3 where k = 'alert'), 3) = 3, 'escalade 2 → 3');
+select tests.expect(public.update_alert((select v::uuid from s3 where k = 'alert'), 1) = 3, 'le niveau ne descend jamais');
+select public.add_alert_position((select v::uuid from s3 where k = 'alert'), 18.54, -72.34, 12, now());
+select public.add_alert_position((select v::uuid from s3 where k = 'alert'), 18.55, -72.34, 12, now()); -- ignorée (< 5 s)
+select tests.expect((select count(*) from public.alert_positions) = 1, 'une position toutes les 5 s au plus');
+select tests.expect_error($$select public.add_alert_position((select v::uuid from s3 where k = 'alert'), 95, 0, 1, now())$$, '%invalid_position%');
+select tests.expect_error($$select public.create_tracking_link((select v::uuid from s3 where k = 'alert'), 'Maman', 30)$$, '%invalid_ttl%');
+insert into s3 values ('token', public.create_tracking_link((select v::uuid from s3 where k = 'alert'), 'Maman', 240));
+select tests.expect(char_length((select v from s3 where k = 'token')) = 32, 'jeton de 192 bits (32 caractères base64url)');
+select tests.expect_error($$select token_hash from public.tracking_links$$, '%permission denied%');
+select tests.expect((select count(*) from public.tracking_links) = 1, 'le propriétaire voit son lien (sans le hachage)');
+reset role;
+
+-- Un tiers ne voit ni ne touche l'alerte d'un autre.
+select tests.as_user(:'teen'); set local role authenticated;
+select tests.expect((select count(*) from public.alerts) = 0, 'un tiers ne voit pas les alertes des autres');
+select tests.expect((select count(*) from public.alert_positions) = 0, 'un tiers ne voit pas les positions des autres');
+select tests.expect_error($$select public.update_alert((select v::uuid from s3 where k = 'alert'), 4)$$, '%not_found%');
+select tests.expect_error($$select public.close_alert((select v::uuid from s3 where k = 'alert'), 'USER_SAFE')$$, '%not_found%');
+select tests.expect_error($$select public.create_tracking_link((select v::uuid from s3 where k = 'alert'), null, 240)$$, '%not_found%');
+select tests.expect_error($$select private.track_read((select v from s3 where k = 'token'))$$, '%permission denied%');
+select tests.expect_error($$insert into public.alerts (owner_id, idempotency_key, level, reason, confidence, trigger) values (auth.uid(), 'direct-insert', 2, 'SOS', 'HIGH', 'SOS')$$, '%permission denied%');
+reset role;
+
+-- R-PAR-01 : un 12–15 ans sans consentement n'ouvre qu'un SOS manuel.
+select tests.as_user(:'minor'); set local role authenticated;
+select tests.expect_error($$select public.create_alert('k-minor-auto', 2, 'DISTRESS', 'MEDIUM', 'AUTOMATIC', false)$$, '%protection_not_allowed%');
+select tests.expect(public.create_alert('k-minor-sos-1', 2, 'SOS', 'HIGH', 'SOS', false) is not null, 'un mineur peut toujours lancer un SOS');
+reset role;
+
+-- Page des proches (service_role, Edge Function `track`).
+select set_config('request.jwt.claims', '', true);
+set local role service_role;
+select tests.expect(private.track_read('jeton-invalide') is null, 'jeton invalide → rien');
+select tests.expect(private.track_read((select v from s3 where k = 'token')) ->> 'name' = 'Inconnu', 'le proche voit le prénom');
+select tests.expect(jsonb_array_length(private.track_read((select v from s3 where k = 'token')) -> 'positions') = 1, 'et la position');
+select tests.expect(private.track_act((select v from s3 where k = 'token'), 'TOOK_CONTACT'), 'action « J''ai pris contact »');
+select tests.expect(private.track_act((select v from s3 where k = 'token'), 'TOOK_CONTACT'), 'action rejouée sans doublon');
+select tests.expect(not private.track_act((select v from s3 where k = 'token'), 'DELETE_ALL'), 'action inconnue refusée');
+reset role;
+select tests.expect((select count(*) from public.contact_actions) = 1, 'une seule action enregistrée');
+select tests.expect((select count(*) from public.link_views) = 1, 'consultations journalisées (une par minute)');
+
+select tests.as_user(:'stranger'); set local role authenticated;
+select tests.expect((select count(*) from public.alert_feedback((select v::uuid from s3 where k = 'alert')) where action = 'TOOK_CONTACT') = 1,
+  'le propriétaire voit que son proche a pris contact');
+select public.close_alert((select v::uuid from s3 where k = 'alert'), 'USER_SAFE');
+select public.close_alert((select v::uuid from s3 where k = 'alert'), 'USER_SAFE'); -- idempotente
+select tests.expect((select status from public.alerts where id = (select v::uuid from s3 where k = 'alert')) = 'closed', 'alerte close');
+select tests.expect_error($$select public.add_alert_position((select v::uuid from s3 where k = 'alert'), 18.54, -72.34, 12, now())$$, '%alert_closed%');
+reset role;
+set local role service_role;
+select tests.expect(private.track_read((select v from s3 where k = 'token')) ->> 'status' = 'closed', 'la page affiche « terminée »');
+select tests.expect(jsonb_array_length(private.track_read((select v from s3 where k = 'token')) -> 'positions') = 0, 'plus aucune position après la clôture');
+select tests.expect(not private.track_act((select v from s3 where k = 'token'), 'FALSE_ALARM'), 'plus d''action après la clôture');
+reset role;
+
+-- Tâches planifiées : expiration à 24 h, purge des positions.
+select set_config('request.jwt.claims', '', true);
+update public.alerts set opened_at = now() - interval '25 hours' where idempotency_key = 'k-minor-sos-1';
+select tests.expect(private.expire_alerts() = 1, 'alerte de plus de 24 h expirée');
+update public.alerts set closed_at = now() - interval '2 days' where id = (select v::uuid from s3 where k = 'alert');
+select private.purge_expired();
+select tests.expect((select count(*) from public.alert_positions) = 0, 'positions purgées 24 h après la clôture');
+
+-- Suppression du compte.
+select tests.as_user(:'teen'); set local role authenticated;
+select public.create_alert('k-teen-0001', 2, 'SOS', 'HIGH', 'SOS', false);
+select public.delete_my_account();
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect(not exists (select 1 from public.profiles where id = :'teen'), 'compte supprimé : profil effacé');
+select tests.expect(not exists (select 1 from public.alerts a where a.idempotency_key = 'k-teen-0001'), 'compte supprimé : alertes effacées');
 
 -- ===== Fonctions : jamais exécutables par anon ni par PUBLIC =====
 select tests.expect(

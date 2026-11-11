@@ -20,6 +20,14 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import com.cerclerouge.contacts.PhoneResult
+import com.cerclerouge.contacts.Phone
+import com.cerclerouge.app.server.SupabaseApi
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -74,7 +82,10 @@ data class SettingsUi(
     val biometric: Boolean = false,
     val biometricAlerts: Boolean = false,
     val busy: Boolean = false,
-    val message: Int? = null
+    val message: Int? = null,
+    val phone: String? = null,
+    /** Numéro en attente du code reçu par SMS. */
+    val pendingPhone: String? = null
 )
 
 @HiltViewModel
@@ -83,6 +94,7 @@ class SettingsViewModel @Inject constructor(
     private val evidence: EvidenceSettings,
     private val security: SecuritySettings,
     private val pins: PinRepository,
+    private val api: SupabaseApi,
     val data: DataControl
 ) : ViewModel() {
     private val _ui = MutableStateFlow(SettingsUi())
@@ -95,7 +107,8 @@ class SettingsViewModel @Inject constructor(
                     retention = settings.retention(),
                     recording = evidence.audioEnabled(),
                     biometric = security.biometric(),
-                    biometricAlerts = security.biometricForAlerts()
+                    biometricAlerts = security.biometricForAlerts(),
+                    phone = api.verifiedPhone()
                 )
             }
         }
@@ -139,6 +152,34 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun said(message: Int?) = _ui.update { it.copy(message = message) }
+
+    /** Étape 1 : envoie un code par SMS au numéro (le compte anonyme devient un compte vérifié, sans perte de données). */
+    fun requestCode(raw: String) = viewModelScope.launch {
+        val phone = (Phone.normalize(raw) as? PhoneResult.Valid)?.number?.value
+        if (phone == null) {
+            said(R.string.settings_phone_invalid)
+            return@launch
+        }
+        _ui.update { it.copy(busy = true, message = null) }
+        val ok = runCatching { api.requestPhoneCode(phone) }.isSuccess
+        _ui.update { it.copy(busy = false, pendingPhone = if (ok) phone else null, message = if (ok) R.string.settings_phone_sent else R.string.settings_phone_failed) }
+    }
+
+    /** Étape 2 : vérifie le code à 6 chiffres. */
+    fun verifyCode(code: String) = viewModelScope.launch {
+        val phone = _ui.value.pendingPhone ?: return@launch
+        _ui.update { it.copy(busy = true, message = null) }
+        val ok = runCatching { api.verifyPhoneCode(phone, code.trim()) }.isSuccess
+        _ui.update {
+            if (ok) {
+                it.copy(busy = false, phone = phone, pendingPhone = null, message = R.string.settings_phone_done)
+            } else {
+                it.copy(busy = false, message = R.string.settings_phone_wrong_code)
+            }
+        }
+    }
+
+    fun cancelPhone() = _ui.update { it.copy(pendingPhone = null, message = null) }
 }
 
 private enum class Guarded { WIPE, DELETE, BIOMETRIC_ALERTS }
@@ -208,6 +249,9 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             }
             Toggle(R.string.vault_audio_toggle, R.string.vault_audio_toggle_ex, ui.recording) { vm.setRecording(it) }
             PxButton(stringResource(R.string.settings_listen), onListen, variant = PxVariant.OUTLINE, icon = PixelIcon.MIC)
+
+            Section(R.string.settings_section_phone)
+            PhoneSection(ui, vm)
 
             Section(R.string.settings_section_security)
             if (bioAvailable) {
@@ -304,6 +348,52 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             }
         )
     }
+}
+
+/** « Mon numéro » : vérification par code SMS (Vonage via Supabase Auth). Débloque le parcours parent et l'accord des proches. */
+@Composable
+private fun PhoneSection(ui: SettingsUi, vm: SettingsViewModel) {
+    val c = Cr.colors
+    var number by remember { mutableStateOf("") }
+    var code by remember { mutableStateOf("") }
+    when {
+        ui.phone != null -> Text(stringResource(R.string.settings_phone_verified, ui.phone), style = PxType.bodyBold, color = c.lime)
+        ui.pendingPhone == null -> {
+            Text(stringResource(R.string.settings_phone_ex), style = PxType.caption, color = c.muted)
+            Field(number, { number = it.filter { ch -> ch.isDigit() || ch == '+' || ch == ' ' }.take(20) }, R.string.settings_phone_label, KeyboardType.Phone)
+            PxButton(stringResource(R.string.settings_phone_send), { vm.requestCode(number) }, variant = PxVariant.OUTLINE, enabled = !ui.busy && number.length >= 8)
+        }
+        else -> {
+            Text(stringResource(R.string.settings_phone_code_for, ui.pendingPhone), style = PxType.body)
+            Field(code, { code = it.filter(Char::isDigit).take(8) }, R.string.settings_phone_code_label, KeyboardType.NumberPassword)
+            PxButton(stringResource(R.string.settings_phone_verify), { vm.verifyCode(code) }, enabled = !ui.busy && code.length >= 6)
+            PxButton(stringResource(R.string.action_cancel), { vm.cancelPhone() }, variant = PxVariant.OUTLINE)
+        }
+    }
+}
+
+@Composable
+private fun Field(value: String, onChange: (String) -> Unit, label: Int, keyboard: KeyboardType) {
+    val c = Cr.colors
+    OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        label = { Text(stringResource(label).uppercase(), style = PxType.label) },
+        keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+        singleLine = true,
+        textStyle = PxType.bodyBold,
+        shape = RectangleShape,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = c.lime,
+            unfocusedBorderColor = c.lineControl,
+            focusedLabelColor = c.lime,
+            unfocusedLabelColor = c.muted,
+            cursorColor = c.lime,
+            focusedContainerColor = c.raised,
+            unfocusedContainerColor = c.raised
+        ),
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 @Composable

@@ -328,4 +328,17 @@
     <string name="battery_generic">Pou pwoteksyon an kenbe lè ekran an etenn : Paramèt → Aplikasyon → Cercle Rouge → Batri : « San restriksyon ».</string>
     <string name="home_row_settings">Paramèt</string>
     <string name="sat_settings">Louvri</string>
+    <string name="settings_section_phone">Nimewo mwen</string>
+    <string name="settings_phone_ex">Verifye nimewo ou ak yon kòd SMS. Li sèvi pou konfime dakò yon granmoun referan epi pou jwenn ou si ou chanje telefòn. Pèsonn pa janm wè l.</string>
+    <string name="settings_phone_label">Nimewo ou (+509…)</string>
+    <string name="settings_phone_send">Resevwa yon kòd pa SMS</string>
+    <string name="settings_phone_code_for">Kòd voye nan %1$s.</string>
+    <string name="settings_phone_code_label">Kòd ou resevwa a</string>
+    <string name="settings_phone_verify">Valide kòd la</string>
+    <string name="settings_phone_verified">Nimewo verifye : %1$s</string>
+    <string name="settings_phone_invalid">Nimewo a pa bon.</string>
+    <string name="settings_phone_sent">Kòd la voye. Li ka pran yon minit pou l rive.</string>
+    <string name="settings_phone_failed">Pa ka voye kòd la. Tcheke koneksyon an epi eseye ankò.</string>
+    <string name="settings_phone_wrong_code">Kòd la pa bon oswa li ekspire.</string>
+    <string name="settings_phone_done">Nimewo a verifye.</string>
 </resources>

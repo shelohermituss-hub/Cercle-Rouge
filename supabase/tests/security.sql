@@ -284,6 +284,26 @@ select set_config('request.jwt.claims', '', true);
 select tests.expect(not exists (select 1 from public.profiles where id = :'teen'), 'compte supprimé : profil effacé');
 select tests.expect(not exists (select 1 from public.alerts a where a.idempotency_key = 'k-teen-0001'), 'compte supprimé : alertes effacées');
 
+-- ===== S3.04 · SMS de secours par le serveur : garde-fous =====
+select tests.as_user(:'guardian'); set local role authenticated;
+insert into s3 values ('g_alert', public.create_alert('k-guardian-01', 2, 'SOS', 'HIGH', 'SOS', false)::text);
+select tests.expect_error($$select private.server_sms_allowed(auth.uid(), (select v::uuid from s3 where k = 'g_alert'), '+50930000009')$$, '%permission denied%');
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect(private.server_sms_allowed(:'guardian', (select v::uuid from s3 where k = 'g_alert'), '+50931000001'), 'SMS serveur permis pour son alerte ouverte');
+select tests.expect(not private.server_sms_allowed(:'stranger', (select v::uuid from s3 where k = 'g_alert'), '+50931000001'), 'jamais pour l''alerte d''un autre');
+select tests.expect(not private.server_sms_allowed(:'stranger', (select v::uuid from s3 where k = 'alert'), '+50931000001'), 'jamais pour une alerte close depuis plus d''1 h');
+do $$ declare i int; begin
+  for i in 2..5 loop perform private.server_sms_allowed('22222222-2222-2222-2222-222222222222', (select v::uuid from s3 where k = 'g_alert'), '+5093100000' || i); end loop;
+end $$;
+select tests.expect(not private.server_sms_allowed(:'guardian', (select v::uuid from s3 where k = 'g_alert'), '+50931000099'), '5 destinataires distincts au plus par alerte');
+select tests.expect(private.server_sms_allowed(:'guardian', (select v::uuid from s3 where k = 'g_alert'), '+50931000001'), 'un destinataire déjà prévenu peut recevoir la suite');
+do $$ declare i int; begin
+  for i in 1..10 loop perform private.server_sms_allowed('22222222-2222-2222-2222-222222222222', (select v::uuid from s3 where k = 'g_alert'), '+50931000001'); end loop;
+end $$;
+select tests.expect((select count(*) from private.server_sms_log where alert_id = (select v::uuid from s3 where k = 'g_alert')) = 12, '12 SMS au plus par alerte');
+select tests.expect(not exists (select 1 from private.server_sms_log where phone_hash like '+%'), 'aucun numéro en clair');
+
 -- ===== Fonctions : jamais exécutables par anon ni par PUBLIC =====
 select tests.expect(
   not exists (

@@ -43,9 +43,41 @@ class SupabaseApi @Inject constructor(db: PrivacyDatabase, private val clock: Cl
         }
     }
 
+    /** Appelle une Edge Function avec la session courante. */
+    suspend fun function(name: String, args: JSONObject): String {
+        val token = accessToken()
+        return try {
+            post("/functions/v1/$name", args.toString(), token)
+        } catch (e: ServerException) {
+            if (e.http != 401) throw e
+            post("/functions/v1/$name", args.toString(), accessToken(forceRefresh = true))
+        }
+    }
+
+    /**
+     * Rattache un numéro au compte (anonyme) : Supabase envoie un code par SMS (Vonage). Le compte et ses données sont gardés.
+     */
+    suspend fun requestPhoneCode(phoneE164: String) {
+        post("/auth/v1/user", JSONObject().put("phone", phoneE164).toString(), accessToken(), method = "PUT")
+    }
+
+    /** Vérifie le code reçu ; la nouvelle session (numéro confirmé) remplace l'ancienne. */
+    suspend fun verifyPhoneCode(phoneE164: String, code: String) {
+        val body = JSONObject().put("type", "phone_change").put("phone", phoneE164).put("token", code).toString()
+        val session = post("/auth/v1/verify", body, accessToken())
+        mutex.withLock {
+            val s = JSONObject(session)
+            if (s.has("access_token")) save(s)
+            settings.put(SettingEntity(PHONE, phoneE164))
+        }
+    }
+
+    /** Numéro vérifié du compte, ou null. */
+    suspend fun verifiedPhone(): String? = settings.get(PHONE)
+
     /** Oublie la session (après la suppression du compte). */
     suspend fun forget() = mutex.withLock {
-        listOf(ACCESS, REFRESH, EXPIRES).forEach { settings.remove(it) }
+        listOf(ACCESS, REFRESH, EXPIRES, PHONE).forEach { settings.remove(it) }
     }
 
     private suspend fun accessToken(forceRefresh: Boolean = false): String = mutex.withLock {
@@ -71,11 +103,11 @@ class SupabaseApi @Inject constructor(db: PrivacyDatabase, private val clock: Cl
         return access
     }
 
-    private suspend fun post(path: String, body: String, bearer: String?): String = withContext(Dispatchers.IO) {
+    private suspend fun post(path: String, body: String, bearer: String?, method: String = "POST"): String = withContext(Dispatchers.IO) {
         if (!configured) throw ServerException("not_configured", 0)
         val c = URL(base + path).openConnection() as HttpURLConnection
         try {
-            c.requestMethod = "POST"
+            c.requestMethod = method
             c.connectTimeout = TIMEOUT_MS
             c.readTimeout = TIMEOUT_MS
             c.doOutput = true
@@ -103,6 +135,7 @@ class SupabaseApi @Inject constructor(db: PrivacyDatabase, private val clock: Cl
         const val ACCESS = "server.access"
         const val REFRESH = "server.refresh"
         const val EXPIRES = "server.expires"
+        const val PHONE = "server.phone"
         const val SKEW_S = 60
         const val TIMEOUT_MS = 8_000
     }

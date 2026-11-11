@@ -136,6 +136,22 @@ class ServerSync @Inject constructor(
         }
     }
 
+    /**
+     * SMS de secours par le serveur (Vonage) quand le téléphone ne peut pas envoyer : pas de permission SMS, ou un premier
+     * envoi local a échoué (pas de crédit…). Vrai si le fournisseur a accepté le message. Bornée à 10 s.
+     */
+    suspend fun sendSms(alert: Alert, phoneE164: String, text: String): Boolean {
+        if (!api.configured || clock.instant().isBefore(downUntil)) return false
+        val ok = withTimeoutOrNull(LINK_TIMEOUT_MS) {
+            val id = ensureAlert(alert) ?: return@withTimeoutOrNull false
+            quietly("server_sms") {
+                api.function("alert-sms", JSONObject().put("alert_id", id).put("to", phoneE164).put("text", text))
+            } != null
+        } ?: false
+        log.append("server", if (ok) "sms_relayed" else "sms_relay_failed")
+        return ok
+    }
+
     /** Suppression du compte serveur et de toutes ses données (S3.12). */
     suspend fun deleteAccount(): Boolean {
         if (!api.configured) return true

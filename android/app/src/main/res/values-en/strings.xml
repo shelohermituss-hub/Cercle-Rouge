@@ -327,4 +327,17 @@
     <string name="battery_generic">For protection to keep working with the screen off: Settings → Apps → Cercle Rouge → Battery: \"Unrestricted\".</string>
     <string name="home_row_settings">Settings</string>
     <string name="sat_settings">Open</string>
+    <string name="settings_section_phone">My number</string>
+    <string name="settings_phone_ex">Verify your number with an SMS code. It is used to confirm a trusted adult\'s consent and to find your account if you change phones. It is never shown to anyone.</string>
+    <string name="settings_phone_label">Your number (+509…)</string>
+    <string name="settings_phone_send">Get a code by SMS</string>
+    <string name="settings_phone_code_for">Code sent to %1$s.</string>
+    <string name="settings_phone_code_label">Code received</string>
+    <string name="settings_phone_verify">Confirm the code</string>
+    <string name="settings_phone_verified">Verified number: %1$s</string>
+    <string name="settings_phone_invalid">Invalid number.</string>
+    <string name="settings_phone_sent">Code sent. It can take a minute to arrive.</string>
+    <string name="settings_phone_failed">Could not send the code. Check the connection and try again.</string>
+    <string name="settings_phone_wrong_code">Wrong or expired code.</string>
+    <string name="settings_phone_done">Number verified.</string>
 </resources>

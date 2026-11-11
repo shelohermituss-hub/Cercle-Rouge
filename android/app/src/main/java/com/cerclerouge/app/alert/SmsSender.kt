@@ -27,6 +27,10 @@ sealed interface SmsResult {
  */
 @Singleton
 class SmsSender @Inject constructor(@ApplicationContext private val context: Context) {
+    /** Vrai si l'app peut envoyer elle-même (permission SEND_SMS accordée). */
+    val canSendDirect: Boolean
+        get() = context.checkSelfPermission(Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
+
     fun send(jobKey: String, phone: String, text: String): SmsResult {
         if (context.checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) return prefilled(phone, text)
         return runCatching {

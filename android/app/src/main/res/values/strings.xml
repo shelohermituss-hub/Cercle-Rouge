@@ -328,4 +328,17 @@
     <string name="battery_generic">Pour que la protection tienne écran éteint : Réglages → Applications → Cercle Rouge → Batterie : « Non restreinte ».</string>
     <string name="home_row_settings">Réglages</string>
     <string name="sat_settings">Ouvrir</string>
+    <string name="settings_section_phone">Mon numéro</string>
+    <string name="settings_phone_ex">Vérifie ton numéro par un code SMS. Il sert à confirmer l\'accord d\'un adulte référent et à te retrouver si tu changes de téléphone. Il n\'est jamais montré à personne.</string>
+    <string name="settings_phone_label">Ton numéro (+509…)</string>
+    <string name="settings_phone_send">Recevoir un code par SMS</string>
+    <string name="settings_phone_code_for">Code envoyé au %1$s.</string>
+    <string name="settings_phone_code_label">Code reçu</string>
+    <string name="settings_phone_verify">Valider le code</string>
+    <string name="settings_phone_verified">Numéro vérifié : %1$s</string>
+    <string name="settings_phone_invalid">Numéro invalide.</string>
+    <string name="settings_phone_sent">Code envoyé. Il peut mettre une minute à arriver.</string>
+    <string name="settings_phone_failed">Envoi du code impossible. Vérifie la connexion et réessaie.</string>
+    <string name="settings_phone_wrong_code">Code faux ou expiré.</string>
+    <string name="settings_phone_done">Numéro vérifié.</string>
 </resources>

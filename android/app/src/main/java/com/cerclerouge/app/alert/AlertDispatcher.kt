@@ -171,7 +171,26 @@ class AlertDispatcher @Inject constructor(
             )
         )
         when (val d = ledger.check(job.contactId, job.alertId, job.kind == MessageKind.TEST, Gsm7.segments(text), now)) {
-            Decision.Allow -> when (val r = sms.send(job.key, contact.phone.value, text)) {
+            Decision.Allow -> {
+                // Secours par le serveur (Vonage) : pas de permission SMS, ou un premier envoi local a échoué (pas de crédit…).
+                val viaServer = alert != null && job.kind != MessageKind.TEST && (job.attempts > 0 || !sms.canSendDirect)
+                if (viaServer && server.sendSms(alert, contact.phone.value, text)) {
+                    outbox.succeeded(job, now)
+                    log.append("sms", "relayed ${job.alertId.take(6)}/${job.contactId.take(6)}")
+                    return
+                }
+                sendLocally(job, contact.phone.value, text, now)
+            }
+            is Decision.Block -> {
+                log.append("sms", "blocked ${d.reason}")
+                // Limite de fréquence : on réessaie plus tard ; plafonds atteints : on abandonne.
+                if (d.reason == com.cerclerouge.contacts.BlockReason.CONTACT_RATE_LIMIT) outbox.failed(job, now) else outbox.gaveUp(job)
+            }
+        }
+    }
+
+    private suspend fun sendLocally(job: OutboxJob, phone: String, text: String, now: java.time.Instant) {
+        when (val r = sms.send(job.key, phone, text)) {
                 SmsResult.Sent, SmsResult.NeedsUserAction -> {
                     outbox.succeeded(job, now)
                     log.append(
@@ -183,12 +202,6 @@ class AlertDispatcher @Inject constructor(
                     outbox.failed(job, now)
                     log.append("sms", "failed ${r.reason}")
                 }
-            }
-            is Decision.Block -> {
-                log.append("sms", "blocked ${d.reason}")
-                // Limite de fréquence : on réessaie plus tard ; plafonds atteints : on abandonne.
-                if (d.reason == com.cerclerouge.contacts.BlockReason.CONTACT_RATE_LIMIT) outbox.failed(job, now) else outbox.gaveUp(job)
-            }
         }
     }
 

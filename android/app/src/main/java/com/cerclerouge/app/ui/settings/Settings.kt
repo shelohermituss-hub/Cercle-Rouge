@@ -18,16 +18,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
-import com.cerclerouge.contacts.PhoneResult
-import com.cerclerouge.contacts.Phone
-import com.cerclerouge.app.server.SupabaseApi
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,12 +33,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
@@ -55,6 +52,7 @@ import com.cerclerouge.app.evidence.EvidenceSettings
 import com.cerclerouge.app.security.Biometric
 import com.cerclerouge.app.security.SecureScreen
 import com.cerclerouge.app.security.SecuritySettings
+import com.cerclerouge.app.server.SupabaseApi
 import com.cerclerouge.app.settings.DataControl
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PxButton
@@ -65,6 +63,8 @@ import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.home.PinDialog
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
+import com.cerclerouge.contacts.Phone
+import com.cerclerouge.contacts.PhoneResult
 import com.cerclerouge.domain.Retention
 import com.cerclerouge.privacy.Settings
 import com.cerclerouge.privacy.pin.PinRepository
@@ -162,7 +162,13 @@ class SettingsViewModel @Inject constructor(
         }
         _ui.update { it.copy(busy = true, message = null) }
         val ok = runCatching { api.requestPhoneCode(phone) }.isSuccess
-        _ui.update { it.copy(busy = false, pendingPhone = if (ok) phone else null, message = if (ok) R.string.settings_phone_sent else R.string.settings_phone_failed) }
+        _ui.update {
+            it.copy(
+                busy = false,
+                pendingPhone = if (ok) phone else null,
+                message = if (ok) R.string.settings_phone_sent else R.string.settings_phone_failed
+            )
+        }
     }
 
     /** Étape 2 : vérifie le code à 6 chiffres. */
@@ -360,8 +366,16 @@ private fun PhoneSection(ui: SettingsUi, vm: SettingsViewModel) {
         ui.phone != null -> Text(stringResource(R.string.settings_phone_verified, ui.phone), style = PxType.bodyBold, color = c.lime)
         ui.pendingPhone == null -> {
             Text(stringResource(R.string.settings_phone_ex), style = PxType.caption, color = c.muted)
-            Field(number, { number = it.filter { ch -> ch.isDigit() || ch == '+' || ch == ' ' }.take(20) }, R.string.settings_phone_label, KeyboardType.Phone)
-            PxButton(stringResource(R.string.settings_phone_send), { vm.requestCode(number) }, variant = PxVariant.OUTLINE, enabled = !ui.busy && number.length >= 8)
+            Field(number, {
+                number = it.filter { ch -> ch.isDigit() || ch == '+' || ch == ' ' }.take(20)
+            }, R.string.settings_phone_label, KeyboardType.Phone)
+            PxButton(
+                stringResource(R.string.settings_phone_send),
+                { vm.requestCode(number) },
+                variant = PxVariant.OUTLINE,
+                enabled =
+                !ui.busy && number.length >= 8
+            )
         }
         else -> {
             Text(stringResource(R.string.settings_phone_code_for, ui.pendingPhone), style = PxType.body)

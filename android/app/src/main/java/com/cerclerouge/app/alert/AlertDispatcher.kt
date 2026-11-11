@@ -191,17 +191,17 @@ class AlertDispatcher @Inject constructor(
 
     private suspend fun sendLocally(job: OutboxJob, phone: String, text: String, now: java.time.Instant) {
         when (val r = sms.send(job.key, phone, text)) {
-                SmsResult.Sent, SmsResult.NeedsUserAction -> {
-                    outbox.succeeded(job, now)
-                    log.append(
-                        "sms",
-                        "${if (r == SmsResult.Sent) "queued" else "prefilled"} ${job.alertId.take(6)}/${job.contactId.take(6)}"
-                    )
-                }
-                is SmsResult.Failed -> {
-                    outbox.failed(job, now)
-                    log.append("sms", "failed ${r.reason}")
-                }
+            SmsResult.Sent, SmsResult.NeedsUserAction -> {
+                outbox.succeeded(job, now)
+                log.append(
+                    "sms",
+                    "${if (r == SmsResult.Sent) "queued" else "prefilled"} ${job.alertId.take(6)}/${job.contactId.take(6)}"
+                )
+            }
+            is SmsResult.Failed -> {
+                outbox.failed(job, now)
+                log.append("sms", "failed ${r.reason}")
+            }
         }
     }
 

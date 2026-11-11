@@ -16,4 +16,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "cercle-rouge"
-include(":app", ":core-domain", ":alert-engine", ":privacy-engine", ":contacts-engine")
+include(":app", ":core-domain", ":alert-engine", ":privacy-engine", ":contacts-engine", ":location-engine")

@@ -73,7 +73,13 @@ class ProtectionService : Service() {
         var base = 0
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) base = base or ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
         if (location) base = base or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-        val withMic = if (mic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) base or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else base
+        val withMic = if (mic &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+        ) {
+            base or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+        } else {
+            base
+        }
         val started = runCatching { startForeground(NOTIFICATION_ID, notification, withMic) }
         if (started.isFailure) {
             // Arrière-plan : le micro est refusé par Android. On garde le service (position, minuteries, alertes) sans lui.

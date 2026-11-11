@@ -119,10 +119,25 @@
     <string name="guardian_screen_title">Your trusted adult</string>
     <string name="notif_screen_title">Notifications</string>
     <string name="sat_position_off">Private</string>
-    <string name="sat_contacts">%1$d / 5</string>
     <string name="home_map_caption">Location hidden</string>
     <string name="home_map_caption_on">Your location stays on your phone</string>
     <string name="sat_position_on">Here only</string>
     <string name="map_expand">Expand map</string>
     <string name="map_close">Collapse map</string>
+    <string name="home_map_title">Map · Haiti</string>
+    <string name="journal_today">Today</string>
+    <string name="journal_week">Last 7 days</string>
+    <string name="journal_kpi_on">Activations</string>
+    <string name="journal_kpi_alerts">Alerts</string>
+    <string name="journal_chart">Activations and alerts per day</string>
+    <string name="journal_ready">Readiness</string>
+    <string name="ready_mic">Mic</string>
+    <string name="ready_location">Location</string>
+    <string name="ready_notif">Notifs</string>
+    <string name="ready_contacts">Contacts</string>
+    <string name="ready_log">Log</string>
+    <plurals name="journal_events">
+        <item quantity="one">%1$d event</item>
+        <item quantity="other">%1$d events</item>
+    </plurals>
 </resources>

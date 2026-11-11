@@ -13,6 +13,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -29,11 +30,13 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,8 +49,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -77,30 +80,38 @@ import com.cerclerouge.alert.RejectReason
 import com.cerclerouge.app.R
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.protection.UiEvent
+import com.cerclerouge.app.ui.components.Brackets
+import com.cerclerouge.app.ui.components.ClockBar
+import com.cerclerouge.app.ui.components.CrIcon
+import com.cerclerouge.app.ui.components.DashButton
+import com.cerclerouge.app.ui.components.DashNavBar
+import com.cerclerouge.app.ui.components.DashPanel
+import com.cerclerouge.app.ui.components.DashVariant
+import com.cerclerouge.app.ui.components.Digits
 import com.cerclerouge.app.ui.components.EqBars
+import com.cerclerouge.app.ui.components.FacePhase
+import com.cerclerouge.app.ui.components.FaceUnlock
+import com.cerclerouge.app.ui.components.GradientOrb
+import com.cerclerouge.app.ui.components.Ico
+import com.cerclerouge.app.ui.components.KpiTile
 import com.cerclerouge.app.ui.components.Led
 import com.cerclerouge.app.ui.components.NavItem
 import com.cerclerouge.app.ui.components.Orb
 import com.cerclerouge.app.ui.components.PinPad
-import com.cerclerouge.app.ui.components.PixelDisc
-import com.cerclerouge.app.ui.components.PixelIcon
-import com.cerclerouge.app.ui.components.PixelIconView
-import com.cerclerouge.app.ui.components.PxButton
-import com.cerclerouge.app.ui.components.PxNavBar
-import com.cerclerouge.app.ui.components.PxPanel
-import com.cerclerouge.app.ui.components.PxVariant
+import com.cerclerouge.app.ui.components.SectionHeader
 import com.cerclerouge.app.ui.components.SosBar
 import com.cerclerouge.app.ui.components.TopBar
-import com.cerclerouge.app.ui.components.pixelGrid
-import com.cerclerouge.app.ui.journal.humanize
+import com.cerclerouge.app.ui.components.TraceLine
+import com.cerclerouge.app.ui.components.cornerTicks
+import com.cerclerouge.app.ui.components.gridBackground
+import com.cerclerouge.app.ui.journal.traceRows
 import com.cerclerouge.app.ui.theme.Cr
-import com.cerclerouge.app.ui.theme.PxType
+import com.cerclerouge.app.ui.theme.DashType
 import com.cerclerouge.privacy.log.ChainedEntry
 import com.cerclerouge.privacy.log.EventLog
 import com.cerclerouge.privacy.pin.PinRepository
 import com.valentinerutto.orbmotion.orbs.OrbState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -116,14 +127,14 @@ class HomeViewModel @Inject constructor(val controller: ProtectionController, pr
 /** Ce que l'utilisateur doit confirmer par PIN avant de l'envoyer au moteur. */
 private enum class Guarded { DISARM, IM_SAFE }
 
-/** Sous-écrans du parcours SOS (maquettes « SOS · appui long » et « SOS · compte à rebours »). */
+/** Sous-écrans du parcours SOS (appui long, compte à rebours). */
 private enum class SosStep { NONE, HOLD, COUNTDOWN }
 
 /** Contacts de confiance : la gestion arrive au Sprint 2. */
 private const val CONTACTS_READY = 0
 
 /**
- * Accueil « Pixel Lime » (maquettes Accueil · veille / actif / écoute) et parcours SOS.
+ * Accueil « tableau de bord » : carte satellite en haut, quatre moniteurs en bas (écoute IA, position, contacts, SOS).
  * L'écran d'urgence remplace l'accueil tant qu'une alerte est ouverte.
  */
 @Composable
@@ -185,7 +196,7 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit) {
         }
     }
 
-    Box(Modifier.fillMaxSize().background(c.surface).pixelGrid(c.grid).safeDrawingPadding()) {
+    Box(Modifier.fillMaxSize().background(c.bg).gridBackground(c.line.copy(alpha = 0.35f)).safeDrawingPadding()) {
         when {
             state.protection.isAlert -> EmergencyScreen(vm, state, onSafe = { guarded(Guarded.IM_SAFE) }, onCall = ::dial114)
             mapFull -> FullMap(state.protection.isArmed, state.protection.isArmed && state.locationGranted) { mapFull = false }
@@ -205,10 +216,10 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit) {
                 onSosTap = { sos = SosStep.HOLD },
                 onExpandMap = { mapFull = true },
                 nav = listOf(
-                    NavItem(stringResource(R.string.nav_home), PixelIcon.HOME) {},
-                    NavItem(stringResource(R.string.nav_map), PixelIcon.PIN) { toast(context, soon) },
-                    NavItem(stringResource(R.string.nav_trip), PixelIcon.ARROW_RIGHT) { toast(context, soon) },
-                    NavItem(stringResource(R.string.nav_log), PixelIcon.CLOCK, onJournal)
+                    NavItem(stringResource(R.string.nav_home), CrIcon.HOME) {},
+                    NavItem(stringResource(R.string.nav_map), CrIcon.MAP) { mapFull = true },
+                    NavItem(stringResource(R.string.nav_trip), CrIcon.ROUTE) { toast(context, soon) },
+                    NavItem(stringResource(R.string.nav_log), CrIcon.HISTORY, onJournal)
                 ),
                 map = { armed, showMe, modifier -> LiveMap(armed, showMe, modifier) }
             )
@@ -218,14 +229,12 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit) {
     pinFor?.let { action ->
         PinDialog(
             onDismiss = { pinFor = null },
-            onPin = { pin ->
-                pinFor = null
-                scope.launch {
-                    val auth = vm.controller.authFor(pin)
-                    vm.controller.send { if (action == Guarded.DISARM) Input.Disarm(it, auth) else Input.ImSafe(it, auth) }
-                    if (auth == Auth.FAILED) toast(context, resources.getString(R.string.pin_wrong))
-                }
-            }
+            verify = { pin ->
+                val auth = vm.controller.authFor(pin)
+                vm.controller.send { if (action == Guarded.DISARM) Input.Disarm(it, auth) else Input.ImSafe(it, auth) }
+                auth != Auth.FAILED
+            },
+            onDone = { pinFor = null }
         )
     }
 }
@@ -246,93 +255,104 @@ internal fun HomeConsole(
     val listening = armed && state.micGranted
     // P4 : la position n'est lue que protection active et autorisation accordée.
     val showMe = armed && state.locationGranted
-    // Coupée : tout est en noir et blanc. Active : la couleur revient (carte, moniteurs).
-    val accent = if (armed) c.lime else c.muted
+    // Veille : tout est en noir et blanc. Protection active : la couleur revient.
+    val accent = if (armed) c.mint else c.muted
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            PixelIconView(PixelIcon.SHIELD, 24.dp, accent)
-            Spacer(Modifier.width(10.dp))
-            Text(stringResource(R.string.app_name).uppercase(), style = PxType.brand, color = accent, modifier = Modifier.weight(1f))
-            PxPanel(Modifier.width(56.dp), padding = PaddingValues(8.dp)) {
-                Text(
-                    LocalConfiguration.current.locales[0].language.uppercase(),
-                    style = PxType.label,
-                    modifier = Modifier.align(Alignment.Center)
-                )
+        Row(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Ico(CrIcon.SHIELD, 24.dp, accent)
+            Spacer(Modifier.width(8.dp))
+            Text(
+                stringResource(R.string.app_name).uppercase(),
+                style = DashType.title,
+                color = if (armed) c.ink else c.muted,
+                modifier = Modifier.weight(1f)
+            )
+            Brackets(color = c.lineControl) {
+                Text(LocalConfiguration.current.locales[0].language.uppercase(), style = DashType.label)
             }
         }
-        // Moitié haute : la carte, agrandissable en plein écran.
-        Box(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 12.dp)) {
-            PxPanel(Modifier.matchParentSize(), border = if (armed) c.lime else c.line, fill = c.void, padding = PaddingValues(0.dp)) {
-                map(armed, showMe, Modifier.matchParentSize())
-                MapCaptions(showMe)
-                PxPanel(
-                    Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .size(48.dp)
-                        .clickable(role = Role.Button, onClickLabel = stringResource(R.string.map_expand), onClick = onExpandMap),
-                    border = c.lineControl,
-                    fill = c.surface,
-                    padding = PaddingValues(0.dp)
-                ) { PixelIconView(PixelIcon.EXPAND, 20.dp, c.ink, Modifier.align(Alignment.Center)) }
-            }
+        ClockBar(Modifier.align(Alignment.CenterHorizontally).padding(vertical = 8.dp), color = if (armed) c.green else c.lineControl)
+        // Moitié haute : carte satellite, agrandissable en plein écran.
+        SectionHeader(
+            stringResource(R.string.home_map_title),
+            Modifier.padding(horizontal = 12.dp),
+            accent = if (armed) c.green else c.lineControl
+        )
+        Box(
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(start = 12.dp, end = 12.dp, top = 6.dp)
+                .background(c.screen)
+                .border(1.dp, if (armed) c.edge else c.line)
+        ) {
+            map(armed, showMe, Modifier.matchParentSize())
+            MapCaptions(showMe)
+            Box(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .size(48.dp)
+                    .background(c.scrim)
+                    .border(1.dp, c.lineControl)
+                    .clickable(role = Role.Button, onClickLabel = stringResource(R.string.map_expand), onClick = onExpandMap),
+                contentAlignment = Alignment.Center
+            ) { Ico(CrIcon.EXPAND, 20.dp, c.ink) }
+            Box(Modifier.matchParentSize().cornerTicks(if (armed) c.mint else c.lineControl, 14.dp))
         }
-        // Moitié basse : quatre moniteurs (écoute IA, position, contacts, SOS).
+        // Moitié basse : quatre moniteurs.
         Column(Modifier.weight(1f).fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ListenMonitor(armed, listening, onToggle, Modifier.weight(1f).fillMaxHeight())
-                Monitor(
-                    "02",
-                    stringResource(R.string.home_row_position),
-                    armed,
-                    onSoon,
-                    Modifier.weight(1f).fillMaxHeight(),
-                    indicator = { Led(if (showMe) c.lime else c.line, blink = showMe) }
-                ) {
-                    PixelIconView(PixelIcon.PIN, 32.dp, accent)
+                Monitor("02", stringResource(R.string.home_row_position), armed, onSoon, Modifier.weight(1f).fillMaxHeight(), {
+                    Led(if (showMe) c.mint else c.muted, blink = showMe)
+                }) {
+                    Ico(CrIcon.PIN, 30.dp, accent)
                     Text(
                         stringResource(if (showMe) R.string.sat_position_on else R.string.sat_position_off).uppercase(),
-                        style = PxType.bodyBold,
+                        style = DashType.title,
                         color = if (armed) c.ink else c.muted
                     )
                 }
             }
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Monitor(
-                    "03",
-                    stringResource(R.string.home_row_contacts),
-                    armed,
-                    onSoon,
-                    Modifier.weight(1f).fillMaxHeight(),
-                    indicator = { Led(c.line, blink = false) }
-                ) {
-                    PixelIconView(PixelIcon.USERS, 32.dp, accent)
-                    Text(stringResource(R.string.sat_contacts, CONTACTS_READY), style = PxType.title, color = if (armed) c.ink else c.muted)
+                Monitor("03", stringResource(R.string.home_row_contacts), armed, onSoon, Modifier.weight(1f).fillMaxHeight(), {
+                    Led(c.muted, blink = false)
+                }) {
+                    Ico(CrIcon.USERS, 30.dp, accent)
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Digits("$CONTACTS_READY", active = armed)
+                        Text(" / 5", style = DashType.title, color = c.muted)
+                    }
                 }
                 SosBar(onTrigger = onSosTrigger, onTap = onSosTap, modifier = Modifier.weight(1f).fillMaxHeight(), tile = true)
             }
         }
-        Box(Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp)) { PxNavBar(nav, selected = 0) }
+        DashNavBar(nav, selected = 0)
     }
 }
 
-/** Légendes de la carte : état de la position et attribution OpenStreetMap (obligatoire). */
+/** Légendes de la carte : état de la position et attribution (obligatoire). */
 @Composable
 private fun BoxScope.MapCaptions(showMe: Boolean) {
     val c = Cr.colors
-    Box(Modifier.matchParentSize().background(Brush.verticalGradient(0f to c.void.copy(alpha = 0.85f), 0.25f to Color.Transparent)))
-    Column(Modifier.padding(10.dp)) {
-        Text(
-            stringResource(if (showMe) R.string.home_map_caption_on else R.string.home_map_caption).uppercase(),
-            style = PxType.caption,
-            color = if (showMe) c.lime else c.muted
-        )
-        Text(MapStyle.ATTRIBUTION, style = PxType.caption.copy(fontSize = PxType.caption.fontSize * 0.85f), color = c.muted)
-    }
+    Box(Modifier.matchParentSize().background(Brush.verticalGradient(0f to c.screen.copy(alpha = 0.85f), 0.3f to Color.Transparent)))
+    Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.8f to Color.Transparent, 1f to c.screen.copy(alpha = 0.85f))))
+    Text(
+        stringResource(if (showMe) R.string.home_map_caption_on else R.string.home_map_caption).uppercase(),
+        style = DashType.label,
+        color = if (showMe) c.mint else c.muted,
+        modifier = Modifier.padding(10.dp)
+    )
+    Text(
+        MapStyle.ATTRIBUTION,
+        style = DashType.caption.copy(fontSize = DashType.caption.fontSize * 0.85f),
+        color = c.muted,
+        modifier = Modifier.align(Alignment.BottomStart).padding(8.dp)
+    )
 }
 
-/** Moniteur 01 : écoute IA, avec le bouton ON / OFF (disque) qui active ou coupe la protection. */
+/** Moniteur 01 : l'orbe dégradée est le bouton qui active ou coupe la protection ; elle « respire » pendant l'écoute. */
 @Composable
 private fun ListenMonitor(armed: Boolean, listening: Boolean, onToggle: () -> Unit, modifier: Modifier) {
     val c = Cr.colors
@@ -346,31 +366,20 @@ private fun ListenMonitor(armed: Boolean, listening: Boolean, onToggle: () -> Un
             role = Role.Switch
             contentDescription = a11y
         },
-        indicator = { if (listening) EqBars() else Led(c.line, blink = false) }
+        { if (listening) EqBars() else Led(c.muted, blink = false) }
     ) {
-        PixelDisc(
-            size = 60.dp,
-            cells = 12,
-            fill = if (armed) c.lime else c.ink,
-            glow = if (armed) c.lime else null,
-            orb = if (listening) {
-                OrbState.LISTENING
-            } else if (armed) {
-                OrbState.BREATHING
-            } else {
-                null
-            }
-        ) {
-            PixelIconView(PixelIcon.POWER, 20.dp, c.onLime)
-            Text(stringResource(if (armed) R.string.home_on else R.string.home_off), style = PxType.label, color = c.onLime)
+        Box(contentAlignment = Alignment.Center) {
+            GradientOrb(active = armed, size = 92.dp)
+            Text(
+                stringResource(if (armed) R.string.home_on else R.string.home_off),
+                style = DashType.title,
+                color = Color.White
+            )
         }
     }
 }
 
-/**
- * Moniteur de la grille d'accueil : bandeau « CH.0x · TITRE » + voyant, écran sombre à lignes de balayage.
- * Gris quand la protection est coupée, bordure lime quand elle est active.
- */
+/** Moniteur de l'accueil : bandeau « CH.0x · TITRE » + voyant, écran sombre à lignes de balayage. */
 @Composable
 private fun Monitor(
     channel: String,
@@ -382,28 +391,32 @@ private fun Monitor(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val c = Cr.colors
-    PxPanel(
-        modifier.clickable(role = Role.Button, onClick = onClick),
-        border = if (armed) c.lime else c.lineControl,
-        fill = c.void,
-        padding = PaddingValues(0.dp)
+    Box(
+        modifier
+            .background(c.screen)
+            .border(1.dp, if (armed) c.edge else c.line)
+            .cornerTicks(if (armed) c.mint else c.lineControl, 8.dp)
+            .clickable(role = Role.Button, onClick = onClick)
     ) {
         Canvas(Modifier.matchParentSize()) {
             val step = 3.dp.toPx()
             var y = 0f
             while (y < size.height) {
-                drawRect(c.ink.copy(alpha = 0.03f), Offset(0f, y), Size(size.width, 1.dp.toPx()))
+                drawLine(c.ink.copy(alpha = 0.03f), Offset(0f, y), Offset(size.width, y), 1f)
                 y += step
             }
         }
         Column(Modifier.fillMaxSize()) {
             Row(
-                Modifier.fillMaxWidth().background(c.raised).padding(horizontal = 8.dp, vertical = 4.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .background(Brush.horizontalGradient(listOf(if (armed) c.banner else c.panelBottom, Color.Transparent)))
+                    .padding(horizontal = 8.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     "CH.$channel · ${title.uppercase()}",
-                    style = PxType.caption,
+                    style = DashType.label,
                     color = c.muted,
                     maxLines = 1,
                     modifier = Modifier.weight(1f)
@@ -428,20 +441,20 @@ private fun FullMap(armed: Boolean, showMe: Boolean, onClose: () -> Unit) {
     Box(Modifier.fillMaxSize()) {
         LiveMap(armed, showMe, Modifier.matchParentSize())
         MapCaptions(showMe)
-        PxPanel(
+        Box(
             Modifier
                 .align(Alignment.TopEnd)
                 .padding(12.dp)
                 .size(48.dp)
+                .background(c.scrim)
+                .border(1.dp, c.lineControl)
                 .clickable(role = Role.Button, onClickLabel = stringResource(R.string.map_close), onClick = onClose),
-            border = c.lineControl,
-            fill = c.surface,
-            padding = PaddingValues(0.dp)
-        ) { PixelIconView(PixelIcon.CROSS, 20.dp, c.ink, Modifier.align(Alignment.Center)) }
+            contentAlignment = Alignment.Center
+        ) { Ico(CrIcon.CLOSE, 20.dp, c.ink) }
     }
 }
 
-/** Maquette « SOS · appui long » : 12 carrés s'allument autour du disque pendant 1,5 s. */
+/** SOS · appui long : 12 repères s'allument autour du disque pendant 1,5 s. */
 @Composable
 internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit) {
     val c = Cr.colors
@@ -452,24 +465,25 @@ internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit) {
     BackHandler(onBack = onBack)
     Column(Modifier.fillMaxSize()) {
         TopBar(stringResource(R.string.sos), onBack)
-        Column(Modifier.fillMaxWidth().padding(top = 36.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(Modifier.fillMaxWidth().padding(top = 28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(Modifier.size(300.dp), contentAlignment = Alignment.Center) {
-                val lit = (progress.value * 12).toInt()
-                repeat(12) { i ->
-                    val angle = Math.toRadians(i * 30.0 - 90)
-                    Box(
-                        Modifier
-                            .offset((130 * Math.cos(angle)).dp, (130 * Math.sin(angle)).dp)
-                            .size(12.dp)
-                            .background(c.sos.copy(alpha = if (i < lit) 1f else 0.2f))
-                    )
+                Canvas(Modifier.matchParentSize()) {
+                    val lit = (progress.value * 12).toInt()
+                    val o = Offset(size.width / 2, size.height / 2)
+                    val r1 = size.minDimension / 2 - 6.dp.toPx()
+                    val r2 = r1 - 18.dp.toPx()
+                    repeat(12) { i ->
+                        val a = Math.toRadians(i * 30.0 - 90)
+                        val d = Offset(kotlin.math.cos(a).toFloat(), kotlin.math.sin(a).toFloat())
+                        drawLine(if (i < lit) c.sos else c.line, o + d * r2, o + d * r1, 6.dp.toPx())
+                    }
                 }
-                PixelDisc(
-                    size = 200.dp,
-                    cells = 25,
-                    fill = c.sos,
-                    glow = c.sos,
-                    modifier = Modifier
+                Column(
+                    Modifier
+                        .size(200.dp)
+                        .clip(CircleShape)
+                        .background(Brush.radialGradient(listOf(c.sos, c.sos.copy(alpha = 0.85f))))
+                        .border(2.dp, c.onSos.copy(alpha = 0.4f), CircleShape)
                         .semantics {
                             role = Role.Button
                             contentDescription = a11y
@@ -493,32 +507,34 @@ internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit) {
                                     scope.launch { progress.snapTo(0f) }
                                 }
                             }
-                        }
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    PixelIconView(PixelIcon.ALERT, 40.dp, c.onSos)
+                    Ico(CrIcon.ALERT, 40.dp, c.onSos)
                     Text(
                         stringResource(R.string.sos),
-                        style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.7f),
+                        style = DashType.hero.copy(fontSize = DashType.hero.fontSize * 1.3f),
                         color = c.onSos
                     )
                 }
             }
-            Spacer(Modifier.height(20.dp))
-            Text(stringResource(R.string.sos_hold_title).uppercase(), style = PxType.display)
+            Spacer(Modifier.height(16.dp))
+            Text(stringResource(R.string.sos_hold_title).uppercase(), style = DashType.display)
             Spacer(Modifier.height(6.dp))
-            Text(stringResource(R.string.sos_hold_body), style = PxType.body, color = c.muted, textAlign = TextAlign.Center)
+            Text(stringResource(R.string.sos_hold_body), style = DashType.body, color = c.muted, textAlign = TextAlign.Center)
         }
         Spacer(Modifier.weight(1f))
-        PxPanel(Modifier.fillMaxWidth().padding(12.dp), padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
+        DashPanel(Modifier.fillMaxWidth().padding(12.dp), padding = PaddingValues(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                PixelIconView(PixelIcon.LOCK, 24.dp, c.lime)
-                Text(stringResource(R.string.sos_hold_note), style = PxType.caption)
+                Ico(CrIcon.LOCK, 22.dp, c.mint)
+                Text(stringResource(R.string.sos_hold_note), style = DashType.body)
             }
         }
     }
 }
 
-/** Maquette « SOS · compte à rebours » : 5 s pour annuler, puis l'alerte part. */
+/** SOS · compte à rebours : 5 s pour annuler, puis l'alerte part. */
 @Composable
 internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit) {
     val c = Cr.colors
@@ -534,13 +550,15 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit) {
     }
     Column(Modifier.fillMaxSize()) {
         TopBar(stringResource(R.string.sos), null)
-        Column(Modifier.fillMaxWidth().padding(top = 28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(R.string.countdown_label).uppercase(), style = PxType.label, color = c.danger)
-            Box(contentAlignment = Alignment.Center) {
-                Orb(OrbState.CONNECTING, 200.dp, c.danger)
+        Column(Modifier.fillMaxWidth().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Brackets(color = c.danger) {
+                Text(stringResource(R.string.countdown_label).uppercase(), style = DashType.banner, color = c.danger)
+            }
+            Box(Modifier.padding(top = 12.dp), contentAlignment = Alignment.Center) {
+                Orb(OrbState.CONNECTING, 230.dp, c.danger)
                 Text(
                     "$seconds",
-                    style = PxType.digits,
+                    style = DashType.digitsXL,
                     color = c.danger,
                     modifier = Modifier.semantics {
                         liveRegion = LiveRegionMode.Assertive
@@ -548,79 +566,106 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit) {
                     }
                 )
             }
-            Text(stringResource(R.string.countdown_seconds).uppercase(), style = PxType.display, modifier = Modifier.padding(top = 12.dp))
+            Text(stringResource(R.string.countdown_seconds).uppercase(), style = DashType.display, modifier = Modifier.padding(top = 8.dp))
             Text(
                 stringResource(R.string.countdown_body),
-                style = PxType.body,
+                style = DashType.body,
                 color = c.muted,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
         }
         Spacer(Modifier.weight(1f))
-        PxButton(stringResource(R.string.action_cancel), onCancel, Modifier.padding(12.dp), icon = PixelIcon.CROSS, tall = true)
+        DashButton(stringResource(R.string.action_cancel), onCancel, Modifier.padding(12.dp), icon = CrIcon.CLOSE, tall = true)
     }
 }
 
-/** Maquette « Urgence » : bandeau d'alerte, contacts, journal, « Je suis en sécurité » et 114. */
+/** Urgence : bandeau d'alerte, contacts, terminal du journal, « Je suis en sécurité » et 114. */
 @Composable
 private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, onSafe: () -> Unit, onCall: () -> Unit) {
     val c = Cr.colors
     val resources = LocalResources.current
     var lines by remember { mutableStateOf(emptyList<ChainedEntry>()) }
-    LaunchedEffect(state) { lines = vm.log.latest(4) }
+    LaunchedEffect(state) { lines = vm.log.latest(6) }
     val time = remember { DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault()) }
-    Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        PxPanel(Modifier.fillMaxWidth(), border = c.danger) {
+    Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        DashPanel(
+            Modifier.fillMaxWidth(),
+            edge = c.danger,
+            ticks = c.danger,
+            fill = Brush.verticalGradient(listOf(c.sos.copy(alpha = 0.25f), c.screen))
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Orb(OrbState.SEARCHING, 44.dp, c.danger)
+                Orb(OrbState.SEARCHING, 48.dp, c.danger)
                 Column {
-                    Text(stringResource(R.string.urgent_sent).uppercase(), style = PxType.display, color = c.danger)
-                    state.alert?.let { Text(time.format(it.openedAt), style = PxType.caption, color = c.muted) }
+                    Text(stringResource(R.string.urgent_sent).uppercase(), style = DashType.display, color = c.danger)
+                    state.alert?.let { Text(time.format(it.openedAt), style = DashType.mono, color = c.muted) }
                 }
             }
         }
-        Text(stringResource(R.string.urgent_contacts).uppercase(), style = PxType.label, color = c.muted)
-        PxPanel(Modifier.fillMaxWidth(), border = c.warn, padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                PixelIconView(PixelIcon.USERS, 24.dp, c.warn)
-                Text(stringResource(R.string.emergency_no_contacts), style = PxType.body)
-            }
+        SectionHeader(stringResource(R.string.urgent_contacts), accent = c.gold)
+        KpiTile(
+            CrIcon.USERS,
+            stringResource(R.string.emergency_no_contacts),
+            "$CONTACTS_READY",
+            Modifier.fillMaxWidth(),
+            unit = "/ 5",
+            active = false
+        )
+        SectionHeader(stringResource(R.string.nav_log))
+        Column(Modifier.weight(1f).fillMaxWidth().background(c.terminal).padding(horizontal = 8.dp).verticalScroll(rememberScrollState())) {
+            val rows = traceRows(lines, resources)
+            rows.forEachIndexed { i, row -> TraceLine(row, last = i == rows.lastIndex) }
         }
-        PxPanel(Modifier.fillMaxWidth(), fill = c.surface, padding = PaddingValues(8.dp)) {
-            Column {
-                Text(
-                    stringResource(R.string.nav_log).uppercase(),
-                    style = PxType.label,
-                    color = c.muted,
-                    modifier = Modifier.padding(bottom = 6.dp)
-                )
-                lines.forEach { e ->
-                    Text(
-                        "${time.format(Instant.ofEpochMilli(e.utcMillis))} ... ${resources.getString(humanize(e))}".uppercase(),
-                        style = PxType.caption
-                    )
-                }
-            }
-        }
-        Spacer(Modifier.weight(1f))
-        PxButton(stringResource(R.string.urgent_safe), onSafe, icon = PixelIcon.CHECK, tall = true)
-        PxButton(stringResource(R.string.home_sat_call), onCall, variant = PxVariant.DARK_DANGER, icon = PixelIcon.PHONE)
+        DashButton(stringResource(R.string.urgent_safe), onSafe, icon = CrIcon.CHECK, tall = true)
+        DashButton(stringResource(R.string.home_sat_call), onCall, variant = DashVariant.DARK_DANGER, icon = CrIcon.PHONE)
     }
 }
 
+/**
+ * PIN avec l'animation biométrique : visage au repos, cercle qui tourne pendant la vérification, puis coche (fermeture)
+ * ou croix (nouvel essai).
+ */
 @Composable
-private fun PinDialog(onDismiss: () -> Unit, onPin: (String) -> Unit) {
+private fun PinDialog(onDismiss: () -> Unit, verify: suspend (String) -> Boolean, onDone: () -> Unit) {
+    val c = Cr.colors
+    val scope = rememberCoroutineScope()
     var pin by remember { mutableStateOf("") }
+    var phase by remember { mutableStateOf(FacePhase.IDLE) }
+    val wrong = stringResource(R.string.pin_wrong)
     Dialog(onDismissRequest = onDismiss) {
-        PxPanel(border = Cr.colors.lime, fill = Cr.colors.surface, padding = PaddingValues(16.dp)) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text(stringResource(R.string.pin_enter).uppercase(), style = PxType.title)
+        DashPanel(edge = c.edge, ticks = c.mint, padding = PaddingValues(16.dp)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                FaceUnlock(phase, 72.dp)
+                Text(stringResource(R.string.pin_enter).uppercase(), style = DashType.title)
+                if (phase == FacePhase.ERROR) {
+                    Text(
+                        wrong,
+                        style = DashType.label,
+                        color = c.danger,
+                        modifier = Modifier.semantics {
+                            liveRegion = LiveRegionMode.Polite
+                        }
+                    )
+                }
                 PinPad(pin, { v ->
+                    if (phase == FacePhase.SCANNING || phase == FacePhase.SUCCESS) return@PinPad
                     pin = v
-                    if (v.length == 4) onPin(v)
+                    if (phase == FacePhase.ERROR) phase = FacePhase.IDLE
+                    if (v.length == 4) {
+                        phase = FacePhase.SCANNING
+                        scope.launch {
+                            val ok = verify(v)
+                            phase = if (ok) FacePhase.SUCCESS else FacePhase.ERROR
+                            pin = ""
+                            if (ok) {
+                                delay(650)
+                                onDone()
+                            }
+                        }
+                    }
                 }, maxLength = 4)
-                PxButton(stringResource(R.string.action_cancel), onDismiss, variant = PxVariant.OUTLINE)
+                DashButton(stringResource(R.string.action_cancel), onDismiss, variant = DashVariant.OUTLINE)
             }
         }
     }

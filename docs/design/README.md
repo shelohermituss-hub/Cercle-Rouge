@@ -1,6 +1,28 @@
 # Design — décisions
 
-## v3 « Pixel Lime » (2026-11-10) — retenue, implémentée dans l'app
+## v4 « tableau de bord » (2026-11-11) — retenue, implémentée dans l'app
+
+Le porteur du projet a fourni ses références : *Data Visualization* (écrans « big screen » verts), *Visualization Axis* (axes, grilles, radar), *AgentPrism* (terminal « trace tree »), *Biometric Smart Animations* (déverrouillage par le visage) et une orbe dégradée rose / orange / bleu. Elles **remplacent le style Pixel Lime** dans toute l'app. Les assets ne sont pas embarqués : chaque visualiseur est redessiné en Compose (Canvas), d'après eux.
+
+| Élément | Où |
+|---|---|
+| Panneaux verts en dégradé, coins marqués, bandeaux de section à languette, titres « » TITRE « », cadres `[ ]` | Tous les écrans |
+| Horloge `[ 22:14:03 ¦ 2026.11.11 ¦ MERCREDI ]` | Accueil |
+| Tuiles KPI (icône, libellé, gros chiffres condensés en dégradé menthe) et chiffres qui montent | Journal, urgence |
+| Carte **satellite** (Sentinel-2, noir et blanc en veille) | Accueil, plein écran |
+| **Orbe dégradée** : bouton et visualiseur de l'écoute IA (grise et immobile en veille) | Moniteur CH.01, affiche 2 |
+| **Animation biométrique** (visage → cercle → coche / croix) | Saisie du PIN |
+| **Terminal AgentPrism** (pastilles lettres, étiquettes, chronologie, durée, état) | Journal, urgence |
+| Histogramme 7 jours et radar de préparation (micro, position, notifications, contacts, journal) | Journal |
+| Orbes à points (OrbMotion) : compte à rebours, alerte envoyée, attente, démarrage | SOS, urgence, onboarding |
+
+Tokens : fond `#0E1011`, écrans `#070908`, panneaux `#0D2416 → #09130D`, bordure `#1A6B3A`, vert `#1DB46C`, menthe `#4BE38C → #D6FFB4`, or `#F2B226`, texte `#E9F2EC` (16,7:1), atténué `#93A89B` (7,5:1), contrôles `#5E8A6F` (≥ 4,2:1), SOS `#E5202B` (blanc 4,6:1). Polices : Barlow Condensed (titres, chiffres), Barlow (texte), JetBrains Mono (terminal). Icônes Lucide.
+
+Règles conservées : veille en noir et blanc, couleurs quand la protection est active ; SOS en un geste ; animations figées si « réduire les animations » ; visualiseurs ignorés par TalkBack (le texte voisin porte le sens).
+
+---
+
+## v3 « Pixel Lime » (remplacée)
 
 Maquettes du porteur du projet (canevas « Cercle Rouge — Maquettes », page « v3 · Pixel Lime », 20 écrans 360×800), puis deux retouches demandées :
 

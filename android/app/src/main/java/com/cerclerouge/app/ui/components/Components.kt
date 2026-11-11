@@ -1,11 +1,13 @@
 package com.cerclerouge.app.ui.components
 
 import android.provider.Settings
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -16,10 +18,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,29 +31,32 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -61,18 +64,19 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.cerclerouge.app.R
 import com.cerclerouge.app.ui.theme.Cr
-import com.cerclerouge.app.ui.theme.PxType
+import com.cerclerouge.app.ui.theme.DashType
 import com.valentinerutto.orbmotion.orbs.AnimatedThinkingOrb
 import com.valentinerutto.orbmotion.orbs.OrbState
-import kotlin.math.hypot
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -80,7 +84,7 @@ import kotlinx.coroutines.launch
 // Mouvement
 // ---------------------------------------------------------------------------
 
-/** Vrai si l'utilisateur a demandé de réduire les animations (R-UI-05) : tout devient statique. */
+/** « Réduire les animations » du système (échelle des animations à 0). */
 @Composable
 fun reduceMotion(): Boolean {
     val context = LocalContext.current
@@ -89,60 +93,29 @@ fun reduceMotion(): Boolean {
     }
 }
 
-/** Horloge à pas fixes (le design n'anime que par paliers, comme `steps()` en CSS). Retourne 0 si animations réduites. */
+/** Compteur qui avance d'un pas toutes les `periodMs` ; figé à 0 si « réduire les animations ». */
 @Composable
 fun stepTick(periodMs: Long, enabled: Boolean = true): Int {
     val still = reduceMotion() || !enabled
-    val tick by produceState(0, still, periodMs) {
-        if (still) return@produceState
+    var tick by remember { mutableIntStateOf(0) }
+    LaunchedEffect(still, periodMs) {
+        if (still) return@LaunchedEffect
         while (true) {
             delay(periodMs)
-            value++
+            tick++
         }
     }
-    return if (still) 0 else tick
+    return tick
 }
 
-// ---------------------------------------------------------------------------
-// Formes
-// ---------------------------------------------------------------------------
-
-/** Coins crénelés en pixels réels, à partir d'une taille en dp. */
-fun notch(px: Float): Shape = GenericShape { size, _ ->
-    val s = px.coerceAtMost(minOf(size.width, size.height) / 2)
-    moveTo(0f, s)
-    lineTo(s, s)
-    lineTo(s, 0f)
-    lineTo(size.width - s, 0f)
-    lineTo(size.width - s, s)
-    lineTo(size.width, s)
-    lineTo(size.width, size.height - s)
-    lineTo(size.width - s, size.height - s)
-    lineTo(size.width - s, size.height)
-    lineTo(s, size.height)
-    lineTo(s, size.height - s)
-    lineTo(0f, size.height - s)
-    close()
+/** Couleur ramenée en niveaux de gris (veille « noir et blanc »). */
+fun Color.mono(): Color {
+    val g = 0.299f * red + 0.587f * green + 0.114f * blue
+    return Color(g, g, g, alpha)
 }
 
-/** Cercle en escalier sur une grille de `cells` cases (disques `--c11`, `--c17`, `--c25` du design). */
-fun pixelCircle(cells: Int): Shape = GenericShape { size, _ ->
-    val cell = size.width / cells
-    val r = cells / 2f
-    for (row in 0 until cells) {
-        val cols = (0 until cells).filter { col -> hypot(col + 0.5f - r, row + 0.5f - r) <= r + 0.15f }
-        if (cols.isNotEmpty()) addRect(Rect(cols.first() * cell, row * cell, (cols.last() + 1) * cell, (row + 1) * cell))
-    }
-}
-
-@Composable
-private fun notchShape(): Shape {
-    val px = with(androidx.compose.ui.platform.LocalDensity.current) { 4.dp.toPx() }
-    return remember(px) { notch(px) }
-}
-
-/** Fond quadrillé de 24 dp (fond des écrans « pl »). */
-fun Modifier.pixelGrid(color: Color): Modifier = drawBehind {
+/** Quadrillage léger du fond (24 dp). */
+fun Modifier.gridBackground(color: Color): Modifier = drawBehind {
     val step = 24.dp.toPx()
     var x = 0f
     while (x < size.width) {
@@ -157,78 +130,317 @@ fun Modifier.pixelGrid(color: Color): Modifier = drawBehind {
 }
 
 // ---------------------------------------------------------------------------
-// Panneaux et boutons
+// Icônes (Lucide, ISC)
 // ---------------------------------------------------------------------------
 
-/** Panneau crénelé : bordure de 2 dp (`border`) et intérieur (`fill`). */
+enum class CrIcon(@param:DrawableRes val res: Int) {
+    SHIELD(R.drawable.ic_shield),
+    POWER(R.drawable.ic_power),
+    MIC(R.drawable.ic_mic),
+    PIN(R.drawable.ic_map_pin),
+    USERS(R.drawable.ic_users),
+    ALERT(R.drawable.ic_triangle_alert),
+    HOME(R.drawable.ic_house),
+    MAP(R.drawable.ic_map),
+    ROUTE(R.drawable.ic_route),
+    HISTORY(R.drawable.ic_history),
+    EXPAND(R.drawable.ic_maximize_2),
+    CLOSE(R.drawable.ic_x),
+    BACK(R.drawable.ic_arrow_left),
+    CHECK(R.drawable.ic_check),
+    PHONE(R.drawable.ic_phone),
+    LOCK(R.drawable.ic_lock),
+    CLOCK(R.drawable.ic_clock),
+    FACE(R.drawable.ic_scan_face),
+    ACTIVITY(R.drawable.ic_activity),
+    NEXT(R.drawable.ic_chevron_right)
+}
+
+/** Icône décorative (le texte voisin porte le sens). */
 @Composable
-fun PxPanel(
+fun Ico(icon: CrIcon, size: Dp, tint: Color, modifier: Modifier = Modifier) {
+    Icon(painterResource(icon.res), contentDescription = null, tint = tint, modifier = modifier.size(size))
+}
+
+// ---------------------------------------------------------------------------
+// Cadres
+// ---------------------------------------------------------------------------
+
+/** Petits coins en « L » (cadres des panneaux de données). */
+fun Modifier.cornerTicks(color: Color, length: Dp = 10.dp, width: Dp = 2.dp): Modifier = drawBehind {
+    val l = length.toPx()
+    val w = width.toPx()
+    val s = size
+    listOf(
+        Offset(0f, 0f) to Offset(1f, 1f),
+        Offset(s.width, 0f) to Offset(-1f, 1f),
+        Offset(0f, s.height) to Offset(1f, -1f),
+        Offset(s.width, s.height) to Offset(-1f, -1f)
+    ).forEach { (o, d) ->
+        drawLine(color, o, Offset(o.x + d.x * l, o.y), w)
+        drawLine(color, o, Offset(o.x, o.y + d.y * l), w)
+    }
+}
+
+/** Panneau de tableau de bord : dégradé vert sombre, bordure fine, coins marqués. */
+@Composable
+fun DashPanel(
     modifier: Modifier = Modifier,
-    border: Color = Cr.colors.line,
-    fill: Color = Cr.colors.raised,
+    edge: Color = Cr.colors.edge,
+    ticks: Color? = null,
     padding: PaddingValues = PaddingValues(12.dp),
+    fill: Brush? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val shape = notchShape()
+    val c = Cr.colors
     Box(
         modifier
-            .clip(shape)
-            .background(border)
-            .padding(2.dp)
-            .clip(shape)
-            .background(fill)
+            .background(fill ?: Brush.verticalGradient(listOf(c.panelTop, c.panelBottom)))
+            .border(1.dp, edge)
+            .then(if (ticks != null) Modifier.cornerTicks(ticks) else Modifier)
             .padding(padding),
         content = content
     )
 }
 
-enum class PxVariant { LIME, DANGER, DARK, DARK_DANGER, OUTLINE }
-
-/** Bouton du design : 56 dp (72 dp pour les actions critiques), décalé de 2 dp à l'appui. */
+/** Crochets « [ … ] » autour d'un contenu (barre d'horloge, météo des assets). */
 @Composable
-fun PxButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    variant: PxVariant = PxVariant.LIME,
-    icon: PixelIcon? = null,
-    tall: Boolean = false,
-    enabled: Boolean = true
-) {
+fun Brackets(modifier: Modifier = Modifier, color: Color = Cr.colors.green, content: @Composable () -> Unit) {
+    Box(
+        modifier
+            .drawBehind {
+                val w = 2.dp.toPx()
+                val l = 8.dp.toPx()
+                drawLine(color, Offset(0f, 0f), Offset(0f, size.height), w)
+                drawLine(color, Offset(0f, 0f), Offset(l, 0f), w)
+                drawLine(color, Offset(0f, size.height), Offset(l, size.height), w)
+                drawLine(color, Offset(size.width, 0f), Offset(size.width, size.height), w)
+                drawLine(color, Offset(size.width, 0f), Offset(size.width - l, 0f), w)
+                drawLine(color, Offset(size.width, size.height), Offset(size.width - l, size.height), w)
+            }
+            .padding(horizontal = 14.dp, vertical = 6.dp)
+    ) { content() }
+}
+
+/** Bandeau de section : fond vert, carré marqueur, languette en biais en bas à gauche. */
+@Composable
+fun SectionHeader(title: String, modifier: Modifier = Modifier, accent: Color = Cr.colors.green, trailing: @Composable () -> Unit = {}) {
     val c = Cr.colors
-    val (border, fill, ink) = when (variant) {
-        PxVariant.LIME -> Triple(c.lime, c.lime, c.onLime)
-        PxVariant.DANGER -> Triple(c.danger, c.danger, c.onLime)
-        PxVariant.DARK -> Triple(c.lineControl, c.surface, c.ink)
-        PxVariant.DARK_DANGER -> Triple(c.danger, c.surface, c.danger)
-        PxVariant.OUTLINE -> Triple(c.lineControl, c.raised, c.ink)
-    }
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    PxPanel(
+    Row(
         modifier
             .fillMaxWidth()
-            .height(if (tall) 72.dp else 56.dp)
-            .offset { if (pressed) IntOffset(2.dp.roundToPx(), 2.dp.roundToPx()) else IntOffset.Zero }
-            .clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick),
-        border = if (enabled) border else c.line,
-        fill = if (enabled) fill else c.raised,
-        padding = PaddingValues(horizontal = 12.dp)
-    ) {
-        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            icon?.let {
-                PixelIconView(it, 24.dp, if (enabled) ink else c.muted)
-                Spacer(Modifier.width(10.dp))
+            .height(36.dp)
+            .background(Brush.horizontalGradient(listOf(c.banner, c.banner.copy(alpha = 0.4f))))
+            .drawBehind {
+                val w = 1.dp.toPx()
+                drawLine(accent, Offset(0f, size.height - w / 2), Offset(size.width, size.height - w / 2), w)
+                // Languette en biais (repère des bandeaux des assets).
+                val tab = Path().apply {
+                    moveTo(0f, size.height)
+                    lineTo(0f, size.height - 5.dp.toPx())
+                    lineTo(48.dp.toPx(), size.height - 5.dp.toPx())
+                    lineTo(56.dp.toPx(), size.height)
+                    close()
+                }
+                drawPath(tab, accent)
             }
-            Text(text.uppercase(), style = PxType.button, color = if (enabled) ink else c.muted, textAlign = TextAlign.Center)
+            .semantics { heading() },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(Modifier.width(10.dp))
+        Box(Modifier.size(10.dp).background(accent))
+        Spacer(Modifier.width(12.dp))
+        Text(title.uppercase(), style = DashType.banner, color = c.ink, modifier = Modifier.weight(1f))
+        trailing()
+        Spacer(Modifier.width(10.dp))
+    }
+}
+
+/** Titre de graphique « ◀ titre ▶ ». */
+@Composable
+fun TagTitle(title: String, modifier: Modifier = Modifier) {
+    val c = Cr.colors
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Canvas(Modifier.size(6.dp, 14.dp)) {
+            drawPath(
+                Path().apply {
+                    moveTo(size.width, 0f)
+                    lineTo(0f, size.height / 2)
+                    lineTo(size.width, size.height)
+                    close()
+                },
+                c.green
+            )
+        }
+        Text(title, style = DashType.bodyStrong, color = c.ink)
+        Canvas(Modifier.size(6.dp, 14.dp)) {
+            drawPath(
+                Path().apply {
+                    moveTo(0f, 0f)
+                    lineTo(size.width, size.height / 2)
+                    lineTo(0f, size.height)
+                    close()
+                },
+                c.green
+            )
         }
     }
 }
 
+/** Titre d'écran « » TITRE « » (chevrons or, asset « 首页 »). */
+@Composable
+fun ChevronTitle(title: String, modifier: Modifier = Modifier, color: Color = Cr.colors.gold) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("»", style = DashType.title, color = color)
+        Text(title.uppercase(), style = DashType.title, color = Cr.colors.ink, modifier = Modifier.semantics { heading() })
+        Text("«", style = DashType.title, color = color)
+    }
+}
+
+/** Barre d'horloge « [ 22:14:03 ¦ 2026.11.11 ¦ MERCREDI ] », mise à jour chaque seconde. */
+@Composable
+fun ClockBar(modifier: Modifier = Modifier, color: Color = Cr.colors.green) {
+    val locale = LocalConfiguration.current.locales[0]
+    var now by remember { mutableStateOf(ZonedDateTime.now()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000 - System.currentTimeMillis() % 1000)
+            now = ZonedDateTime.now()
+        }
+    }
+    val time = remember(now) { now.format(DateTimeFormatter.ofPattern("HH:mm:ss")) }
+    val date = remember(now) { now.format(DateTimeFormatter.ofPattern("yyyy.MM.dd")) }
+    val day = remember(now, locale) { now.format(DateTimeFormatter.ofPattern("EEEE", locale)).uppercase(locale) }
+    Brackets(modifier, color) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(time, style = DashType.clock)
+            Text("¦", style = DashType.clock, color = Cr.colors.muted)
+            Text(date, style = DashType.clock)
+            Text("¦", style = DashType.clock, color = Cr.colors.muted)
+            Text(day, style = DashType.clock)
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Données
+// ---------------------------------------------------------------------------
+
+/** Chiffre en dégradé menthe (gros chiffres condensés des assets). */
+@Composable
+fun Digits(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: androidx.compose.ui.text.TextStyle = DashType.digits,
+    active: Boolean = true
+) {
+    val c = Cr.colors
+    val brush = if (active) Brush.verticalGradient(listOf(c.mintLight, c.mint)) else Brush.verticalGradient(listOf(c.ink, c.muted))
+    Text(text, style = style.copy(brush = brush), modifier = modifier)
+}
+
+/** Tuile KPI : icône, étiquette, valeur en chiffres condensés et unité (tuiles « 事项总量 4,432 件 »). */
+@Composable
+fun KpiTile(
+    icon: CrIcon,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    unit: String = "",
+    active: Boolean = true,
+    onClick: (() -> Unit)? = null
+) {
+    val c = Cr.colors
+    val accent = if (active) c.green else c.muted
+    Row(
+        modifier
+            .background(Brush.horizontalGradient(listOf(c.panelTop, c.panelBottom.copy(alpha = 0.3f))))
+            .drawBehind { drawLine(accent, Offset(0f, 0f), Offset(0f, size.height), 3.dp.toPx()) }
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Ico(icon, 30.dp, if (active) c.mint else c.muted)
+        Column {
+            Text(label.uppercase(), style = DashType.label, color = c.ink)
+            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Digits(value, active = active)
+                if (unit.isNotEmpty()) Text(unit, style = DashType.label, color = c.muted, modifier = Modifier.padding(bottom = 6.dp))
+            }
+        }
+    }
+}
+
+/** Voyant rond de 8 dp, qui clignote (1 s) quand `blink`. */
+@Composable
+fun Led(color: Color, blink: Boolean, modifier: Modifier = Modifier, size: Dp = 8.dp) {
+    val on = stepTick(500, enabled = blink) % 2 == 0
+    Box(modifier.size(size).clip(CircleShape).background(if (on) color else color.copy(alpha = 0.25f)))
+}
+
+/** Égaliseur de 5 barres : l'écoute est active (aucun contenu audio n'est affiché). */
+@Composable
+fun EqBars(color: Color = Cr.colors.mint) {
+    val t = stepTick(160)
+    Row(Modifier.height(16.dp), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.Bottom) {
+        listOf(3, 1, 4, 2, 5).forEachIndexed { i, base ->
+            val h = (base + t + i * 2) % 5 + 1
+            Box(Modifier.width(3.dp).height((h * 3).dp).background(color))
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Boutons et navigation
+// ---------------------------------------------------------------------------
+
+enum class DashVariant { PRIMARY, DANGER, OUTLINE, DARK_DANGER }
+
+/** Bouton : 56 dp (72 dp pour les actions critiques), légèrement décalé à l'appui. */
+@Composable
+fun DashButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    variant: DashVariant = DashVariant.PRIMARY,
+    icon: CrIcon? = null,
+    tall: Boolean = false,
+    enabled: Boolean = true
+) {
+    val c = Cr.colors
+    val (fill, border, ink) = when (variant) {
+        DashVariant.PRIMARY -> Triple(Brush.verticalGradient(listOf(c.mint, c.green)), c.green, c.onAccent)
+        DashVariant.DANGER -> Triple(Brush.verticalGradient(listOf(c.sos, c.sos)), c.sos, c.onSos)
+        DashVariant.OUTLINE -> Triple(Brush.verticalGradient(listOf(c.panelTop, c.panelBottom)), c.lineControl, c.ink)
+        DashVariant.DARK_DANGER -> Triple(Brush.verticalGradient(listOf(c.bg, c.bg)), c.danger, c.danger)
+    }
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    Row(
+        modifier
+            .fillMaxWidth()
+            .height(if (tall) 72.dp else 56.dp)
+            .offset { if (pressed) IntOffset(0, 2.dp.roundToPx()) else IntOffset.Zero }
+            .background(if (enabled) fill else Brush.verticalGradient(listOf(c.panelBottom, c.panelBottom)))
+            .border(1.dp, if (enabled) border else c.line)
+            .cornerTicks(if (enabled) border else c.line, 8.dp)
+            .clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 12.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        icon?.let {
+            Ico(it, 22.dp, if (enabled) ink else c.muted)
+            Spacer(Modifier.width(10.dp))
+        }
+        Text(text.uppercase(), style = DashType.button, color = if (enabled) ink else c.muted, textAlign = TextAlign.Center)
+    }
+}
+
 /**
- * Barre SOS de l'accueil : appui long de 1,5 s (la barre se remplit), puis vibration et compte à rebours (R-HOME-01).
- * Un appui court ouvre l'écran SOS. TalkBack : l'action « activer » déclenche directement.
- * `tile` : version écran d'accueil (moniteur 4 de la grille), contenu empilé, taille donnée par `modifier`.
+ * SOS : appui long de 1,5 s (remplissage), puis vibration et compte à rebours (R-HOME-01) ; appui court → écran SOS.
+ * TalkBack : l'action « activer » déclenche directement. `tile` : version moniteur de l'accueil.
  */
 @Composable
 fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifier, tile: Boolean = false) {
@@ -237,8 +449,10 @@ fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifi
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     val a11y = stringResource(R.string.sos_a11y)
-    PxPanel(
+    Box(
         (if (tile) modifier else modifier.fillMaxWidth().height(72.dp))
+            .background(c.sos)
+            .cornerTicks(c.onSos.copy(alpha = 0.6f), 10.dp)
             .semantics {
                 role = Role.Button
                 contentDescription = a11y
@@ -265,82 +479,167 @@ fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifi
                         scope.launch { progress.snapTo(0f) }
                     }
                 }
-            },
-        border = c.sos,
-        fill = c.sos,
-        padding = PaddingValues(0.dp)
+            }
     ) {
-        // Remplissage par paliers de 1/12, comme les 12 carrés de l'écran SOS.
-        val steps = (progress.value * 12).toInt() / 12f
         if (tile) {
-            Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().fillMaxHeight(steps).background(c.void.copy(alpha = 0.3f)))
+            Box(
+                Modifier.align(
+                    Alignment.BottomStart
+                ).fillMaxWidth().fillMaxHeight(progress.value).background(Color.Black.copy(alpha = 0.3f))
+            )
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                PixelIconView(PixelIcon.ALERT, 28.dp, c.onSos)
-                Text(stringResource(R.string.sos), style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.4f), color = c.onSos)
-                Text(stringResource(R.string.sos_hint_two_lines), style = PxType.label, color = c.onSos, textAlign = TextAlign.Center)
+                Ico(CrIcon.ALERT, 30.dp, c.onSos)
+                Text(
+                    stringResource(R.string.sos),
+                    style = DashType.display.copy(fontSize = DashType.display.fontSize * 1.5f),
+                    color = c.onSos
+                )
+                Text(stringResource(R.string.sos_hint_two_lines), style = DashType.label, color = c.onSos, textAlign = TextAlign.Center)
             }
         } else {
-            Box(Modifier.fillMaxHeight().fillMaxWidth(steps).background(c.void.copy(alpha = 0.3f)))
+            Box(Modifier.fillMaxHeight().fillMaxWidth(progress.value).background(Color.Black.copy(alpha = 0.3f)))
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                PixelIconView(PixelIcon.ALERT, 28.dp, c.onSos)
+                Ico(CrIcon.ALERT, 28.dp, c.onSos)
                 Spacer(Modifier.width(14.dp))
-                Text(stringResource(R.string.sos), style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.28f), color = c.onSos)
-                Spacer(Modifier.width(14.dp))
-                Text(stringResource(R.string.sos_hint_two_lines), style = PxType.label, color = c.onSos)
-            }
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Disque, orbite, indicateurs
-// ---------------------------------------------------------------------------
-
-/** Disque en pixels (ON/OFF de l'accueil, SOS) : halo qui pulse par paliers quand `glow`, orbe animée autour quand `orb`. */
-@Composable
-fun PixelDisc(
-    size: Dp,
-    cells: Int,
-    fill: Color,
-    modifier: Modifier = Modifier,
-    glow: Color? = null,
-    orb: OrbState? = null,
-    orbColor: Color? = null,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    val c = Cr.colors
-    val pulse = stepTick(500, enabled = glow != null) % 6
-    val shape = remember(cells) { pixelCircle(cells) }
-    Box(modifier.size(size + 32.dp), contentAlignment = Alignment.Center) {
-        if (glow != null) {
-            val strength = 0.35f + 0.1f * (if (pulse < 3) pulse else 6 - pulse)
-            Canvas(Modifier.size(size + 32.dp)) {
-                drawCircle(
-                    Brush.radialGradient(listOf(glow.copy(alpha = strength), Color.Transparent), radius = this.size.minDimension / 2)
+                Text(
+                    stringResource(R.string.sos),
+                    style = DashType.display.copy(fontSize = DashType.display.fontSize * 1.3f),
+                    color = c.onSos
                 )
+                Spacer(Modifier.width(14.dp))
+                Text(stringResource(R.string.sos_hint_two_lines), style = DashType.label, color = c.onSos)
             }
         }
-        orb?.let { Orb(it, size * 1.6f, orbColor ?: c.lime) }
-        Column(
-            Modifier.size(size).clip(shape).background(fill),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            content = content
-        )
     }
 }
 
-/** Voyant carré de 8 dp, qui clignote (1 s) quand `blink`. */
+/** En-tête d'écran : retour (48 dp) et titre à chevrons. */
 @Composable
-fun Led(color: Color, blink: Boolean, modifier: Modifier = Modifier, size: Dp = 8.dp) {
-    val on = stepTick(500, enabled = blink) % 2 == 0
-    Box(modifier.size(size).background(if (on) color else Color.Transparent))
+fun TopBar(title: String, onBack: (() -> Unit)?) {
+    val back = stringResource(R.string.back)
+    Row(Modifier.fillMaxWidth().height(56.dp).padding(start = 4.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (onBack != null) {
+            Box(
+                Modifier.size(48.dp).clickable(role = Role.Button, onClick = onBack).semantics { contentDescription = back },
+                contentAlignment = Alignment.Center
+            ) { Ico(CrIcon.BACK, 24.dp, Cr.colors.ink) }
+        } else {
+            Spacer(Modifier.width(12.dp))
+        }
+        Spacer(Modifier.width(4.dp))
+        ChevronTitle(title)
+    }
 }
+
+data class NavItem(val label: String, val icon: CrIcon, val onClick: () -> Unit)
+
+/** Barre de navigation : 4 onglets, l'onglet courant en vert avec un trait lumineux au-dessus. */
+@Composable
+fun DashNavBar(items: List<NavItem>, selected: Int) {
+    val c = Cr.colors
+    Row(Modifier.fillMaxWidth().height(64.dp).background(c.screen).border(1.dp, c.line)) {
+        items.forEachIndexed { i, item ->
+            val active = i == selected
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clickable(role = Role.Tab, onClick = item.onClick)
+                    .semantics { this.selected = active },
+                contentAlignment = Alignment.Center
+            ) {
+                if (active) {
+                    Box(
+                        Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth(0.6f)
+                            .height(3.dp)
+                            .background(Brush.horizontalGradient(listOf(Color.Transparent, c.mint, Color.Transparent)))
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Ico(item.icon, 22.dp, if (active) c.mint else c.muted)
+                    Text(item.label.uppercase(), style = DashType.label, color = if (active) c.mint else c.muted)
+                }
+            }
+        }
+    }
+}
+
+/** Case à cocher carrée de 24 dp (zone tactile : toute la ligne). */
+@Composable
+fun DashCheck(checked: Boolean) {
+    val c = Cr.colors
+    Box(
+        Modifier.size(24.dp).background(if (checked) c.green else c.screen).border(2.dp, if (checked) c.green else c.lineControl),
+        contentAlignment = Alignment.Center
+    ) { if (checked) Ico(CrIcon.CHECK, 18.dp, c.onAccent) }
+}
+
+/** Puce de filtre (Tout / Alertes…). */
+@Composable
+fun FilterChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val c = Cr.colors
+    Box(
+        modifier
+            .heightIn(min = 48.dp)
+            .background(if (selected) c.green else c.screen)
+            .border(1.dp, if (selected) c.green else c.lineControl)
+            .semantics { this.selected = selected }
+            .clickable(role = Role.Tab, onClick = onClick)
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.Center
+    ) { Text(text.uppercase(), style = DashType.label, color = if (selected) c.onAccent else c.ink) }
+}
+
+/** Pavé PIN (touches de 72 × 56 dp). Le code n'est jamais affiché en clair. */
+@Composable
+fun PinPad(value: String, onChange: (String) -> Unit, maxLength: Int = 8) {
+    val c = Cr.colors
+    val delete = stringResource(R.string.pin_delete)
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.height(16.dp)) {
+            repeat(maxOf(4, value.length)) { i ->
+                Box(Modifier.size(12.dp).clip(CircleShape).background(if (i < value.length) c.mint else c.line))
+            }
+        }
+        listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf("", "0", "⌫")).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                row.forEach { key ->
+                    if (key.isEmpty()) {
+                        Spacer(Modifier.size(72.dp, 56.dp))
+                    } else {
+                        Box(
+                            Modifier
+                                .size(72.dp, 56.dp)
+                                .background(Brush.verticalGradient(listOf(c.panelTop, c.panelBottom)))
+                                .border(1.dp, c.lineControl)
+                                .clickable(role = Role.Button) {
+                                    if (key == "⌫") {
+                                        onChange(value.dropLast(1))
+                                    } else if (value.length < maxLength) {
+                                        onChange(value + key)
+                                    }
+                                }
+                                .semantics { if (key == "⌫") contentDescription = delete },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (key == "⌫") Ico(CrIcon.BACK, 20.dp, c.ink) else Digits(key, style = DashType.title)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Orbes à points (OrbMotion, MIT)
+// ---------------------------------------------------------------------------
 
 /**
- * Orbe animée (bibliothèque OrbMotion) : activité en cours (écoute, envoi, attente).
- * Décorative pour TalkBack ; figée si « réduire les animations » est actif. La taille est convertie en pixels
- * (la bibliothèque dessine en pixels).
+ * Orbe à points (bibliothèque OrbMotion) : activité en cours (envoi, attente, démarrage).
+ * Décorative pour TalkBack ; figée si « réduire les animations ». La bibliothèque dessine en pixels.
  */
 @Composable
 fun Orb(state: OrbState, size: Dp, color: Color, modifier: Modifier = Modifier, speed: Float = 1f) {
@@ -352,265 +651,4 @@ fun Orb(state: OrbState, size: Dp, color: Color, modifier: Modifier = Modifier, 
         speed = if (reduceMotion()) 0f else speed,
         color = color
     )
-}
-
-/** Égaliseur de 5 barres : l'écoute est active (aucun contenu audio n'est affiché). */
-@Composable
-fun EqBars() {
-    val c = Cr.colors
-    val t = stepTick(300)
-    val levels = listOf(0.2f, 1f, 0.45f, 0.8f)
-    Row(Modifier.height(24.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.Bottom) {
-        repeat(5) { i -> Box(Modifier.width(6.dp).fillMaxHeight(levels[(t + i * 3) % 4]).background(c.lime)) }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Icônes en pixels (grilles 8 × 8 des maquettes)
-// ---------------------------------------------------------------------------
-
-enum class PixelIcon(val rows: String) {
-    EXPAND("###..###/#......#/#......#/......../......../#......#/#......#/###..###"),
-    SHIELD("########/#......#/#......#/#......#/.#....#./.#....#./..#..#../...##..."),
-    POWER("...##.../.#.##.#./#..##..#/#......#/#......#/.#....#./..####../........"),
-    MIC("..####../..#..#../..#..#../#.#..#.#/#..##..#/.#....#./..####../...##..."),
-    USERS("..####../..#..#../..####../...##.../.######./##....##/#......#/#......#"),
-    ARROW_RIGHT("......../...#..../....#.../#######./....#.../...#..../......../........"),
-    ALERT("...##.../..#..#../..#..#../.#.##.#./.#.##.#./#......#/#..##..#/########"),
-    HOME("...##.../..#..#../.#....#./##....##/.#....#./.#.##.#./.#.##.#./.######."),
-    PIN("..####../.#....#./.#.##.#./.#.##.#./.#....#./..#..#../...##.../........"),
-    GEAR("...##.../#.####.#/.##..##./###..###/###..###/.##..##./#.####.#/...##..."),
-    ARROW_LEFT("....#.../...#..../..#...../.#######/..#...../...#..../....#.../........"),
-    CHECK("......../.......#/......##/#....##./##..##../.####.../..##..../........"),
-    PHONE(".######./.#....#./.#....#./.#....#./.#....#./.#....#./.######./...##..."),
-    CROSS("#......#/.#....#./..#..#../...##.../...##.../..#..#../.#....#./#......#"),
-    LOCK("..####../.#....#./.#....#./########/##....##/##.##.##/##....##/########"),
-    CLOCK("..####../.#....#./#..#...#/#..#...#/#..###.#/#......#/.#....#./..####..")
-}
-
-/** Icône décorative en pixels : le libellé voisin porte le sens (TalkBack). */
-@Composable
-fun PixelIconView(icon: PixelIcon, size: Dp, color: Color, modifier: Modifier = Modifier) {
-    val rows = remember(icon) { icon.rows.split('/') }
-    Canvas(modifier.size(size)) {
-        val cell = this.size.width / 8
-        rows.forEachIndexed { y, row ->
-            row.forEachIndexed { x, ch -> if (ch == '#') drawRect(color, Offset(x * cell, y * cell), Size(cell, cell)) }
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Lignes, en-têtes, navigation
-// ---------------------------------------------------------------------------
-
-/** Ligne de panneau : icône, étiquette grise, valeur en gras, indicateur à droite (lignes de l'accueil). */
-@Composable
-fun StatusRow(icon: PixelIcon, label: String, value: String, active: Boolean = false, trailing: @Composable RowScope.() -> Unit = {}) {
-    val c = Cr.colors
-    PxPanel(
-        Modifier.fillMaxWidth(),
-        border = if (active) c.lime else c.line,
-        padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            PixelIconView(icon, 24.dp, c.lime)
-            Column(Modifier.weight(1f)) {
-                Text(label.uppercase(), style = PxType.label, color = c.muted)
-                Text(value.uppercase(), style = PxType.bodyBold)
-            }
-            trailing()
-        }
-    }
-}
-
-/** En-tête d'écran : retour (48 dp) et titre en pixels. */
-@Composable
-fun TopBar(title: String, onBack: (() -> Unit)?) {
-    val back = stringResource(R.string.back)
-    Row(Modifier.fillMaxWidth().height(56.dp).padding(start = 4.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (onBack != null) {
-            Box(
-                Modifier
-                    .size(48.dp)
-                    .clickable(role = Role.Button, onClick = onBack)
-                    .semantics { contentDescription = back },
-                contentAlignment = Alignment.Center
-            ) { PixelIconView(PixelIcon.ARROW_LEFT, 24.dp, Cr.colors.ink) }
-        } else {
-            Spacer(Modifier.width(12.dp))
-        }
-        Spacer(Modifier.width(8.dp))
-        Text(title.uppercase(), style = PxType.title, modifier = Modifier.semantics { heading() })
-    }
-}
-
-data class NavItem(val label: String, val icon: PixelIcon, val onClick: () -> Unit)
-
-/** Barre de navigation : 4 onglets, l'onglet courant en lime avec un trait au-dessus. */
-@Composable
-fun PxNavBar(items: List<NavItem>, selected: Int) {
-    val c = Cr.colors
-    PxPanel(Modifier.fillMaxWidth().height(68.dp), fill = c.surface, padding = PaddingValues(0.dp)) {
-        Row(Modifier.fillMaxSize()) {
-            items.forEachIndexed { i, item ->
-                val active = i == selected
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clickable(role = Role.Tab, onClick = item.onClick)
-                        .semantics { if (active) stateDescription = "sélectionné" },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (active) Box(Modifier.align(Alignment.TopCenter).fillMaxWidth(0.6f).height(4.dp).background(c.lime))
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        PixelIconView(item.icon, 20.dp, if (active) c.lime else c.muted)
-                        Text(item.label.uppercase(), style = PxType.label, color = if (active) c.lime else c.muted)
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** Ligne de journal « heure ······ événement ». */
-@Composable
-fun LeaderLine(time: String, text: String, color: Color) {
-    val c = Cr.colors
-    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(time, style = PxType.caption, color = c.muted)
-        Canvas(Modifier.weight(1f).height(10.dp)) {
-            var x = 0f
-            val dot = 2.dp.toPx()
-            while (x < size.width) {
-                drawRect(c.line, Offset(x, size.height - dot), Size(dot, dot))
-                x += dot * 2
-            }
-        }
-        Text(text.uppercase(), style = PxType.label, color = color, textAlign = TextAlign.End, modifier = Modifier.widthIn(max = 220.dp))
-    }
-}
-
-/** Case à cocher carrée de 28 dp (zone tactile : toute la ligne). */
-@Composable
-fun PxCheck(checked: Boolean) {
-    val c = Cr.colors
-    Box(
-        Modifier
-            .size(28.dp)
-            .background(if (checked) c.lime else c.surface)
-            .drawBehind { if (!checked) drawRect(c.lineControl, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx())) },
-        contentAlignment = Alignment.Center
-    ) { if (checked) PixelIconView(PixelIcon.CHECK, 20.dp, c.onLime) }
-}
-
-/** Écran d'affiche lime de l'onboarding : progression, titre géant, escalier en bas, bouton sombre. */
-@Composable
-fun Poster(
-    step: Int,
-    total: Int,
-    icon: PixelIcon,
-    title: String,
-    body: String,
-    action: String,
-    onAction: () -> Unit,
-    onSkip: (() -> Unit)?,
-    extra: @Composable ColumnScope.() -> Unit = {}
-) {
-    val c = Cr.colors
-    Box(Modifier.fillMaxSize().background(c.lime)) {
-        // Escalier décoratif (blocs forêt / forêt profonde).
-        listOf(0, 60, 120, 180, 240, 300).forEachIndexed { i, left ->
-            Box(
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .fillMaxWidth(1f - left / 360f)
-                    .height((24 * (i + 1)).dp)
-                    .background(if (i % 2 == 0) c.forest else c.forestShade)
-            )
-        }
-        Column(Modifier.fillMaxSize()) {
-            Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.weight(1f).semantics {
-                        stateDescription =
-                            "$step / $total"
-                    }
-                ) {
-                    repeat(total) { i ->
-                        Box(
-                            Modifier
-                                .size(24.dp, 12.dp)
-                                .background(if (i < step) c.onLime else Color.Transparent)
-                                .drawBehind { drawRect(c.onLime, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx())) }
-                        )
-                    }
-                }
-                if (onSkip != null) {
-                    Box(
-                        Modifier.heightIn(min = 48.dp).clickable(role = Role.Button, onClick = onSkip).padding(horizontal = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(stringResource(R.string.action_skip).uppercase(), style = PxType.label, color = c.onLime)
-                    }
-                }
-            }
-            Column(Modifier.padding(horizontal = 24.dp, vertical = 12.dp)) {
-                PxPanel(Modifier.width(96.dp), fill = c.surface) {
-                    PixelIconView(icon, 48.dp, c.lime, Modifier.align(Alignment.Center))
-                }
-                Spacer(Modifier.height(24.dp))
-                Text(title.uppercase(), style = PxType.poster, color = c.onLime, modifier = Modifier.semantics { heading() })
-                Spacer(Modifier.height(16.dp))
-                Text(body, style = PxType.bodyBold, color = c.onLime)
-                extra()
-            }
-            Spacer(Modifier.weight(1f))
-            PxButton(action, onAction, Modifier.padding(24.dp), variant = PxVariant.DARK, icon = PixelIcon.ARROW_RIGHT)
-        }
-    }
-}
-
-/** Pavé PIN en touches crénelées de 64 dp. Le code n'est jamais affiché en clair. */
-@Composable
-fun PinPad(value: String, onChange: (String) -> Unit, maxLength: Int = 8) {
-    val c = Cr.colors
-    val delete = stringResource(R.string.pin_delete)
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.height(16.dp)) {
-            repeat(maxOf(4, value.length)) { i -> Box(Modifier.size(14.dp).background(if (i < value.length) c.lime else c.line)) }
-        }
-        listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf("", "0", "⌫")).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                row.forEach { key ->
-                    if (key.isEmpty()) {
-                        Spacer(Modifier.size(72.dp, 56.dp))
-                    } else {
-                        PxPanel(
-                            Modifier
-                                .size(72.dp, 56.dp)
-                                .clickable(role = Role.Button) {
-                                    if (key == "⌫") {
-                                        onChange(value.dropLast(1))
-                                    } else if (value.length < maxLength) {
-                                        onChange(value + key)
-                                    }
-                                }
-                                .semantics { if (key == "⌫") contentDescription = delete },
-                            border = c.lineControl,
-                            padding = PaddingValues(0.dp)
-                        ) {
-                            if (key == "⌫") {
-                                PixelIconView(PixelIcon.ARROW_LEFT, 20.dp, c.ink, Modifier.align(Alignment.Center))
-                            } else {
-                                Text(key, style = PxType.title, modifier = Modifier.align(Alignment.Center))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 }

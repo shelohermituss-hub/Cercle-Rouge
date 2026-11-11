@@ -86,12 +86,12 @@ fun LiveMap(armed: Boolean, showMe: Boolean, modifier: Modifier = Modifier, cove
             val location = map.locationComponent
             if (showMe) {
                 val puck = LocationComponentOptions.builder(context)
-                    .foregroundTintColor(c.lime.toArgb())
-                    .backgroundTintColor(c.surface.toArgb())
-                    .accuracyColor(c.lime.toArgb())
+                    .foregroundTintColor(c.mint.toArgb())
+                    .backgroundTintColor(c.screen.toArgb())
+                    .accuracyColor(c.mint.toArgb())
                     .accuracyAlpha(0.12f)
                     .pulseEnabled(true)
-                    .pulseColor(c.lime.toArgb())
+                    .pulseColor(c.mint.toArgb())
                     .build()
                 location.activateLocationComponent(
                     LocationComponentActivationOptions.builder(context, style)
@@ -102,7 +102,7 @@ fun LiveMap(armed: Boolean, showMe: Boolean, modifier: Modifier = Modifier, cove
                 location.isLocationComponentEnabled = true
                 location.renderMode = RenderMode.NORMAL
                 location.cameraMode = CameraMode.TRACKING
-                location.zoomWhileTracking(15.0)
+                location.zoomWhileTracking(13.5) // imagerie Sentinel-2 à 10 m : au-delà, l'image devient floue
             } else {
                 if (location.isLocationComponentActivated) location.isLocationComponentEnabled = false
                 map.cameraPosition = CameraPosition.Builder().target(DEFAULT_CENTER).zoom(12.5).build()

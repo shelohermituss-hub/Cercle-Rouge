@@ -63,9 +63,9 @@ class MainActivity : ComponentActivity() {
                     app.account.load()
                     screen = if (app.settings.onboardingDone()) Screen.HOME else Screen.ONBOARDING
                 }
-                Box(Modifier.fillMaxSize().background(Cr.colors.surface)) {
+                Box(Modifier.fillMaxSize().background(Cr.colors.bg)) {
                     when (screen) {
-                        Screen.LOADING -> Orb(OrbState.BREATHING, 96.dp, Cr.colors.lime, Modifier.align(Alignment.Center))
+                        Screen.LOADING -> Orb(OrbState.BREATHING, 96.dp, Cr.colors.mint, Modifier.align(Alignment.Center))
                         Screen.ONBOARDING -> OnboardingScreen(
                             onboarding,
                             onSos = { app.controller.send { Input.Sos(it) } },

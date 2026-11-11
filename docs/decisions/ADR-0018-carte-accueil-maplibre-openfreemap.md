@@ -10,7 +10,7 @@ Le porteur du projet veut une **vraie carte en direct** en arrière-plan de l'ac
 |---|---|
 | Moteur | **MapLibre Native Android** (libre, sans compte, sans Google Play Services) |
 | Tuiles | **OpenFreeMap** (`tiles.openfreemap.org`, données OpenStreetMap) : sans clé, sans compte, sans pistage publicitaire |
-| Style | **Satellite hybride** (2026-11-11) : imagerie **Sentinel-2 cloudless 2016 d'EOX** (`tiles.maps.eox.at`, CC BY 4.0, sans clé), routes principales et noms de lieux OpenFreeMap par-dessus. Veille : image en noir et blanc ; protection active : couleurs |
+| Style | Style plan maison (`MapStyle.kt`) sur OpenFreeMap : gris en veille, routes lime quand la protection est active (le satellite essayé le 2026-11-11 a été retiré) |
 | Position | Point en direct **seulement si la protection est active** et la localisation accordée, application au premier plan. En `OFF`, le GPS n'est jamais sollicité : carte centrée sur Port-au-Prince, sans point |
 | Autorisations | Micro et localisation demandés **ensemble, au moment d'activer** la protection (R-PLAY-02). Pas de localisation en arrière-plan (ADR-0006) |
 | Attribution | « © OpenMapTiles © OpenStreetMap » affichée en texte sur l'accueil |
@@ -27,3 +27,6 @@ Le porteur du projet veut une **vraie carte en direct** en arrière-plan de l'ac
 - Le porteur du projet veut une carte satellite. Choix : **Sentinel-2 EOX, couche 2016**, la seule sous **CC BY 4.0** (les couches 2017-2024 sont CC BY-NC-SA, interdites pour une app publiée). Gratuit, sans clé ni compte.
 - Limite : **10 m par pixel**. On voit les quartiers et la côte, pas les rues ; le suivi de position est plafonné au zoom 13,5. Si une imagerie plus fine devient nécessaire : MapTiler Satellite (clé API), sans changer le code hors du style.
 - Nouveau destinataire technique : EOX (voit l'IP et la zone affichée, jamais la position). Attribution affichée sur la carte.
+
+## Révision du 2026-11-11 (2) : retour au style plan
+- Le porteur du projet revient à la carte **en style plan** (tuiles vectorielles OpenFreeMap, style maison gris / lime). **L'imagerie satellite EOX est retirée** : plus aucune requête vers `tiles.maps.eox.at`.

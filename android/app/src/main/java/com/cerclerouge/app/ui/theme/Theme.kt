@@ -18,111 +18,87 @@ import androidx.compose.ui.unit.sp
 import com.cerclerouge.app.R
 
 /**
- * Tokens du design « Pixel » v5 : style pixel (polices, angles crénelés, icônes 8×8) avec les couleurs du tableau de bord v4.
- * Fond noir-gris neutre, panneaux verts sombres, vert d'état, chiffres menthe, or pour les valeurs mises en avant.
- * Contrastes : voir docs/design/README.md (v4).
+ * Tokens du design « Pixel Lime » (maquettes Cercle Rouge v3, canevas « Cercle Rouge — Maquettes »).
+ * Fonds noir-gris neutres (comme la référence « Pixel VPN »), lime comme seule couleur d'action.
+ * Contrastes : voir docs/design/README.md (v3).
  */
 @Immutable
 data class CrColors(
-    /** Fond des écrans (noir-gris). */
-    val bg: Color,
-    /** Écran des moniteurs et des cartes, plus sombre que le fond. */
-    val screen: Color,
-    /** Panneaux : dégradé de `panelTop` vers `panelBottom`. */
-    val panelTop: Color,
-    val panelBottom: Color,
-    /** Bandeaux de section. */
-    val banner: Color,
-    /** Bordure verte des panneaux et bandeaux. */
-    val edge: Color,
-    /** Vert d'état et d'action (barres, icônes, bouton principal). */
-    val green: Color,
-    /** Chiffres et icônes en dégradé : du clair (`mintLight`) au vert (`mint`). */
-    val mint: Color,
-    val mintLight: Color,
-    /** Valeurs mises en avant, chevrons de titre. */
-    val gold: Color,
-    /** Texte posé sur vert ou or. */
-    val onAccent: Color,
+    val void: Color,
+    /** Fond des écrans. */
+    val surface: Color,
+    /** Intérieur des panneaux crénelés. */
+    val raised: Color,
+    val forestDeep: Color,
+    val forest: Color,
+    /** Vert sombre de l'escalier des affiches lime. */
+    val forestShade: Color,
+    /** Couleur d'action et d'état « protégé ». */
+    val lime: Color,
+    val glow: Color,
+    /** Texte posé sur lime, rouge ou jaune. */
+    val onLime: Color,
     val ink: Color,
     val muted: Color,
-    /** Traits décoratifs (grilles, séparateurs) : jamais seuls pour un contrôle. */
+    /** Bordure décorative des panneaux (2,6:1 : jamais seule pour un contrôle). */
     val line: Color,
-    /** Bordure des contrôles cliquables (≥ 3:1). */
+    /** Bordure des contrôles cliquables (≥ 3:1 sur surface et raised). */
     val lineControl: Color,
-    /** Texte et voyants d'alerte (corail, lisible sur fond sombre). */
+    val grid: Color,
+    /** SOS et alertes. */
     val danger: Color,
-    /** Boutons SOS : rouge franc, texte blanc (4,6:1). */
-    val sos: Color,
-    val onSos: Color,
-    /** Terminal (style AgentPrism). */
-    val terminal: Color,
-    val chip: Color,
-    val violet: Color,
-    val cyan: Color,
-    val teal: Color,
-    val orange: Color,
-    val blue: Color,
+    /** Vérification, attente, hors ligne. */
+    val warn: Color,
     val scrim: Color
 )
 
-val Dashboard = CrColors(
-    bg = Color(0xFF0E1011),
-    screen = Color(0xFF070908),
-    panelTop = Color(0xFF0D2416),
-    panelBottom = Color(0xFF09130D),
-    banner = Color(0xFF062A12),
-    edge = Color(0xFF1A6B3A),
-    green = Color(0xFF1DB46C),
-    mint = Color(0xFF4BE38C),
-    mintLight = Color(0xFFD6FFB4),
-    gold = Color(0xFFF2B226),
-    onAccent = Color(0xFF06140C),
-    ink = Color(0xFFE9F2EC),
-    muted = Color(0xFF93A89B),
-    line = Color(0xFF26352C),
-    lineControl = Color(0xFF5E8A6F),
+val PixelLime = CrColors(
+    void = Color(0xFF0A0B0C),
+    surface = Color(0xFF121416),
+    raised = Color(0xFF1B1E21),
+    forestDeep = Color(0xFF2A2E33),
+    forest = Color(0xFF009443),
+    forestShade = Color(0xFF00430F),
+    lime = Color(0xFFA0E705),
+    glow = Color(0x66A0E705),
+    onLime = Color(0xFF0E1012),
+    ink = Color(0xFFE6E8EA),
+    muted = Color(0xFF9BA1A8),
+    line = Color(0xFF3A3F45),
+    lineControl = Color(0xFF6B7279),
+    grid = Color(0x1F6B7279),
     danger = Color(0xFFFF6B5A),
-    sos = Color(0xFFE5202B),
-    onSos = Color(0xFFFFFFFF),
-    terminal = Color(0xFF070B14),
-    chip = Color(0xFF1A2233),
-    violet = Color(0xFF6366F1),
-    cyan = Color(0xFF22C3EE),
-    teal = Color(0xFF14C8A8),
-    orange = Color(0xFFFF6A1A),
-    blue = Color(0xFF1AA3F5),
-    scrim = Color(0xCC050706)
+    warn = Color(0xFFFFD23F),
+    scrim = Color(0xCC0A0B0C)
 )
 
-/** Titres, bandeaux et chiffres : Pixelify Sans (en capitales). */
+/** Titres en pixels (toujours en capitales). */
 val Pixel = FontFamily(Font(R.font.pixelify_sans_bold, FontWeight.Bold))
 
-/** Chiffres : Silkscreen (5 et S bien distincts, contrairement à Pixelify : vital pour le compte à rebours). */
+/** Chiffres du compte à rebours : Silkscreen (dans Pixelify, le 5 ressemble à un S). */
 val Digit = FontFamily(Font(R.font.silkscreen_bold, FontWeight.Bold))
 
-/** Texte, terminal et horodatages : Space Mono. */
+/** Tout le reste : Space Mono. */
 val Mono = FontFamily(
     Font(R.font.space_mono_regular, FontWeight.Normal),
     Font(R.font.space_mono_bold, FontWeight.Bold)
 )
 
-/** Typographie pixel : Pixelify Sans pour ce qui se lit de loin, Space Mono pour le reste. */
 object PxType {
-    /** Grand titre (onboarding). */
-    val hero = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 40.sp, lineHeight = 42.sp)
+    /** Grand titre d'affiche (onboarding). */
+    val poster = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 52.sp, lineHeight = 50.sp)
     val display = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = 32.sp)
-    val title = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 24.sp, letterSpacing = 0.04.em)
-    val banner = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 16.sp, lineHeight = 20.sp, letterSpacing = 0.08.em)
-    val digits = TextStyle(fontFamily = Digit, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 32.sp)
-    val digitsXL = TextStyle(fontFamily = Digit, fontWeight = FontWeight.Bold, fontSize = 104.sp, lineHeight = 108.sp)
-    val clock = TextStyle(fontFamily = Digit, fontWeight = FontWeight.Bold, fontSize = 13.sp, lineHeight = 18.sp, letterSpacing = 0.02.em)
+    val title = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 28.sp)
+    val brand = TextStyle(fontFamily = Pixel, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 24.sp, letterSpacing = 0.04.em)
+    val digits = TextStyle(fontFamily = Digit, fontWeight = FontWeight.Bold, fontSize = 96.sp, lineHeight = 100.sp)
     val body = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 22.sp)
-    val bodyStrong = body.copy(fontWeight = FontWeight.Bold, lineHeight = 20.sp)
-    val label = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Bold, fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.1.em)
-    val caption = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Normal, fontSize = 11.sp, lineHeight = 16.sp)
+    val bodyBold = body.copy(fontWeight = FontWeight.Bold, lineHeight = 20.sp)
+
+    /** Étiquettes en capitales (LB du design). */
+    val label = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.12.em)
+    val caption =
+        TextStyle(fontFamily = Mono, fontWeight = FontWeight.Normal, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.04.em)
     val button = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 18.sp, letterSpacing = 0.08.em)
-    val mono = TextStyle(fontFamily = Mono, fontWeight = FontWeight.Normal, fontSize = 11.sp, lineHeight = 16.sp)
 }
 
 private val CrTypography = Typography(
@@ -135,20 +111,20 @@ private val CrTypography = Typography(
     labelLarge = PxType.button
 )
 
-val LocalCrColors = staticCompositionLocalOf { Dashboard }
+val LocalCrColors = staticCompositionLocalOf { PixelLime }
 
-/** Un seul thème sombre, quel que soit le réglage du système. */
+/** Le design « Pixel Lime » n'existe qu'en sombre : un seul thème, quel que soit le réglage du système. */
 @Composable
 fun CercleRougeTheme(content: @Composable () -> Unit) {
-    val t = Dashboard
+    val t = PixelLime
     val scheme = darkColorScheme(
-        primary = t.green,
-        onPrimary = t.onAccent,
-        background = t.bg,
+        primary = t.lime,
+        onPrimary = t.onLime,
+        background = t.surface,
         onBackground = t.ink,
-        surface = t.panelBottom,
+        surface = t.raised,
         onSurface = t.ink,
-        surfaceVariant = t.panelTop,
+        surfaceVariant = t.raised,
         onSurfaceVariant = t.muted,
         outline = t.lineControl,
         error = t.danger

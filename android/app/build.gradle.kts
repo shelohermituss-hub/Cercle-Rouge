@@ -66,11 +66,6 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.biometric)
     implementation(libs.maplibre)
-    // Orbes animées (MIT, portage de « Thinking Orbs ») ; on retire les outils de debug qu'elle tire en dépendance.
-    implementation(libs.orbmotion) {
-        exclude(group = "org.jetbrains.compose.ui", module = "ui-tooling")
-        exclude(group = "androidx.compose.ui", module = "ui-tooling")
-    }
     testImplementation(libs.kotlin.test)
     // Rendu des écrans sur la JVM (captures PNG dans build/screenshots), sans émulateur.
     testImplementation(libs.robolectric)

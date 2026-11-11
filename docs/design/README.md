@@ -1,6 +1,16 @@
 # Design — décisions
 
-## v5 « Pixel » aux couleurs du tableau de bord (2026-11-11) — retenue, implémentée dans l'app
+## v6 : retour exact à « Pixel Lime » + carte en direct (2026-11-11) — retenue, implémentée dans l'app
+
+Demande du porteur du projet : **revenir exactement** à l'accueil Pixel Lime avec la carte en direct en style **plan** (commit `f32f70f`), **vert lime `#A0E705`**, et **déplacer les quatre boutons** (Écoute IA, Position, Contacts, Trajet) **dans le coin supérieur droit, empilés verticalement**, au lieu de les placer autour du losange.
+
+- Les styles v4 (tableau de bord), v5 et la carte satellite sont abandonnés, ainsi que les visualiseurs (orbe dégradée, biométrie, terminal, graphiques, orbes OrbMotion).
+- Le losange et le bouton ON/OFF restent centrés en bas de la carte ; le point de position est recentré dans la zone libre (marges de carte : haut 40 dp, droite 168 dp, bas 240 dp).
+- Seule différence volontaire avec `f32f70f` : les chiffres du compte à rebours SOS sont en **Silkscreen**, car dans Pixelify le 5 ressemble à un S.
+
+---
+
+## v5 « Pixel » aux couleurs du tableau de bord (remplacée)
 
 Demande du porteur du projet : **revenir au style pixel** (v3) **avec les couleurs de la v4** et **garder tous les assets** de la v4.
 

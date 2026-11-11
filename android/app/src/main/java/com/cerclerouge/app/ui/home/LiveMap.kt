@@ -42,7 +42,14 @@ private suspend fun MapView.awaitMap(): MapLibreMap = suspendCancellableCoroutin
  */
 @SuppressLint("MissingPermission") // showMe n'est vrai que si ACCESS_FINE_LOCATION est accordée (EngineState.locationGranted).
 @Composable
-fun LiveMap(armed: Boolean, showMe: Boolean, modifier: Modifier = Modifier, coveredBottom: Dp = 0.dp, coveredTop: Dp = 40.dp) {
+fun LiveMap(
+    armed: Boolean,
+    showMe: Boolean,
+    modifier: Modifier = Modifier,
+    coveredBottom: Dp = 240.dp,
+    coveredTop: Dp = 40.dp,
+    coveredEnd: Dp = 168.dp
+) {
     val density = LocalDensity.current
     val context = LocalContext.current
     val c = Cr.colors
@@ -80,18 +87,18 @@ fun LiveMap(armed: Boolean, showMe: Boolean, modifier: Modifier = Modifier, cove
             isAttributionEnabled = false // attribution OpenStreetMap affichée en texte sur l'accueil
             isCompassEnabled = false
         }
-        // Les légendes couvrent le haut de la carte : le centre (et donc ton point) est placé sous elles.
-        with(density) { map.setPadding(0, coveredTop.roundToPx(), 0, coveredBottom.roundToPx()) }
+        // Le losange (en bas) et les boutons (à droite) couvrent la carte : le centre (et donc ton point) reste dans la partie libre.
+        with(density) { map.setPadding(0, coveredTop.roundToPx(), coveredEnd.roundToPx(), coveredBottom.roundToPx()) }
         map.setStyle(Style.Builder().fromJson(MapStyle.json(armed))) { style ->
             val location = map.locationComponent
             if (showMe) {
                 val puck = LocationComponentOptions.builder(context)
-                    .foregroundTintColor(c.mint.toArgb())
-                    .backgroundTintColor(c.screen.toArgb())
-                    .accuracyColor(c.mint.toArgb())
+                    .foregroundTintColor(c.lime.toArgb())
+                    .backgroundTintColor(c.surface.toArgb())
+                    .accuracyColor(c.lime.toArgb())
                     .accuracyAlpha(0.12f)
                     .pulseEnabled(true)
-                    .pulseColor(c.mint.toArgb())
+                    .pulseColor(c.lime.toArgb())
                     .build()
                 location.activateLocationComponent(
                     LocationComponentActivationOptions.builder(context, style)
@@ -102,7 +109,7 @@ fun LiveMap(armed: Boolean, showMe: Boolean, modifier: Modifier = Modifier, cove
                 location.isLocationComponentEnabled = true
                 location.renderMode = RenderMode.NORMAL
                 location.cameraMode = CameraMode.TRACKING
-                location.zoomWhileTracking(13.5) // imagerie Sentinel-2 à 10 m : au-delà, l'image devient floue
+                location.zoomWhileTracking(15.0)
             } else {
                 if (location.isLocationComponentActivated) location.isLocationComponentEnabled = false
                 map.cameraPosition = CameraPosition.Builder().target(DEFAULT_CENTER).zoom(12.5).build()

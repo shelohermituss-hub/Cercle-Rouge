@@ -15,14 +15,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.cerclerouge.alert.Input
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.protection.ProtectionController
-import com.cerclerouge.app.ui.components.Orb
 import com.cerclerouge.app.ui.home.HomeScreen
 import com.cerclerouge.app.ui.home.HomeViewModel
 import com.cerclerouge.app.ui.journal.JournalScreen
@@ -32,7 +29,6 @@ import com.cerclerouge.app.ui.theme.CercleRougeTheme
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.privacy.Settings
 import com.cerclerouge.privacy.log.EventLog
-import com.valentinerutto.orbmotion.orbs.OrbState
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -63,9 +59,9 @@ class MainActivity : ComponentActivity() {
                     app.account.load()
                     screen = if (app.settings.onboardingDone()) Screen.HOME else Screen.ONBOARDING
                 }
-                Box(Modifier.fillMaxSize().background(Cr.colors.bg)) {
+                Box(Modifier.fillMaxSize().background(Cr.colors.surface)) {
                     when (screen) {
-                        Screen.LOADING -> Orb(OrbState.BREATHING, 96.dp, Cr.colors.mint, Modifier.align(Alignment.Center))
+                        Screen.LOADING -> Unit
                         Screen.ONBOARDING -> OnboardingScreen(
                             onboarding,
                             onSos = { app.controller.send { Input.Sos(it) } },

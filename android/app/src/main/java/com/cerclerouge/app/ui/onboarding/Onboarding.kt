@@ -5,7 +5,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
@@ -33,13 +31,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -48,21 +42,16 @@ import com.cerclerouge.app.BuildConfig
 import com.cerclerouge.app.R
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.account.GuardianStatus
-import com.cerclerouge.app.ui.components.Brackets
-import com.cerclerouge.app.ui.components.ChevronTitle
-import com.cerclerouge.app.ui.components.CrIcon
-import com.cerclerouge.app.ui.components.DashButton
-import com.cerclerouge.app.ui.components.DashCheck
-import com.cerclerouge.app.ui.components.DashPanel
-import com.cerclerouge.app.ui.components.DashVariant
-import com.cerclerouge.app.ui.components.Digits
-import com.cerclerouge.app.ui.components.GradientOrb
-import com.cerclerouge.app.ui.components.Ico
-import com.cerclerouge.app.ui.components.Orb
 import com.cerclerouge.app.ui.components.PinPad
+import com.cerclerouge.app.ui.components.PixelIcon
+import com.cerclerouge.app.ui.components.Poster
+import com.cerclerouge.app.ui.components.PxButton
+import com.cerclerouge.app.ui.components.PxCheck
+import com.cerclerouge.app.ui.components.PxPanel
+import com.cerclerouge.app.ui.components.PxVariant
 import com.cerclerouge.app.ui.components.SosBar
 import com.cerclerouge.app.ui.components.TopBar
-import com.cerclerouge.app.ui.components.gridBackground
+import com.cerclerouge.app.ui.components.pixelGrid
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
 import com.cerclerouge.domain.AgeBand
@@ -73,7 +62,6 @@ import com.cerclerouge.privacy.Settings
 import com.cerclerouge.privacy.consent.ConsentRepository
 import com.cerclerouge.privacy.pin.PinRepository
 import com.cerclerouge.privacy.pin.PinRules
-import com.valentinerutto.orbmotion.orbs.OrbState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.Year
@@ -201,13 +189,13 @@ fun OnboardingScreen(vm: OnboardingViewModel, onSos: () -> Unit, onDone: () -> U
     val c = Cr.colors
     val back = ui.step.previous(ui)
     if (back != null) BackHandler { vm.goTo(back) }
-    Box(Modifier.fillMaxSize().background(c.bg).gridBackground(c.line.copy(alpha = 0.35f)).safeDrawingPadding()) {
+    Box(Modifier.fillMaxSize().background(if (ui.step.ordinal <= Step.CIRCLE.ordinal) c.lime else c.surface).safeDrawingPadding()) {
         when (ui.step) {
-            // Affiches (trois écrans d'introduction).
+            // Affiches lime (maquettes « Onboarding 1 à 3 »).
             Step.WELCOME -> Poster(
                 1,
                 3,
-                { PosterVisual(CrIcon.SHIELD) },
+                PixelIcon.SHIELD,
                 stringResource(R.string.poster1_title),
                 stringResource(R.string.poster1_body),
                 stringResource(R.string.action_continue),
@@ -221,7 +209,7 @@ fun OnboardingScreen(vm: OnboardingViewModel, onSos: () -> Unit, onDone: () -> U
             Step.AI -> Poster(
                 2,
                 3,
-                { GradientOrb(active = true, size = 190.dp) },
+                PixelIcon.MIC,
                 stringResource(R.string.poster2_title),
                 stringResource(R.string.poster2_body),
                 stringResource(R.string.action_continue),
@@ -231,7 +219,7 @@ fun OnboardingScreen(vm: OnboardingViewModel, onSos: () -> Unit, onDone: () -> U
             Step.CIRCLE -> Poster(
                 3,
                 3,
-                { PosterVisual(CrIcon.USERS, "5") },
+                PixelIcon.USERS,
                 stringResource(R.string.poster3_title),
                 stringResource(R.string.poster3_body),
                 stringResource(R.string.action_start),
@@ -247,74 +235,14 @@ fun OnboardingScreen(vm: OnboardingViewModel, onSos: () -> Unit, onDone: () -> U
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     PinPad(ui.pin, vm::pinDigit, maxLength = 4)
                 }
-                DashButton(stringResource(R.string.action_later), { vm.goTo(Step.NOTIFICATIONS) }, variant = DashVariant.OUTLINE)
+                PxButton(stringResource(R.string.action_later), { vm.goTo(Step.NOTIFICATIONS) }, variant = PxVariant.OUTLINE)
             }
             Step.NOTIFICATIONS -> Form(R.string.notif_screen_title, back, vm) { NotificationsStep(vm) }
             Step.SUMMARY -> Form(R.string.summary_title, back, vm) {
                 Intro(null, R.string.summary_off)
-                Note(CrIcon.LOCK, stringResource(R.string.summary_privacy))
-                DashButton(stringResource(R.string.action_finish), { vm.finish(onDone) }, icon = CrIcon.CHECK, tall = true)
+                Note(PixelIcon.LOCK, stringResource(R.string.summary_privacy))
+                PxButton(stringResource(R.string.action_finish), { vm.finish(onDone) }, icon = PixelIcon.CHECK, tall = true)
             }
-        }
-    }
-}
-
-/** Affiche d'introduction : progression, grand visuel, titre géant, texte, bouton. */
-@Composable
-internal fun Poster(
-    step: Int,
-    total: Int,
-    visual: @Composable () -> Unit,
-    title: String,
-    body: String,
-    action: String,
-    onAction: () -> Unit,
-    onSkip: (() -> Unit)?,
-    extra: @Composable ColumnScope.() -> Unit = {}
-) {
-    val c = Cr.colors
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.weight(1f).semantics {
-                    stateDescription =
-                        "$step / $total"
-                }
-            ) {
-                repeat(total) { i -> Box(Modifier.width(28.dp).height(4.dp).background(if (i < step) c.mint else c.line)) }
-            }
-            if (onSkip != null) {
-                Box(
-                    Modifier.heightIn(min = 48.dp).clickable(role = Role.Button, onClick = onSkip).padding(horizontal = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(stringResource(R.string.action_skip).uppercase(), style = PxType.label, color = c.muted)
-                }
-            }
-        }
-        Box(Modifier.fillMaxWidth().height(230.dp), contentAlignment = Alignment.Center) { visual() }
-        Column(Modifier.padding(horizontal = 20.dp)) {
-            ChevronTitle(stringResource(R.string.app_name), color = c.gold)
-            Spacer(Modifier.height(12.dp))
-            Text(title.uppercase(), style = PxType.hero, color = c.ink, modifier = Modifier.semantics { heading() })
-            Spacer(Modifier.height(12.dp))
-            Text(body, style = PxType.body, color = c.muted)
-            extra()
-        }
-        Spacer(Modifier.weight(1f))
-        DashButton(action, onAction, Modifier.padding(20.dp), icon = CrIcon.NEXT)
-    }
-}
-
-/** Grand visuel d'affiche : icône dans un cadre à crochets, avec un chiffre éventuel. */
-@Composable
-private fun PosterVisual(icon: CrIcon, number: String? = null) {
-    val c = Cr.colors
-    Brackets(color = c.green) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Ico(icon, 96.dp, c.mint)
-            number?.let { Digits(it, style = PxType.digitsXL) }
         }
     }
 }
@@ -322,7 +250,7 @@ private fun PosterVisual(icon: CrIcon, number: String? = null) {
 /** Écran de formulaire : en-tête « retour + titre », fond quadrillé, contenu défilant. */
 @Composable
 private fun Form(title: Int, back: Step?, vm: OnboardingViewModel, content: @Composable ColumnScope.() -> Unit) {
-    Column(Modifier.fillMaxSize().gridBackground(Cr.colors.line.copy(alpha = 0.35f))) {
+    Column(Modifier.fillMaxSize().pixelGrid(Cr.colors.grid)) {
         TopBar(stringResource(title), back?.let { { vm.goTo(it) } })
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp).padding(bottom = 24.dp),
@@ -340,11 +268,11 @@ private fun Intro(title: Int?, body: Int) {
 
 /** Panneau d'information : icône lime et texte. */
 @Composable
-private fun Note(icon: CrIcon, text: String, warn: Boolean = false) {
+private fun Note(icon: PixelIcon, text: String, warn: Boolean = false) {
     val c = Cr.colors
-    DashPanel(Modifier.fillMaxWidth(), edge = if (warn) c.gold else c.line) {
+    PxPanel(Modifier.fillMaxWidth(), border = if (warn) c.warn else c.line) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            com.cerclerouge.app.ui.components.Ico(icon, 24.dp, if (warn) c.gold else c.mint)
+            com.cerclerouge.app.ui.components.PixelIconView(icon, 24.dp, if (warn) c.warn else c.lime)
             Text(text, style = PxType.body)
         }
     }
@@ -365,16 +293,16 @@ private fun Field(
         label = { Text(stringResource(label).uppercase(), style = PxType.label) },
         keyboardOptions = KeyboardOptions(keyboardType = keyboard),
         singleLine = true,
-        textStyle = PxType.bodyStrong,
+        textStyle = PxType.bodyBold,
         shape = RectangleShape,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = c.mint,
+            focusedBorderColor = c.lime,
             unfocusedBorderColor = c.lineControl,
-            focusedLabelColor = c.mint,
+            focusedLabelColor = c.lime,
             unfocusedLabelColor = c.muted,
-            cursorColor = c.mint,
-            focusedContainerColor = c.panelBottom,
-            unfocusedContainerColor = c.panelBottom
+            cursorColor = c.lime,
+            focusedContainerColor = c.raised,
+            unfocusedContainerColor = c.raised
         ),
         modifier = modifier.fillMaxWidth()
     )
@@ -396,7 +324,7 @@ private fun ProfileStep(ui: OnboardingUi, vm: OnboardingViewModel) {
     }
     val band = ui.band
     if (band == AgeBand.UNDER_12) {
-        Note(CrIcon.ALERT, stringResource(R.string.profile_under_12), warn = true)
+        Note(PixelIcon.ALERT, stringResource(R.string.profile_under_12), warn = true)
         return
     }
     if (band == AgeBand.ADULT) {
@@ -404,10 +332,10 @@ private fun ProfileStep(ui: OnboardingUi, vm: OnboardingViewModel) {
     }
     // R-ONB-08 : anti-stalkerware, la personne protégée est le détenteur du téléphone.
     CheckLine(stringResource(R.string.profile_holder), ui.holderAttested) { vm.edit { copy(holderAttested = it) } }
-    DashButton(
+    PxButton(
         stringResource(R.string.action_continue),
         { vm.saveProfile() },
-        icon = CrIcon.NEXT,
+        icon = PixelIcon.ARROW_RIGHT,
         enabled = ui.name.isNotBlank() && band != null && ui.holderAttested
     )
 }
@@ -416,19 +344,19 @@ private fun ProfileStep(ui: OnboardingUi, vm: OnboardingViewModel) {
 @Composable
 private fun CheckLine(text: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     val c = Cr.colors
-    DashPanel(
+    PxPanel(
         Modifier.fillMaxWidth().toggleable(checked, role = Role.Checkbox, onValueChange = onChange),
-        edge = if (checked) c.mint else c.lineControl
+        border = if (checked) c.lime else c.lineControl
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            DashCheck(checked)
+            PxCheck(checked)
             Text(text, style = PxType.body)
         }
     }
 }
 
 @Composable
-private fun ColumnScope.GuardianStep(ui: OnboardingUi, vm: OnboardingViewModel, onSos: () -> Unit) {
+private fun GuardianStep(ui: OnboardingUi, vm: OnboardingViewModel, onSos: () -> Unit) {
     val c = Cr.colors
     Intro(R.string.guardian_title, R.string.guardian_body)
     when (ui.guardian) {
@@ -441,46 +369,45 @@ private fun ColumnScope.GuardianStep(ui: OnboardingUi, vm: OnboardingViewModel, 
                 listOf("parent" to R.string.relation_parent, "tuteur" to R.string.relation_tutor, "autre" to R.string.relation_other)
                     .forEach { (key, label) ->
                         val on = ui.relationship == key
-                        DashPanel(
+                        PxPanel(
                             Modifier.weight(1f).selectable(on, role = Role.RadioButton) { vm.edit { copy(relationship = key) } },
-                            edge = if (on) c.mint else c.lineControl,
-                            fill = Brush.verticalGradient(if (on) listOf(c.mint, c.green) else listOf(c.panelTop, c.panelBottom)),
+                            border = if (on) c.lime else c.lineControl,
+                            fill = if (on) c.lime else c.raised,
                             padding = PaddingValues(vertical = 14.dp, horizontal = 4.dp)
                         ) {
                             Text(
                                 stringResource(label).uppercase(),
                                 style = PxType.label,
-                                color = if (on) c.onAccent else c.ink,
+                                color = if (on) c.onLime else c.ink,
                                 modifier = Modifier.align(Alignment.Center)
                             )
                         }
                     }
             }
-            DashButton(
+            PxButton(
                 stringResource(R.string.guardian_send),
                 { vm.requestGuardian() },
-                icon = CrIcon.NEXT,
+                icon = PixelIcon.ARROW_RIGHT,
                 enabled = ui.guardianPhone.count(Char::isDigit) in 8..15
             )
         }
         GuardianStatus.PENDING -> {
-            Orb(OrbState.SEARCHING, 72.dp, c.gold, Modifier.align(Alignment.CenterHorizontally))
-            Note(CrIcon.CLOCK, stringResource(R.string.guardian_waiting), warn = true)
+            Note(PixelIcon.CLOCK, stringResource(R.string.guardian_waiting), warn = true)
             Text(stringResource(R.string.guardian_waiting_sos), style = PxType.body, color = c.muted)
             SosBar(onTrigger = onSos, onTap = {})
-            DashButton(stringResource(R.string.guardian_change), {
+            PxButton(stringResource(R.string.guardian_change), {
                 vm.edit { copy(guardian = GuardianStatus.NONE) }
-            }, variant = DashVariant.OUTLINE)
+            }, variant = PxVariant.OUTLINE)
             if (BuildConfig.DEBUG) {
-                DashButton(stringResource(R.string.guardian_simulate), {
+                PxButton(stringResource(R.string.guardian_simulate), {
                     vm.simulateGuardian()
-                }, variant = DashVariant.OUTLINE)
+                }, variant = PxVariant.OUTLINE)
             }
-            DashButton(stringResource(R.string.action_continue), { vm.goTo(Step.RETENTION) }, icon = CrIcon.NEXT)
+            PxButton(stringResource(R.string.action_continue), { vm.goTo(Step.RETENTION) }, icon = PixelIcon.ARROW_RIGHT)
         }
         GuardianStatus.CONFIRMED -> {
-            Note(CrIcon.CHECK, stringResource(R.string.guardian_confirmed))
-            DashButton(stringResource(R.string.action_continue), { vm.goTo(Step.RETENTION) }, icon = CrIcon.NEXT)
+            Note(PixelIcon.CHECK, stringResource(R.string.guardian_confirmed))
+            PxButton(stringResource(R.string.action_continue), { vm.goTo(Step.RETENTION) }, icon = PixelIcon.ARROW_RIGHT)
         }
     }
 }
@@ -496,21 +423,21 @@ private fun RetentionStep(ui: OnboardingUi, vm: OnboardingViewModel) {
         Triple(Retention.ON_CLOSURE, R.string.retention_closure, R.string.retention_closure_ex)
     ).forEach { (value, title, example) ->
         val selected = ui.retention == value
-        DashPanel(
+        PxPanel(
             Modifier.fillMaxWidth().selectable(selected, role = Role.RadioButton) { vm.chooseRetention(value) },
-            edge = if (selected) c.mint else c.lineControl
+            border = if (selected) c.lime else c.lineControl
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                DashCheck(selected)
+                PxCheck(selected)
                 Column {
-                    Text(stringResource(title).uppercase(), style = PxType.bodyStrong)
+                    Text(stringResource(title).uppercase(), style = PxType.bodyBold)
                     Text(stringResource(example), style = PxType.caption, color = c.muted)
                 }
             }
         }
     }
     // ADR-0017 : aucune option présélectionnée, « Continuer » reste désactivé tant que rien n'est choisi.
-    DashButton(stringResource(R.string.action_continue), { vm.goTo(Step.PIN) }, icon = CrIcon.NEXT, enabled = ui.retention != null)
+    PxButton(stringResource(R.string.action_continue), { vm.goTo(Step.PIN) }, icon = PixelIcon.ARROW_RIGHT, enabled = ui.retention != null)
 }
 
 @Composable
@@ -521,7 +448,7 @@ private fun NotificationsStep(vm: OnboardingViewModel) {
     }
     Intro(R.string.notif_title, R.string.notif_body)
     Spacer(Modifier.width(0.dp))
-    DashButton(stringResource(R.string.notif_allow), {
+    PxButton(stringResource(R.string.notif_allow), {
         // Avant Android 13, les notifications sont autorisées par défaut : rien à demander.
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -529,9 +456,9 @@ private fun NotificationsStep(vm: OnboardingViewModel) {
             vm.recordConsent(ConsentScope.NOTIFICATIONS, true)
             vm.goTo(Step.SUMMARY)
         }
-    }, icon = CrIcon.CHECK)
-    DashButton(stringResource(R.string.action_later), {
+    }, icon = PixelIcon.CHECK)
+    PxButton(stringResource(R.string.action_later), {
         vm.recordConsent(ConsentScope.NOTIFICATIONS, false)
         vm.goTo(Step.SUMMARY)
-    }, variant = DashVariant.OUTLINE)
+    }, variant = PxVariant.OUTLINE)
 }

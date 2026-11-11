@@ -13,6 +13,11 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- Service de premier plan de la protection (S2.04) ; type « special use » jusqu'aux moteurs micro et position (S4, S5). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Après un redémarrage : restaurer l'état et inviter à réarmer (R-SM-08). -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".CercleRougeApp"
@@ -27,6 +32,24 @@
         android:theme="@style/Theme.CercleRouge"
         tools:targetApi="37">
 
+        <service
+            android:name=".protection.ProtectionService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Protection de sécurité personnelle : maintient l'application active pour envoyer l'alerte et gérer les minuteries de vérification" />
+        </service>
+        <receiver
+            android:name=".protection.TimerReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".protection.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <activity
             android:name=".MainActivity"
             android:exported="true"

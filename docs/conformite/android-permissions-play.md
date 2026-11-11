@@ -8,6 +8,7 @@
 |---|---|---|---|
 | `RECORD_AUDIO` | Dangereuse (runtime) | Écoute IA, preuves audio | Déclaration de la fonction principale, vidéo de démonstration si demandée |
 | `FOREGROUND_SERVICE` | Normale | `ProtectionService` | — |
+| `FOREGROUND_SERVICE_SPECIAL_USE` | Normale (API 34+) | Type provisoire du `ProtectionService` au Sprint 2 (aucun micro ni position encore) ; remplacé par `microphone` et `location` aux Sprints 4 et 5 | Déclaration du type « usage spécial » et de sa justification (propriété `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`) dans la Play Console, à retirer ensuite |
 | `FOREGROUND_SERVICE_MICROPHONE` | Normale (API 34+) | Type de service `microphone` | Déclaration des types de service dans la Play Console |
 | `FOREGROUND_SERVICE_LOCATION` | Normale (API 34+) | Type de service `location` | Idem |
 | `FOREGROUND_SERVICE_CAMERA` | Normale (API 34+) | Vidéo de preuve | Idem |

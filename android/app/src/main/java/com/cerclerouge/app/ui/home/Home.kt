@@ -77,6 +77,7 @@ import com.cerclerouge.alert.RejectReason
 import com.cerclerouge.app.R
 import com.cerclerouge.app.contacts.ContactsRepository
 import com.cerclerouge.app.protection.ProtectionController
+import com.cerclerouge.app.protection.ProtectionService
 import com.cerclerouge.app.protection.UiEvent
 import com.cerclerouge.app.ui.components.FacePhase
 import com.cerclerouge.app.ui.components.FaceUnlock
@@ -161,6 +162,10 @@ fun HomeScreen(vm: HomeViewModel, onJournal: () -> Unit, onContacts: () -> Unit)
         vm.controller.send { Input.Arm(it) }
     }
 
+    // Le service de premier plan tourne tant que la protection n'est pas OFF (il s'arrête seul au retour à OFF).
+    LaunchedEffect(state.protection) {
+        if (state.protection != com.cerclerouge.domain.ProtectionState.OFF) ProtectionService.start(context)
+    }
     LaunchedEffect(Unit) {
         val mic = context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         val loc = context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED

@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
@@ -57,6 +58,21 @@ data class ContactEntity(
     val position: Int,
     val isGuardian: Boolean,
     val hasApp: Boolean
+)
+
+/** Envoi en attente (SMS, push…) : file persistante et idempotente (clé primaire = clé d'idempotence). */
+@Entity(tableName = "outbox")
+data class OutboxEntity(
+    @PrimaryKey val key: String,
+    val alertId: String,
+    val contactId: String,
+    val channel: String,
+    val kind: String,
+    val priority: Int,
+    val createdAtMillis: Long,
+    val attempts: Int,
+    val nextAttemptAtMillis: Long,
+    val state: String
 )
 
 @Dao
@@ -116,9 +132,25 @@ interface ContactDao {
     }
 }
 
+@Dao
+interface OutboxDao {
+    /** Sans effet si la clé existe déjà : un même envoi mis deux fois dans la file n'existe qu'une fois. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(job: OutboxEntity): Long
+
+    @Query("SELECT * FROM outbox ORDER BY createdAtMillis, `key`")
+    suspend fun all(): List<OutboxEntity>
+
+    @Query("UPDATE outbox SET attempts = :attempts, nextAttemptAtMillis = :next, state = :state WHERE `key` = :key")
+    suspend fun update(key: String, attempts: Int, next: Long, state: String)
+
+    @Query("DELETE FROM outbox WHERE state != 'PENDING' AND createdAtMillis < :beforeMillis")
+    suspend fun purgeFinished(beforeMillis: Long): Int
+}
+
 @Database(
-    entities = [EventLogEntity::class, ConsentEntity::class, SettingEntity::class, ContactEntity::class],
-    version = 2,
+    entities = [EventLogEntity::class, ConsentEntity::class, SettingEntity::class, ContactEntity::class, OutboxEntity::class],
+    version = 3,
     exportSchema = false
 )
 abstract class PrivacyDatabase : RoomDatabase() {
@@ -130,8 +162,21 @@ abstract class PrivacyDatabase : RoomDatabase() {
 
     abstract fun contacts(): ContactDao
 
+    abstract fun outbox(): OutboxDao
+
     companion object {
         const val NAME = "cercle-rouge.db"
+
+        /** v2 → v3 : file d'attente des envois (Sprint 2). Tout le reste est conservé. */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `outbox` (`key` TEXT NOT NULL, `alertId` TEXT NOT NULL, `contactId` TEXT NOT NULL, " +
+                        "`channel` TEXT NOT NULL, `kind` TEXT NOT NULL, `priority` INTEGER NOT NULL, `createdAtMillis` INTEGER NOT NULL, " +
+                        "`attempts` INTEGER NOT NULL, `nextAttemptAtMillis` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`key`))"
+                )
+            }
+        }
 
         /** v1 → v2 : table des contacts de confiance (Sprint 2). Le journal, les consentements et le PIN sont conservés. */
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -160,7 +205,7 @@ abstract class PrivacyDatabase : RoomDatabase() {
             }
             return Room.databaseBuilder(context, PrivacyDatabase::class.java, NAME)
                 .openHelperFactory(factory)
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
         }
     }

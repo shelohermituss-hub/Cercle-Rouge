@@ -173,4 +173,8 @@
     <string name="contacts_duplicate">Ce numéro est déjà dans ta liste.</string>
     <string name="contacts_simulate">Simuler accepté</string>
     <string name="contacts_guardian">Adulte référent</string>
+    <string name="service_text_armed">Protection active</string>
+    <string name="service_text_alert">Alerte en cours</string>
+    <string name="service_action_sos">SOS</string>
+    <string name="service_action_disable">Désactiver</string>
 </resources>

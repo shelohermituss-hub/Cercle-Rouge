@@ -76,6 +76,7 @@ class MainActivity : ComponentActivity() {
                 var screen by remember { mutableStateOf(Screen.LOADING) }
                 LaunchedEffect(Unit) {
                     app.account.load()
+                    app.controller.ensureRestored() // état persisté (alerte en cours, protection interrompue…)
                     screen = if (app.settings.onboardingDone()) Screen.HOME else Screen.ONBOARDING
                 }
                 CrashReport()

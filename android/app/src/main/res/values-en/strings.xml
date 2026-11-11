@@ -172,4 +172,8 @@
     <string name="contacts_duplicate">This number is already in your list.</string>
     <string name="contacts_simulate">Simulate accepted</string>
     <string name="contacts_guardian">Guardian adult</string>
+    <string name="service_text_armed">Protection on</string>
+    <string name="service_text_alert">Alert in progress</string>
+    <string name="service_action_sos">SOS</string>
+    <string name="service_action_disable">Turn off</string>
 </resources>

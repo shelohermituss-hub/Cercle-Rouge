@@ -173,4 +173,8 @@
     <string name="contacts_duplicate">Nimewo sa a deja nan lis ou a.</string>
     <string name="contacts_simulate">Simile aksepte</string>
     <string name="contacts_guardian">Granmoun responsab</string>
+    <string name="service_text_armed">Pwoteksyon aktif</string>
+    <string name="service_text_alert">Alèt ap kouri</string>
+    <string name="service_action_sos">SOS</string>
+    <string name="service_action_disable">Dezaktive</string>
 </resources>

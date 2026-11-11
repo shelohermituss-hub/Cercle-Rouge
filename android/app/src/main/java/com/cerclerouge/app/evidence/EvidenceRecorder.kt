@@ -103,7 +103,7 @@ class EvidenceRecorder @Inject constructor(
                     block.fill(0)
                     if (segmentSamples >= SEGMENT_SAMPLES) flushSegment(final = false)
                     if (segments >= RecordingPolicy.maxSegments()) {
-                        log.append("evidence", "audio_cap_reached minutes=${RecordingPolicy.MAX_MINUTES}")
+                        runBlocking { log.append("evidence", "audio_cap_reached minutes=${RecordingPolicy.MAX_MINUTES}") }
                         break
                     }
                 }

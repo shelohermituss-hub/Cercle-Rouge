@@ -19,7 +19,15 @@ PGHOST=/tmp/pg PGPORT=54322 PGUSER=postgres supabase/scripts/test-local.sh
 
 La CI (`.github/workflows/supabase.yml`) lance le même script à chaque modification de `supabase/`.
 
-## Quand le vrai projet existera (S0.08)
+## Projet relié (2026-11-11)
+
+- Projet Supabase « Cercle rouge » (`lvxdpmjyeelrxfbrtvay`, us-east-1). Migrations appliquées : `s1_socle`, `s1_hardening`.
+- `tests/security.sql` relancé sur le projet (dans une transaction annulée) : toutes les assertions passent ; Security Advisor :
+  seules restent les 6 RPC voulues (`set_profile`, `request_guardian_consent`, `pending_guardian_requests`,
+  `confirm_guardian_consent`, `revoke_guardian_consent`, `protection_allowed`), appelables par `authenticated` par conception.
+- App Android : `supabase.url` et `supabase.publishableKey` dans `android/local.properties` (hors du dépôt) → `BuildConfig`.
+
+## Procédure d'origine (S0.08)
 
 1. `supabase link --project-ref <ref>` puis `supabase db push` (staging d'abord).
 2. Lancer `tests/security.sql` sur la base de staging, sans le stub.

@@ -55,6 +55,7 @@ select tests.expect_error('select * from public.guardian_links', '%permission de
 select tests.expect_error('select * from public.consents', '%permission denied%');
 select tests.expect_error($$select public.request_guardian_consent('+50930000002', 'parent')$$, '%permission denied%');
 select tests.expect_error($$select public.protection_allowed()$$, '%permission denied%');
+select tests.expect_error($$select private.is_admin()$$, '%permission denied%');
 reset role;
 
 -- ===== Âge et rôle =====
@@ -63,6 +64,8 @@ select tests.expect_error($$select public.set_profile('Bébé', 'fr', 2020, 1)$$
 select tests.expect_error($$select public.set_profile('Jeune', 'fr', 2012, 1)$$, '%birth_date_immutable%');
 select tests.expect_error($$select public.set_profile('Jeune', 'fr', 2012, 1, true)$$, '%adult_attestation_inconsistent%');
 select tests.expect_error($$update public.profiles set role = 'admin' where id = auth.uid()$$, '%permission denied%');
+select tests.expect_error($$select public.is_admin()$$, '%permission denied%');   -- remplacée par private.is_admin()
+select tests.expect_error($$select * from public.rate_limits$$, '%permission denied%');
 select tests.expect((select count(*) from public.profiles) = 1, 'un utilisateur ne voit que son propre profil');
 reset role;
 
@@ -197,13 +200,13 @@ reset role;
 select tests.expect(
   not exists (
     select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public' and p.prosecdef
+    where n.nspname in ('public', 'private') and p.prosecdef
       and (has_function_privilege('anon', p.oid, 'execute'))),
   'aucune fonction SECURITY DEFINER exécutable par anon');
 select tests.expect(
   not exists (
     select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public' and p.prosecdef
+    where n.nspname in ('public', 'private') and p.prosecdef
       and not exists (select 1 from unnest(coalesce(p.proconfig, '{}')) c where c like 'search_path=%')),
   'toutes les fonctions SECURITY DEFINER fixent search_path');
 select tests.expect(

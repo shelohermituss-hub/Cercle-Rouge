@@ -1,8 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+}
+
+// Supabase (Sprint 3) : URL et clé publique (sb_publishable_…) lues dans local.properties, hors du dépôt.
+// Clé conçue pour être publique (la RLS protège les données) ; jamais de clé service_role dans l'app (règle 9).
+val localProps = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
 
 android {
@@ -16,6 +24,8 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "SUPABASE_URL", "\"${localProps.getProperty("supabase.url", "")}\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"${localProps.getProperty("supabase.publishableKey", "")}\"")
     }
 
     buildTypes {

@@ -1,5 +1,6 @@
--- S1 · Durcissement après le premier Security Advisor du vrai projet (2026-11-11).
--- 1) Le helper is_admin() n'a pas à être appelable via l'API (/rest/v1/rpc) : il passe dans un schéma `private`, non exposé.
+-- S1 · Durcissement après le premier Security Advisor du vrai projet (2026-11-11). Sans suppression (aucune instruction DROP).
+-- 1) Le helper is_admin() n'a pas à être appelable via l'API (/rest/v1/rpc) : copie dans un schéma `private`, non exposé ;
+--    l'ancienne fonction public.is_admin() n'est plus utilisée nulle part et plus exécutable par personne.
 -- 2) rate_limits n'est lu ni écrit que par les RPC SECURITY DEFINER : politique explicite « aucun accès direct ».
 
 create schema if not exists private;
@@ -13,9 +14,7 @@ $$;
 revoke execute on function private.is_admin() from public, anon;
 grant execute on function private.is_admin() to authenticated;
 
-drop policy audit_logs_select_admin on public.audit_logs;
-create policy audit_logs_select_admin on public.audit_logs for select to authenticated
-  using ((select private.is_admin()));
+alter policy audit_logs_select_admin on public.audit_logs using ((select private.is_admin()));
 
 create or replace function public.tg_profiles_guard() returns trigger
 language plpgsql security definer set search_path = public as $$
@@ -36,7 +35,7 @@ begin
 end $$;
 revoke execute on function public.tg_profiles_guard() from public, anon, authenticated;
 
-drop function public.is_admin();
+revoke execute on function public.is_admin() from public, anon, authenticated;
 
 create policy rate_limits_no_direct_access on public.rate_limits for all to authenticated
   using (false) with check (false);

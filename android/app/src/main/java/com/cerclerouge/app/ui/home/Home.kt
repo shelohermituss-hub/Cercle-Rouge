@@ -76,6 +76,7 @@ import com.cerclerouge.alert.Input
 import com.cerclerouge.alert.RejectReason
 import com.cerclerouge.app.R
 import com.cerclerouge.app.contacts.ContactsRepository
+import com.cerclerouge.app.server.ServerSync
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.protection.ProtectionService
 import com.cerclerouge.app.protection.UiEvent
@@ -119,7 +120,8 @@ class HomeViewModel @Inject constructor(
     val controller: ProtectionController,
     private val pins: PinRepository,
     val log: EventLog,
-    val contacts: ContactsRepository
+    val contacts: ContactsRepository,
+    val server: ServerSync
 ) : ViewModel() {
     init {
         viewModelScope.launch { contacts.load() }
@@ -576,10 +578,33 @@ private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, onSafe: () ->
             }
         }
         Text(stringResource(R.string.urgent_contacts).uppercase(), style = PxType.label, color = c.muted)
-        PxPanel(Modifier.fillMaxWidth(), border = c.warn, padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
+        // Réponses des proches via la page de suivi (S3.10) ; à défaut, combien ont été prévenus.
+        val book by vm.contacts.book.collectAsState()
+        val feedback by vm.server.feedback.collectAsState()
+        val replied = feedback.any { it.action != "VIEWED" }
+        PxPanel(
+            Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
+            border = if (replied) c.lime else c.warn,
+            padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                PixelIconView(PixelIcon.USERS, 24.dp, c.warn)
-                Text(stringResource(R.string.emergency_no_contacts), style = PxType.body)
+                PixelIconView(if (replied) PixelIcon.CHECK else PixelIcon.USERS, 24.dp, if (replied) c.lime else c.warn)
+                Column {
+                    when {
+                        book.contacts.isEmpty() -> Text(stringResource(R.string.emergency_no_contacts), style = PxType.body)
+                        feedback.isEmpty() -> Text(pluralStringResource(R.plurals.urgent_notified, book.contacts.size, book.contacts.size), style = PxType.body)
+                        else -> feedback.sortedByDescending { it.at }.forEach { f ->
+                            val who = f.label ?: stringResource(R.string.urgent_fb_someone)
+                            val text = when (f.action) {
+                                "TOOK_CONTACT" -> R.string.urgent_fb_took
+                                "FALSE_ALARM" -> R.string.urgent_fb_false
+                                "CALLED_EMERGENCY" -> R.string.urgent_fb_called
+                                else -> R.string.urgent_fb_viewed
+                            }
+                            Text(stringResource(text, who), style = if (f.action == "VIEWED") PxType.body else PxType.bodyBold)
+                        }
+                    }
+                }
             }
         }
         Text(stringResource(R.string.nav_log).uppercase(), style = PxType.label, color = c.muted)

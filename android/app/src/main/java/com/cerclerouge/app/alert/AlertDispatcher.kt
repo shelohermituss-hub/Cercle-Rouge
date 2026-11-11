@@ -8,6 +8,7 @@ import com.cerclerouge.alert.DispatchKind
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.contacts.ContactsRepository
 import com.cerclerouge.app.contacts.OutboxRepository
+import com.cerclerouge.app.server.ServerSync
 import com.cerclerouge.contacts.Channel
 import com.cerclerouge.contacts.ContactStatus
 import com.cerclerouge.contacts.Decision
@@ -42,7 +43,7 @@ import kotlinx.coroutines.sync.withLock
  * file en respectant l'anti-spam, avec attente de 2 à 60 s en cas d'échec (S2.06, S2.07, S2.11). Un test d'alerte suit le même
  * chemin avec le marqueur « TEST » (S2.12, R-ALR-05).
  *
- * Sans lien de suivi tant que le serveur n'existe pas (Sprint 3) : le SMS porte la position en coordonnées brutes.
+ * Avec le serveur (Sprint 3) : le SMS d'alerte porte un lien de suivi personnel ; sans réseau, la position en coordonnées.
  */
 @Singleton
 class AlertDispatcher @Inject constructor(
@@ -53,13 +54,15 @@ class AlertDispatcher @Inject constructor(
     private val sms: SmsSender,
     private val location: LocationProvider,
     private val log: EventLog,
-    private val clock: Clock
+    private val clock: Clock,
+    private val server: ServerSync
 ) {
     private val drainLock = Mutex()
 
     /** Effet `Dispatch` du moteur. Les avis sans alerte (ex. protection désactivée) ne partent à personne. */
     suspend fun onDispatch(alert: Alert?, kind: DispatchKind) {
         if (alert == null) return
+        server.onDispatch(alert, kind) // serveur en parallèle : ne retarde jamais les SMS
         val message = when (kind) {
             DispatchKind.OPEN, DispatchKind.ESCALATE -> MessageKind.ALERT
             DispatchKind.CLOSE_SAFE -> MessageKind.CLOSURE_SAFE
@@ -157,7 +160,8 @@ class AlertDispatcher @Inject constructor(
                 at = alert?.openedAt ?: now,
                 zone = ZoneId.systemDefault(),
                 position = if (job.kind == MessageKind.ALERT || job.kind == MessageKind.TEST) position() else LocationShare.NotShared,
-                link = null,
+                // Lien de suivi (S3.06) : attente bornée à 10 s, sinon le SMS part avec les coordonnées seules.
+                link = if (job.kind == MessageKind.ALERT && alert != null) server.trackingLink(alert, contact.id, contact.name) else null,
                 language = contact.language,
                 alertId = job.alertId,
                 test = job.kind == MessageKind.TEST,

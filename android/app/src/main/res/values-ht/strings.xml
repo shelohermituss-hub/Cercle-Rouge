@@ -278,4 +278,13 @@
     <string name="vault_export_save">Anrejistre fichye a</string>
     <string name="vault_export_saved">Fichye a ekspòte.</string>
     <string name="vault_legal">Anrejistreman yo montre yo pa t modifye (chèn anprent), men valè yo devan yon jij depann de peyi a ak jij la.</string>
+    <string name="urgent_fb_took">%1$s pran kontak</string>
+    <string name="urgent_fb_false">%1$s panse se yon fo alèt</string>
+    <string name="urgent_fb_called">%1$s rele sekou</string>
+    <string name="urgent_fb_viewed">%1$s louvri lyen swivi a</string>
+    <string name="urgent_fb_someone">Yon moun</string>
+    <plurals name="urgent_notified">
+        <item quantity="one">%d moun avèti pa SMS · n ap tann repons</item>
+        <item quantity="other">%d moun avèti pa SMS · n ap tann repons</item>
+    </plurals>
 </resources>

@@ -25,6 +25,11 @@ android {
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "SUPABASE_URL", "\"${localProps.getProperty("supabase.url", "")}\"")
+        buildConfigField(
+            "String",
+            "TRACK_PAGE_URL",
+            "\"${localProps.getProperty("track.pageUrl", "https://shelohermituss-hub.github.io/Cercle-Rouge/#t=")}\""
+        )
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"${localProps.getProperty("supabase.publishableKey", "")}\"")
     }
 

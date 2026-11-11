@@ -277,4 +277,13 @@
     <string name="vault_export_save">Save the file</string>
     <string name="vault_export_saved">File exported.</string>
     <string name="vault_legal">Recordings prove they were not changed (fingerprint chain), but their value in court depends on the country and the judge.</string>
+    <string name="urgent_fb_took">%1$s made contact</string>
+    <string name="urgent_fb_false">%1$s thinks it\'s a false alarm</string>
+    <string name="urgent_fb_called">%1$s called emergency services</string>
+    <string name="urgent_fb_viewed">%1$s opened the tracking link</string>
+    <string name="urgent_fb_someone">A contact</string>
+    <plurals name="urgent_notified">
+        <item quantity="one">%d contact notified by SMS · waiting for a reply</item>
+        <item quantity="other">%d contacts notified by SMS · waiting for a reply</item>
+    </plurals>
 </resources>

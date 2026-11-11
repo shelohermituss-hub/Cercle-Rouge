@@ -278,4 +278,13 @@
     <string name="vault_export_save">Enregistrer le fichier</string>
     <string name="vault_export_saved">Fichier exporté.</string>
     <string name="vault_legal">Les enregistrements prouvent qu\'ils n\'ont pas été modifiés (chaîne d\'empreintes), mais leur valeur devant un juge dépend du pays et du juge.</string>
+    <string name="urgent_fb_took">%1$s a pris contact</string>
+    <string name="urgent_fb_false">%1$s pense que c\'est une fausse alerte</string>
+    <string name="urgent_fb_called">%1$s a appelé les secours</string>
+    <string name="urgent_fb_viewed">%1$s a ouvert le lien de suivi</string>
+    <string name="urgent_fb_someone">Un proche</string>
+    <plurals name="urgent_notified">
+        <item quantity="one">%d proche prévenu par SMS · en attente de réponse</item>
+        <item quantity="other">%d proches prévenus par SMS · en attente de réponse</item>
+    </plurals>
 </resources>

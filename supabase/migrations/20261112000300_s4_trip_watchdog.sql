@@ -7,7 +7,7 @@
 do $$
 begin
   if exists (select 1 from pg_available_extensions where name = 'pg_net') then
-    create extension if not exists pg_net;
+    create extension if not exists pg_net with schema extensions;
   end if;
 end $$;
 
@@ -19,6 +19,10 @@ begin
   end if;
   if not exists (select 1 from vault.secrets where name = 'cr_cron_secret') then
     perform vault.create_secret(encode(extensions.gen_random_bytes(32), 'hex'), 'cr_cron_secret', 'Appel de trip-watchdog par pg_cron');
+  end if;
+  -- URL des Edge Functions du projet (pas un secret ; propre à chaque projet : à adapter hors projet lié).
+  if not exists (select 1 from vault.secrets where name = 'cr_functions_url') then
+    perform vault.create_secret('https://lvxdpmjyeelrxfbrtvay.supabase.co/functions/v1', 'cr_functions_url', 'URL des Edge Functions');
   end if;
 end $$;
 
@@ -149,14 +153,19 @@ begin
     and exists (select 1 from public.trips where id = p_trip_id and owner_id = (select auth.uid()));
 end $$;
 
--- Chaque minute (pg_cron) : marque les trajets silencieux depuis 10 min, termine ceux qui dépassent 12 h + 2 h,
+-- Chaque minute (pg_cron) : marque les trajets silencieux depuis 10 min, termine ceux dont l'arrivée prévue est dépassée de 2 h,
 -- et réveille l'Edge Function `trip-watchdog` s'il y a des SMS à envoyer.
 create function private.trip_watchdog_tick() returns int
 language plpgsql security definer set search_path = public as $$
 declare n int;
 begin
-  update public.trips set status = 'ended', ended_at = now(), last_lat = null, last_lon = null
-  where status = 'active' and planned_arrival < now() - interval '2 hours' and started_at < now() - interval '12 hours';
+  -- Arrivée prévue dépassée de 2 h : le suivi serveur s'arrête (l'app garde son propre suivi du retard).
+  update public.trips set status = 'ended', ended_at = now(), last_lat = null, last_lon = null, last_accuracy = null
+  where status = 'active' and planned_arrival < now() - interval '2 hours';
+  -- Numéros effacés une heure après la fin (laisse partir un SMS « retour » en attente).
+  update private.trip_recipients r set phone_enc = null, phone_hash = ''
+  from public.trips t
+  where t.id = r.trip_id and t.status = 'ended' and t.ended_at < now() - interval '1 hour' and r.phone_enc is not null;
   update public.trips set lost_at = now()
   where status = 'active' and lost_at is null and lost_notified_at is null and last_heartbeat_at < now() - interval '10 minutes';
   select count(*) into n from public.trips

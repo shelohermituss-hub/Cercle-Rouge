@@ -273,7 +273,7 @@ update public.alerts set opened_at = now() - interval '25 hours' where idempoten
 select tests.expect(private.expire_alerts() = 1, 'alerte de plus de 24 h expirée');
 update public.alerts set closed_at = now() - interval '2 days' where id = (select v::uuid from s3 where k = 'alert');
 select private.purge_expired();
-select tests.expect((select count(*) from public.alert_positions) = 0, 'positions purgées 24 h après la clôture');
+select tests.expect((select count(*) from public.alert_positions where alert_id = (select v::uuid from s3 where k = 'alert')) = 0, 'positions purgées 24 h après la clôture');
 
 -- Suppression du compte.
 select tests.as_user(:'teen'); set local role authenticated;
@@ -340,7 +340,7 @@ select tests.expect_error(format('select * from private.guardian_invite_target(%
 reset role;
 select set_config('request.jwt.claims', '', true);
 update public.guardian_links set status = 'expired', guardian_phone = null where minor_id = :'minor' and status = 'pending';
-delete from public.rate_limits where user_id = :'minor' and action = 'guardian_invite';
+update public.rate_limits set count = 0 where user_id = :'minor' and action = 'guardian_invite';
 select tests.as_user(:'minor'); set local role authenticated;
 select public.request_guardian_consent('+50933000001', 'parent');
 reset role;

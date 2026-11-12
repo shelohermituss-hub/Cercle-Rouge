@@ -21,8 +21,9 @@ android {
         applicationId = "com.cerclerouge.app"
         minSdk = 29
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        // Version tirée de l'étiquette git (CI de publication), 0.1.0 sinon.
+        versionCode = System.getenv("CR_VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = System.getenv("CR_VERSION_NAME") ?: "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "SUPABASE_URL", "\"${localProps.getProperty("supabase.url", "")}\"")
         buildConfigField(
@@ -33,8 +34,22 @@ android {
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"${localProps.getProperty("supabase.publishableKey", "")}\"")
     }
 
+    // Signature de la version publiée : clé fournie par l'environnement (secrets GitHub), jamais dans le dépôt.
+    val keystore = System.getenv("CR_KEYSTORE_PATH")?.let { file(it) }?.takeIf { it.exists() }
+    signingConfigs {
+        if (keystore != null) {
+            create("release") {
+                storeFile = keystore
+                storePassword = System.getenv("CR_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("CR_KEY_ALIAS")
+                keyPassword = System.getenv("CR_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (keystore != null) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

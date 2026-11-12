@@ -1,0 +1,64 @@
+name: Publication APK
+
+# APK de test pour le porteur et ses proches (remplace Firebase App Distribution, ADR-0026).
+# Déclenché par une étiquette « v* » (ex. v0.2.0) ou à la main.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      # Configuration publique (URL et clé publishable : faites pour être embarquées), depuis les variables du dépôt.
+      - name: Configuration Supabase
+        run: |
+          {
+            echo "supabase.url=${{ vars.SUPABASE_URL }}"
+            echo "supabase.publishableKey=${{ vars.SUPABASE_PUBLISHABLE_KEY }}"
+          } > local.properties
+      - name: Clé de signature
+        env:
+          KEYSTORE_B64: ${{ secrets.CR_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/cr.jks"
+            echo "CR_KEYSTORE_PATH=$RUNNER_TEMP/cr.jks" >> "$GITHUB_ENV"
+          fi
+      - name: Construction
+        env:
+          CR_KEYSTORE_PASSWORD: ${{ secrets.CR_KEYSTORE_PASSWORD }}
+          CR_KEY_ALIAS: ${{ secrets.CR_KEY_ALIAS }}
+          CR_KEY_PASSWORD: ${{ secrets.CR_KEY_PASSWORD }}
+          CR_VERSION_CODE: ${{ github.run_number }}
+          CR_VERSION_NAME: ${{ github.ref_type == 'tag' && github.ref_name || format('0.0.{0}', github.run_number) }}
+        run: |
+          if [ -n "${CR_KEYSTORE_PATH:-}" ]; then
+            ./gradlew assembleRelease
+            cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/cercle-rouge.apk"
+          else
+            # Sans clé de signature : APK de test (debug), installable mais pas publiable sur Play.
+            ./gradlew assembleDebug
+            cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/cercle-rouge-test.apk"
+          fi
+      - name: Publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ github.ref_type == 'tag' && github.ref_name || format('test-{0}', github.run_number) }}"
+          gh release create "$tag" "$RUNNER_TEMP"/*.apk --repo "$GITHUB_REPOSITORY" --prerelease \
+            --title "Cercle Rouge $tag" --notes "APK de test. Installation : autoriser les sources inconnues. Ne remplace pas les secours."

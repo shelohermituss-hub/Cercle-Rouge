@@ -57,7 +57,9 @@ data class ContactEntity(
     val status: String,
     val position: Int,
     val isGuardian: Boolean,
-    val hasApp: Boolean
+    val hasApp: Boolean,
+    val email: String? = null,
+    val relation: String? = null
 )
 
 /** Envoi en attente (SMS, push…) : file persistante et idempotente (clé primaire = clé d'idempotence). */
@@ -233,7 +235,7 @@ interface OutboxDao {
         EventLogEntity::class, ConsentEntity::class, SettingEntity::class, ContactEntity::class, OutboxEntity::class,
         EvidenceAlertEntity::class, EvidenceSegmentEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class PrivacyDatabase : RoomDatabase() {
@@ -251,6 +253,14 @@ abstract class PrivacyDatabase : RoomDatabase() {
 
     companion object {
         const val NAME = "cercle-rouge.db"
+
+        /** v4 → v5 : e-mail et relation des contacts de confiance (PDF 12.1). Tout le reste est conservé. */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `contacts` ADD COLUMN `email` TEXT")
+                db.execSQL("ALTER TABLE `contacts` ADD COLUMN `relation` TEXT")
+            }
+        }
 
         /** v3 → v4 : preuves chiffrées (Sprint 6). Tout le reste est conservé. */
         val MIGRATION_3_4 = object : Migration(3, 4) {
@@ -306,7 +316,7 @@ abstract class PrivacyDatabase : RoomDatabase() {
             }
             return Room.databaseBuilder(context, PrivacyDatabase::class.java, NAME)
                 .openHelperFactory(factory)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
         }
     }

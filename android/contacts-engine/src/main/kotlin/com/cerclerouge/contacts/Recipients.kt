@@ -53,6 +53,10 @@ private fun channelsFor(c: TrustedContact, device: DeviceStatus): List<Channel> 
         when (it) {
             Channel.SMS -> device.canSendSms
             Channel.PUSH -> device.hasData && c.hasApp && consented
+            // L'e-mail part du serveur (étape 1.8) : il faut des données, une adresse et l'accord du proche.
+            Channel.EMAIL -> device.hasData && consented && !c.email.isNullOrBlank()
+            // WhatsApp et appel automatisé : choisis par l'utilisateur, mais pas encore envoyés (phase 2).
+            Channel.WHATSAPP, Channel.CALL -> false
         }
     }
     return usable.take(2).ifEmpty { listOf(Channel.SMS) }

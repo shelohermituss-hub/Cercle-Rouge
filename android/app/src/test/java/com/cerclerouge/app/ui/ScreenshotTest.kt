@@ -145,6 +145,19 @@ class ScreenshotTest {
         }
     }
 
+    @Test fun contactEdit() = capture("contact-edit") {
+        com.cerclerouge.app.ui.contacts.EditDialog(
+            com.cerclerouge.contacts.TrustedContact(
+                "c1", "Tante Marie", com.cerclerouge.contacts.E164("+50937123456"), com.cerclerouge.contacts.ContactGroup.FAMILY,
+                com.cerclerouge.contacts.ContactRole.PRIMARY, com.cerclerouge.contacts.Language.HT,
+                listOf(com.cerclerouge.contacts.Channel.SMS, com.cerclerouge.contacts.Channel.EMAIL),
+                com.cerclerouge.contacts.ContactStatus.ACCEPTED, 0, email = "marie@example.org", relation = "tante"
+            ),
+            {},
+            {}
+        )
+    }
+
     @Test fun sosHold() = capture("sos-hold") { SosHoldScreen({}, {}) }
 
     @Test fun countdown() = capture("countdown") { CountdownScreen({}, {}) }

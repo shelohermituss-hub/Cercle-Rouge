@@ -25,7 +25,9 @@ class ContactsMappingTest {
         status = ContactStatus.WITHDRAWN,
         position = 3,
         isGuardian = true,
-        hasApp = true
+        hasApp = true,
+        email = "marie@example.org",
+        relation = "tante"
     )
 
     @Test fun roundTripKeepsEveryField() {

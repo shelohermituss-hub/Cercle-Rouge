@@ -1,5 +1,6 @@
 package com.cerclerouge.contacts
 
+import com.cerclerouge.domain.AlertLevel
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -82,5 +83,56 @@ class ContactBookTest {
             Language.FR
         ).withGuardian("g2", "A", E164("+50937000001"), Language.FR)
         assertEquals(1, b.contacts.size)
+    }
+
+    @Test fun editKeepsPhoneStatusAndOrderAndValidatesEmail() { // PDF 12.1
+        val b = book("c1", "c2")
+        val phone = b.contacts[0].phone
+        val r = b.edit("c1") {
+            it.copy(name = "  Tante Marie ", email = " marie@example.org ", relation = "sœur", phone = E164("+50930000000"))
+        }
+        val e = (r as BookResult.Ok).book.contacts[0]
+        assertEquals("Tante Marie", e.name)
+        assertEquals("marie@example.org", e.email)
+        assertEquals("sœur", e.relation)
+        assertEquals(phone, e.phone) // le numéro ne change pas par une modification
+        assertEquals(0, e.position)
+        assertEquals(BookResult.Refused(BookError.INVALID_EMAIL), b.edit("c1") { it.copy(email = "pas-un-email") })
+        assertEquals(null, ((b.edit("c1") { it.copy(email = "  ") }) as BookResult.Ok).book.contacts[0].email)
+    }
+
+    @Test fun makingSomeonePrimaryDemotesThePreviousOne() { // un seul contact principal
+        val b = (book("c1", "c2").edit("c1") { it.copy(role = ContactRole.PRIMARY) } as BookResult.Ok).book
+        val r = (b.edit("c2") { it.copy(role = ContactRole.PRIMARY) } as BookResult.Ok).book
+        assertEquals(ContactRole.BACKUP, r.contacts[0].role)
+        assertEquals(ContactRole.PRIMARY, r.contacts[1].role)
+        assertEquals(1, r.contacts.count { it.role == ContactRole.PRIMARY })
+    }
+
+    @Test fun emptyChannelsFallBackToSms() {
+        val r = (book("c1").edit("c1") { it.copy(channels = emptyList()) } as BookResult.Ok).book
+        assertEquals(listOf(Channel.SMS), r.contacts[0].channels)
+    }
+
+    @Test fun emailChannelNeedsAnAddressAndConsent() { // canaux utilisables
+        val c =
+            TrustedContact(
+                "e", "E",
+                E164(
+                    "+50937000099"
+                ),
+                ContactGroup.FAMILY, ContactRole.NONE, Language.FR,
+                listOf(
+                    Channel.EMAIL,
+                    Channel.WHATSAPP,
+                    Channel.SMS
+                ),
+                ContactStatus.ACCEPTED, 0, email = "e@example.org"
+            )
+        val online = DeviceStatus(hasData = true, canSendSms = true)
+        val channels = resolveRecipients(AlertLevel.CONTACTS, true, listOf(c), online).map { it.channel }
+        assertEquals(listOf(Channel.EMAIL, Channel.SMS), channels) // WhatsApp : pas encore
+        val noMail = resolveRecipients(AlertLevel.CONTACTS, true, listOf(c.copy(email = null)), online).map { it.channel }
+        assertEquals(listOf(Channel.SMS), noMail)
     }
 }

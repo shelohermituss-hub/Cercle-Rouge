@@ -1,5 +1,6 @@
 package com.cerclerouge.app.contacts
 
+import com.cerclerouge.contacts.BookError
 import com.cerclerouge.contacts.BookResult
 import com.cerclerouge.contacts.Channel
 import com.cerclerouge.contacts.ContactBook
@@ -102,6 +103,17 @@ class ContactsRepository @Inject constructor(db: PrivacyDatabase) {
         save(_book.value.update { c -> if (c.id == id) c.copy(language = language) else c })
     }
 
+    /** Modification d'un contact (PDF 12) : le carnet valide l'e-mail et l'unicité du contact principal. */
+    suspend fun edit(id: String, change: (TrustedContact) -> TrustedContact): BookError? = mutex.withLock {
+        when (val r = _book.value.edit(id, change)) {
+            is BookResult.Ok -> {
+                save(r.book)
+                null
+            }
+            is BookResult.Refused -> r.error
+        }
+    }
+
     /** Adulte référent ajouté par défaut comme contact (Q3c, S2.03). Sans effet s'il y est déjà ou si le carnet est plein. */
     suspend fun addGuardian(name: String, phone: E164, language: Language) = mutex.withLock {
         save(_book.value.withGuardian(UUID.randomUUID().toString(), name, phone, language))
@@ -130,7 +142,7 @@ private fun ContactBook.update(change: (TrustedContact) -> TrustedContact) = Con
 
 internal fun TrustedContact.toEntity() = ContactEntity(
     id, name, phone.value, group.name, role.name, language.name, channels.joinToString(",") { it.name }, status.name, position,
-    isGuardian, hasApp
+    isGuardian, hasApp, email, relation
 )
 
 internal fun ContactEntity.toContact() = TrustedContact(
@@ -140,9 +152,11 @@ internal fun ContactEntity.toContact() = TrustedContact(
     group = ContactGroup.valueOf(grp),
     role = ContactRole.valueOf(role),
     language = Language.valueOf(language),
-    channels = channels.split(',').filter { it.isNotBlank() }.map { Channel.valueOf(it) },
+    channels = channels.split(',').filter { it.isNotBlank() }.mapNotNull { runCatching { Channel.valueOf(it) }.getOrNull() },
     status = ContactStatus.valueOf(status),
     position = position,
     isGuardian = isGuardian,
-    hasApp = hasApp
+    hasApp = hasApp,
+    email = email,
+    relation = relation
 )

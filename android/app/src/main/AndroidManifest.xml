@@ -15,6 +15,8 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <!-- SMS d'alerte envoyé par le téléphone (S2.07). Permission restreinte par Play (ADR-0005) : repli SMS pré-rempli si absente. -->
     <uses-permission android:name="android.permission.SEND_SMS" />
+    <!-- Recherche d'un proche dans le répertoire, à la demande ; rien n'est copié ni envoyé (R-CE-02). -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
     <!-- Service de premier plan de la protection (S2.04) ; type « special use » jusqu'aux moteurs micro et position (S4, S5). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />

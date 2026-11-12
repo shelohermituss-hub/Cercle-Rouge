@@ -2,13 +2,19 @@ package com.cerclerouge.contacts
 
 enum class Language { FR, HT, EN }
 
-/** Canaux utilisables par ce module. L'appel automatique est en V2 (ADR-0010), WhatsApp et e-mail viennent avec le serveur. */
-enum class Channel { SMS, PUSH }
+/**
+ * Canaux préférés d'un proche (PDF 12.1). Utilisables aujourd'hui : SMS, e-mail (envoyé par le serveur). PUSH est sans objet
+ * depuis ADR-0026 (pas de Firebase). WHATSAPP et CALL sont choisis dès maintenant mais n'enverront rien avant la phase 2.
+ */
+enum class Channel { SMS, PUSH, EMAIL, WHATSAPP, CALL }
 
 enum class ContactGroup { FAMILY, FRIENDS, NEIGHBORS, WORK, CUSTOM }
 
-/** Au plus un [PRIMARY] (répondant principal). [MEDICAL] reçoit les infos médicales si l'utilisateur les a autorisées. */
-enum class ContactRole { PRIMARY, BACKUP, MEDICAL, NONE }
+/**
+ * Rôles (PDF 12.2) : au plus un [PRIMARY] (contact principal) ; [BACKUP] = contact secondaire ; [MEDICAL] reçoit les infos
+ * médicales si l'utilisateur les a autorisées ; [PROFESSIONAL] (travail) ; [NEIGHBOR] (voisinage, proche géographiquement).
+ */
+enum class ContactRole { PRIMARY, BACKUP, MEDICAL, PROFESSIONAL, NEIGHBOR, NONE }
 
 enum class ContactStatus { PENDING, ACCEPTED, DECLINED, WITHDRAWN }
 
@@ -27,10 +33,14 @@ data class TrustedContact(
     val status: ContactStatus,
     val position: Int,
     val isGuardian: Boolean = false,
-    val hasApp: Boolean = false
+    val hasApp: Boolean = false,
+    /** E-mail du proche (PDF 12.1) : jamais envoyé au serveur avant une alerte, puis chiffré (R-CE-02). */
+    val email: String? = null,
+    /** Lien avec l'utilisateur en quelques mots (« sœur », « voisine »), affiché dans la liste. */
+    val relation: String? = null
 )
 
-enum class BookError { FULL, DUPLICATE, SECOND_PRIMARY }
+enum class BookError { FULL, DUPLICATE, SECOND_PRIMARY, INVALID_EMAIL }
 
 sealed interface BookResult {
     data class Ok(val book: ContactBook) : BookResult
@@ -54,6 +64,37 @@ data class ContactBook(val contacts: List<TrustedContact> = emptyList()) {
     }
 
     fun remove(id: String) = ContactBook(renumber(contacts.filterNot { it.id == id }))
+
+    /**
+     * Modifie un contact (nom, e-mail, relation, rôle, groupe, canaux, langue) sans toucher au numéro, au statut ni à l'ordre.
+     * Donner le rôle principal à un contact le retire au précédent (qui devient secondaire). Un e-mail invalide est refusé.
+     */
+    fun edit(id: String, change: (TrustedContact) -> TrustedContact): BookResult {
+        val old = contacts.firstOrNull { it.id == id } ?: return BookResult.Ok(this)
+        val new = change(
+            old
+        ).copy(id = old.id, phone = old.phone, status = old.status, position = old.position, isGuardian = old.isGuardian)
+        val email = new.email?.trim()?.takeIf { it.isNotEmpty() }
+        if (email != null && !isEmail(email)) return BookResult.Refused(BookError.INVALID_EMAIL)
+        val fixed = new.copy(
+            email = email,
+            relation = new.relation?.trim()?.take(MAX_RELATION)?.takeIf { it.isNotEmpty() },
+            name = new.name.trim().take(MAX_NAME).ifBlank { old.name },
+            channels = new.channels.distinct().ifEmpty { listOf(Channel.SMS) }
+        )
+        val demote = fixed.role == ContactRole.PRIMARY && old.role != ContactRole.PRIMARY
+        return BookResult.Ok(
+            ContactBook(
+                contacts.map {
+                    when {
+                        it.id == id -> fixed
+                        demote && it.role == ContactRole.PRIMARY -> it.copy(role = ContactRole.BACKUP)
+                        else -> it
+                    }
+                }
+            )
+        )
+    }
 
     /** `ids` doit être une permutation exacte des identifiants actuels ; sinon l'ordre reste inchangé. */
     fun reorder(ids: List<String>): ContactBook {
@@ -81,5 +122,11 @@ data class ContactBook(val contacts: List<TrustedContact> = emptyList()) {
 
     companion object {
         const val MAX = 5
+        const val MAX_NAME = 40
+        const val MAX_RELATION = 30
+        private val EMAIL = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+$")
+
+        /** Vérification simple (une arobase, un domaine avec un point) : le serveur ne fait que transmettre. */
+        fun isEmail(text: String) = text.length <= 254 && EMAIL.matches(text)
     }
 }

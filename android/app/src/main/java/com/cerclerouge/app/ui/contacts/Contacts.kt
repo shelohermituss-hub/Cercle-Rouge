@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -68,7 +69,38 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class ContactsViewModel @Inject constructor(private val repo: ContactsRepository, private val server: ServerSync) : ViewModel() {
+class ContactsViewModel @Inject constructor(
+    private val repo: ContactsRepository,
+    private val server: ServerSync,
+    private val directory: com.cerclerouge.app.contacts.DirectorySearch
+) : ViewModel() {
+    val directoryGranted: Boolean get() = directory.granted
+    private val _found = MutableStateFlow<List<com.cerclerouge.app.contacts.PickedPhone>>(emptyList())
+
+    /** Résultats de la recherche dans le répertoire (jusqu'à 20). */
+    val found: StateFlow<List<com.cerclerouge.app.contacts.PickedPhone>> = _found
+
+    fun search(query: String) = viewModelScope.launch { _found.value = directory.search(query) }
+
+    fun clearSearch() {
+        _found.value = emptyList()
+    }
+
+    /** Enregistre la fiche modifiée ; rend un message d'erreur (e-mail invalide) ou null. */
+    fun save(id: String, edit: ContactEdit) = viewModelScope.launch {
+        val error = repo.edit(id) { c ->
+            c.copy(
+                name = edit.name,
+                email = edit.email,
+                relation = edit.relation,
+                role = edit.role,
+                group = edit.group,
+                channels = edit.channels
+            )
+        }
+        _message.value = if (error == BookError.INVALID_EMAIL) R.string.contacts_invalid_email else null
+    }
+
     val book: StateFlow<ContactBook> = repo.book
     private val _message = MutableStateFlow<Int?>(null)
 
@@ -116,6 +148,7 @@ class ContactsViewModel @Inject constructor(private val repo: ContactsRepository
                 BookError.FULL -> R.string.contacts_full
                 BookError.DUPLICATE -> R.string.contacts_duplicate
                 BookError.SECOND_PRIMARY -> R.string.contacts_full
+                BookError.INVALID_EMAIL -> R.string.contacts_invalid_email
             }
         }
     }
@@ -137,6 +170,16 @@ class ContactsViewModel @Inject constructor(private val repo: ContactsRepository
     }
 }
 
+/** Fiche modifiable d'un contact (PDF 12.1, 12.2). */
+data class ContactEdit(
+    val name: String,
+    val email: String?,
+    val relation: String?,
+    val role: ContactRole,
+    val group: com.cerclerouge.contacts.ContactGroup,
+    val channels: List<com.cerclerouge.contacts.Channel>
+)
+
 /** Contacts de confiance : 5 au maximum, ordre d'alerte, répondant principal, langue des messages (module produit 7). */
 @Composable
 fun ContactsScreen(vm: ContactsViewModel, onBack: () -> Unit) {
@@ -145,6 +188,8 @@ fun ContactsScreen(vm: ContactsViewModel, onBack: () -> Unit) {
     val message by vm.message.collectAsState()
     val context = LocalContext.current
     var manual by remember { mutableStateOf(false) }
+    var searching by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<TrustedContact?>(null) }
     val picker = rememberLauncherForActivityResult(PickPhone(context)) { picked -> picked?.let { vm.add(it.name, it.number) } }
     // Accord des proches : relu toutes les 20 s tant que l'écran est ouvert.
     LaunchedEffect(Unit) {
@@ -175,13 +220,30 @@ fun ContactsScreen(vm: ContactsViewModel, onBack: () -> Unit) {
                 PxPanel(Modifier.fillMaxWidth()) { Text(stringResource(R.string.contacts_empty), style = PxType.body) }
             }
             book.contacts.forEachIndexed { i, contact ->
-                ContactRow(contact, first = i == 0, last = i == book.contacts.lastIndex, vm = vm)
+                ContactRow(contact, first = i == 0, last = i == book.contacts.lastIndex, vm = vm, onEdit = { editing = contact })
             }
             Spacer(Modifier.size(4.dp))
         }
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             PxButton(stringResource(R.string.contacts_pick), { picker.launch(Unit) }, icon = PixelIcon.USERS, enabled = !full)
+            PxButton(stringResource(R.string.contacts_search), {
+                searching = true
+            }, variant = PxVariant.OUTLINE, icon = PixelIcon.USERS, enabled = !full)
             PxButton(stringResource(R.string.contacts_manual), { manual = true }, variant = PxVariant.OUTLINE, enabled = !full)
+        }
+    }
+    if (searching) {
+        SearchDialog(vm, onDismiss = {
+            searching = false
+            vm.clearSearch()
+        }) { picked ->
+            vm.add(picked.name, picked.number) { searching = false }
+        }
+    }
+    editing?.let { contact ->
+        EditDialog(contact, onDismiss = { editing = null }) { edit ->
+            vm.save(contact.id, edit)
+            editing = null
         }
     }
     if (manual) {
@@ -197,7 +259,7 @@ fun ContactsScreen(vm: ContactsViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun ContactRow(contact: TrustedContact, first: Boolean, last: Boolean, vm: ContactsViewModel) {
+private fun ContactRow(contact: TrustedContact, first: Boolean, last: Boolean, vm: ContactsViewModel, onEdit: () -> Unit) {
     val c = Cr.colors
     val accepted = contact.status == ContactStatus.ACCEPTED
     PxPanel(Modifier.fillMaxWidth(), border = if (accepted) c.lime else c.lineControl, padding = PaddingValues(10.dp)) {
@@ -207,6 +269,14 @@ private fun ContactRow(contact: TrustedContact, first: Boolean, last: Boolean, v
                 Column(Modifier.weight(1f)) {
                     Text(contact.name, style = PxType.bodyBold, maxLines = 1)
                     Text(contact.phone.value, style = PxType.caption, color = c.muted)
+                    val sub = listOfNotNull(
+                        contact.relation,
+                        stringResource(roleLabel(contact.role)).takeIf {
+                            contact.role !=
+                                ContactRole.NONE
+                        }
+                    )
+                    if (sub.isNotEmpty()) Text(sub.joinToString(" · "), style = PxType.caption, color = c.ink, maxLines = 1)
                 }
                 Text(statusLabel(contact.status).uppercase(), style = PxType.label, color = if (accepted) c.lime else c.warn)
             }
@@ -219,6 +289,7 @@ private fun ContactRow(contact: TrustedContact, first: Boolean, last: Boolean, v
                     selected = contact.role == ContactRole.PRIMARY
                 ) { vm.setPrimary(contact.id) }
                 Chip(contact.language.name) { vm.cycleLanguage(contact) }
+                Chip(stringResource(R.string.contacts_edit)) { onEdit() }
                 Spacer(Modifier.weight(1f))
                 if (!accepted && contact.status != ContactStatus.WITHDRAWN) {
                     val sending by vm.sending.collectAsState()
@@ -335,4 +406,155 @@ private fun Field(value: String, onChange: (String) -> Unit, label: Int, keyboar
         ),
         modifier = Modifier.fillMaxWidth().width(280.dp)
     )
+}
+
+@Composable
+private fun roleLabel(r: ContactRole): Int = when (r) {
+    ContactRole.PRIMARY -> R.string.contacts_role_primary
+    ContactRole.BACKUP -> R.string.contacts_role_secondary
+    ContactRole.MEDICAL -> R.string.contacts_role_medical
+    ContactRole.PROFESSIONAL -> R.string.contacts_role_professional
+    ContactRole.NEIGHBOR -> R.string.contacts_role_neighbor
+    ContactRole.NONE -> R.string.contacts_role_none
+}
+
+@Composable
+private fun groupLabel(g: com.cerclerouge.contacts.ContactGroup): Int = when (g) {
+    com.cerclerouge.contacts.ContactGroup.FAMILY -> R.string.contacts_group_family
+    com.cerclerouge.contacts.ContactGroup.FRIENDS -> R.string.contacts_group_friends
+    com.cerclerouge.contacts.ContactGroup.NEIGHBORS -> R.string.contacts_group_neighbors
+    com.cerclerouge.contacts.ContactGroup.WORK -> R.string.contacts_group_work
+    com.cerclerouge.contacts.ContactGroup.CUSTOM -> R.string.contacts_group_other
+}
+
+@Composable
+private fun channelLabel(ch: com.cerclerouge.contacts.Channel): Int = when (ch) {
+    com.cerclerouge.contacts.Channel.SMS -> R.string.contacts_channel_sms
+    com.cerclerouge.contacts.Channel.EMAIL -> R.string.contacts_channel_email
+    com.cerclerouge.contacts.Channel.WHATSAPP -> R.string.contacts_channel_whatsapp
+    com.cerclerouge.contacts.Channel.CALL -> R.string.contacts_channel_call
+    com.cerclerouge.contacts.Channel.PUSH -> R.string.contacts_channel_sms
+}
+
+/** Fiche d'un contact (PDF 12.1, 12.2) : nom, e-mail, relation, rôle, groupe, canaux préférés. Le numéro ne se modifie pas. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+internal fun EditDialog(contact: TrustedContact, onDismiss: () -> Unit, onSave: (ContactEdit) -> Unit) {
+    val c = Cr.colors
+    var name by remember { mutableStateOf(contact.name) }
+    var email by remember { mutableStateOf(contact.email.orEmpty()) }
+    var relation by remember { mutableStateOf(contact.relation.orEmpty()) }
+    var role by remember { mutableStateOf(contact.role) }
+    var group by remember { mutableStateOf(contact.group) }
+    var channels by remember { mutableStateOf(contact.channels.filter { it != com.cerclerouge.contacts.Channel.PUSH }.toSet()) }
+    Dialog(onDismissRequest = onDismiss) {
+        PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(stringResource(R.string.contacts_edit).uppercase(), style = PxType.title)
+                Text(contact.phone.value, style = PxType.caption, color = c.muted)
+                Field(name, { name = it.take(ContactBook.MAX_NAME) }, R.string.contacts_name, KeyboardType.Text)
+                Field(email, { email = it.take(120) }, R.string.contacts_email, KeyboardType.Email)
+                Field(relation, { relation = it.take(ContactBook.MAX_RELATION) }, R.string.contacts_relation, KeyboardType.Text)
+                Text(stringResource(R.string.contacts_role).uppercase(), style = PxType.label, color = c.lime)
+                androidx.compose.foundation.layout.FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    ContactRole.entries.forEach { r -> Pick(stringResource(roleLabel(r)), role == r) { role = r } }
+                }
+                Text(stringResource(R.string.contacts_group).uppercase(), style = PxType.label, color = c.lime)
+                androidx.compose.foundation.layout.FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    com.cerclerouge.contacts.ContactGroup.entries.forEach { g ->
+                        Pick(stringResource(groupLabel(g)), group == g) { group = g }
+                    }
+                }
+                Text(stringResource(R.string.contacts_channels).uppercase(), style = PxType.label, color = c.lime)
+                androidx.compose.foundation.layout.FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf(
+                        com.cerclerouge.contacts.Channel.SMS,
+                        com.cerclerouge.contacts.Channel.EMAIL,
+                        com.cerclerouge.contacts.Channel.WHATSAPP,
+                        com.cerclerouge.contacts.Channel.CALL
+                    ).forEach { ch ->
+                        Pick(stringResource(channelLabel(ch)), ch in channels) {
+                            channels =
+                                if (ch in channels) channels - ch else channels + ch
+                        }
+                    }
+                }
+                Text(stringResource(R.string.contacts_channels_ex), style = PxType.caption, color = c.muted)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(Modifier.weight(1f)) { PxButton(stringResource(R.string.action_cancel), onDismiss, variant = PxVariant.OUTLINE) }
+                    Column(Modifier.weight(1f)) {
+                        PxButton(stringResource(R.string.trip_save), {
+                            onSave(ContactEdit(name, email.ifBlank { null }, relation.ifBlank { null }, role, group, channels.toList()))
+                        })
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Pick(text: String, on: Boolean, onClick: () -> Unit) {
+    val c = Cr.colors
+    PxPanel(
+        Modifier.clickable(role = Role.Checkbox, onClick = onClick).semantics { selected = on },
+        border = if (on) c.lime else c.lineControl,
+        padding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+    ) { Text(text.uppercase(), style = PxType.label, color = if (on) c.lime else c.ink) }
+}
+
+/** Recherche dans le répertoire du téléphone (READ_CONTACTS, demandée ici, au moment du besoin). */
+@Composable
+private fun SearchDialog(vm: ContactsViewModel, onDismiss: () -> Unit, onPick: (com.cerclerouge.app.contacts.PickedPhone) -> Unit) {
+    val c = Cr.colors
+    val found by vm.found.collectAsState()
+    var granted by remember { mutableStateOf(vm.directoryGranted) }
+    var query by remember { mutableStateOf("") }
+    val ask = rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) {
+        granted =
+            it
+    }
+    LaunchedEffect(query, granted) { if (granted) vm.search(query) }
+    Dialog(onDismissRequest = onDismiss) {
+        PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(stringResource(R.string.contacts_search).uppercase(), style = PxType.title)
+                if (!granted) {
+                    Text(stringResource(R.string.contacts_search_why), style = PxType.body)
+                    PxButton(stringResource(R.string.contacts_search_allow), { ask.launch(android.Manifest.permission.READ_CONTACTS) })
+                } else {
+                    Field(query, { query = it.take(40) }, R.string.contacts_name, KeyboardType.Text)
+                    if (query.trim().length >= 2 &&
+                        found.isEmpty()
+                    ) {
+                        Text(stringResource(R.string.contacts_search_none), style = PxType.caption, color = c.muted)
+                    }
+                    found.forEach { p ->
+                        PxPanel(
+                            Modifier.fillMaxWidth().clickable(role = Role.Button) {
+                                onPick(p)
+                            },
+                            border = c.lineControl,
+                            padding = PaddingValues(10.dp)
+                        ) {
+                            Column {
+                                Text(p.name, style = PxType.bodyBold, maxLines = 1)
+                                Text(p.number, style = PxType.caption, color = c.muted)
+                            }
+                        }
+                    }
+                }
+                PxButton(stringResource(R.string.action_cancel), onDismiss, variant = PxVariant.OUTLINE)
+            }
+        }
+    }
 }

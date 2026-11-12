@@ -22,7 +22,7 @@
 | `INTERNET`, `ACCESS_NETWORK_STATE` | Normales | Sync ; tuiles de la carte d'accueil (OpenFreeMap) | — |
 | Google Play Services (`play-services-location`) | Bibliothèque, pas une permission | Fused Location ; repli `LocationManager` sans Play Services (ADR-0019) | Section « Sécurité des données » : SDK Google déclaré |
 | ~~`ACCESS_BACKGROUND_LOCATION`~~ | — | **Non demandée** (ADR-0006) | — |
-| ~~`READ_CONTACTS`~~ | — | Remplacée par le sélecteur système | — |
+| `READ_CONTACTS` | Dangereuse | **Ajoutée le 2026-11-12** (décision du porteur, PDF 15.2) : recherche d'un proche par son nom dans le répertoire ; demandée dans la fenêtre « Chercher dans le répertoire » seulement, avec explication ; refus : le sélecteur système (sans permission) et la saisie manuelle restent possibles. Lecture locale à la demande, rien n'est copié ni envoyé au serveur (R-CE-02) | Déclaration dans la Play Console (fonction principale : choisir ses contacts de confiance) ; politique de confidentialité mise à jour |
 | ~~`SYSTEM_ALERT_WINDOW`, accessibilité, admin d'appareil~~ | — | **Interdites** dans ce projet (N9, R-SEC-04) | — |
 
 ## Contraintes plateforme qui modifient la spécification

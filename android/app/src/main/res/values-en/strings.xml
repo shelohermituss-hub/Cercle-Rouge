@@ -396,4 +396,23 @@
     <string name="trip_route_consent_text">To trace the route along streets, the start and end of this trip (two coordinates, no name or identifier) are sent to an OpenStreetMap routing service, which also sees your IP address. Cercle Rouge keeps nothing. Without this consent, a straight line is drawn.</string>
     <string name="trip_route_consent_ok">I agree</string>
     <string name="viz_risk">Risk %1$d%% · signals %2$d</string>
+    <string name="detect_title">Detection settings</string>
+    <string name="detect_sensitivity">Sensitivity</string>
+    <string name="detect_sensitivity_ex">High: reacts faster, with more false alarms. Low: only very clear signals. The secret phrase and SOS do not change.</string>
+    <string name="detect_low">Low</string>
+    <string name="detect_normal">Normal</string>
+    <string name="detect_high">High</string>
+    <string name="detect_verify">Time to answer "I\'m safe"</string>
+    <string name="detect_seconds">%1$d s</string>
+    <string name="detect_contexts">Contexts to ignore</string>
+    <string name="detect_contexts_ex">During a concert, sport, driving or sleep, usual sounds (shouts, impacts, horns, alarms) count less. The secret phrase, sure keywords and SOS always work.</string>
+    <string name="detect_ctx_concert">Concert, party</string>
+    <string name="detect_ctx_sport">Sport</string>
+    <string name="detect_ctx_driving">Driving</string>
+    <string name="detect_ctx_sleep">Sleep</string>
+    <string name="detect_context_until">On until %1$s</string>
+    <string name="detect_context_stop">Stop</string>
+    <string name="detect_1h">1 h</string>
+    <string name="detect_3h">3 h</string>
+    <string name="detect_tomorrow">Until tomorrow</string>
 </resources>

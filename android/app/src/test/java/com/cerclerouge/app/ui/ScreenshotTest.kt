@@ -128,6 +128,23 @@ class ScreenshotTest {
         )
     }
 
+    @Test fun detection() = capture("detection") {
+        androidx.compose.foundation.layout.Column(
+            Modifier.padding(12.dp),
+            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+        ) {
+            com.cerclerouge.app.ui.listen.DetectionSettings(
+                com.cerclerouge.app.protection.ListenPrefs(
+                    ignored = mapOf(com.cerclerouge.alert.IgnoreContext.SPORT to java.time.Instant.parse("2026-11-12T22:00:00Z"))
+                ),
+                java.time.Instant.parse("2026-11-12T20:00:00Z"),
+                {},
+                {},
+                { _, _ -> }
+            )
+        }
+    }
+
     @Test fun sosHold() = capture("sos-hold") { SosHoldScreen({}, {}) }
 
     @Test fun countdown() = capture("countdown") { CountdownScreen({}, {}) }

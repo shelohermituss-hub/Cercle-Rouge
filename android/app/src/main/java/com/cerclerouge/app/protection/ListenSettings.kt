@@ -15,7 +15,9 @@ import kotlinx.coroutines.flow.StateFlow
 data class ListenPrefs(
     val sensitivity: Sensitivity = Sensitivity.NORMAL,
     /** Contextes à ignorer actifs, avec leur fin (ils expirent tout seuls). */
-    val ignored: Map<IgnoreContext, Instant> = emptyMap()
+    val ignored: Map<IgnoreContext, Instant> = emptyMap(),
+    /** Délai de la vérification « Es-tu en sécurité ? » avant l'alerte des proches (PDF 8.3 : 10 à 30 s). */
+    val verifySeconds: Int = 20
 ) {
     fun activeContexts(now: Instant): Set<IgnoreContext> = ignored.filterValues { it.isAfter(now) }.keys
 }
@@ -34,12 +36,19 @@ class ListenSettings @Inject constructor(db: PrivacyDatabase, private val clock:
             val ctx = IgnoreContext.entries.firstOrNull { it.name == name } ?: return@mapNotNull null
             until.toLongOrNull()?.let { ctx to Instant.ofEpochMilli(it) }
         }.toMap().filterValues { it.isAfter(clock.instant()) }
-        return ListenPrefs(sensitivity, ignored).also { _prefs.value = it }
+        val verify = settings.get(VERIFY)?.toIntOrNull()?.takeIf { it in VERIFY_CHOICES } ?: 20
+        return ListenPrefs(sensitivity, ignored, verify).also { _prefs.value = it }
     }
 
     suspend fun setSensitivity(s: Sensitivity) {
         settings.put(SettingEntity(SENSITIVITY, s.name))
         _prefs.value = _prefs.value.copy(sensitivity = s)
+    }
+
+    suspend fun setVerifySeconds(seconds: Int) {
+        require(seconds in VERIFY_CHOICES)
+        settings.put(SettingEntity(VERIFY, seconds.toString()))
+        _prefs.value = _prefs.value.copy(verifySeconds = seconds)
     }
 
     /** Active un contexte jusqu'à `until`, ou le retire si `until` est null. */
@@ -50,8 +59,10 @@ class ListenSettings @Inject constructor(db: PrivacyDatabase, private val clock:
         _prefs.value = _prefs.value.copy(ignored = map)
     }
 
-    private companion object {
-        const val SENSITIVITY = "listen.sensitivity"
-        const val IGNORED = "listen.ignored"
+    companion object {
+        val VERIFY_CHOICES = listOf(10, 20, 30)
+        private const val VERIFY = "listen.verify_seconds"
+        private const val SENSITIVITY = "listen.sensitivity"
+        private const val IGNORED = "listen.ignored"
     }
 }

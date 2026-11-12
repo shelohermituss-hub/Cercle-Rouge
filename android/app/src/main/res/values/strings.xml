@@ -397,4 +397,23 @@
     <string name="trip_route_consent_text">Pour tracer la route par les rues, le départ et l\'arrivée de ce trajet (deux coordonnées, sans nom ni identifiant) sont envoyés à un service de routage d\'OpenStreetMap, qui voit aussi ton adresse IP. Cercle Rouge ne garde rien. Sans cet accord, une ligne droite est tracée.</string>
     <string name="trip_route_consent_ok">J\'accepte</string>
     <string name="viz_risk">Risque %1$d %% · signaux %2$d</string>
+    <string name="detect_title">Réglages de la détection</string>
+    <string name="detect_sensitivity">Sensibilité</string>
+    <string name="detect_sensitivity_ex">Élevée : réagit plus vite, avec plus de fausses alertes. Faible : seulement les signaux très nets. La phrase secrète et le SOS ne changent pas.</string>
+    <string name="detect_low">Faible</string>
+    <string name="detect_normal">Normale</string>
+    <string name="detect_high">Élevée</string>
+    <string name="detect_verify">Délai pour répondre « Je vais bien »</string>
+    <string name="detect_seconds">%1$d s</string>
+    <string name="detect_contexts">Contextes à ignorer</string>
+    <string name="detect_contexts_ex">Pendant un concert, du sport, la conduite ou le sommeil, les sons habituels (cris, chocs, klaxons, alarmes) comptent moins. La phrase secrète, les mots-clés sûrs et le SOS marchent toujours.</string>
+    <string name="detect_ctx_concert">Concert, fête</string>
+    <string name="detect_ctx_sport">Sport</string>
+    <string name="detect_ctx_driving">Conduite</string>
+    <string name="detect_ctx_sleep">Sommeil</string>
+    <string name="detect_context_until">Actif jusqu\'à %1$s</string>
+    <string name="detect_context_stop">Arrêter</string>
+    <string name="detect_1h">1 h</string>
+    <string name="detect_3h">3 h</string>
+    <string name="detect_tomorrow">Jusqu\'à demain</string>
 </resources>

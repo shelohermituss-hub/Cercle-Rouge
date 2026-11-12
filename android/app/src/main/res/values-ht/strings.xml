@@ -397,4 +397,23 @@
     <string name="trip_route_consent_text">Pou trase wout la sou ri yo, kote w pati ak kote w ale nan trajè sa a (de kowòdone, san non ni idantifyan) ap voye bay yon sèvis routaj OpenStreetMap, ki wè adrès IP ou tou. Cercle Rouge pa kenbe anyen. San aksepte sa a, y ap trase yon liy dwat.</string>
     <string name="trip_route_consent_ok">M aksepte</string>
     <string name="viz_risk">Risk %1$d %% · siyal %2$d</string>
+    <string name="detect_title">Paramèt deteksyon an</string>
+    <string name="detect_sensitivity">Sansiblite</string>
+    <string name="detect_sensitivity_ex">Wo : li reyaji pi vit, men gen plis fo alèt. Ba : se sèlman siyal ki klè anpil. Fraz sekrè a ak SOS la pa chanje.</string>
+    <string name="detect_low">Ba</string>
+    <string name="detect_normal">Nòmal</string>
+    <string name="detect_high">Wo</string>
+    <string name="detect_verify">Tan pou reponn « Mwen anfòm »</string>
+    <string name="detect_seconds">%1$d s</string>
+    <string name="detect_contexts">Kontèks pou inyore</string>
+    <string name="detect_contexts_ex">Pandan yon konsè, espò, lè w ap kondi oswa lè w ap dòmi, son abityèl yo (rèl, chòk, klaksòn, alam) konte mwens. Fraz sekrè a, mo kle ki sèten yo ak SOS la toujou mache.</string>
+    <string name="detect_ctx_concert">Konsè, fèt</string>
+    <string name="detect_ctx_sport">Espò</string>
+    <string name="detect_ctx_driving">Kondi</string>
+    <string name="detect_ctx_sleep">Dòmi</string>
+    <string name="detect_context_until">Aktif jiska %1$s</string>
+    <string name="detect_context_stop">Rete</string>
+    <string name="detect_1h">1 è</string>
+    <string name="detect_3h">3 è</string>
+    <string name="detect_tomorrow">Jiska demen</string>
 </resources>

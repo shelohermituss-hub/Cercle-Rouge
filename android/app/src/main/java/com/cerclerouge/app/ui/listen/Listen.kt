@@ -84,8 +84,33 @@ data class ListenUi(
 class ListenViewModel @Inject constructor(
     private val audio: AudioListener,
     private val phrases: PhraseRepository,
-    private val log: EventLog
+    private val log: EventLog,
+    private val listen: com.cerclerouge.app.protection.ListenSettings,
+    private val clock: java.time.Clock
 ) : ViewModel() {
+    val prefs: StateFlow<com.cerclerouge.app.protection.ListenPrefs> = listen.prefs
+
+    fun now(): java.time.Instant = clock.instant()
+
+    fun setSensitivity(s: com.cerclerouge.alert.Sensitivity) = viewModelScope.launch { listen.setSensitivity(s) }
+
+    fun setVerify(seconds: Int) = viewModelScope.launch { listen.setVerifySeconds(seconds) }
+
+    /** Contexte à ignorer : 1 h, 3 h ou jusqu'à demain 7 h ; null l'arrête. */
+    fun setContext(ctx: com.cerclerouge.alert.IgnoreContext, d: ContextDuration?) = viewModelScope.launch {
+        val now = clock.instant()
+        val until = when (d) {
+            null -> null
+            ContextDuration.ONE_HOUR -> now.plusSeconds(3_600)
+            ContextDuration.THREE_HOURS -> now.plusSeconds(3 * 3_600)
+            ContextDuration.UNTIL_TOMORROW ->
+                now.atZone(java.time.ZoneId.systemDefault()).toLocalDate().plusDays(1).atTime(7, 0)
+                    .atZone(java.time.ZoneId.systemDefault()).toInstant()
+        }
+        listen.setContext(ctx, until)
+        log.append("listen", "context ${ctx.name} ${if (until == null) "off" else "on"}")
+    }
+
     val status: StateFlow<AudioStatus> = audio.status
     private val _ui = MutableStateFlow(ListenUi())
     val ui: StateFlow<ListenUi> = _ui
@@ -93,6 +118,7 @@ class ListenViewModel @Inject constructor(
     val granted: Boolean get() = audio.granted
 
     init {
+        viewModelScope.launch { listen.load() }
         viewModelScope.launch { _ui.update { it.copy(enrolled = phrases.load() != null) } }
     }
 
@@ -184,6 +210,7 @@ fun ListenScreen(vm: ListenViewModel, onBack: () -> Unit) {
     val c = Cr.colors
     val ui by vm.ui.collectAsState()
     val status by vm.status.collectAsState()
+    val prefs by vm.prefs.collectAsState()
     var granted by remember { mutableStateOf(vm.granted) }
     var confirmDelete by remember { mutableStateOf(false) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted = it }
@@ -267,6 +294,8 @@ fun ListenScreen(vm: ListenViewModel, onBack: () -> Unit) {
             ui.testConfidence?.let {
                 Text(stringResource(R.string.listen_confidence, (it * 100).toInt()), style = PxType.caption, color = c.muted)
             }
+
+            DetectionSettings(prefs, vm.now(), vm::setSensitivity, vm::setVerify, vm::setContext)
 
             Text(stringResource(R.string.listen_keywords_title).uppercase(), style = PxType.label, color = c.lime)
             Text(stringResource(R.string.listen_keywords_intro), style = PxType.body, color = c.muted)

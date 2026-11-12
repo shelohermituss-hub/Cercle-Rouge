@@ -67,6 +67,7 @@ class ProtectionController @Inject constructor(
     private val audio: AudioListener,
     private val phrases: PhraseRepository,
     private val recorder: EvidenceRecorder,
+    private val listen: ListenSettings,
     db: PrivacyDatabase
 ) {
     private val settings = db.settings()
@@ -125,7 +126,11 @@ class ProtectionController @Inject constructor(
         else -> Auth.FAILED
     }
 
-    private suspend fun policy() = Policy(pinConfigured = pins.isConfigured(), protectionAllowed = account.protectionAllowed())
+    private suspend fun policy() = Policy(
+        verifyDelay = java.time.Duration.ofSeconds(listen.load().verifySeconds.toLong()),
+        pinConfigured = pins.isConfigured(),
+        protectionAllowed = account.protectionAllowed()
+    )
 
     private suspend fun dispatch(input: Input) {
         ensureRestored()

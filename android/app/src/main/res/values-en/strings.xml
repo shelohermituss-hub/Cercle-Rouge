@@ -84,7 +84,6 @@
     <string name="home_off">OFF</string>
     <string name="home_protected">[ > PROTECTED &lt; ]</string>
     <string name="home_standby">[ - STANDBY - ]</string>
-    <string name="home_row_listen">AI listening</string>
     <string name="home_listen_on">On your phone · nothing is sent</string>
     <string name="home_row_position">Location</string>
     <string name="home_row_contacts">Contacts</string>
@@ -121,8 +120,6 @@
     <string name="profile_screen_title">Your profile</string>
     <string name="guardian_screen_title">Your trusted adult</string>
     <string name="notif_screen_title">Notifications</string>
-    <string name="sat_on">On</string>
-    <string name="sat_off">Off</string>
     <string name="sat_position_off">Private</string>
     <string name="sat_contacts">%1$d / 5</string>
     <string name="sat_trip_none">None</string>
@@ -372,4 +369,30 @@
     <string name="guardian_req_refused">Refusal recorded.</string>
     <string name="guardian_req_must_be_adult">You must be an adult (18 or over) to accept.</string>
     <string name="guardian_req_limit">You are already the trusted adult of 6 young people, the maximum.</string>
+    <string name="viz_live_title">Live listening</string>
+    <string name="viz_ai_title">AI thinking</string>
+    <string name="viz_stage_idle">Standby</string>
+    <string name="viz_stage_listening">Listening…</string>
+    <string name="viz_stage_voice">Voice detected</string>
+    <string name="viz_stage_hit">Phrase recognised</string>
+    <string name="viz_stage_miss">Other voice, ignored</string>
+    <string name="viz_off">Protection off</string>
+    <string name="viz_paused_low">Listening paused (battery or heat)</string>
+    <string name="viz_paused_busy">Mic used by another app</string>
+    <string name="viz_mic_error">Mic unavailable</string>
+    <string name="viz_levels_only">Levels only: no sound is kept.</string>
+    <string name="viz_ev_voice">Voice detected</string>
+    <string name="viz_ev_compare">Gap %1$s/%2$s</string>
+    <string name="viz_ev_hit">Phrase recognised</string>
+    <string name="viz_ev_miss">Not the phrase</string>
+    <string name="viz_waiting">Waiting…</string>
+    <string name="viz_open_a11y">Open listening settings. %1$s</string>
+    <string name="trip_route_straight">Route: dotted straight line for now.</string>
+    <string name="trip_route_trace">Trace the route along streets</string>
+    <string name="trip_route_loading">Tracing the route…</string>
+    <string name="trip_route_road">Route along streets traced.</string>
+    <string name="trip_route_failed">Street route unavailable: straight line shown.</string>
+    <string name="trip_route_consent_title">Trace the route</string>
+    <string name="trip_route_consent_text">To trace the route along streets, the start and end of this trip (two coordinates, no name or identifier) are sent to an OpenStreetMap routing service, which also sees your IP address. Cercle Rouge keeps nothing. Without this consent, a straight line is drawn.</string>
+    <string name="trip_route_consent_ok">I agree</string>
 </resources>

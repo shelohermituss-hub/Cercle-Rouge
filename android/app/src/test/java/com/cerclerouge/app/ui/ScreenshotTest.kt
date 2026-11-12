@@ -22,6 +22,11 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import com.cerclerouge.alert.EngineState
+import com.cerclerouge.app.audio.AudioStatus
+import com.cerclerouge.app.audio.ListenActivity
+import com.cerclerouge.app.audio.ListenEvent
+import com.cerclerouge.app.audio.ListenEventKind
+import com.cerclerouge.app.audio.ListenStage
 import com.cerclerouge.app.ui.components.BarChart
 import com.cerclerouge.app.ui.components.FacePhase
 import com.cerclerouge.app.ui.components.FaceUnlock
@@ -109,7 +114,17 @@ class ScreenshotTest {
             {},
             {},
             nav,
-            fakeMap
+            fakeMap,
+            activity = ListenActivity(
+                levels = List(40) { i -> (0.5f + 0.5f * kotlin.math.sin(i / 3.0).toFloat()).coerceIn(0f, 1f) * if (i > 25) 1f else 0.25f },
+                stage = ListenStage.RESULT,
+                events = listOf(
+                    ListenEvent(ListenEventKind.VOICE),
+                    ListenEvent(ListenEventKind.MISS, 24.1, 18.0)
+                ),
+                hasPhrase = true
+            ),
+            audioStatus = AudioStatus.RUNNING
         )
     }
 

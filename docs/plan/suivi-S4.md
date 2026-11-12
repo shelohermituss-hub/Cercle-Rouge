@@ -18,6 +18,7 @@ Le Sprint 3 (IA audio) est mis de côté pour l'instant, à la demande du porteu
 | S4.03 Algorithmes purs (corridor, écart, direction, retour, arrêt, retard, zones) | ✅ | Module `:location-engine`, seuils par mode (à calibrer sur le terrain) |
 | S4.04 Banc de rejeu GPX | ✅ | Scénarios synthétiques ; **traces réelles de S0.21 à ajouter** (👤) |
 | S4.05 Écran Trajet | 🟡 | Destination (carte, favoris, recherche), mode (marche, voiture, tap-tap, taxi, moto), heure prévue (−5/+5), démarrage avec PIN, « Je fais un arrêt » (10 à 60 min), « Je suis arrivé·e » (PIN), arrivée détectée proposée. « Contacts qui suivent » : avec le serveur (S4.07) |
+| S4.05b Route tracée sur la carte | 🟡 | ADR-0025. Ligne droite locale en pointillés ; route par les rues après accord (OSM). **Service non joignable depuis l'environnement de développement : lecture de la réponse testée sur un exemple, appel réel à vérifier sur téléphone** (👤) |
 | S4.06 Événement de trajet → vérification (niveau 1 au plus) | ✅ (moteur) / 🟡 (branchement) | `TripIssue` → vérification ; sans réponse, escalade normale |
 | S4.07 `trips` + RPC + battement | ✅ (serveur) / 🟡 (app) | ADR-0024. Opt-in sur l'écran Trajet, numéro vérifié, 3 proches ayant accepté ; battement 2 min. `security.sql` vert en local et sur le projet |
 | S4.08 Chien de garde `pg_cron` | ✅ (serveur) / 🟡 (SMS réel) | 10 min sans battement → SMS Vonage (`trip-watchdog`), puis « de nouveau joignable ». Chaîne cron → `pg_net` → fonction vérifiée (200) ; **envoi d'un vrai SMS à vérifier** (👤) |

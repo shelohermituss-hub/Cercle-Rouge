@@ -10,6 +10,7 @@ import android.media.AudioRecord
 import android.media.AudioRecordingConfiguration
 import android.media.MediaRecorder
 import com.cerclerouge.audio.AudioSignal
+import com.cerclerouge.audio.Features
 import com.cerclerouge.audio.Listener
 import com.cerclerouge.audio.PhraseTemplate
 import com.cerclerouge.audio.RingBuffer
@@ -24,6 +25,25 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+
+/** Étape de l'écoute pour les visualiseurs de l'accueil. */
+enum class ListenStage { IDLE, LISTENING, VOICE, RESULT }
+
+enum class ListenEventKind { VOICE, HIT, MISS }
+
+/** Un événement de l'analyse : une voix détectée, ou une comparaison à la phrase secrète (écart et seuil, unités DTW-MFCC). */
+data class ListenEvent(val kind: ListenEventKind, val distance: Double? = null, val threshold: Double? = null)
+
+/**
+ * Ce que l'écoute fait en ce moment (visualiseurs de l'accueil) : niveaux du micro (0 à 1, un toutes les 100 ms) et étapes de
+ * l'analyse. **Aucun son** : seulement des nombres, perdus à l'arrêt du micro (R-AE-01).
+ */
+data class ListenActivity(
+    val levels: List<Float> = emptyList(),
+    val stage: ListenStage = ListenStage.IDLE,
+    val events: List<ListenEvent> = emptyList(),
+    val hasPhrase: Boolean = false
+)
 
 enum class AudioStatus { STOPPED, RUNNING, PAUSED_MIC_BUSY, PAUSED_LOW_POWER, ERROR }
 
@@ -55,6 +75,10 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
     val signals: SharedFlow<AudioSignal> = _signals
     private val _status = MutableStateFlow(AudioStatus.STOPPED)
     val status: StateFlow<AudioStatus> = _status
+    private val _activity = MutableStateFlow(ListenActivity())
+
+    /** Niveaux et étapes de l'analyse pour l'affichage. */
+    val activity: StateFlow<ListenActivity> = _activity
 
     @Volatile private var running = false
 
@@ -166,14 +190,21 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
         _status.value = AudioStatus.RUNNING
         // La phrase secrète n'est cherchée que si l'écoute est voulue (pas pendant un simple enregistrement).
         val listener = Listener(if (wantListen && !degraded) template else null)
-        thread = Thread({ loop(r, listener) }, "cr-audio").apply {
+        thread = Thread({ loop(r, listener, wantListen && !degraded) }, "cr-audio").apply {
             priority = Thread.NORM_PRIORITY + 1
             start()
         }
     }
 
-    private fun loop(r: AudioRecord, listener: Listener) {
+    private fun loop(r: AudioRecord, listener: Listener, listening: Boolean) {
         val block = ShortArray(Vad.BLOCK)
+        val levels = ArrayDeque<Float>()
+        val events = ArrayDeque<ListenEvent>()
+        var peakDb = -120.0
+        var blocks = 0
+        var wasVoice = false
+        var seenComparisons = 0
+        var resultUntil = 0L
         try {
             while (running) {
                 val n = r.read(block, 0, block.size)
@@ -181,10 +212,38 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
                 preBuffer.write(block)
                 tap?.invoke(block)
                 listener.push(block)?.let { _signals.tryEmit(it) }
+                peakDb = maxOf(peakDb, Features.dbfs(block))
+                if (++blocks < LEVEL_BLOCKS) continue
+                blocks = 0
+                val now = System.currentTimeMillis()
+                levels.addLast(((peakDb - LEVEL_FLOOR_DB) / (LEVEL_CEIL_DB - LEVEL_FLOOR_DB)).toFloat().coerceIn(0f, 1f))
+                peakDb = -120.0
+                while (levels.size > LEVEL_HISTORY) levels.removeFirst()
+                if (listening) {
+                    if (listener.inSpeech && !wasVoice) events.addLast(ListenEvent(ListenEventKind.VOICE))
+                    wasVoice = listener.inSpeech
+                    if (listener.comparisons != seenComparisons) {
+                        seenComparisons = listener.comparisons
+                        listener.lastMatch?.let {
+                            val kind = if (it.detected) ListenEventKind.HIT else ListenEventKind.MISS
+                            events.addLast(ListenEvent(kind, it.distance, listener.threshold))
+                        }
+                        resultUntil = now + RESULT_MS
+                    }
+                    while (events.size > EVENT_HISTORY) events.removeFirst()
+                }
+                val stage = when {
+                    !listening -> ListenStage.IDLE
+                    listener.inSpeech -> ListenStage.VOICE
+                    now < resultUntil -> ListenStage.RESULT
+                    else -> ListenStage.LISTENING
+                }
+                _activity.value = ListenActivity(levels.toList(), stage, events.toList(), listener.threshold != null)
             }
         } finally {
             block.fill(0)
             listener.stop()
+            _activity.value = ListenActivity()
         }
     }
 
@@ -266,5 +325,11 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
     companion object {
         const val RATE = 16_000
         private const val STOP_TIMEOUT_MS = 400L
+        private const val LEVEL_BLOCKS = 5 // un niveau toutes les 100 ms (blocs de 20 ms)
+        private const val LEVEL_HISTORY = 40
+        private const val LEVEL_FLOOR_DB = -70.0
+        private const val LEVEL_CEIL_DB = -10.0
+        private const val EVENT_HISTORY = 3
+        private const val RESULT_MS = 2_500L
     }
 }

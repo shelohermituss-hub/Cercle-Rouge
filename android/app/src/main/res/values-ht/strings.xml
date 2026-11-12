@@ -85,7 +85,6 @@
     <string name="home_off">OFF</string>
     <string name="home_protected">[ > PWOTEJE &lt; ]</string>
     <string name="home_standby">[ - AN VÈY - ]</string>
-    <string name="home_row_listen">Koute IA</string>
     <string name="home_listen_on">Sou telefòn ou · anyen pa voye</string>
     <string name="home_row_position">Pozisyon</string>
     <string name="home_row_contacts">Kontak</string>
@@ -122,8 +121,6 @@
     <string name="profile_screen_title">Pwofil ou</string>
     <string name="guardian_screen_title">Granmoun referans ou</string>
     <string name="notif_screen_title">Notifikasyon</string>
-    <string name="sat_on">Aktif</string>
-    <string name="sat_off">Kanpe</string>
     <string name="sat_position_off">Prive</string>
     <string name="sat_contacts">%1$d / 5</string>
     <string name="sat_trip_none">Okenn</string>
@@ -373,4 +370,30 @@
     <string name="guardian_req_refused">Refi a anrejistre.</string>
     <string name="guardian_req_must_be_adult">Fòk ou majè (18 an oswa plis) pou w aksepte.</string>
     <string name="guardian_req_limit">Ou deja granmoun referan 6 jèn, se maksimòm nan.</string>
+    <string name="viz_live_title">Koute an dirèk</string>
+    <string name="viz_ai_title">Refleksyon IA</string>
+    <string name="viz_stage_idle">Anveyè</string>
+    <string name="viz_stage_listening">M ap koute…</string>
+    <string name="viz_stage_voice">Vwa detekte</string>
+    <string name="viz_stage_hit">Fraz la rekonèt</string>
+    <string name="viz_stage_miss">Lòt vwa, inyore</string>
+    <string name="viz_off">Pwoteksyon koupe</string>
+    <string name="viz_paused_low">Koute an pòz (batri oswa chalè)</string>
+    <string name="viz_paused_busy">Yon lòt aplikasyon ap itilize mikwo a</string>
+    <string name="viz_mic_error">Mikwo pa disponib</string>
+    <string name="viz_levels_only">Nivo sèlman : okenn son pa kenbe.</string>
+    <string name="viz_ev_voice">Vwa detekte</string>
+    <string name="viz_ev_compare">Distans %1$s/%2$s</string>
+    <string name="viz_ev_hit">Fraz rekonèt</string>
+    <string name="viz_ev_miss">Pa fraz la</string>
+    <string name="viz_waiting">Ap tann…</string>
+    <string name="viz_open_a11y">Louvri paramèt koute a. %1$s</string>
+    <string name="trip_route_straight">Wout : liy dwat an pwen pou kounye a.</string>
+    <string name="trip_route_trace">Trase wout la sou ri yo</string>
+    <string name="trip_route_loading">Ap trase wout la…</string>
+    <string name="trip_route_road">Wout la trase sou ri yo.</string>
+    <string name="trip_route_failed">Wout sou ri yo pa disponib : liy dwat la afiche.</string>
+    <string name="trip_route_consent_title">Trase wout la</string>
+    <string name="trip_route_consent_text">Pou trase wout la sou ri yo, kote w pati ak kote w ale nan trajè sa a (de kowòdone, san non ni idantifyan) ap voye bay yon sèvis routaj OpenStreetMap, ki wè adrès IP ou tou. Cercle Rouge pa kenbe anyen. San aksepte sa a, y ap trase yon liy dwat.</string>
+    <string name="trip_route_consent_ok">M aksepte</string>
 </resources>

@@ -113,11 +113,25 @@ data class AudioSignal(val kind: Kind, val confidence: Double, val modelVersion:
 class Listener(private val template: PhraseTemplate?) {
     private val vad = Vad()
 
+    /** Une voix est en cours (pour les visualiseurs). */
+    val inSpeech: Boolean get() = vad.inSpeech
+
+    /** Nombre d'énoncés comparés depuis le début, et résultat du dernier : pour l'affichage, jamais l'énoncé lui-même. */
+    var comparisons: Int = 0
+        private set
+    var lastMatch: PhraseMatch? = null
+        private set
+
+    /** Seuil de la phrase enrôlée (unités DTW-MFCC), null sans phrase. */
+    val threshold: Double? get() = template?.threshold
+
     fun push(block: ShortArray): AudioSignal? {
         val utterance = vad.push(block) ?: return null
         val t = template ?: return AudioSignal(AudioSignal.Kind.SPEECH, 1.0, "vad-energy-v1")
         val m = SecretPhrase.match(t, utterance)
         utterance.fill(0)
+        lastMatch = m
+        comparisons++
         return if (m.detected) AudioSignal(AudioSignal.Kind.SECRET_PHRASE, m.confidence, SecretPhrase.MODEL_VERSION) else null
     }
 

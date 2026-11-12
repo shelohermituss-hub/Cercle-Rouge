@@ -58,6 +58,8 @@ import com.cerclerouge.app.server.WatchStatus
 import com.cerclerouge.app.trip.AddressSearch
 import com.cerclerouge.app.trip.Place
 import com.cerclerouge.app.trip.PlacesRepository
+import com.cerclerouge.app.trip.RouteLine
+import com.cerclerouge.app.trip.RouteService
 import com.cerclerouge.app.trip.TripController
 import com.cerclerouge.app.trip.TripDraft
 import com.cerclerouge.app.trip.TripUi
@@ -87,6 +89,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -102,7 +105,10 @@ data class PlannerUi(
     val favorites: List<Place> = emptyList(),
     val results: List<Place>? = null,
     val searching: Boolean = false,
-    val searchAllowed: Boolean = false
+    val searchAllowed: Boolean = false,
+    val route: RouteLine? = null,
+    val routing: Boolean = false,
+    val routeAllowed: Boolean = false
 )
 
 @HiltViewModel
@@ -113,6 +119,7 @@ class TripViewModel @Inject constructor(
     private val pins: PinRepository,
     private val security: SecuritySettings,
     private val watch: TripWatch,
+    private val routes: RouteService,
     val controller: ProtectionController,
     private val clock: Clock
 ) : ViewModel() {
@@ -125,22 +132,50 @@ class TripViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            _ui.update { it.copy(favorites = places.favorites(), searchAllowed = places.searchAllowed()) }
+            _ui.update { it.copy(favorites = places.favorites(), searchAllowed = places.searchAllowed(), routeAllowed = routes.allowed()) }
             val origin = trips.currentPosition()
             _ui.update { it.copy(origin = origin, originLoading = false) }
             reestimate()
+            reroute()
         }
     }
 
     fun choose(place: Place) {
         _ui.update { it.copy(destination = place, results = null) }
         reestimate()
+        reroute()
     }
 
     fun mode(mode: TransportMode) {
         _ui.update { it.copy(mode = mode) }
         reestimate()
+        reroute()
     }
+
+    private var routeJob: Job? = null
+
+    /** Trace tout de suite la ligne droite (locale), puis la route par les rues si l'utilisateur l'a autorisée. */
+    private fun reroute() {
+        val s = _ui.value
+        val o = s.origin ?: return
+        val d = s.destination ?: return
+        routeJob?.cancel()
+        _ui.update { it.copy(route = routes.straight(o, d.point, s.mode), routing = s.routeAllowed) }
+        routeJob = viewModelScope.launch {
+            val line = routes.route(o, d.point, s.mode)
+            _ui.update { it.copy(route = line, routing = false) }
+        }
+    }
+
+    /** Accord donné : la route par les rues est calculée aussitôt. */
+    fun allowRoute() = viewModelScope.launch {
+        routes.allow()
+        _ui.update { it.copy(routeAllowed = true) }
+        reroute()
+    }
+
+    /** Tracé du trajet en cours : celui calculé à la planification, sinon la ligne droite. */
+    fun activeRoute(plan: com.cerclerouge.location.TripPlan): RouteLine = routes.cachedOrStraight(plan.origin, plan.destination, plan.mode)
 
     fun shift(delta: Int) = _ui.update { it.copy(minutes = (it.minutes + delta).coerceIn(MIN_MINUTES, MAX_MINUTES)) }
 
@@ -193,6 +228,7 @@ class TripViewModel @Inject constructor(
         val origin = trips.currentPosition()
         _ui.update { it.copy(origin = origin, originLoading = false) }
         reestimate()
+        reroute()
     }
 
     fun stop(minutes: Int) = viewModelScope.launch { trips.declareStop(minutes) }
@@ -260,6 +296,7 @@ private fun Planner(vm: TripViewModel) {
     var askPin by remember { mutableStateOf(false) }
     var naming by remember { mutableStateOf(false) }
     var consent by remember { mutableStateOf(false) }
+    var routeConsent by remember { mutableStateOf(false) }
     var lastPin by remember { mutableStateOf<String?>(null) }
     var bioOk by remember { mutableStateOf(false) }
     var bio by remember { mutableStateOf(false) }
@@ -274,6 +311,9 @@ private fun Planner(vm: TripViewModel) {
             coveredTop = 0.dp,
             coveredEnd = 0.dp,
             destination = s.destination?.point,
+            origin = s.origin,
+            route = s.route?.points.orEmpty(),
+            routeIsRoad = s.route?.road ?: true,
             onTap = { vm.choose(Place(pointLabel, it)) }
         )
     }
@@ -285,6 +325,7 @@ private fun Planner(vm: TripViewModel) {
         SearchBox(vm, s, onConsent = { consent = true })
         Favorites(vm, s.favorites)
         DestinationPanel(s, onSave = { naming = true })
+        if (s.destination != null) RouteStatus(s, onAsk = { routeConsent = true })
         Text(stringResource(R.string.trip_mode).uppercase(), style = PxType.label, color = c.lime)
         ModePicker(s.mode, vm::mode)
         ArrivalPicker(s.minutes, vm::shift)
@@ -328,6 +369,41 @@ private fun Planner(vm: TripViewModel) {
     }
     if (naming) NameDialog(onDismiss = { naming = false }) { name -> vm.saveFavorite(name).also { naming = false } }
     if (consent) ConsentDialog(onDismiss = { consent = false }) { vm.allowSearch().also { consent = false } }
+    if (routeConsent) {
+        ConsentDialog(
+            onDismiss = { routeConsent = false },
+            title = R.string.trip_route_consent_title,
+            text = R.string.trip_route_consent_text,
+            ok = R.string.trip_route_consent_ok
+        ) { vm.allowRoute().also { routeConsent = false } }
+    }
+}
+
+/** État du tracé de la route : ligne droite locale, ou route par les rues après accord. */
+@Composable
+private fun RouteStatus(s: PlannerUi, onAsk: () -> Unit) {
+    val c = Cr.colors
+    val road = s.route?.road == true
+    val text = when {
+        s.routing -> R.string.trip_route_loading
+        road -> R.string.trip_route_road
+        s.routeAllowed -> R.string.trip_route_failed
+        else -> R.string.trip_route_straight
+    }
+    Text(
+        stringResource(text),
+        style = PxType.caption,
+        color = if (road) c.warn else c.muted,
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+    )
+    if (!s.routeAllowed) {
+        PxButton(
+            stringResource(R.string.trip_route_trace),
+            onAsk,
+            variant = PxVariant.OUTLINE,
+            icon = PixelIcon.ARROW_RIGHT
+        )
+    }
 }
 
 @Composable
@@ -484,6 +560,7 @@ private fun ActiveTrip(vm: TripViewModel, t: TripUi) {
     var bioOk by remember { mutableStateOf(false) }
     var bio by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { bio = vm.biometric() }
+    val route = remember(t.plan) { vm.activeRoute(t.plan) }
     Box(Modifier.fillMaxWidth().height(260.dp)) {
         LiveMap(
             armed = true,
@@ -492,7 +569,9 @@ private fun ActiveTrip(vm: TripViewModel, t: TripUi) {
             coveredBottom = 0.dp,
             coveredTop = 0.dp,
             coveredEnd = 0.dp,
-            destination = t.plan.destination
+            destination = t.plan.destination,
+            route = route.points,
+            routeIsRoad = route.road
         )
     }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -642,15 +721,21 @@ private fun NameDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
 }
 
 @Composable
-private fun ConsentDialog(onDismiss: () -> Unit, onAccept: () -> Unit) {
+private fun ConsentDialog(
+    onDismiss: () -> Unit,
+    title: Int = R.string.trip_consent_title,
+    text: Int = R.string.trip_consent_text,
+    ok: Int = R.string.trip_consent_ok,
+    onAccept: () -> Unit
+) {
     val c = Cr.colors
     Dialog(onDismissRequest = onDismiss) {
         PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.trip_consent_title).uppercase(), style = PxType.title)
-                Text(stringResource(R.string.trip_consent_text), style = PxType.body)
+                Text(stringResource(title).uppercase(), style = PxType.title)
+                Text(stringResource(text), style = PxType.body)
                 Spacer(Modifier.size(4.dp))
-                PxButton(stringResource(R.string.trip_consent_ok), onAccept)
+                PxButton(stringResource(ok), onAccept)
                 PxButton(stringResource(R.string.action_cancel), onDismiss, variant = PxVariant.OUTLINE)
             }
         }

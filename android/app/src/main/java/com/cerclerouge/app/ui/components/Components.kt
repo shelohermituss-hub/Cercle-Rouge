@@ -266,19 +266,19 @@ fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifi
                     }
                 }
             },
-        border = c.danger,
-        fill = c.danger,
+        border = LogoRed,
+        fill = LogoRed,
         padding = PaddingValues(0.dp)
     ) {
-        // Remplissage par paliers de 1/12, comme les 12 carrés de l'écran SOS.
+        // Rouge du logo (#ED1B24), texte blanc. Remplissage par paliers de 1/12, comme les 12 carrés de l'écran SOS.
         val steps = (progress.value * 12).toInt() / 12f
-        Box(Modifier.fillMaxHeight().fillMaxWidth(steps).background(c.onLime.copy(alpha = 0.25f)))
+        Box(Modifier.fillMaxHeight().fillMaxWidth(steps).background(Color.Black.copy(alpha = 0.28f)))
         Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            PixelIconView(PixelIcon.ALERT, 28.dp, c.onLime)
+            PixelIconView(PixelIcon.ALERT, 28.dp, Color.White)
             Spacer(Modifier.width(14.dp))
-            Text(stringResource(R.string.sos), style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.28f), color = c.onLime)
+            Text(stringResource(R.string.sos), style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.28f), color = Color.White)
             Spacer(Modifier.width(14.dp))
-            Text(stringResource(R.string.sos_hint_two_lines), style = PxType.label, color = c.onLime)
+            Text(stringResource(R.string.sos_hint_two_lines), style = PxType.label, color = Color.White)
         }
     }
 }

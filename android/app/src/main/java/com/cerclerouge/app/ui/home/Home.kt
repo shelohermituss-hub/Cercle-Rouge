@@ -12,7 +12,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -46,8 +45,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -77,6 +74,9 @@ import com.cerclerouge.alert.Input
 import com.cerclerouge.alert.RejectReason
 import com.cerclerouge.app.R
 import com.cerclerouge.app.account.GuardianSync
+import com.cerclerouge.app.audio.AudioListener
+import com.cerclerouge.app.audio.AudioStatus
+import com.cerclerouge.app.audio.ListenActivity
 import com.cerclerouge.app.contacts.ContactsRepository
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.protection.ProtectionService
@@ -87,7 +87,6 @@ import com.cerclerouge.app.security.SecuritySettings
 import com.cerclerouge.app.server.ServerSync
 import com.cerclerouge.app.ui.components.FacePhase
 import com.cerclerouge.app.ui.components.FaceUnlock
-import com.cerclerouge.app.ui.components.GradientOrb
 import com.cerclerouge.app.ui.components.Led
 import com.cerclerouge.app.ui.components.LogoMark
 import com.cerclerouge.app.ui.components.NavItem
@@ -102,6 +101,7 @@ import com.cerclerouge.app.ui.components.PxPanel
 import com.cerclerouge.app.ui.components.PxVariant
 import com.cerclerouge.app.ui.components.SosBar
 import com.cerclerouge.app.ui.components.TERM_BG
+import com.cerclerouge.app.ui.components.TERM_CYAN
 import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.components.TraceLine
 import com.cerclerouge.app.ui.components.pixelGrid
@@ -128,6 +128,7 @@ class HomeViewModel @Inject constructor(
     val contacts: ContactsRepository,
     val server: ServerSync,
     val security: SecuritySettings,
+    val audio: AudioListener,
     private val guardians: GuardianSync
 ) : ViewModel() {
     init {
@@ -169,6 +170,8 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
     val state by vm.controller.state.collectAsState()
     val book by vm.contacts.book.collectAsState()
+    val activity by vm.audio.activity.collectAsState()
+    val audioStatus by vm.audio.status.collectAsState()
     val contactsReady = book.contacts.count { it.status == ContactStatus.ACCEPTED }
     var sos by remember { mutableStateOf(SosStep.NONE) }
     var pinFor by remember { mutableStateOf<Guarded?>(null) }
@@ -265,7 +268,9 @@ fun HomeScreen(
                     NavItem(stringResource(R.string.nav_trip), PixelIcon.ARROW_RIGHT, onTrip),
                     NavItem(stringResource(R.string.nav_log), PixelIcon.CLOCK, onJournal)
                 ),
-                map = { armed, showMe, modifier -> LiveMap(armed, showMe, modifier) }
+                map = { armed, showMe, modifier -> LiveMap(armed, showMe, modifier, coveredBottom = 28.dp) },
+                activity = activity,
+                audioStatus = audioStatus
             )
         }
     }
@@ -311,7 +316,9 @@ internal fun HomeConsole(
     map: @Composable (armed: Boolean, showMe: Boolean, modifier: Modifier) -> Unit,
     onTrip: () -> Unit = onSoon,
     onListen: () -> Unit = onToggle,
-    onSettings: () -> Unit = onSoon
+    onSettings: () -> Unit = onSoon,
+    activity: ListenActivity = ListenActivity(),
+    audioStatus: AudioStatus = AudioStatus.STOPPED
 ) {
     val c = Cr.colors
     val armed = state.protection.isArmed
@@ -358,25 +365,20 @@ internal fun HomeConsole(
                 )
                 Text(MapStyle.ATTRIBUTION, style = PxType.caption.copy(fontSize = PxType.caption.fontSize * 0.85f), color = c.muted)
             }
-            // Les quatre fonctions, empilées dans le coin supérieur droit (hors du losange).
+            // Les boutons, empilés dans le coin supérieur droit : ON/OFF d'abord, puis une couleur par fonction.
             Column(
                 Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalAlignment = Alignment.End
             ) {
-                Satellite(
-                    PixelIcon.MIC,
-                    stringResource(R.string.home_row_listen),
-                    stringResource(if (listening) R.string.sat_on else R.string.sat_off),
-                    armed,
-                    onListen,
-                    active = listening
-                )
+                PowerButton(armed, discA11y, onToggle)
                 Satellite(
                     PixelIcon.PIN,
                     stringResource(R.string.home_row_position),
                     stringResource(if (showMe) R.string.sat_position_on else R.string.sat_position_off),
                     armed,
                     onSoon,
+                    tint = TERM_CYAN,
                     active = showMe
                 )
                 Satellite(
@@ -384,7 +386,8 @@ internal fun HomeConsole(
                     stringResource(R.string.home_row_contacts),
                     stringResource(R.string.sat_contacts, contactsReady),
                     armed,
-                    onContacts
+                    onContacts,
+                    tint = THOUGHT_VIOLET
                 )
                 Satellite(
                     PixelIcon.ARROW_RIGHT,
@@ -392,6 +395,7 @@ internal fun HomeConsole(
                     stringResource(if (trip) R.string.sat_trip_active else R.string.sat_trip_none),
                     armed,
                     onTrip,
+                    tint = c.warn,
                     active = trip
                 )
                 Satellite(
@@ -399,54 +403,54 @@ internal fun HomeConsole(
                     stringResource(R.string.home_row_settings),
                     stringResource(R.string.sat_settings),
                     armed,
-                    onSettings
+                    onSettings,
+                    tint = c.ink
                 )
             }
-            Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(Modifier.size(224.dp), contentAlignment = Alignment.Center) {
-                    // Losange autour du disque (repris de la référence « connect »).
-                    Canvas(Modifier.size(212.dp)) {
-                        val w = size.width
-                        val stroke = 2.dp.toPx()
-                        val col = if (armed) c.lime.copy(alpha = 0.5f) else c.line
-                        val pts = listOf(Offset(w / 2, 0f), Offset(w, w / 2), Offset(w / 2, w), Offset(0f, w / 2))
-                        pts.forEachIndexed { i, p -> drawLine(col, p, pts[(i + 1) % 4], stroke) }
-                        pts.forEach { drawRect(col, it - Offset(4.dp.toPx(), 4.dp.toPx()), Size(8.dp.toPx(), 8.dp.toPx())) }
-                    }
-                    // Visualiseur de l'écoute IA : l'orbe dégradée « respire » derrière le disque tant que le micro tourne.
-                    if (armed) GradientOrb(active = listening, size = 220.dp)
-                    PixelDisc(
-                        size = 120.dp,
-                        cells = 16,
-                        fill = if (armed) c.lime else c.ink,
-                        glow = if (armed) c.lime else null,
-                        orbit = armed,
-                        modifier = Modifier.semantics {
-                            role = Role.Switch
-                            contentDescription = discA11y
-                            onClick {
-                                onToggle()
-                                true
-                            }
-                        }.clickable(onClick = onToggle)
-                    ) {
-                        PixelIconView(PixelIcon.POWER, 28.dp, c.onLime)
-                        Text(stringResource(if (armed) R.string.home_on else R.string.home_off), style = PxType.display, color = c.onLime)
-                    }
-                }
+            // État de la protection, en bas de la carte.
+            Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(stringResource(if (armed) R.string.home_protected else R.string.home_standby), style = PxType.label, color = accent)
                 Text(
                     stringResource(if (listening) R.string.home_listen_on else R.string.home_tap_activate).uppercase(),
                     style = PxType.caption,
                     color = c.muted,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 4.dp, start = 24.dp, end = 24.dp)
+                    modifier = Modifier.padding(top = 2.dp, start = 24.dp, end = 24.dp)
                 )
             }
         }
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            ListenPanels(activity, audioStatus, armed, onOpen = onListen)
             SosBar(onTrigger = onSosTrigger, onTap = onSosTap)
             PxNavBar(nav, selected = 0)
+        }
+    }
+}
+
+/** ON/OFF de la protection : le bouton principal, en haut à droite (rempli quand la protection est active). */
+@Composable
+private fun PowerButton(armed: Boolean, description: String, onToggle: () -> Unit) {
+    val c = Cr.colors
+    PxPanel(
+        Modifier.size(56.dp).semantics {
+            role = Role.Switch
+            contentDescription = description
+            onClick {
+                onToggle()
+                true
+            }
+        }.clickable(onClick = onToggle),
+        border = if (armed) c.lime else c.ink,
+        fill = if (armed) c.lime else c.surface,
+        padding = PaddingValues(0.dp)
+    ) {
+        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+            PixelIconView(PixelIcon.POWER, 22.dp, if (armed) c.onLime else c.ink)
+            Text(
+                stringResource(if (armed) R.string.home_on else R.string.home_off),
+                style = PxType.label,
+                color = if (armed) c.onLime else c.ink
+            )
         }
     }
 }
@@ -463,19 +467,22 @@ private fun Satellite(
     armed: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    tint: Color = Cr.colors.lime,
     active: Boolean = false
 ) {
     val c = Cr.colors
+    val color = if (armed) tint else c.muted
     PxPanel(
         modifier
             .size(52.dp)
             .semantics(mergeDescendants = true) { contentDescription = "$label : $value" }
             .clickable(role = Role.Button, onClick = onClick),
-        border = if (armed) c.lime else c.lineControl,
+        border = if (armed) tint else c.lineControl,
+        fill = c.surface,
         padding = PaddingValues(0.dp)
     ) {
-        PixelIconView(icon, 24.dp, if (armed) c.lime else c.muted, Modifier.align(Alignment.Center))
-        Led(if (active) c.lime else c.line, blink = active, modifier = Modifier.align(Alignment.TopEnd).padding(5.dp), size = 6.dp)
+        PixelIconView(icon, 24.dp, color, Modifier.align(Alignment.Center))
+        Led(if (active) tint else c.line, blink = active, modifier = Modifier.align(Alignment.TopEnd).padding(5.dp), size = 6.dp)
     }
 }
 

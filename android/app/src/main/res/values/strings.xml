@@ -85,7 +85,6 @@
     <string name="home_off">OFF</string>
     <string name="home_protected">[ > PROTÉGÉ &lt; ]</string>
     <string name="home_standby">[ - VEILLE - ]</string>
-    <string name="home_row_listen">Écoute IA</string>
     <string name="home_listen_on">Sur ton téléphone · rien n\'est envoyé</string>
     <string name="home_row_position">Position</string>
     <string name="home_row_contacts">Contacts</string>
@@ -122,8 +121,6 @@
     <string name="profile_screen_title">Ton profil</string>
     <string name="guardian_screen_title">Ton adulte référent</string>
     <string name="notif_screen_title">Notifications</string>
-    <string name="sat_on">Active</string>
-    <string name="sat_off">Arrêtée</string>
     <string name="sat_position_off">Privée</string>
     <string name="sat_contacts">%1$d / 5</string>
     <string name="sat_trip_none">Aucun</string>
@@ -373,4 +370,30 @@
     <string name="guardian_req_refused">Refus enregistré.</string>
     <string name="guardian_req_must_be_adult">Il faut être majeur (18 ans et plus) pour accepter.</string>
     <string name="guardian_req_limit">Tu es déjà adulte référent de 6 jeunes au maximum.</string>
+    <string name="viz_live_title">Écoute en direct</string>
+    <string name="viz_ai_title">Réflexion IA</string>
+    <string name="viz_stage_idle">En veille</string>
+    <string name="viz_stage_listening">J\'écoute…</string>
+    <string name="viz_stage_voice">Voix détectée</string>
+    <string name="viz_stage_hit">Phrase reconnue</string>
+    <string name="viz_stage_miss">Autre voix, ignorée</string>
+    <string name="viz_off">Protection coupée</string>
+    <string name="viz_paused_low">Écoute en pause (batterie ou chaleur)</string>
+    <string name="viz_paused_busy">Micro pris par une autre appli</string>
+    <string name="viz_mic_error">Micro indisponible</string>
+    <string name="viz_levels_only">Niveaux seulement : aucun son n\'est gardé.</string>
+    <string name="viz_ev_voice">Voix détectée</string>
+    <string name="viz_ev_compare">Écart %1$s/%2$s</string>
+    <string name="viz_ev_hit">Phrase reconnue</string>
+    <string name="viz_ev_miss">Pas la phrase</string>
+    <string name="viz_waiting">En attente…</string>
+    <string name="viz_open_a11y">Ouvrir les réglages de l\'écoute. %1$s</string>
+    <string name="trip_route_straight">Route : ligne droite en pointillés pour l\'instant.</string>
+    <string name="trip_route_trace">Tracer la route par les rues</string>
+    <string name="trip_route_loading">Tracé de la route…</string>
+    <string name="trip_route_road">Route par les rues tracée.</string>
+    <string name="trip_route_failed">Route par les rues indisponible : ligne droite affichée.</string>
+    <string name="trip_route_consent_title">Tracer la route</string>
+    <string name="trip_route_consent_text">Pour tracer la route par les rues, le départ et l\'arrivée de ce trajet (deux coordonnées, sans nom ni identifiant) sont envoyés à un service de routage d\'OpenStreetMap, qui voit aussi ton adresse IP. Cercle Rouge ne garde rien. Sans cet accord, une ligne droite est tracée.</string>
+    <string name="trip_route_consent_ok">J\'accepte</string>
 </resources>

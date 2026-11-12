@@ -450,6 +450,54 @@ select tests.expect(private.alert_notify_tick() = 0, 'alerte close : plus rien �
 select tests.expect(not exists (select 1 from private.alert_recipients where phone_enc is not null or email_enc is not null or message_enc is not null),
   'une heure après la fin : numéros, e-mails et textes effacés');
 
+-- ===== 1.9 · Tableau de bord des proches : trajet, état du téléphone, actions des autres proches =====
+select set_config('request.jwt.claims', '', true);
+select tests.as_user(:'guardian'); set local role authenticated;
+insert into s3 values ('trip9', public.start_trip('trip-0000009', 'WALK', now() + interval '30 minutes')::text);
+select tests.expect_error($$select public.create_trip_link((select v::uuid from s3 where k = 'trip9'), 'Tante', 30)$$, '%invalid_ttl%');
+insert into s3 values ('tlink', public.create_trip_link((select v::uuid from s3 where k = 'trip9'), 'Tante', 240));
+select tests.expect(char_length((select v from s3 where k = 'tlink')) = 32, 'trajet : jeton de 192 bits');
+select tests.expect_error($$select trip_id from public.tracking_links$$, '%permission denied%');
+select public.trip_heartbeat((select v::uuid from s3 where k = 'trip9'), 18.54, -72.34, 15, 64);
+insert into s3 values ('g2', public.create_alert('k-guardian-02', 2, 'SOS', 'HIGH', 'SOS', false)::text);
+select public.set_alert_device((select v::uuid from s3 where k = 'g2'), 55, true);
+select tests.expect_error($$select public.set_alert_device((select v::uuid from s3 where k = 'g2'), 120, true)$$, '%invalid_battery%');
+insert into s3 values ('l1', public.create_tracking_link((select v::uuid from s3 where k = 'g2'), 'Tante', 240));
+insert into s3 values ('l2', public.create_tracking_link((select v::uuid from s3 where k = 'g2'), 'Voisin', 240));
+reset role;
+select tests.as_user(:'stranger'); set local role authenticated;
+select tests.expect_error($$select public.create_trip_link((select v::uuid from s3 where k = 'trip9'), 'X', 240)$$, '%not_found%');
+select tests.expect_error($$select public.set_alert_device((select v::uuid from s3 where k = 'g2'), 50, true)$$, '%not_found%');
+reset role;
+set local role anon;
+select tests.expect_error($$select public.create_trip_link(gen_random_uuid(), 'X', 240)$$, '%permission denied%');
+select tests.expect_error($$select public.set_alert_device(gen_random_uuid(), 50, true)$$, '%permission denied%');
+reset role;
+select set_config('request.jwt.claims', '', true);
+set local role service_role;
+select tests.expect(private.track_read((select v from s3 where k = 'tlink')) ->> 'kind' = 'trip', 'la page voit un trajet');
+select tests.expect(private.track_read((select v from s3 where k = 'tlink')) ->> 'status' = 'active', 'trajet en cours');
+select tests.expect((private.track_read((select v from s3 where k = 'tlink')) ->> 'battery')::int = 64, 'batterie du trajet');
+select tests.expect(jsonb_array_length(private.track_read((select v from s3 where k = 'tlink')) -> 'positions') = 1, 'dernière position du trajet seulement');
+select tests.expect(private.track_read((select v from s3 where k = 'l1')) ->> 'kind' = 'alert', 'alerte : kind');
+select tests.expect((private.track_read((select v from s3 where k = 'l1')) ->> 'battery')::int = 55
+  and (private.track_read((select v from s3 where k = 'l1')) ->> 'online')::boolean, 'alerte : batterie et réseau visibles');
+select tests.expect(private.track_act((select v from s3 where k = 'l2'), 'TOOK_CONTACT'), 'un proche prend contact');
+select tests.expect(private.track_read((select v from s3 where k = 'l1')) -> 'others' -> 0 ->> 'label' = 'Voisin'
+  and private.track_read((select v from s3 where k = 'l1')) -> 'others' -> 0 ->> 'action' = 'TOOK_CONTACT', 'R-DASH-05 : les autres proches voient l''action');
+select tests.expect(jsonb_array_length(private.track_read((select v from s3 where k = 'l2')) -> 'others') = 0, 'son propre geste n''est pas dans « autres »');
+select tests.expect(not private.track_act((select v from s3 where k = 'tlink'), 'TOOK_CONTACT'), 'pas d''action sur un lien de trajet');
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.as_user(:'guardian'); set local role authenticated;
+select public.end_trip((select v::uuid from s3 where k = 'trip9'));
+reset role;
+select set_config('request.jwt.claims', '', true);
+set local role service_role;
+select tests.expect(private.track_read((select v from s3 where k = 'tlink')) ->> 'status' = 'ended'
+  and jsonb_array_length(private.track_read((select v from s3 where k = 'tlink')) -> 'positions') = 0, 'trajet fini : plus de position');
+reset role;
+
 -- ===== Fonctions : jamais exécutables par anon ni par PUBLIC =====
 select tests.expect(
   not exists (

@@ -31,14 +31,20 @@
   <section id="live" hidden>
     <div id="map" class="map" role="img" aria-labelledby="pos-text"></div>
     <p id="pos-text" class="muted"></p>
+    <p id="device" class="muted"></p>
     <p><a id="open-map" target="_blank" rel="noopener noreferrer" data-i18n="openMap">Ouvrir dans une application de carte</a></p>
 
-    <div class="actions">
+    <div class="actions" id="actions">
       <button type="button" id="act-contact" class="btn lime" data-i18n="tookContact">J'ai pris contact</button>
       <a id="act-114" class="btn danger" href="tel:114" data-i18n="call114">Appeler les secours (114)</a>
       <button type="button" id="act-false" class="btn outline" data-i18n="falseAlarm">C'est une fausse alerte</button>
     </div>
     <p id="act-msg" class="muted" role="status" aria-live="polite"></p>
+  </section>
+
+  <section id="others" hidden>
+    <h2 data-i18n="others">Ce que les autres proches ont fait</h2>
+    <ol id="others-list"></ol>
   </section>
 
   <section id="history" hidden>

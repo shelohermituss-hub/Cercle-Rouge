@@ -49,9 +49,9 @@ a { color: var(--lime); }
 .btn.outline { background: var(--raised); color: var(--ink); border-color: var(--line); }
 .btn[disabled] { opacity: .5; cursor: default; }
 h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 24px 0 8px; }
-#events { list-style: none; padding: 0; margin: 0; border-left: 2px solid var(--line); }
-#events li { padding: 4px 0 4px 12px; }
-#events time { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 8px; }
+#events, #others-list { list-style: none; padding: 0; margin: 0; border-left: 2px solid var(--line); }
+#events li, #others-list li { padding: 4px 0 4px 12px; }
+#events time, #others-list time { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 8px; }
 @media (prefers-reduced-motion: no-preference) {
   .banner.alert { animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 50% { border-color: var(--line); } }
@@ -60,3 +60,5 @@ table { width: 100%; border-collapse: collapse; font-size: .9rem; margin: 8px 0 
 th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
 th { color: var(--muted); }
 ul { padding-left: 20px; }
+
+[hidden] { display: none !important; }

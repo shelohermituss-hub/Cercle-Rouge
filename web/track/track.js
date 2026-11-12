@@ -8,6 +8,19 @@ const POLL_MS = 5000;
 
 const T = {
   fr: {
+    tripActive: (n) => `${n} est en trajet`,
+    tripLost: (n) => `Plus de nouvelles de ${n}`,
+    tripEnded: (n) => `Le trajet de ${n} est terminé`,
+    tripPlanned: (t) => `Arrivée prévue à ${t}`,
+    tripLostSub: (t) => `Dernier signal il y a ${t}. Essaie de l'appeler.`,
+    tripNoPos: "Dernière position pas encore reçue.",
+    mode: { WALK: "À pied", CAR: "En voiture", TAP_TAP: "En tap-tap", TAXI: "En taxi", MOTO: "À moto" },
+    battery: (p) => `Batterie ${p} %`,
+    devOnline: "Connecté à Internet",
+    devOffline: "Sans Internet",
+    deviceAge: (a) => `mis à jour il y a ${a}`,
+    others: "Ce que les autres proches ont fait",
+    otherAct: { TOOK_CONTACT: "a pris contact", FALSE_ALARM: "dit que c'est une fausse alerte", CALLED_EMERGENCY: "a appelé les secours" },
     loading: "Chargement…",
     invalid: "Lien invalide ou expiré",
     invalidSub: "Ce lien ne fonctionne plus. Si tu es inquiet, appelle la personne ou le 114.",
@@ -43,6 +56,19 @@ const T = {
     sec: "s", min: "min", h: "h",
   },
   ht: {
+    tripActive: (n) => `${n} nan yon trajè`,
+    tripLost: (n) => `Pa gen nouvèl ${n} ankò`,
+    tripEnded: (n) => `Trajè ${n} fini`,
+    tripPlanned: (t) => `L ap rive a ${t}`,
+    tripLostSub: (t) => `Dènye siyal gen ${t}. Eseye rele l.`,
+    tripNoPos: "Dènye pozisyon an poko resevwa.",
+    mode: { WALK: "A pye", CAR: "Nan machin", TAP_TAP: "Nan tap-tap", TAXI: "Nan taksi", MOTO: "Sou moto" },
+    battery: (p) => `Batri ${p} %`,
+    devOnline: "Konekte sou Entènèt",
+    devOffline: "San Entènèt",
+    deviceAge: (a) => `mizajou gen ${a}`,
+    others: "Sa lòt moun yo fè",
+    otherAct: { TOOK_CONTACT: "pran kontak", FALSE_ALARM: "di se yon fo alèt", CALLED_EMERGENCY: "rele sekou" },
     loading: "N ap chaje…",
     invalid: "Lyen an pa bon oswa li ekspire",
     invalidSub: "Lyen sa a pa mache ankò. Si w enkyè, rele moun nan oswa 114.",
@@ -78,6 +104,19 @@ const T = {
     sec: "s", min: "min", h: "è",
   },
   en: {
+    tripActive: (n) => `${n} is on a trip`,
+    tripLost: (n) => `No news from ${n}`,
+    tripEnded: (n) => `${n}'s trip has ended`,
+    tripPlanned: (t) => `Expected arrival at ${t}`,
+    tripLostSub: (t) => `Last signal ${t} ago. Try calling them.`,
+    tripNoPos: "Last position not received yet.",
+    mode: { WALK: "On foot", CAR: "By car", TAP_TAP: "By tap-tap", TAXI: "By taxi", MOTO: "By motorbike" },
+    battery: (p) => `Battery ${p}%`,
+    devOnline: "Online",
+    devOffline: "No Internet",
+    deviceAge: (a) => `updated ${a} ago`,
+    others: "What the other contacts did",
+    otherAct: { TOOK_CONTACT: "made contact", FALSE_ALARM: "says it is a false alarm", CALLED_EMERGENCY: "called emergency services" },
     loading: "Loading…",
     invalid: "Invalid or expired link",
     invalidSub: "This link no longer works. If you are worried, call the person or 114.",
@@ -158,9 +197,41 @@ function banner(kind, title, sub) {
   $("subtitle").textContent = sub || "";
 }
 
+function deviceLine() {
+  if (data.battery == null && data.online == null) return "";
+  const parts = [];
+  if (data.battery != null) parts.push(t().battery(data.battery));
+  if (data.online != null) parts.push(data.online ? t().devOnline : t().devOffline);
+  if (data.device_at) parts.push(t().deviceAge(ago(data.device_at)));
+  return parts.join(" · ");
+}
+
+function renderTrip() {
+  const name = data.name || "?";
+  const open = data.status === "active" || data.status === "lost";
+  if (data.status === "active") {
+    banner("verify", t().tripActive(name), [t().mode[data.mode] || "", t().tripPlanned(hhmm(data.planned_arrival))].filter(Boolean).join(" · "));
+  } else if (data.status === "lost") {
+    banner("alert", t().tripLost(name), t().tripLostSub(ago(data.last_heartbeat_at)));
+  } else if (data.status === "ended") {
+    banner("done", t().tripEnded(name), data.ended_at ? hhmm(data.ended_at) : "");
+  } else {
+    banner("wait", t().revoked, "");
+  }
+  $("live").hidden = !open;
+  $("actions").hidden = true;
+  $("act-msg").textContent = "";
+  $("device").textContent = data.battery != null ? t().battery(data.battery) + " · " + t().deviceAge(ago(data.last_heartbeat_at)) : "";
+  if (open) renderPosition(true);
+  $("history").hidden = true;
+  $("others").hidden = true;
+}
+
 function render() {
   applyStatic();
   if (!data) return;
+  if (data.kind === "trip") return renderTrip();
+  $("actions").hidden = false;
   const name = data.name || "?";
   const open = data.status === "open";
   if (open) {
@@ -177,11 +248,23 @@ function render() {
   }
 
   $("live").hidden = !open;
-  if (open) renderPosition();
+  $("device").textContent = open ? deviceLine() : "";
+  if (open) renderPosition(false);
   $("act-msg").textContent = msgKey ? t()[msgKey] : "";
   const actions = data.actions || [];
   $("act-contact").disabled = actions.includes("TOOK_CONTACT");
   $("act-false").disabled = actions.includes("FALSE_ALARM");
+
+  const others = data.others || [];
+  $("others").hidden = others.length === 0 || !open;
+  $("others-list").replaceChildren(...others.map((o) => {
+    const li = document.createElement("li");
+    const time = document.createElement("time");
+    time.dateTime = o.at;
+    time.textContent = hhmm(o.at);
+    li.append(time, document.createTextNode(`${o.label || "?"} ${t().otherAct[o.action] || o.action}`));
+    return li;
+  }));
 
   const events = data.events || [];
   $("history").hidden = events.length === 0;
@@ -195,10 +278,10 @@ function render() {
   }));
 }
 
-function renderPosition() {
+function renderPosition(trip) {
   const p = (data.positions || [])[0];
   if (!p) {
-    $("pos-text").textContent = t().noPos;
+    $("pos-text").textContent = trip ? t().tripNoPos : t().noPos;
     $("map").hidden = true;
     $("open-map").hidden = true;
     return;
@@ -249,7 +332,7 @@ async function poll() {
     }
     data = r;
     render();
-    if (data.status === "open") timer = setTimeout(poll, POLL_MS);
+    if (data.status === "open" || data.status === "active" || data.status === "lost") timer = setTimeout(poll, POLL_MS);
   } catch {
     if (!data) banner("wait", t().offline, "");
     else $("pos-text").textContent = t().offline;
@@ -280,7 +363,7 @@ document.querySelectorAll(".langs button").forEach((b) => b.addEventListener("cl
   render();
   if (!data) applyStatic();
 }));
-document.addEventListener("visibilitychange", () => { if (!document.hidden && data && data.status === "open") poll(); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && data && ["open", "active", "lost"].includes(data.status)) poll(); });
 
 applyStatic();
 if (/^[A-Za-z0-9_-]{32}$/.test(token)) {

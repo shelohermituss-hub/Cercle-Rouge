@@ -216,6 +216,13 @@
     <string name="trip_stop">M ap fè yon kanpe</string>
     <string name="trip_stop_minutes">%1$d min</string>
     <string name="trip_arrived">Mwen rive</string>
+    <string name="trip_watch">Avèti moun pa m yo si telefòn mwen pa bay nouvèl</string>
+    <string name="trip_watch_ex">Pandan trajè a, sèvè a resevwa pozisyon ou chak 2 minit. Si pa gen nouvèl pandan 10 minit, jiska 3 moun ki te aksepte resevwa yon SMS ak dènye pozisyon ou. Tout efase lè trajè a fini.</string>
+    <string name="trip_watch_need_phone">Pou sèvè a ka avèti moun pa w yo si telefòn ou pa bay nouvèl, verifye nimewo w (Paramèt, Nimewo mwen).</string>
+    <string name="trip_watch_starting">Siveyans sèvè a : koneksyon…</string>
+    <string name="trip_watch_on">Siveyans sèvè a aktive. Moun k ap resevwa avètisman si telefòn nan pa bay nouvèl : %1$d</string>
+    <string name="trip_watch_no_recipients">Pa gen moun ki aksepte envitasyon w lan ankò : siveyans sèvè a pa aktive.</string>
+    <string name="trip_watch_failed">Siveyans sèvè a pa disponib (%1$s). Trajè a ap kontinye sou telefòn nan.</string>
     <string name="trip_privacy">Okenn pwen pa kenbe : se dènye pozisyon yo sèlman ki rete nan memwa, epi yo efase lè ou rive.</string>
     <string name="sat_trip_active">An kou</string>
     <string name="action_retry">Eseye ankò</string>

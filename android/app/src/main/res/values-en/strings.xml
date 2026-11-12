@@ -215,6 +215,13 @@
     <string name="trip_stop">I\'m making a stop</string>
     <string name="trip_stop_minutes">%1$d min</string>
     <string name="trip_arrived">I\'ve arrived</string>
+    <string name="trip_watch">Alert my contacts if my phone goes silent</string>
+    <string name="trip_watch_ex">During the trip, the server receives your position every 2 min. With no news for 10 min, up to 3 contacts who accepted get an SMS with your last position. Everything is erased when the trip ends.</string>
+    <string name="trip_watch_need_phone">To let the server alert your contacts if your phone goes silent, verify your number (Settings, My number).</string>
+    <string name="trip_watch_starting">Server monitoring: connecting…</string>
+    <string name="trip_watch_on">Server monitoring on. Contacts alerted if the phone goes silent: %1$d</string>
+    <string name="trip_watch_no_recipients">No contact has accepted your invitation yet: server monitoring is not active.</string>
+    <string name="trip_watch_failed">Server monitoring unavailable (%1$s). The trip continues on the phone.</string>
     <string name="trip_privacy">No points are kept: only the latest positions stay in memory, erased on arrival.</string>
     <string name="sat_trip_active">Active</string>
     <string name="action_retry">Try again</string>

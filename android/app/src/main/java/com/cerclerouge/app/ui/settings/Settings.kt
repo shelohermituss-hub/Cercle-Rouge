@@ -505,7 +505,7 @@ private fun Section(title: Int) {
 }
 
 @Composable
-private fun Toggle(title: Int, detail: Int, checked: Boolean, onChange: (Boolean) -> Unit) {
+internal fun Toggle(title: Int, detail: Int, checked: Boolean, onChange: (Boolean) -> Unit) {
     val c = Cr.colors
     PxPanel(
         Modifier.fillMaxWidth().toggleable(checked, role = Role.Switch, onValueChange = onChange),

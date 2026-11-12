@@ -216,6 +216,13 @@
     <string name="trip_stop">Je fais un arrêt</string>
     <string name="trip_stop_minutes">%1$d min</string>
     <string name="trip_arrived">Je suis arrivé·e</string>
+    <string name="trip_watch">Prévenir mes proches si mon téléphone se tait</string>
+    <string name="trip_watch_ex">Pendant le trajet, le serveur reçoit ta position toutes les 2 min. Sans nouvelles pendant 10 min, jusqu\'à 3 proches qui ont accepté reçoivent un SMS avec ta dernière position. Tout est effacé à la fin du trajet.</string>
+    <string name="trip_watch_need_phone">Pour que le serveur prévienne tes proches si ton téléphone se tait, vérifie ton numéro (Réglages, Mon numéro).</string>
+    <string name="trip_watch_starting">Surveillance par le serveur : connexion…</string>
+    <string name="trip_watch_on">Surveillance par le serveur active. Proches prévenus si le téléphone se tait : %1$d</string>
+    <string name="trip_watch_no_recipients">Aucun proche n\'a encore accepté ton invitation : la surveillance par le serveur n\'est pas active.</string>
+    <string name="trip_watch_failed">Surveillance par le serveur indisponible (%1$s). Le trajet continue sur le téléphone.</string>
     <string name="trip_privacy">Aucun point n\'est gardé : seules les dernières positions restent en mémoire et sont effacées à l\'arrivée.</string>
     <string name="sat_trip_active">En cours</string>
     <string name="action_retry">Réessayer</string>

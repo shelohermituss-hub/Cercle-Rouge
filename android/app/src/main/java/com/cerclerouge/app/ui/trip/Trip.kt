@@ -53,6 +53,8 @@ import com.cerclerouge.app.R
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.protection.UiEvent
 import com.cerclerouge.app.security.SecuritySettings
+import com.cerclerouge.app.server.TripWatch
+import com.cerclerouge.app.server.WatchStatus
 import com.cerclerouge.app.trip.AddressSearch
 import com.cerclerouge.app.trip.Place
 import com.cerclerouge.app.trip.PlacesRepository
@@ -68,6 +70,7 @@ import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.home.LiveMap
 import com.cerclerouge.app.ui.home.PinDialog
 import com.cerclerouge.app.ui.home.message
+import com.cerclerouge.app.ui.settings.Toggle
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
 import com.cerclerouge.location.Geo
@@ -109,10 +112,13 @@ class TripViewModel @Inject constructor(
     private val search: AddressSearch,
     private val pins: PinRepository,
     private val security: SecuritySettings,
+    private val watch: TripWatch,
     val controller: ProtectionController,
     private val clock: Clock
 ) : ViewModel() {
     val trip: StateFlow<TripUi?> = trips.trip
+    val watchEnabled: StateFlow<Boolean> = watch.enabled
+    val watchStatus: StateFlow<WatchStatus> = watch.status
     private val _ui = MutableStateFlow(PlannerUi())
     val ui: StateFlow<PlannerUi> = _ui
     val searchAvailable: Boolean get() = search.available
@@ -166,6 +172,11 @@ class TripViewModel @Inject constructor(
     suspend fun biometric() = security.biometric()
 
     suspend fun pinConfigured() = pins.isConfigured()
+
+    /** S4.07 : la surveillance serveur demande un numéro vérifié. */
+    suspend fun watchAvailable() = watch.available()
+
+    fun setWatch(on: Boolean) = viewModelScope.launch { watch.setEnabled(on) }
 
     /** Faux si la position de départ manque : l'écran l'explique. */
     fun start(pin: String?, biometricVerified: Boolean = false): Boolean {
@@ -277,6 +288,7 @@ private fun Planner(vm: TripViewModel) {
         Text(stringResource(R.string.trip_mode).uppercase(), style = PxType.label, color = c.lime)
         ModePicker(s.mode, vm::mode)
         ArrivalPicker(s.minutes, vm::shift)
+        WatchChoice(vm)
         if (!s.originLoading && s.origin == null) {
             Text(noPosition, style = PxType.label, color = c.warn, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             PxButton(stringResource(R.string.action_retry), { vm.refreshOrigin() }, variant = PxVariant.OUTLINE)
@@ -518,6 +530,7 @@ private fun ActiveTrip(vm: TripViewModel, t: TripUi) {
                 )
             }
         }
+        WatchLine(vm)
         PxButton(stringResource(R.string.trip_arrived), { askPin = true }, icon = PixelIcon.CHECK, tall = true)
         PxButton(stringResource(R.string.trip_stop), { stopChoice = true }, variant = PxVariant.OUTLINE, icon = PixelIcon.CLOCK)
         Text(stringResource(R.string.trip_privacy), style = PxType.caption, color = c.muted)
@@ -555,6 +568,38 @@ private fun ActiveTrip(vm: TripViewModel, t: TripUi) {
             }
         }
     }
+}
+
+/** S4.07 : opt-in « prévenir mes proches si mon téléphone se tait », possible seulement avec un numéro vérifié. */
+@Composable
+private fun WatchChoice(vm: TripViewModel) {
+    val c = Cr.colors
+    val on by vm.watchEnabled.collectAsState()
+    var available by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(Unit) { available = vm.watchAvailable() }
+    when (available) {
+        true -> Toggle(R.string.trip_watch, R.string.trip_watch_ex, on) { vm.setWatch(it) }
+        false -> Text(stringResource(R.string.trip_watch_need_phone), style = PxType.caption, color = c.muted)
+        null -> Unit
+    }
+}
+
+@Composable
+private fun WatchLine(vm: TripViewModel) {
+    val c = Cr.colors
+    val status by vm.watchStatus.collectAsState()
+    val (text, color) = when (val st = status) {
+        WatchStatus.Off -> return
+        WatchStatus.Starting -> stringResource(R.string.trip_watch_starting) to c.muted
+        is WatchStatus.On -> stringResource(R.string.trip_watch_on, st.recipients) to c.lime
+        is WatchStatus.Failed ->
+            if (st.code == "no_recipients") {
+                stringResource(R.string.trip_watch_no_recipients) to c.warn
+            } else {
+                stringResource(R.string.trip_watch_failed, st.code) to c.warn
+            }
+    }
+    Text(text, style = PxType.caption, color = color, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
 }
 
 private fun minutesLeft(arrival: Instant): Int = Duration.between(Instant.now(), arrival).toMinutes().toInt().coerceAtLeast(0)

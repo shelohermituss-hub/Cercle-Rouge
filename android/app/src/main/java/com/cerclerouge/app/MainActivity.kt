@@ -72,10 +72,11 @@ class AppViewModel @Inject constructor(
     // Instancié dès le démarrage : il suit l'état de la protection.
     val trips: TripController,
     val purge: EvidencePurge,
-    val health: DeviceHealth
+    val health: DeviceHealth,
+    val history: com.cerclerouge.app.history.HistoryRepository
 ) : ViewModel()
 
-private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN, VAULT, SETTINGS, WATCH }
+private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN, VAULT, SETTINGS, WATCH, HISTORY }
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() { // FragmentActivity : requis par BiometricPrompt (S7.02)
@@ -129,6 +130,7 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                             onListen = { screen = Screen.LISTEN },
                             onVault = { screen = Screen.VAULT },
                             onSettings = { screen = Screen.SETTINGS },
+                            onHistory = { screen = Screen.HISTORY },
                             sosRequested = sosRequested.value,
                             onSosConsumed = { sosRequested.value = false }
                         )
@@ -164,7 +166,15 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                         }
                         Screen.JOURNAL -> {
                             BackHandler { screen = Screen.HOME }
-                            Box(Modifier.safeDrawingPadding()) { JournalScreen(app.log) { screen = Screen.HOME } }
+                            Box(Modifier.safeDrawingPadding()) {
+                                JournalScreen(app.log, onHistory = { screen = Screen.HISTORY }) { screen = Screen.HOME }
+                            }
+                        }
+                        Screen.HISTORY -> {
+                            BackHandler { screen = Screen.HOME }
+                            Box(Modifier.safeDrawingPadding()) {
+                                com.cerclerouge.app.ui.history.HistoryScreen(app.history) { screen = Screen.HOME }
+                            }
                         }
                     }
                 }

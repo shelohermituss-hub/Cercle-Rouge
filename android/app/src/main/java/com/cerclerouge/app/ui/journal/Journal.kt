@@ -41,7 +41,9 @@ import com.cerclerouge.app.ui.components.BarChart
 import com.cerclerouge.app.ui.components.CountUp
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PixelIconView
+import com.cerclerouge.app.ui.components.PxButton
 import com.cerclerouge.app.ui.components.PxPanel
+import com.cerclerouge.app.ui.components.PxVariant
 import com.cerclerouge.app.ui.components.RadarChart
 import com.cerclerouge.app.ui.components.TERM_BG
 import com.cerclerouge.app.ui.components.TERM_BLUE
@@ -161,7 +163,7 @@ private fun granted(context: Context, permission: String) = context.checkSelfPer
 
 /** Journal : chiffres clés, histogramme 7 jours, radar de préparation, terminal des événements (P7, R-PE-03). */
 @Composable
-fun JournalScreen(log: EventLog, onBack: () -> Unit) {
+fun JournalScreen(log: EventLog, onHistory: () -> Unit = {}, onBack: () -> Unit) {
     var entries by remember { mutableStateOf(emptyList<ChainedEntry>()) }
     var broken by remember { mutableStateOf<Long?>(null) }
     LaunchedEffect(Unit) {
@@ -169,12 +171,12 @@ fun JournalScreen(log: EventLog, onBack: () -> Unit) {
         entries = log.latest(500).filter { it.type != "engines" && humanize(it) != R.string.log_other }
         broken = log.firstBreak()
     }
-    JournalContent(entries, broken, onBack)
+    JournalContent(entries, broken, onBack, onHistory)
 }
 
 /** Contenu du journal, séparé du chargement pour pouvoir être testé avec des entrées fabriquées. */
 @Composable
-internal fun JournalContent(entries: List<ChainedEntry>, broken: Long?, onBack: () -> Unit) {
+internal fun JournalContent(entries: List<ChainedEntry>, broken: Long?, onBack: () -> Unit, onHistory: () -> Unit = {}) {
     val c = Cr.colors
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -206,6 +208,7 @@ internal fun JournalContent(entries: List<ChainedEntry>, broken: Long?, onBack: 
                     PixelIconView(if (broken == null) PixelIcon.LOCK else PixelIcon.ALERT, 16.dp, if (broken == null) c.lime else c.danger)
                     Text(status.uppercase(), style = PxType.label, color = if (broken == null) c.lime else c.danger)
                 }
+                PxButton(stringResource(R.string.history_open), onHistory, variant = PxVariant.OUTLINE, icon = PixelIcon.CLOCK)
                 Text(stringResource(R.string.journal_week).uppercase(), style = PxType.label, color = c.muted)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Stat(stringResource(R.string.journal_kpi_on), activations.sum(), Modifier.weight(1f))

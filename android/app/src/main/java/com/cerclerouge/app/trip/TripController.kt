@@ -62,7 +62,8 @@ class TripController @Inject constructor(
     private val tracker: LocationTracker,
     private val locationProvider: LocationProvider,
     private val log: EventLog,
-    private val clock: Clock
+    private val clock: Clock,
+    private val history: com.cerclerouge.app.history.HistoryRepository
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
@@ -128,11 +129,15 @@ class TripController @Inject constructor(
         when {
             p == ProtectionState.TRIP_ACTIVE && monitor == null -> pending?.let { begin(it) }
             // Les états d'alerte ne terminent pas le trajet : on revient à TRIP_ACTIVE après « Je vais bien ».
-            (p == ProtectionState.OFF || p.isArmed && p != ProtectionState.TRIP_ACTIVE) && monitor != null -> end()
+            (p == ProtectionState.OFF || p.isArmed && p != ProtectionState.TRIP_ACTIVE) && monitor != null -> end(
+                arrived =
+                p != ProtectionState.OFF
+            )
         }
     }
 
-    private fun begin(plan: TripPlan) {
+    private suspend fun begin(plan: TripPlan) {
+        history.tripStarted(plan.startedAt.toEpochMilli(), plan.mode.name)
         pending = null
         activePlan = plan
         val m = TripMonitor(plan)
@@ -144,8 +149,9 @@ class TripController @Inject constructor(
         publish()
     }
 
-    private suspend fun end() {
+    private suspend fun end(arrived: Boolean) {
         val plan = activePlan
+        plan?.let { history.tripEnded(it.startedAt.toEpochMilli(), arrived) }
         val minutes = plan?.let { Duration.between(it.startedAt, clock.instant()).toMinutes() }
         // Fin du trajet : plus aucun point (R-LE-04). Seul un résumé sans coordonnées reste au journal.
         log.append("trip", "ended mode=${plan?.mode} minutes=$minutes incidents=$incidents")

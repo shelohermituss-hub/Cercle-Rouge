@@ -156,7 +156,7 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 
 ### 1.10 Accueil conforme (PDF 16.2) et historique (PDF 16.1)
 - 🤖 Accueil : bandeau d'état **GPS, réseau, batterie** (depuis `DeviceStatus`), **contacts d'urgence** (prénoms + statut), **dernier trajet**, **dernière alerte** ; garder SOS, ON/OFF, statut de l'écoute.
-- 🤖 Room : tables `alert_history` et `trip_history` (résumés sans coordonnées : heure, durée, raison, niveau, issue) ; écran **Historique des alertes** (+ trajets) ; effacement possible.
+- ✅ (fait) Room : table `history` (alertes + trajets) (résumés sans coordonnées : heure, durée, raison, niveau, issue) ; écran **Historique des alertes** (+ trajets) ; effacement possible.
 - ⏱ 3 j.
 
 ### 1.11 Modes de protection (PDF 5.2)

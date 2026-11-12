@@ -130,6 +130,8 @@ class HomeViewModel @Inject constructor(
     val security: SecuritySettings,
     val audio: AudioListener,
     val brain: com.cerclerouge.app.protection.RiskBrain,
+    val device: com.cerclerouge.app.device.DeviceMonitor,
+    val history: com.cerclerouge.app.history.HistoryRepository,
     private val guardians: GuardianSync
 ) : ViewModel() {
     init {
@@ -162,6 +164,7 @@ fun HomeScreen(
     onListen: () -> Unit = {},
     onVault: () -> Unit = {},
     onSettings: () -> Unit = {},
+    onHistory: () -> Unit = {},
     sosRequested: Boolean = false,
     onSosConsumed: () -> Unit = {}
 ) {
@@ -174,6 +177,13 @@ fun HomeScreen(
     val activity by vm.audio.activity.collectAsState()
     val audioStatus by vm.audio.status.collectAsState()
     val decision by vm.brain.decision.collectAsState()
+    val device by vm.device.status.collectAsState()
+    var lastAlert by remember { mutableStateOf<com.cerclerouge.privacy.db.HistoryEntity?>(null) }
+    var lastTrip by remember { mutableStateOf<com.cerclerouge.privacy.db.HistoryEntity?>(null) }
+    LaunchedEffect(state.protection, state.alert?.id) {
+        lastAlert = vm.history.last(com.cerclerouge.app.history.HistoryRepository.ALERT)
+        lastTrip = vm.history.last(com.cerclerouge.app.history.HistoryRepository.TRIP)
+    }
     val contactsReady = book.contacts.count { it.status == ContactStatus.ACCEPTED }
     var sos by remember { mutableStateOf(SosStep.NONE) }
     var pinFor by remember { mutableStateOf<Guarded?>(null) }
@@ -273,7 +283,13 @@ fun HomeScreen(
                 map = { armed, showMe, modifier -> LiveMap(armed, showMe, modifier, coveredBottom = 28.dp) },
                 activity = activity,
                 audioStatus = audioStatus,
-                decision = decision
+                decision = decision,
+                device = device,
+                contactNames = book.contacts.filter { it.status == ContactStatus.ACCEPTED }.sortedBy { it.position }
+                    .map { it.name.substringBefore(' ') },
+                lastAlert = lastAlert,
+                lastTrip = lastTrip,
+                onHistory = onHistory
             )
         }
     }
@@ -322,7 +338,12 @@ internal fun HomeConsole(
     onSettings: () -> Unit = onSoon,
     activity: ListenActivity = ListenActivity(),
     audioStatus: AudioStatus = AudioStatus.STOPPED,
-    decision: com.cerclerouge.alert.Decision? = null
+    decision: com.cerclerouge.alert.Decision? = null,
+    device: com.cerclerouge.sensor.DeviceStatus = com.cerclerouge.sensor.DeviceStatus(),
+    contactNames: List<String> = emptyList(),
+    lastAlert: com.cerclerouge.privacy.db.HistoryEntity? = null,
+    lastTrip: com.cerclerouge.privacy.db.HistoryEntity? = null,
+    onHistory: () -> Unit = {}
 ) {
     val c = Cr.colors
     val armed = state.protection.isArmed
@@ -424,9 +445,65 @@ internal fun HomeConsole(
             }
         }
         Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatusStrip(device, contactNames, lastAlert, lastTrip, onHistory)
             ListenPanels(activity, audioStatus, armed, onOpen = onListen, decision = decision)
             SosBar(onTrigger = onSosTrigger, onTap = onSosTap)
             PxNavBar(nav, selected = 0)
+        }
+    }
+}
+
+/**
+ * Bandeau d'état de l'accueil (PDF 16.2) : GPS, réseau, batterie, proches prêts, dernier trajet, dernière alerte.
+ * Les points à régler (GPS coupé, pas de réseau, batterie faible, aucun proche) sont en orange ; toucher ouvre l'historique.
+ */
+@Composable
+internal fun StatusStrip(
+    device: com.cerclerouge.sensor.DeviceStatus,
+    contactNames: List<String>,
+    lastAlert: com.cerclerouge.privacy.db.HistoryEntity?,
+    lastTrip: com.cerclerouge.privacy.db.HistoryEntity?,
+    onHistory: () -> Unit
+) {
+    val c = Cr.colors
+    val net = when {
+        device.network == com.cerclerouge.sensor.NetworkKind.NONE -> stringResource(R.string.status_net_none)
+        !device.validated -> stringResource(R.string.status_net_limited)
+        device.network == com.cerclerouge.sensor.NetworkKind.WIFI -> stringResource(R.string.status_net_wifi)
+        else -> stringResource(R.string.status_net_cell)
+    }
+    val battery = device.batteryPct?.let { stringResource(R.string.status_battery, it) } ?: stringResource(R.string.status_battery_unknown)
+    val names = when {
+        contactNames.isEmpty() -> stringResource(R.string.status_contacts_none)
+        contactNames.size <= 2 -> contactNames.joinToString(", ")
+        else -> stringResource(R.string.status_contacts_more, contactNames.take(2).joinToString(", "), contactNames.size - 2)
+    }
+    val never = stringResource(R.string.status_never)
+    val tripAt = lastTrip?.let { com.cerclerouge.app.ui.history.formatWhen(it.startedAtMillis) } ?: never
+    val alertAt = lastAlert?.let { com.cerclerouge.app.ui.history.formatWhen(it.startedAtMillis) } ?: never
+    PxPanel(
+        Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onHistory),
+        fill = c.surface,
+        padding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    stringResource(if (device.gpsEnabled) R.string.status_gps_on else R.string.status_gps_off),
+                    style = PxType.caption,
+                    color = if (device.gpsEnabled) c.lime else c.warn
+                )
+                Text("·", style = PxType.caption, color = c.muted)
+                Text(net, style = PxType.caption, color = if (device.network == com.cerclerouge.sensor.NetworkKind.NONE) c.warn else c.lime)
+                Text("·", style = PxType.caption, color = c.muted)
+                Text(battery, style = PxType.caption, color = if (device.lowBattery) c.warn else c.lime)
+            }
+            Text(
+                stringResource(R.string.status_contacts, names),
+                style = PxType.caption,
+                color = if (contactNames.isEmpty()) c.warn else c.muted
+            )
+            Text(stringResource(R.string.status_last, tripAt, alertAt), style = PxType.caption, color = c.muted)
         }
     }
 }

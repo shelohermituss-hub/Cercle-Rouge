@@ -69,6 +69,7 @@ class ProtectionController @Inject constructor(
     private val keywords: com.cerclerouge.app.audio.KeywordRepository,
     private val recorder: EvidenceRecorder,
     private val listen: ListenSettings,
+    private val history: com.cerclerouge.app.history.HistoryRepository,
     db: PrivacyDatabase
 ) {
     private val settings = db.settings()
@@ -140,6 +141,7 @@ class ProtectionController @Inject constructor(
             // R-SM-01 / R-AL-02 : l'état est écrit AVANT l'exécution des effets. Si le processus meurt entre les deux,
             // la restauration rejoue les minuteries ; les envois sont idempotents (file d'attente).
             settings.put(SettingEntity(STATE_KEY, EngineStateCodec.encode(tr.state)))
+            history.alertChanged(_state.value.alert, tr.state.alert, userSafe = input is Input.ImSafe)
             _state.value = tr.state
             tr.effects
         }

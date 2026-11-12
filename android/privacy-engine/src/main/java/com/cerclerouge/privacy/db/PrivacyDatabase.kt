@@ -109,6 +109,38 @@ data class EvidenceSegmentEntity(
     val entryHash: String
 )
 
+/**
+ * Résumé d'une alerte ou d'un trajet terminé ou en cours (PDF 16.1) : heures, raison, niveau, issue. **Jamais de coordonnées.**
+ * `kind` : « alert » ou « trip ». `reason` : motif de l'alerte (Reason) ou mode du trajet. `outcome` : safe, ended, arrived, stopped.
+ */
+@Entity(tableName = "history")
+data class HistoryEntity(
+    @PrimaryKey val id: String,
+    val kind: String,
+    val startedAtMillis: Long,
+    val endedAtMillis: Long?,
+    val reason: String?,
+    val level: Int?,
+    val outcome: String?
+)
+
+@Dao
+interface HistoryDao {
+    @Upsert suspend fun put(e: HistoryEntity)
+
+    @Query("SELECT * FROM history WHERE id = :id")
+    suspend fun get(id: String): HistoryEntity?
+
+    @Query("SELECT * FROM history ORDER BY startedAtMillis DESC LIMIT :limit")
+    suspend fun latest(limit: Int): List<HistoryEntity>
+
+    @Query("SELECT * FROM history WHERE kind = :kind ORDER BY startedAtMillis DESC LIMIT 1")
+    suspend fun last(kind: String): HistoryEntity?
+
+    @Query("DELETE FROM history")
+    suspend fun clear()
+}
+
 @Dao
 interface EvidenceDao {
     @Query("SELECT * FROM evidence_alerts ORDER BY openedAtMillis DESC")
@@ -233,9 +265,9 @@ interface OutboxDao {
 @Database(
     entities = [
         EventLogEntity::class, ConsentEntity::class, SettingEntity::class, ContactEntity::class, OutboxEntity::class,
-        EvidenceAlertEntity::class, EvidenceSegmentEntity::class
+        EvidenceAlertEntity::class, EvidenceSegmentEntity::class, HistoryEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class PrivacyDatabase : RoomDatabase() {
@@ -251,8 +283,20 @@ abstract class PrivacyDatabase : RoomDatabase() {
 
     abstract fun evidence(): EvidenceDao
 
+    abstract fun history(): HistoryDao
+
     companion object {
         const val NAME = "cercle-rouge.db"
+
+        /** v5 → v6 : historique des alertes et des trajets (PDF 16.1), sans coordonnées. Tout le reste est conservé. */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `history` (`id` TEXT NOT NULL, `kind` TEXT NOT NULL, `startedAtMillis` INTEGER NOT NULL, " +
+                        "`endedAtMillis` INTEGER, `reason` TEXT, `level` INTEGER, `outcome` TEXT, PRIMARY KEY(`id`))"
+                )
+            }
+        }
 
         /** v4 → v5 : e-mail et relation des contacts de confiance (PDF 12.1). Tout le reste est conservé. */
         val MIGRATION_4_5 = object : Migration(4, 5) {
@@ -316,7 +360,7 @@ abstract class PrivacyDatabase : RoomDatabase() {
             }
             return Room.databaseBuilder(context, PrivacyDatabase::class.java, NAME)
                 .openHelperFactory(factory)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .build()
         }
     }

@@ -42,6 +42,7 @@ class DataControl @Inject constructor(
         audio.restartWithKeywords(emptyList())
         listOf("trip.favorites", "trip.search.consent", "trip.route.consent").forEach { db.settings().remove(it) }
         db.eventLog().deleteOlderThan(Long.MAX_VALUE)
+        db.history().clear()
         log.append("privacy", "emergency_wipe") // seule trace : l'effacement lui-même, sans contenu
     }
 

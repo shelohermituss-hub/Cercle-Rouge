@@ -207,6 +207,22 @@ class ScreenshotTest {
 
     private fun lateTonight() = java.time.LocalDate.now().atTime(23, 50).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
 
+    /** Historique : une alerte close, un trajet arrivé, un trajet en cours. */
+    @Test fun history() = capture("history") {
+        val now = System.currentTimeMillis()
+        fun h(id: String, kind: String, ago: Long, minutes: Long?, reason: String, level: Int?, outcome: String?) =
+            com.cerclerouge.privacy.db.HistoryEntity(id, kind, now - ago, minutes?.let { now - ago + it * 60_000 }, reason, level, outcome)
+        com.cerclerouge.app.ui.history.HistoryContent(
+            listOf(
+                h("a", "alert", 3_600_000, 12, "DISTRESS_KEYWORD", 2, "safe"),
+                h("t", "trip", 86_400_000, 25, "MOTO", null, "arrived"),
+                h("t2", "trip", 60_000, null, "WALK", null, null)
+            ),
+            onBack = {},
+            onClear = {}
+        )
+    }
+
     /** Journal avec des entrées réalistes sur plusieurs jours : ne doit pas planter. */
     @Test fun journal() = capture("journal") {
         val now = System.currentTimeMillis()

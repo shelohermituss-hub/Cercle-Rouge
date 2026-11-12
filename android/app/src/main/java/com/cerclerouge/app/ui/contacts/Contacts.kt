@@ -440,6 +440,13 @@ private fun channelLabel(ch: com.cerclerouge.contacts.Channel): Int = when (ch) 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 internal fun EditDialog(contact: TrustedContact, onDismiss: () -> Unit, onSave: (ContactEdit) -> Unit) {
+    Dialog(onDismissRequest = onDismiss) { EditPanel(contact, onDismiss, onSave) }
+}
+
+/** Contenu de la fiche (séparé de la fenêtre pour pouvoir être capturé en test). */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+internal fun EditPanel(contact: TrustedContact, onDismiss: () -> Unit, onSave: (ContactEdit) -> Unit) {
     val c = Cr.colors
     var name by remember { mutableStateOf(contact.name) }
     var email by remember { mutableStateOf(contact.email.orEmpty()) }
@@ -447,55 +454,53 @@ internal fun EditDialog(contact: TrustedContact, onDismiss: () -> Unit, onSave: 
     var role by remember { mutableStateOf(contact.role) }
     var group by remember { mutableStateOf(contact.group) }
     var channels by remember { mutableStateOf(contact.channels.filter { it != com.cerclerouge.contacts.Channel.PUSH }.toSet()) }
-    Dialog(onDismissRequest = onDismiss) {
-        PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(stringResource(R.string.contacts_edit).uppercase(), style = PxType.title)
-                Text(contact.phone.value, style = PxType.caption, color = c.muted)
-                Field(name, { name = it.take(ContactBook.MAX_NAME) }, R.string.contacts_name, KeyboardType.Text)
-                Field(email, { email = it.take(120) }, R.string.contacts_email, KeyboardType.Email)
-                Field(relation, { relation = it.take(ContactBook.MAX_RELATION) }, R.string.contacts_relation, KeyboardType.Text)
-                Text(stringResource(R.string.contacts_role).uppercase(), style = PxType.label, color = c.lime)
-                androidx.compose.foundation.layout.FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    ContactRole.entries.forEach { r -> Pick(stringResource(roleLabel(r)), role == r) { role = r } }
+    PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
+        Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(stringResource(R.string.contacts_edit).uppercase(), style = PxType.title)
+            Text(contact.phone.value, style = PxType.caption, color = c.muted)
+            Field(name, { name = it.take(ContactBook.MAX_NAME) }, R.string.contacts_name, KeyboardType.Text)
+            Field(email, { email = it.take(120) }, R.string.contacts_email, KeyboardType.Email)
+            Field(relation, { relation = it.take(ContactBook.MAX_RELATION) }, R.string.contacts_relation, KeyboardType.Text)
+            Text(stringResource(R.string.contacts_role).uppercase(), style = PxType.label, color = c.lime)
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                ContactRole.entries.forEach { r -> Pick(stringResource(roleLabel(r)), role == r) { role = r } }
+            }
+            Text(stringResource(R.string.contacts_group).uppercase(), style = PxType.label, color = c.lime)
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                com.cerclerouge.contacts.ContactGroup.entries.forEach { g ->
+                    Pick(stringResource(groupLabel(g)), group == g) { group = g }
                 }
-                Text(stringResource(R.string.contacts_group).uppercase(), style = PxType.label, color = c.lime)
-                androidx.compose.foundation.layout.FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    com.cerclerouge.contacts.ContactGroup.entries.forEach { g ->
-                        Pick(stringResource(groupLabel(g)), group == g) { group = g }
+            }
+            Text(stringResource(R.string.contacts_channels).uppercase(), style = PxType.label, color = c.lime)
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                listOf(
+                    com.cerclerouge.contacts.Channel.SMS,
+                    com.cerclerouge.contacts.Channel.EMAIL,
+                    com.cerclerouge.contacts.Channel.WHATSAPP,
+                    com.cerclerouge.contacts.Channel.CALL
+                ).forEach { ch ->
+                    Pick(stringResource(channelLabel(ch)), ch in channels) {
+                        channels =
+                            if (ch in channels) channels - ch else channels + ch
                     }
                 }
-                Text(stringResource(R.string.contacts_channels).uppercase(), style = PxType.label, color = c.lime)
-                androidx.compose.foundation.layout.FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf(
-                        com.cerclerouge.contacts.Channel.SMS,
-                        com.cerclerouge.contacts.Channel.EMAIL,
-                        com.cerclerouge.contacts.Channel.WHATSAPP,
-                        com.cerclerouge.contacts.Channel.CALL
-                    ).forEach { ch ->
-                        Pick(stringResource(channelLabel(ch)), ch in channels) {
-                            channels =
-                                if (ch in channels) channels - ch else channels + ch
-                        }
-                    }
-                }
-                Text(stringResource(R.string.contacts_channels_ex), style = PxType.caption, color = c.muted)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Column(Modifier.weight(1f)) { PxButton(stringResource(R.string.action_cancel), onDismiss, variant = PxVariant.OUTLINE) }
-                    Column(Modifier.weight(1f)) {
-                        PxButton(stringResource(R.string.trip_save), {
-                            onSave(ContactEdit(name, email.ifBlank { null }, relation.ifBlank { null }, role, group, channels.toList()))
-                        })
-                    }
+            }
+            Text(stringResource(R.string.contacts_channels_ex), style = PxType.caption, color = c.muted)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.weight(1f)) { PxButton(stringResource(R.string.action_cancel), onDismiss, variant = PxVariant.OUTLINE) }
+                Column(Modifier.weight(1f)) {
+                    PxButton(stringResource(R.string.trip_save), {
+                        onSave(ContactEdit(name, email.ifBlank { null }, relation.ifBlank { null }, role, group, channels.toList()))
+                    })
                 }
             }
         }

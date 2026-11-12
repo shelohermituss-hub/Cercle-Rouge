@@ -146,7 +146,7 @@ class ScreenshotTest {
     }
 
     @Test fun contactEdit() = capture("contact-edit") {
-        com.cerclerouge.app.ui.contacts.EditDialog(
+        com.cerclerouge.app.ui.contacts.EditPanel(
             com.cerclerouge.contacts.TrustedContact(
                 "c1", "Tante Marie", com.cerclerouge.contacts.E164("+50937123456"), com.cerclerouge.contacts.ContactGroup.FAMILY,
                 com.cerclerouge.contacts.ContactRole.PRIMARY, com.cerclerouge.contacts.Language.HT,

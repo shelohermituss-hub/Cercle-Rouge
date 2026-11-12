@@ -425,4 +425,8 @@
     <string name="kw_max">5 mots-clés au maximum : supprimes-en un pour en ajouter un autre.</string>
     <string name="kw_enrolled">Mot-clé enregistré. Il est reconnu sur ce téléphone seulement.</string>
     <string name="kw_recording_elsewhere">Enregistrement d\'un mot-clé en cours, plus bas.</string>
+    <string name="settings_section_message">Message personnalisé</string>
+    <string name="settings_message_ex">Ajouté à la fin de chaque alerte envoyée à tes proches (pas aux tests). Par ex. : « Appelle d\'abord ma sœur. »</string>
+    <string name="settings_message_label">Ton message (80 caractères)</string>
+    <string name="settings_message_save">Enregistrer le message</string>
 </resources>

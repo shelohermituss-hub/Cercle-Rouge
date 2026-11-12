@@ -425,4 +425,8 @@
     <string name="kw_max">5 mo kle maksimòm : efase youn pou w ajoute yon lòt.</string>
     <string name="kw_enrolled">Mo kle a anrejistre. Se sèlman telefòn sa a ki rekonèt li.</string>
     <string name="kw_recording_elsewhere">Y ap anrejistre yon mo kle, pi ba a.</string>
+    <string name="settings_section_message">Mesaj pèsonèl</string>
+    <string name="settings_message_ex">L ap ajoute nan fen chak alèt ki voye bay moun ou yo (pa nan tès yo). Egzanp : « Rele sè m nan anvan. »</string>
+    <string name="settings_message_label">Mesaj ou (80 karaktè)</string>
+    <string name="settings_message_save">Anrejistre mesaj la</string>
 </resources>

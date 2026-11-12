@@ -1,5 +1,6 @@
 package com.cerclerouge.contacts
 
+import com.cerclerouge.domain.Confidence
 import com.cerclerouge.domain.Reason
 import java.time.Instant
 import java.time.ZoneId
@@ -21,8 +22,14 @@ class MessagesTest {
         test: Boolean = false,
         unconsented: Boolean = false,
         name: String = "Marie",
-        link: String? = "https://cr.example/s/AbC123"
-    ) = MessageInput(name, reason, kind, at, zone, position, link, lang, "a1b2c3d4-0000", test, unconsented, null)
+        link: String? = "https://cr.example/s/AbC123",
+        battery: Int? = 23,
+        online: Boolean? = false,
+        confidence: Confidence? = Confidence.MEDIUM,
+        callback: String? = null
+    ) = MessageInput(
+        name, reason, kind, at, zone, position, link, lang, "a1b2c3d4-0000", test, unconsented, null, battery, online, confidence, callback
+    )
 
     @Test fun gsm7TableMatchesTheSpecMeasurements() { // docs/produit/05 : é è à ù ì ò Ç passent, ê â î ô û « » ’ — non
         assertTrue(Gsm7.isGsm7("é è à ù ì ò Ç"))
@@ -90,6 +97,27 @@ class MessagesTest {
             assertTrue(m.startsWith("[TEST]"), m)
         }
         assertFalse(Messages.sms(input(Language.FR)).contains("[TEST]"))
+    }
+
+    @Test fun testMessageIsTheExactSentenceWithoutAlertBody() { // PDF 12.3
+        val fr = Messages.sms(input(Language.FR, kind = MessageKind.TEST, test = true))
+        assertTrue("Ceci est un test de Cercle Rouge. Aucune urgence réelle." in fr, fr)
+        assertFalse("demande de l'aide" in fr, fr)
+        assertFalse("18.5392" in fr, "pas de position dans un test : $fr")
+        assertTrue("No real emergency" in Messages.sms(input(Language.EN, kind = MessageKind.TEST, test = true)))
+    }
+
+    @Test fun alertCarriesBatteryNetworkConfidenceAndCallback() { // PDF 5.1, 10.3
+        val m = Messages.sms(input(Language.FR, reason = Reason.VIOLENCE_SOUND, callback = "+50937000000"))
+        assertTrue("Batterie 23%." in m && "Internet: non." in m && "Confiance: moyenne." in m && "Appeler: +50937000000." in m, m)
+        val sos = Messages.sms(input(Language.FR, battery = null, online = null, confidence = null))
+        assertFalse("Batterie" in sos || "Confiance" in sos || "Appeler" in sos, sos)
+    }
+
+    @Test fun protectionStoppedIsNeutral() { // R-SEC-03
+        val m = Messages.sms(input(Language.FR, kind = MessageKind.PROTECTION_STOPPED))
+        assertTrue("Marie a coupé sa protection à 22h14." in m, m)
+        assertFalse("aide" in m || "18.5392" in m, m)
     }
 
     @Test fun unconsentedContactsGetTheMentionAndStop() { // ADR-0015

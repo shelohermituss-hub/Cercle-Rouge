@@ -13,6 +13,11 @@ class Settings(private val dao: SettingDao) {
 
     suspend fun setRetention(value: Retention) = dao.put(SettingEntity(RETENTION, value.name))
 
+    /** Message personnalisé ajouté aux SMS d'alerte (PDF 5.1), 80 caractères au plus ; vide = aucun. */
+    suspend fun customMessage(): String = dao.get(CUSTOM_MESSAGE).orEmpty()
+
+    suspend fun setCustomMessage(text: String) = dao.put(SettingEntity(CUSTOM_MESSAGE, text.replace(Regex("\\s+"), " ").trim().take(80)))
+
     suspend fun onboardingDone(): Boolean = dao.get(ONBOARDING) == "done"
 
     suspend fun setOnboardingDone() = dao.put(SettingEntity(ONBOARDING, "done"))
@@ -20,5 +25,6 @@ class Settings(private val dao: SettingDao) {
     private companion object {
         const val RETENTION = "retention"
         const val ONBOARDING = "onboarding"
+        const val CUSTOM_MESSAGE = "alert.custom"
     }
 }

@@ -89,7 +89,9 @@ data class SettingsUi(
     /** Numéro en attente du code reçu par SMS. */
     val pendingPhone: String? = null,
     /** Demandes d'accord reçues en tant qu'adulte référent ; null = pas encore chargées. */
-    val guardianRequests: List<GuardianRequest>? = null
+    val guardianRequests: List<GuardianRequest>? = null,
+    /** Message personnalisé ajouté aux alertes (PDF 5.1). */
+    val customMessage: String = ""
 )
 
 @HiltViewModel
@@ -105,6 +107,11 @@ class SettingsViewModel @Inject constructor(
     private val _ui = MutableStateFlow(SettingsUi())
     val ui: StateFlow<SettingsUi> = _ui
 
+    fun setCustomMessage(text: String) = viewModelScope.launch {
+        settings.setCustomMessage(text)
+        _ui.update { it.copy(customMessage = settings.customMessage()) }
+    }
+
     init {
         viewModelScope.launch {
             _ui.update {
@@ -113,7 +120,8 @@ class SettingsViewModel @Inject constructor(
                     recording = evidence.audioEnabled(),
                     biometric = security.biometric(),
                     biometricAlerts = security.biometricForAlerts(),
-                    phone = api.verifiedPhone()
+                    phone = api.verifiedPhone(),
+                    customMessage = settings.customMessage()
                 )
             }
         }
@@ -299,6 +307,9 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             Toggle(R.string.vault_audio_toggle, R.string.vault_audio_toggle_ex, ui.recording) { vm.setRecording(it) }
             PxButton(stringResource(R.string.settings_listen), onListen, variant = PxVariant.OUTLINE, icon = PixelIcon.MIC)
 
+            Section(R.string.settings_section_message)
+            CustomMessage(ui.customMessage) { vm.setCustomMessage(it) }
+
             Section(R.string.settings_section_phone)
             PhoneSection(ui, vm)
 
@@ -411,6 +422,23 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
 }
 
 /** « Mon numéro » : vérification par code SMS (Vonage via Supabase Auth). Débloque le parcours parent et l'accord des proches. */
+@Composable
+private fun CustomMessage(saved: String, onSave: (String) -> Unit) {
+    val c = Cr.colors
+    var text by remember(saved) { mutableStateOf(saved) }
+    Text(stringResource(R.string.settings_message_ex), style = PxType.caption, color = c.muted)
+    OutlinedTextField(
+        value = text,
+        onValueChange = { text = it.take(80) },
+        label = { Text(stringResource(R.string.settings_message_label).uppercase(), style = PxType.label) },
+        textStyle = PxType.bodyBold,
+        shape = RectangleShape,
+        supportingText = { Text("${text.length}/80", style = PxType.caption) },
+        modifier = Modifier.fillMaxWidth()
+    )
+    PxButton(stringResource(R.string.settings_message_save), { onSave(text) }, variant = PxVariant.OUTLINE, enabled = text.trim() != saved)
+}
+
 @Composable
 private fun PhoneSection(ui: SettingsUi, vm: SettingsViewModel) {
     val c = Cr.colors

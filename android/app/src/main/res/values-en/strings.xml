@@ -424,4 +424,8 @@
     <string name="kw_max">5 keywords at most: delete one to add another.</string>
     <string name="kw_enrolled">Keyword saved. Only this phone recognises it.</string>
     <string name="kw_recording_elsewhere">A keyword is being recorded, below.</string>
+    <string name="settings_section_message">Custom message</string>
+    <string name="settings_message_ex">Added at the end of every alert sent to your contacts (not to tests). Example: “Call my sister first.”</string>
+    <string name="settings_message_label">Your message (80 characters)</string>
+    <string name="settings_message_save">Save the message</string>
 </resources>

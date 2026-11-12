@@ -1,11 +1,25 @@
 package com.cerclerouge.contacts
 
+import com.cerclerouge.domain.Confidence
 import com.cerclerouge.domain.Reason
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-enum class MessageKind { ALERT, TEST, CLOSURE_SAFE, CLOSURE_FALSE, CLOSURE_ENDED, PIN_FAILURES }
+enum class MessageKind {
+    ALERT,
+    TEST,
+    CLOSURE_SAFE,
+    CLOSURE_FALSE,
+    CLOSURE_ENDED,
+    PIN_FAILURES,
+
+    /** La protection ou le trajet a été arrêté (R-SEC-03) : avis neutre aux proches. */
+    PROTECTION_STOPPED,
+
+    /** Arrivée confirmée (PIN) d'un trajet suivi par les proches. */
+    TRIP_ARRIVED
+}
 
 /**
  * Données d'un SMS. `alertId` : seul un identifiant court part dans le message (R-ALR-02). `unconsented` : le destinataire
@@ -23,7 +37,15 @@ data class MessageInput(
     val alertId: String,
     val test: Boolean,
     val unconsented: Boolean,
-    val custom: String?
+    val custom: String?,
+    /** Batterie (%) au moment de l'envoi (PDF 5.1, 10.3), null si inconnue. */
+    val batteryPct: Int? = null,
+    /** Données mobiles ou Wi-Fi disponibles au moment de l'envoi, null si inconnu. */
+    val online: Boolean? = null,
+    /** Niveau de confiance d'une détection automatique (PDF 10.3) ; null pour un SOS ou une phrase secrète (certains). */
+    val confidence: Confidence? = null,
+    /** Numéro vérifié de l'utilisateur, pour le rappeler quand le SMS part du serveur (et non de son téléphone). */
+    val callback: String? = null
 )
 
 /**
@@ -37,23 +59,35 @@ object Messages {
         val id = m.alertId.replace("-", "").take(6)
         val time = DateTimeFormatter.ofPattern(t.timePattern).format(m.at.atZone(m.zone))
         val body = when (m.kind) {
-            MessageKind.ALERT, MessageKind.TEST -> buildString {
+            MessageKind.ALERT -> buildString {
                 append(t.alert(m.name, t.reason(m.reason), time))
+                m.confidence?.let { append(' ').append(t.confidence(it)) }
                 append(' ').append(position(m, t))
+                status(m, t)?.let { append(' ').append(it) }
+                m.callback?.let { append(' ').append(t.callback(it)) }
                 m.link?.let { append(' ').append(t.follow).append(' ').append(it) }
                 append(" Ref ").append(id)
             }
+            // Test d'alerte (PDF 12.3) : la phrase exacte, sans corps d'alerte, pour ne jamais faire croire à une urgence.
+            MessageKind.TEST -> "${t.testBody} Ref $id"
             MessageKind.CLOSURE_SAFE -> "${t.closureSafe(m.name)} Ref $id"
             MessageKind.CLOSURE_FALSE -> "${t.closureFalse(m.name)} Ref $id"
             MessageKind.CLOSURE_ENDED -> "${t.closureEnded(m.name)} Ref $id"
             MessageKind.PIN_FAILURES -> "${t.pinFailures(m.name)} Ref $id"
+            MessageKind.PROTECTION_STOPPED -> "${t.protectionStopped(m.name, time)} Ref $id"
+            MessageKind.TRIP_ARRIVED -> "${t.tripArrived(m.name, time)} Ref $id"
         }
         return buildString {
-            if (m.test || m.kind == MessageKind.TEST) append("[TEST] ").append(t.testNote).append(' ')
+            if (m.test || m.kind == MessageKind.TEST) append("[TEST] ")
             append(body)
-            if (m.unconsented) append(' ').append(t.unconsented(m.name))
-            m.custom?.takeIf { it.isNotBlank() }?.let { append(' ').append(it.trim()) }
+            if (m.unconsented && m.kind == MessageKind.ALERT) append(' ').append(t.unconsented(m.name))
+            if (m.kind == MessageKind.ALERT) m.custom?.takeIf { it.isNotBlank() }?.let { append(' ').append(it.trim()) }
         }
+    }
+
+    private fun status(m: MessageInput, t: Texts): String? {
+        if (m.batteryPct == null && m.online == null) return null
+        return t.status(m.batteryPct, m.online)
     }
 
     private fun position(m: MessageInput, t: Texts): String = when (val p = m.position) {
@@ -66,8 +100,13 @@ object Messages {
 private interface Texts {
     val timePattern: String
     val follow: String
-    val testNote: String
+    val testBody: String
     val notShared: String
+    fun status(battery: Int?, online: Boolean?): String
+    fun confidence(c: Confidence): String
+    fun callback(phone: String): String
+    fun protectionStopped(name: String, time: String): String
+    fun tripArrived(name: String, time: String): String
     fun alert(name: String, reason: String, time: String): String
     fun reason(r: Reason): String
     fun position(coords: String, accuracy: Int): String
@@ -92,8 +131,20 @@ private interface Texts {
 private object Fr : Texts {
     override val timePattern = "HH'h'mm"
     override val follow = "Suivi:"
-    override val testNote = "Ceci est un test."
+    override val testBody = "Ceci est un test de Cercle Rouge. Aucune urgence réelle."
     override val notShared = "Position non partagée."
+    override fun status(battery: Int?, online: Boolean?) = listOfNotNull(
+        battery?.let { "Batterie $it%." },
+        online?.let { if (it) "Internet: oui." else "Internet: non." }
+    ).joinToString(" ")
+    override fun confidence(c: Confidence) = "Confiance: ${when (c) {
+        Confidence.LOW -> "faible"
+        Confidence.MEDIUM -> "moyenne"
+        Confidence.HIGH -> "élevée"
+    }}."
+    override fun callback(phone: String) = "Appeler: $phone."
+    override fun protectionStopped(name: String, time: String) = "Cercle Rouge: $name a coupé sa protection à $time."
+    override fun tripArrived(name: String, time: String) = "Cercle Rouge: $name est bien arrivé(e) à $time."
     override fun alert(name: String, reason: String, time: String) = "Alerte Cercle Rouge: $name demande de l'aide ($reason). $time."
     override fun reason(r: Reason) = when (r) {
         Reason.SOS -> "SOS déclenché"
@@ -119,8 +170,20 @@ private object Fr : Texts {
 private object Ht : Texts {
     override val timePattern = "HH:mm"
     override val follow = "Swiv li:"
-    override val testNote = "Sa a se yon tès."
+    override val testBody = "Sa a se yon tès Cercle Rouge. Pa gen okenn ijans tout bon."
     override val notShared = "Pozisyon pa pataje."
+    override fun status(battery: Int?, online: Boolean?) = listOfNotNull(
+        battery?.let { "Batri $it%." },
+        online?.let { if (it) "Entènèt: wi." else "Entènèt: non." }
+    ).joinToString(" ")
+    override fun confidence(c: Confidence) = "Konfyans: ${when (c) {
+        Confidence.LOW -> "ba"
+        Confidence.MEDIUM -> "mwayen"
+        Confidence.HIGH -> "wo"
+    }}."
+    override fun callback(phone: String) = "Rele: $phone."
+    override fun protectionStopped(name: String, time: String) = "Cercle Rouge: $name kanpe pwoteksyon li a $time."
+    override fun tripArrived(name: String, time: String) = "Cercle Rouge: $name rive byen a $time."
     override fun alert(name: String, reason: String, time: String) = "Alèt Cercle Rouge: $name bezwen èd ($reason). $time."
     override fun reason(r: Reason) = when (r) {
         Reason.SOS -> "li voye SOS"
@@ -144,8 +207,16 @@ private object Ht : Texts {
 private object En : Texts {
     override val timePattern = "HH:mm"
     override val follow = "Follow:"
-    override val testNote = "This is a test."
+    override val testBody = "This is a Cercle Rouge test. No real emergency."
     override val notShared = "Location not shared."
+    override fun status(battery: Int?, online: Boolean?) = listOfNotNull(
+        battery?.let { "Battery $it%." },
+        online?.let { if (it) "Internet: yes." else "Internet: no." }
+    ).joinToString(" ")
+    override fun confidence(c: Confidence) = "Confidence: ${c.name.lowercase()}."
+    override fun callback(phone: String) = "Call: $phone."
+    override fun protectionStopped(name: String, time: String) = "Cercle Rouge: $name turned off their protection at $time."
+    override fun tripArrived(name: String, time: String) = "Cercle Rouge: $name arrived safely at $time."
     override fun alert(name: String, reason: String, time: String) = "Cercle Rouge alert: $name needs help ($reason). $time."
     override fun reason(r: Reason) = when (r) {
         Reason.SOS -> "SOS triggered"

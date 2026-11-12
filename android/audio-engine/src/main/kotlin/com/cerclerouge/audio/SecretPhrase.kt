@@ -103,15 +103,31 @@ object SecretPhrase {
 }
 
 /** Signal rendu au moteur d'alerte, avec la version du modèle (R-AE-03). */
-data class AudioSignal(val kind: Kind, val confidence: Double, val modelVersion: String) {
-    enum class Kind { SECRET_PHRASE, SPEECH }
+data class AudioSignal(val kind: Kind, val confidence: Double, val modelVersion: String, val label: String? = null) {
+    enum class Kind {
+        SECRET_PHRASE,
+        SPEECH,
+
+        /** Mot-clé de détresse enregistré par l'utilisateur (« au secours », « anmwe »…), `label` = son nom. */
+        KEYWORD,
+
+        /** Silence brutal après une voix forte (PDF 5.3) : utile seulement combiné à un autre signal. */
+        SILENCE_AFTER_VOICE
+    }
 }
+
+/** Mot-clé de détresse enrôlé par l'utilisateur (3 répétitions, même moteur que la phrase secrète). */
+class Keyword(val label: String, val template: PhraseTemplate)
 
 /**
  * Chaîne d'écoute en continu : VAD → énoncé → comparaison à la phrase secrète. Ne garde aucun énoncé après comparaison.
  */
-class Listener(private val template: PhraseTemplate?) {
+class Listener(private val template: PhraseTemplate?, private val keywords: List<Keyword> = emptyList()) {
     private val vad = Vad()
+    private var loudSpeechEndedAt: Long? = null
+    private var speechPeakDb = -120.0
+    private var wasSpeaking = false
+    private var blocks = 0L
 
     /** Une voix est en cours (pour les visualiseurs). */
     val inSpeech: Boolean get() = vad.inSpeech
@@ -126,16 +142,59 @@ class Listener(private val template: PhraseTemplate?) {
     val threshold: Double? get() = template?.threshold
 
     fun push(block: ShortArray): AudioSignal? {
+        blocks++
+        silenceAfterVoice(block)?.let { return it }
         val utterance = vad.push(block) ?: return null
-        val t = template ?: return AudioSignal(AudioSignal.Kind.SPEECH, 1.0, "vad-energy-v1")
-        val m = SecretPhrase.match(t, utterance)
-        utterance.fill(0)
-        lastMatch = m
-        comparisons++
-        return if (m.detected) AudioSignal(AudioSignal.Kind.SECRET_PHRASE, m.confidence, SecretPhrase.MODEL_VERSION) else null
+        if (template == null && keywords.isEmpty()) {
+            utterance.fill(0)
+            return AudioSignal(AudioSignal.Kind.SPEECH, 1.0, "vad-energy-v1")
+        }
+        try {
+            // La phrase secrète passe d'abord : elle déclenche l'urgence silencieuse (R-ESC-01).
+            if (template != null) {
+                val m = SecretPhrase.match(template, utterance)
+                lastMatch = m
+                comparisons++
+                if (m.detected) return AudioSignal(AudioSignal.Kind.SECRET_PHRASE, m.confidence, SecretPhrase.MODEL_VERSION)
+            }
+            val best = keywords.map { it to SecretPhrase.match(it.template, utterance) }.filter { it.second.detected }
+                .maxByOrNull { it.second.confidence }
+            if (best != null) {
+                comparisons++
+                lastMatch = best.second
+                return AudioSignal(AudioSignal.Kind.KEYWORD, best.second.confidence, KEYWORD_MODEL, best.first.label)
+            }
+            return null
+        } finally {
+            utterance.fill(0)
+        }
+    }
+
+    /** Voix forte (pic > −20 dBFS) puis plus aucune voix pendant 20 s : signalé une fois. */
+    private fun silenceAfterVoice(block: ShortArray): AudioSignal? {
+        val speaking = vad.inSpeech
+        if (speaking) speechPeakDb = maxOf(speechPeakDb, Features.dbfs(block))
+        if (wasSpeaking && !speaking) {
+            if (speechPeakDb > LOUD_DB) loudSpeechEndedAt = blocks
+            speechPeakDb = -120.0
+        }
+        if (speaking) loudSpeechEndedAt = null
+        wasSpeaking = speaking
+        val ended = loudSpeechEndedAt ?: return null
+        if ((blocks - ended) * Vad.BLOCK < SILENCE_SAMPLES) return null
+        loudSpeechEndedAt = null
+        return AudioSignal(AudioSignal.Kind.SILENCE_AFTER_VOICE, 1.0, SILENCE_MODEL)
     }
 
     fun stop() = vad.reset()
+
+    companion object {
+        const val KEYWORD_MODEL = "dtw-mfcc-kw-v1"
+        const val SILENCE_MODEL = "vad-silence-v1"
+        const val MAX_KEYWORDS = 5
+        private const val LOUD_DB = -20.0
+        private const val SILENCE_SAMPLES = 20L * Features.SAMPLE_RATE
+    }
 }
 
 /** Mots-clés de détresse par défaut (Q20), pour les mots-clés personnalisés et l'entraînement futur ; à valider avec des locuteurs natifs. */

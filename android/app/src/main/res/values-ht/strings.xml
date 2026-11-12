@@ -249,7 +249,6 @@
     <string name="listen_deleted">Fraz la efase.</string>
     <string name="listen_confidence">Resanblans : %1$d %%</string>
     <string name="listen_keywords_title">Mo kle pou detrès</string>
-    <string name="listen_keywords_intro">Talè : pou detekte yo, nou bezwen anrejistreman an kreyòl, n ap ranmase yo. Lis ki prevwa :</string>
     <string name="nav_vault">Prèv</string>
     <string name="retention_recording_notice">Pandan yon alèt (nivo 2 oswa SOS), mikwo a anrejistre. Li ka pran vwa lòt moun. Anrejistreman an rete kode sou telefòn ou ; nou pa ka garanti valè l devan yon jij. Ou ka fèmen l nan « Prèv ».</string>
     <string name="vault_title">Prèv</string>
@@ -416,4 +415,14 @@
     <string name="detect_1h">1 è</string>
     <string name="detect_3h">3 è</string>
     <string name="detect_tomorrow">Jiska demen</string>
+    <string name="kw_intro">Anrejistre jiska 5 mo ou ta rele si w an danje (anmwe, ede m…). Chak mo konte kòm yon siyal fò pou IA a ; ak yon lòt siyal, l ap mande w si w anfòm. Fraz sekrè a, li menm, voye alèt la dirèkteman.</string>
+    <string name="kw_delete">Efase</string>
+    <string name="kw_say">Di « %1$s » jan ou ta rele l.</string>
+    <string name="kw_suggestions">Sijesyon (pou di ak vwa w) :</string>
+    <string name="kw_add_word">Anrejistre « %1$s »</string>
+    <string name="kw_custom">Yon lòt mo oswa ti fraz</string>
+    <string name="kw_add">Anrejistre mo sa a</string>
+    <string name="kw_max">5 mo kle maksimòm : efase youn pou w ajoute yon lòt.</string>
+    <string name="kw_enrolled">Mo kle a anrejistre. Se sèlman telefòn sa a ki rekonèt li.</string>
+    <string name="kw_recording_elsewhere">Y ap anrejistre yon mo kle, pi ba a.</string>
 </resources>

@@ -11,6 +11,7 @@ import android.media.AudioRecordingConfiguration
 import android.media.MediaRecorder
 import com.cerclerouge.audio.AudioSignal
 import com.cerclerouge.audio.Features
+import com.cerclerouge.audio.Keyword
 import com.cerclerouge.audio.Listener
 import com.cerclerouge.audio.PhraseTemplate
 import com.cerclerouge.audio.RingBuffer
@@ -46,6 +47,38 @@ data class ListenActivity(
 )
 
 enum class AudioStatus { STOPPED, RUNNING, PAUSED_MIC_BUSY, PAUSED_LOW_POWER, ERROR }
+
+/**
+ * Mots-clés de détresse enrôlés par l'utilisateur (1.4) : jusqu'à 5, chacun une empreinte chiffrée (jamais d'audio, R-AUD-09).
+ */
+@Singleton
+class KeywordRepository @Inject constructor(db: PrivacyDatabase) {
+    private val settings = db.settings()
+
+    suspend fun load(): List<Keyword> = settings.get(KEY).orEmpty().lineSequence().mapNotNull { line ->
+        val tab = line.indexOf('\t')
+        if (tab <= 0) return@mapNotNull null
+        PhraseTemplate.decode(line.substring(tab + 1))?.let { Keyword(line.substring(0, tab), it) }
+    }.toList()
+
+    suspend fun add(label: String, t: PhraseTemplate) {
+        val clean = label.replace(Regex("[\\t\\n\\r]"), " ").trim().take(MAX_LABEL)
+        val list = (load().filterNot { it.label.equals(clean, ignoreCase = true) } + Keyword(clean, t)).takeLast(Listener.MAX_KEYWORDS)
+        save(list)
+    }
+
+    suspend fun remove(label: String) = save(load().filterNot { it.label == label })
+
+    suspend fun clear() = settings.put(SettingEntity(KEY, ""))
+
+    private suspend fun save(list: List<Keyword>) =
+        settings.put(SettingEntity(KEY, list.joinToString("\n") { "${it.label}\t${it.template.encode()}" }))
+
+    companion object {
+        const val MAX_LABEL = 30
+        private const val KEY = "audio.keywords"
+    }
+}
 
 /** Empreinte de la phrase secrète, dans la base chiffrée (R-AUD-09) : jamais d'audio. */
 @Singleton
@@ -84,6 +117,7 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
 
     @Volatile private var degraded = false
     private var template: PhraseTemplate? = null
+    private var keywords: List<Keyword> = emptyList()
     private var wantListen = false
     private var wantRecord = false
     private var thread: Thread? = null
@@ -101,8 +135,9 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
 
     /** Écoute de la phrase secrète (moteur, protection active). */
     @Synchronized
-    fun start(template: PhraseTemplate?) {
+    fun start(template: PhraseTemplate?, keywords: List<Keyword> = this.keywords) {
         this.template = template
+        this.keywords = keywords
         wantListen = true
         if (running) restartMic() else ensureMic() // micro déjà ouvert pour une preuve : relancé avec la phrase
     }
@@ -189,7 +224,8 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
         r.startRecording()
         _status.value = AudioStatus.RUNNING
         // La phrase secrète n'est cherchée que si l'écoute est voulue (pas pendant un simple enregistrement).
-        val listener = Listener(if (wantListen && !degraded) template else null)
+        val listening = wantListen && !degraded
+        val listener = Listener(if (listening) template else null, if (listening) keywords else emptyList())
         thread = Thread({ loop(r, listener, wantListen && !degraded) }, "cr-audio").apply {
             priority = Thread.NORM_PRIORITY + 1
             start()
@@ -273,6 +309,13 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
     @Synchronized
     fun restartWith(template: PhraseTemplate?) {
         this.template = template
+        if (running) restartMic()
+    }
+
+    /** Relance avec une nouvelle liste de mots-clés (après un ajout ou une suppression), si l'écoute tournait. */
+    @Synchronized
+    fun restartWithKeywords(keywords: List<Keyword>) {
+        this.keywords = keywords
         if (running) restartMic()
     }
 

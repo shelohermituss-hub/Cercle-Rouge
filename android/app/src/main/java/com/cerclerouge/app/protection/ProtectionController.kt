@@ -66,6 +66,7 @@ class ProtectionController @Inject constructor(
     private val tracker: LocationTracker,
     private val audio: AudioListener,
     private val phrases: PhraseRepository,
+    private val keywords: com.cerclerouge.app.audio.KeywordRepository,
     private val recorder: EvidenceRecorder,
     private val listen: ListenSettings,
     db: PrivacyDatabase
@@ -175,9 +176,10 @@ class ProtectionController @Inject constructor(
             }
             is Effect.ConfigureEngines -> {
                 log.append("engines", "audio=${effect.audio} location=${effect.location}")
-                // Écoute : seulement avec une phrase secrète enregistrée (sans détecteur, le micro ne servirait à rien).
+                // Écoute : seulement avec une phrase secrète ou des mots-clés enregistrés (sans détecteur, le micro ne servirait à rien).
                 val phrase = if (effect.audio) phrases.load() else null
-                if (phrase != null) audio.start(phrase) else audio.stop()
+                val words = if (effect.audio) keywords.load() else emptyList()
+                if (phrase != null || words.isNotEmpty()) audio.start(phrase, words) else audio.stop()
                 // Le suivi de position n'existe que dans les états qui l'autorisent (R-TRIP-01) : arrêté dans tous les autres.
                 when (effect.location) {
                     LocationProfile.ARMED -> tracker.start(TrackingProfile.ARMED)

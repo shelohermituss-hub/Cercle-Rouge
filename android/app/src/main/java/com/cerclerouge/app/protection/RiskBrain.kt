@@ -52,6 +52,7 @@ class RiskBrain @Inject constructor(
     private val account: AccountRepository,
     private val listen: ListenSettings,
     private val motion: com.cerclerouge.app.device.MotionSensors,
+    private val audio: com.cerclerouge.app.audio.AudioListener,
     private val log: EventLog,
     private val clock: Clock
 ) {
@@ -78,6 +79,7 @@ class RiskBrain @Inject constructor(
             controller.state.collect { if (it.protection == ProtectionState.OFF) motion.stop() else motion.start() }
         }
         scope.launch { motion.events.collect { onMotion(it) } }
+        scope.launch { audio.signals.collect { onAudio(it) } }
         scope.launch {
             while (isActive) {
                 delay(TICK_MS)
@@ -105,6 +107,30 @@ class RiskBrain @Inject constructor(
             com.cerclerouge.sensor.MotionKind.STILL -> Observation(Component.D, 0.5, Reason.CONTACT_LOST, "sensor.still", now)
         }
         log.append("sensor", "${e.kind.name.lowercase()} strength=${"%.2f".format(java.util.Locale.ROOT, e.strength)}")
+        observe(o)
+    }
+
+    /** Mot-clé enrôlé → A (confiance) ; sûr au-dessus de 0,75 (R-ESC-07). Silence brutal après une voix forte → D. */
+    private suspend fun onAudio(sig: com.cerclerouge.audio.AudioSignal) {
+        val now = clock.instant()
+        val o = when (sig.kind) {
+            com.cerclerouge.audio.AudioSignal.Kind.KEYWORD -> Observation(
+                Component.A,
+                sig.confidence.coerceIn(0.0, 1.0),
+                Reason.DISTRESS_KEYWORD,
+                "keyword",
+                now,
+                keywordHighConfidence = sig.confidence >= KEYWORD_SURE
+            )
+            com.cerclerouge.audio.AudioSignal.Kind.SILENCE_AFTER_VOICE ->
+                Observation(Component.D, 0.5, Reason.CONTACT_LOST, "audio.silence", now)
+            else -> return
+        }
+        // R-AUD-04 : chaque détection est journalisée (score arrondi, version du modèle, aucun audio envoyé ; jamais le mot).
+        log.append(
+            "audio",
+            "${sig.kind.name.lowercase()} confidence=${"%.2f".format(java.util.Locale.ROOT, sig.confidence)} model=${sig.modelVersion}"
+        )
         observe(o)
     }
 
@@ -195,6 +221,7 @@ class RiskBrain @Inject constructor(
 
     private companion object {
         const val TICK_MS = 2_000L
+        const val KEYWORD_SURE = 0.75
         val TRIP_HOLD: Duration = Duration.ofMinutes(5)
         val JOURNAL_GAP: Duration = Duration.ofSeconds(30)
     }

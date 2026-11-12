@@ -248,7 +248,6 @@
     <string name="listen_deleted">Phrase deleted.</string>
     <string name="listen_confidence">Similarity: %1$d %%</string>
     <string name="listen_keywords_title">Distress keywords</string>
-    <string name="listen_keywords_intro">Coming soon: detecting them needs recordings in Creole, being collected. Planned list:</string>
     <string name="nav_vault">Evidence</string>
     <string name="retention_recording_notice">During an alert (level 2 or SOS), the microphone records. It may capture other people\'s voices. The recording stays encrypted on your phone; its value in court is not guaranteed. You can turn it off in \"Evidence\".</string>
     <string name="vault_title">Evidence</string>
@@ -415,4 +414,14 @@
     <string name="detect_1h">1 h</string>
     <string name="detect_3h">3 h</string>
     <string name="detect_tomorrow">Until tomorrow</string>
+    <string name="kw_intro">Record up to 5 words you would shout in danger (help, anmwe…). Each counts as a strong signal for the AI; with another signal, it asks if you are safe. The secret phrase alerts directly.</string>
+    <string name="kw_delete">Delete</string>
+    <string name="kw_say">Say “%1$s” the way you would shout it.</string>
+    <string name="kw_suggestions">Suggestions (say them in your own voice):</string>
+    <string name="kw_add_word">Record “%1$s”</string>
+    <string name="kw_custom">Other word or short phrase</string>
+    <string name="kw_add">Record this word</string>
+    <string name="kw_max">5 keywords at most: delete one to add another.</string>
+    <string name="kw_enrolled">Keyword saved. Only this phone recognises it.</string>
+    <string name="kw_recording_elsewhere">A keyword is being recorded, below.</string>
 </resources>

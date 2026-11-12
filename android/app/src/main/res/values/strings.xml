@@ -249,7 +249,6 @@
     <string name="listen_deleted">Phrase supprimée.</string>
     <string name="listen_confidence">Similarité : %1$d %%</string>
     <string name="listen_keywords_title">Mots-clés de détresse</string>
-    <string name="listen_keywords_intro">Bientôt : leur détection demande des enregistrements en créole, en cours de collecte. Liste prévue :</string>
     <string name="nav_vault">Preuves</string>
     <string name="retention_recording_notice">Pendant une alerte (niveau 2 ou SOS), le micro enregistre. Il peut capter la voix d\'autres personnes. L\'enregistrement reste chiffré sur ton téléphone ; sa valeur devant un juge n\'est pas garantie. Tu peux le couper dans « Preuves ».</string>
     <string name="vault_title">Preuves</string>
@@ -416,4 +415,14 @@
     <string name="detect_1h">1 h</string>
     <string name="detect_3h">3 h</string>
     <string name="detect_tomorrow">Jusqu\'à demain</string>
+    <string name="kw_intro">Enregistre jusqu\'à 5 mots que tu crierais en danger (au secours, anmwe…). Chacun compte comme un signal fort pour l\'IA ; avec un autre signal, elle te demande si tu vas bien. La phrase secrète, elle, alerte directement.</string>
+    <string name="kw_delete">Supprimer</string>
+    <string name="kw_say">Dis « %1$s » comme tu le crierais.</string>
+    <string name="kw_suggestions">Suggestions (à dire avec ta voix) :</string>
+    <string name="kw_add_word">Enregistrer « %1$s »</string>
+    <string name="kw_custom">Autre mot ou courte phrase</string>
+    <string name="kw_add">Enregistrer ce mot</string>
+    <string name="kw_max">5 mots-clés au maximum : supprimes-en un pour en ajouter un autre.</string>
+    <string name="kw_enrolled">Mot-clé enregistré. Il est reconnu sur ce téléphone seulement.</string>
+    <string name="kw_recording_elsewhere">Enregistrement d\'un mot-clé en cours, plus bas.</string>
 </resources>

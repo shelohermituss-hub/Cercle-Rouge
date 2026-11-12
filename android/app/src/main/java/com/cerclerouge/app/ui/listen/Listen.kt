@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -77,7 +79,11 @@ data class ListenUi(
     val step: Step = Step.Idle,
     val samples: Int = 0,
     val level: Double = -90.0,
-    val testConfidence: Double? = null
+    val testConfidence: Double? = null,
+    /** Mots-clés enrôlés (noms seulement). */
+    val keywords: List<String> = emptyList(),
+    /** Mot-clé en cours d'enregistrement, null pour la phrase secrète. */
+    val keywordTarget: String? = null
 )
 
 @HiltViewModel
@@ -86,6 +92,7 @@ class ListenViewModel @Inject constructor(
     private val phrases: PhraseRepository,
     private val log: EventLog,
     private val listen: com.cerclerouge.app.protection.ListenSettings,
+    private val keywordRepo: com.cerclerouge.app.audio.KeywordRepository,
     private val clock: java.time.Clock
 ) : ViewModel() {
     val prefs: StateFlow<com.cerclerouge.app.protection.ListenPrefs> = listen.prefs
@@ -119,7 +126,9 @@ class ListenViewModel @Inject constructor(
 
     init {
         viewModelScope.launch { listen.load() }
-        viewModelScope.launch { _ui.update { it.copy(enrolled = phrases.load() != null) } }
+        viewModelScope.launch {
+            _ui.update { it.copy(enrolled = phrases.load() != null, keywords = keywordRepo.load().map { k -> k.label }) }
+        }
     }
 
     /** Enregistre la répétition suivante ; à la 3ᵉ, calcule l'empreinte. Les répétitions ne vivent qu'en mémoire. */
@@ -138,7 +147,7 @@ class ListenViewModel @Inject constructor(
         samples.forEach { it.fill(0) }
         samples.clear()
         when (result) {
-            is Enrollment.Ok -> save(result.template)
+            is Enrollment.Ok -> _ui.value.keywordTarget?.let { saveKeyword(it, result.template) } ?: save(result.template)
             is Enrollment.BadSample -> _ui.update {
                 it.copy(samples = 0, step = Step.Message(result.problem.message(), ok = false))
             }
@@ -170,6 +179,44 @@ class ListenViewModel @Inject constructor(
         withContext(Dispatchers.Default) { audio.restartWith(null) }
         log.append("audio", "secret_phrase_deleted")
         _ui.update { ListenUi(enrolled = false, step = Step.Message(R.string.listen_deleted, ok = true)) }
+    }
+
+    /** Commence l'enregistrement d'un mot-clé (3 répétitions). */
+    fun startKeyword(label: String) {
+        val clean = label.trim().take(com.cerclerouge.app.audio.KeywordRepository.MAX_LABEL)
+        if (clean.isEmpty() || _ui.value.keywords.size >= com.cerclerouge.audio.Listener.MAX_KEYWORDS) return
+        restart()
+        _ui.update { it.copy(keywordTarget = clean, step = Step.Idle) }
+    }
+
+    fun cancelKeyword() {
+        restart()
+        _ui.update { it.copy(keywordTarget = null) }
+    }
+
+    fun deleteKeyword(label: String) = viewModelScope.launch {
+        keywordRepo.remove(label)
+        val list = keywordRepo.load()
+        withContext(Dispatchers.Default) { audio.restartWithKeywords(list) }
+        log.append("audio", "keyword_deleted")
+        _ui.update { it.copy(keywords = list.map { k -> k.label }) }
+    }
+
+    private suspend fun saveKeyword(label: String, t: PhraseTemplate) {
+        keywordRepo.add(label, t)
+        val list = keywordRepo.load()
+        withContext(Dispatchers.Default) { audio.restartWithKeywords(list) }
+        log.append("audio", "keyword_enrolled model=${com.cerclerouge.audio.Listener.KEYWORD_MODEL}") // jamais le mot lui-même
+        _ui.update {
+            it.copy(
+                keywords = list.map { k ->
+                    k.label
+                },
+                keywordTarget = null,
+                samples = 0,
+                step = Step.Message(R.string.kw_enrolled, ok = true)
+            )
+        }
     }
 
     fun restart() {
@@ -257,6 +304,8 @@ fun ListenScreen(vm: ListenViewModel, onBack: () -> Unit) {
                 PxButton(stringResource(R.string.listen_allow_mic), {
                     permission.launch(Manifest.permission.RECORD_AUDIO)
                 }, icon = PixelIcon.MIC)
+            } else if (ui.keywordTarget != null) {
+                Text(stringResource(R.string.kw_recording_elsewhere), style = PxType.caption, color = c.muted)
             } else if (!ui.enrolled) {
                 Repetitions(ui.samples, busy)
                 Level(ui.level, busy)
@@ -297,9 +346,7 @@ fun ListenScreen(vm: ListenViewModel, onBack: () -> Unit) {
 
             DetectionSettings(prefs, vm.now(), vm::setSensitivity, vm::setVerify, vm::setContext)
 
-            Text(stringResource(R.string.listen_keywords_title).uppercase(), style = PxType.label, color = c.lime)
-            Text(stringResource(R.string.listen_keywords_intro), style = PxType.body, color = c.muted)
-            Text((DistressKeywords.HT + DistressKeywords.FR).joinToString(" · "), style = PxType.bodyBold)
+            Keywords(vm, ui, granted, busy)
         }
     }
     if (confirmDelete) {
@@ -316,6 +363,70 @@ fun ListenScreen(vm: ListenViewModel, onBack: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+/** Mots-clés de détresse (1.4) : enregistrés par l'utilisateur, 5 au plus ; un signal fort pour le cerveau, pas une alerte directe. */
+@Composable
+private fun Keywords(vm: ListenViewModel, ui: ListenUi, granted: Boolean, busy: Boolean) {
+    val c = Cr.colors
+    var custom by remember { mutableStateOf("") }
+    Text(stringResource(R.string.listen_keywords_title).uppercase(), style = PxType.label, color = c.lime)
+    Text(stringResource(R.string.kw_intro), style = PxType.body, color = c.muted)
+    ui.keywords.forEach { label ->
+        PxPanel(Modifier.fillMaxWidth(), border = c.lime) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(label, style = PxType.bodyBold, modifier = Modifier.weight(1f))
+                Box(Modifier.size(width = 120.dp, height = 48.dp)) {
+                    PxButton(stringResource(R.string.kw_delete), { vm.deleteKeyword(label) }, variant = PxVariant.OUTLINE, enabled = !busy)
+                }
+            }
+        }
+    }
+    val target = ui.keywordTarget
+    when {
+        !granted -> Unit
+        target != null -> {
+            Text(stringResource(R.string.kw_say, target), style = PxType.bodyBold)
+            Repetitions(ui.samples, busy)
+            Level(ui.level, busy)
+            PxButton(
+                if (busy) {
+                    stringResource(
+                        R.string.listen_speak_now_short
+                    )
+                } else {
+                    stringResource(R.string.listen_record_n, ui.samples + 1, SecretPhrase.MIN_REPETITIONS)
+                },
+                { vm.recordNext() },
+                icon = PixelIcon.MIC,
+                tall = true,
+                enabled = !busy
+            )
+            PxButton(stringResource(R.string.action_cancel), { vm.cancelKeyword() }, variant = PxVariant.OUTLINE, enabled = !busy)
+        }
+        ui.keywords.size < com.cerclerouge.audio.Listener.MAX_KEYWORDS -> {
+            Text(stringResource(R.string.kw_suggestions), style = PxType.caption, color = c.muted)
+            (DistressKeywords.HT + DistressKeywords.FR).filter { it !in ui.keywords }.forEach { word ->
+                PxButton(stringResource(R.string.kw_add_word, word), {
+                    vm.startKeyword(word)
+                }, variant = PxVariant.OUTLINE, icon = PixelIcon.MIC)
+            }
+            OutlinedTextField(
+                value = custom,
+                onValueChange = { custom = it.take(com.cerclerouge.app.audio.KeywordRepository.MAX_LABEL) },
+                label = { Text(stringResource(R.string.kw_custom).uppercase(), style = PxType.label) },
+                singleLine = true,
+                textStyle = PxType.bodyBold,
+                shape = RectangleShape,
+                modifier = Modifier.fillMaxWidth()
+            )
+            PxButton(stringResource(R.string.kw_add), {
+                vm.startKeyword(custom)
+                custom = ""
+            }, icon = PixelIcon.MIC, enabled = custom.isNotBlank())
+        }
+        else -> Text(stringResource(R.string.kw_max), style = PxType.caption, color = c.muted)
     }
 }
 

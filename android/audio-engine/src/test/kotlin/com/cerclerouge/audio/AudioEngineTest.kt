@@ -178,4 +178,53 @@ class SecretPhraseTest {
         assertEquals(AudioSignal.Kind.SECRET_PHRASE, signals[0].kind)
         assertEquals(SecretPhrase.MODEL_VERSION, signals[0].modelVersion) // R-AE-03
     }
+
+    @Test fun keywordsAreRecognisedButNeverTakenForTheSecretPhrase() { // 1.4 : mots-clés enrôlés
+        val kwEnroll = listOf(
+            Synth.phrase(PHRASE_C, Variation(tempo = 1.0), seed = 51),
+            Synth.phrase(PHRASE_C, Variation(tempo = 0.93, pitch = 1.02), seed = 52),
+            Synth.phrase(PHRASE_C, Variation(tempo = 1.07, pitch = 0.98), seed = 53)
+        )
+        val kw = Keyword("au secours", assertIs<Enrollment.Ok>(SecretPhrase.enroll(kwEnroll)).template)
+        val listener = Listener(template(), listOf(kw))
+        val stream = Synth.concat(
+            Synth.noise(1.0, -55.0),
+            Synth.phrase(PHRASE_C, Variation(tempo = 1.02, gain = 0.45), seed = 54),
+            Synth.noise(1.0, -55.0, 8),
+            Synth.phrase(PHRASE_B, seed = 55),
+            Synth.noise(1.0, -55.0, 9)
+        )
+        val signals = (0 until stream.size / Vad.BLOCK).mapNotNull {
+            listener.push(stream.copyOfRange(it * Vad.BLOCK, (it + 1) * Vad.BLOCK))
+        }
+        assertEquals(listOf(AudioSignal.Kind.KEYWORD), signals.map { it.kind }, "$signals")
+        assertEquals("au secours", signals[0].label)
+        assertEquals(Listener.KEYWORD_MODEL, signals[0].modelVersion)
+    }
+
+    @Test fun loudVoiceThenLongSilenceIsSignalledOnce() { // PDF 5.3 : silence brutal après une activité vocale
+        val listener = Listener(null)
+        val stream = Synth.concat(
+            Synth.noise(1.0, -55.0),
+            Synth.phrase(PHRASE_A, Variation(gain = 0.9), seed = 60),
+            Synth.noise(25.0, -60.0, 10)
+        )
+        val kinds = (0 until stream.size / Vad.BLOCK).mapNotNull {
+            listener.push(stream.copyOfRange(it * Vad.BLOCK, (it + 1) * Vad.BLOCK))
+        }.map { it.kind }
+        assertEquals(1, kinds.count { it == AudioSignal.Kind.SILENCE_AFTER_VOICE }, "$kinds")
+    }
+
+    @Test fun quietVoiceThenSilenceIsNothing() {
+        val listener = Listener(null)
+        val stream = Synth.concat(
+            Synth.noise(1.0, -55.0),
+            Synth.phrase(PHRASE_A, Variation(gain = 0.05), seed = 61),
+            Synth.noise(25.0, -60.0, 11)
+        )
+        val kinds = (0 until stream.size / Vad.BLOCK).mapNotNull {
+            listener.push(stream.copyOfRange(it * Vad.BLOCK, (it + 1) * Vad.BLOCK))
+        }.map { it.kind }
+        assertTrue(AudioSignal.Kind.SILENCE_AFTER_VOICE !in kinds, "$kinds")
+    }
 }

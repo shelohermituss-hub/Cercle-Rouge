@@ -28,6 +28,7 @@ class DataControl @Inject constructor(
     private val db: PrivacyDatabase,
     private val evidence: EvidenceStore,
     private val phrases: PhraseRepository,
+    private val keywords: com.cerclerouge.app.audio.KeywordRepository,
     private val audio: AudioListener,
     private val server: ServerSync,
     private val log: EventLog,
@@ -36,8 +37,10 @@ class DataControl @Inject constructor(
     suspend fun emergencyWipe() = withContext(Dispatchers.IO) {
         evidence.wipeAll() // les clés d'abord : illisible même si la suite est interrompue
         phrases.delete()
+        keywords.clear()
         audio.restartWith(null)
-        listOf("trip.favorites", "trip.search.consent").forEach { db.settings().remove(it) }
+        audio.restartWithKeywords(emptyList())
+        listOf("trip.favorites", "trip.search.consent", "trip.route.consent").forEach { db.settings().remove(it) }
         db.eventLog().deleteOlderThan(Long.MAX_VALUE)
         log.append("privacy", "emergency_wipe") // seule trace : l'effacement lui-même, sans contenu
     }

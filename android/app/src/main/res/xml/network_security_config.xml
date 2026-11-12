@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- R-NET-07 : pas de trafic en clair. L'épinglage (ADR-0014) sera ajouté avec le domaine Supabase réel. -->
+<!--
+  R-NET-07, ADR-0014 : pas de trafic en clair ; épinglage des clés publiques des autorités de certification de Supabase.
+  Broches (SHA-256 de la clé publique) : intermédiaire WE1 et racines Google Trust Services utilisées par *.supabase.co,
+  plus les racines ISRG (Let's Encrypt) en secours si Supabase change d'autorité. Expiration au bout de 6 mois : passé cette
+  date, Android n'applique plus l'épinglage (l'app ne casse pas). À renouveler avant : tools/check-pins.sh (contrôlé en CI).
+-->
 <network-security-config>
     <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">supabase.co</domain>
+        <pin-set expiration="2027-05-12">
+            <!-- Google Trust Services WE1 (intermédiaire actuel) -->
+            <pin digest="SHA-256">kIdp6NNEd8wsugYyyIYFsi1ylMCED3hZbSR8ZFsa/A4=</pin>
+            <!-- GTS Root R4 -->
+            <pin digest="SHA-256">mEflZT5enoR1FuXLgYYGqnVEoZvmf9c2bVBpiOjYQ0c=</pin>
+            <!-- GTS Root R1 (secours) -->
+            <pin digest="SHA-256">hxqRlPTu1bMS/0DITB1SSu0vd4u/8l8TjPgfaAp63Gc=</pin>
+            <!-- GTS Root R3 (secours) -->
+            <pin digest="SHA-256">QXnt2YHvdHR3tJYmQIr0Paosp6t/nggsEGD4QJZ3Q0g=</pin>
+            <!-- ISRG Root X1 (secours) -->
+            <pin digest="SHA-256">C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=</pin>
+            <!-- ISRG Root X2 (secours) -->
+            <pin digest="SHA-256">diGVwiVYbubAI3RW4hB9xU8e/CH2GnkuvVFZE8zmgzI=</pin>
+        </pin-set>
+    </domain-config>
 </network-security-config>

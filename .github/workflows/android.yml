@@ -2,9 +2,9 @@ name: Android
 
 on:
   push:
-    paths: ["android/**", ".github/workflows/android.yml"]
+    paths: ["android/**", "tools/**", ".github/workflows/android.yml"]
   pull_request:
-    paths: ["android/**", ".github/workflows/android.yml"]
+    paths: ["android/**", "tools/**", ".github/workflows/android.yml"]
 
 permissions:
   contents: read
@@ -32,6 +32,13 @@ jobs:
         with:
           name: rapports
           path: android/**/build/reports/
+
+  pins:
+    # L'épinglage TLS correspond-il toujours à la chaîne réelle de Supabase ? (R-NET-07)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: tools/check-pins.sh
 
   secrets:
     runs-on: ubuntu-latest

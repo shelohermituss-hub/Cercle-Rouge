@@ -163,6 +163,7 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 - 🤖 Sélecteur de mode : Désactivé, **Écoute IA uniquement** (`ARMED_AUDIO_ONLY`), Trajet protégé, **Mode discret**, Urgence.
 - 🤖 **Mode discret** (R-HOME-03, R-AL-05) : notification persistante neutre (titre générique, icône neutre), aucun mot « alerte » à l'écran, vibration codée seulement ; l'indicateur micro Android reste (obligatoire, N2).
 - 🤖 Activation depuis **tuile, widget et notification** (PDF 8.1) : armer en 1 geste ; désarmer → écran PIN/biométrie (P8). Widget migré vers Glance avec état.
+- ✅ Fait : mode discret (réglage dans Écoute › Détection : notifications neutres sans son, écran d'alerte neutre « Terminer / Appeler le 114 », vibrations codées), tuile « Protection » et bouton ON du widget (ouvrent l'app qui arme ; désarmer = PIN). **Reste** : le widget Glance n'est pas migré (RemoteViews suffit, pas de dépendance ajoutée) ; pas de sélecteur de mode séparé (les modes viennent des états ARMED_*/TRIP/alerte).
 - ⏱ 3 j.
 
 ### 1.12 Trajet complet (PDF 5.4, 9.2, 9.3)

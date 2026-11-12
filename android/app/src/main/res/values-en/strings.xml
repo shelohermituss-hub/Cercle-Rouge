@@ -510,4 +510,13 @@
     <string name="outcome_arrived">arrived</string>
     <string name="outcome_stopped">stopped</string>
     <string name="outcome_ended">ended</string>
+    <string name="detect_discreet">Discreet mode</string>
+    <string name="detect_discreet_off">Off</string>
+    <string name="detect_discreet_on">On</string>
+    <string name="detect_discreet_ex">Neutral notifications, no sound and no alert text on screen; only coded vibrations tell you. Android\'s microphone indicator stays visible: it is mandatory.</string>
+    <string name="discreet_finish">Finish</string>
+    <string name="discreet_call">Call 114</string>
+    <string name="widget_arm_a11y">Turn protection on</string>
+    <string name="widget_arm_tile">Protection</string>
+    <string name="widget_arm">ON</string>
 </resources>

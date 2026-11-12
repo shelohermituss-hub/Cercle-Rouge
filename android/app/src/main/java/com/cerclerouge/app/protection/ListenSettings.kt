@@ -17,7 +17,9 @@ data class ListenPrefs(
     /** Contextes à ignorer actifs, avec leur fin (ils expirent tout seuls). */
     val ignored: Map<IgnoreContext, Instant> = emptyMap(),
     /** Délai de la vérification « Es-tu en sécurité ? » avant l'alerte des proches (PDF 8.3 : 10 à 30 s). */
-    val verifySeconds: Int = 20
+    val verifySeconds: Int = 20,
+    /** Mode discret (R-HOME-03, R-AL-05) : notifications neutres, aucun texte « alerte » à l'écran, vibrations codées seulement. */
+    val discreet: Boolean = false
 ) {
     fun activeContexts(now: Instant): Set<IgnoreContext> = ignored.filterValues { it.isAfter(now) }.keys
 }
@@ -37,12 +39,17 @@ class ListenSettings @Inject constructor(db: PrivacyDatabase, private val clock:
             until.toLongOrNull()?.let { ctx to Instant.ofEpochMilli(it) }
         }.toMap().filterValues { it.isAfter(clock.instant()) }
         val verify = settings.get(VERIFY)?.toIntOrNull()?.takeIf { it in VERIFY_CHOICES } ?: 20
-        return ListenPrefs(sensitivity, ignored, verify).also { _prefs.value = it }
+        return ListenPrefs(sensitivity, ignored, verify, settings.get(DISCREET) == "1").also { _prefs.value = it }
     }
 
     suspend fun setSensitivity(s: Sensitivity) {
         settings.put(SettingEntity(SENSITIVITY, s.name))
         _prefs.value = _prefs.value.copy(sensitivity = s)
+    }
+
+    suspend fun setDiscreet(on: Boolean) {
+        settings.put(SettingEntity(DISCREET, if (on) "1" else "0"))
+        _prefs.value = _prefs.value.copy(discreet = on)
     }
 
     suspend fun setVerifySeconds(seconds: Int) {
@@ -64,5 +71,6 @@ class ListenSettings @Inject constructor(db: PrivacyDatabase, private val clock:
         private const val VERIFY = "listen.verify_seconds"
         private const val SENSITIVITY = "listen.sensitivity"
         private const val IGNORED = "listen.ignored"
+        private const val DISCREET = "listen.discreet"
     }
 }

@@ -45,6 +45,8 @@ class ProtectionService : Service() {
     @Inject lateinit var monitor: com.cerclerouge.app.device.DeviceMonitor
 
     @Inject lateinit var brain: RiskBrain
+
+    @Inject lateinit var listen: ListenSettings
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     /** Retour du réseau : la file d'envoi repart tout de suite (R-NET-06), sans attendre la fin de son attente. */
@@ -119,6 +121,7 @@ class ProtectionService : Service() {
     }
 
     private fun build(alert: Boolean): Notification {
+        val discreet = listen.prefs.value.discreet
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val sos = SosIntents.pending(this, 13) // compte à rebours de 5 s, annulable : pas d'envoi direct
         // Écran verrouillé : version publique neutre, sans le mot « protection » ni « alerte » (R-SEC-06).
@@ -129,7 +132,7 @@ class ProtectionService : Service() {
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.app_name))
-            .setContentText(getString(if (alert) R.string.service_text_alert else R.string.service_text_armed))
+            .setContentText(getString(if (alert && !discreet) R.string.service_text_alert else R.string.service_text_armed))
             .setContentIntent(open)
             .setOngoing(true)
             .setVisibility(Notification.VISIBILITY_PRIVATE)

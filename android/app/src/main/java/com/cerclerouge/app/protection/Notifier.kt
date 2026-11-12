@@ -23,7 +23,7 @@ import javax.inject.Singleton
  * la version publique dit seulement « Cercle Rouge » (R-SEC-06).
  */
 @Singleton
-class Notifier @Inject constructor(@ApplicationContext private val context: Context) {
+class Notifier @Inject constructor(@ApplicationContext private val context: Context, private val listen: ListenSettings) {
     private val nm = context.getSystemService(NotificationManager::class.java)
 
     init {
@@ -38,11 +38,17 @@ class Notifier @Inject constructor(@ApplicationContext private val context: Cont
     fun notice(kind: NoticeKind) {
         // areNotificationsEnabled couvre Android 10–12 (pas de permission) et 13+ (permission POST_NOTIFICATIONS).
         if (!nm.areNotificationsEnabled()) return
-        val (channel, text) = when (kind) {
-            NoticeKind.EMERGENCY -> CH_ALERT to R.string.notif_emergency
-            NoticeKind.ALERT_SENT -> CH_ALERT to R.string.notif_alert_sent
-            NoticeKind.PROTECTION_DOWNGRADED -> CH_STATUS to R.string.notif_downgraded
-            NoticeKind.PROTECTION_INTERRUPTED -> CH_STATUS to R.string.notif_interrupted
+        // Mode discret : jamais de son ni de bannière, texte neutre sans le mot « alerte » ni « urgence » (R-HOME-03).
+        val discreet = listen.prefs.value.discreet
+        val (channel, text) = if (discreet) {
+            CH_STATUS to R.string.service_text_armed
+        } else {
+            when (kind) {
+                NoticeKind.EMERGENCY -> CH_ALERT to R.string.notif_emergency
+                NoticeKind.ALERT_SENT -> CH_ALERT to R.string.notif_alert_sent
+                NoticeKind.PROTECTION_DOWNGRADED -> CH_STATUS to R.string.notif_downgraded
+                NoticeKind.PROTECTION_INTERRUPTED -> CH_STATUS to R.string.notif_interrupted
+            }
         }
         val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val public = Notification.Builder(context, channel)

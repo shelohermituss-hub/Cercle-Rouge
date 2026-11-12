@@ -1,18 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_sos_root"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_sos_background"
-    android:contentDescription="@string/sos_a11y">
+    android:baselineAligned="false"
+    android:orientation="horizontal">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:importantForAccessibility="no"
-        android:text="@string/sos"
-        android:textColor="#FFFFFF"
-        android:textSize="28sp"
-        android:textStyle="bold" />
-</FrameLayout>
+    <FrameLayout
+        android:id="@+id/widget_sos_root"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginEnd="4dp"
+        android:layout_weight="1"
+        android:background="@drawable/widget_sos_background"
+        android:contentDescription="@string/sos_a11y">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:text="@string/sos"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/widget_arm_root"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@drawable/widget_arm_background"
+        android:contentDescription="@string/widget_arm_a11y">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:text="@string/widget_arm"
+            android:textColor="#0A0A0A"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+    </FrameLayout>
+</LinearLayout>

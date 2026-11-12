@@ -90,11 +90,13 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
     private val settingsVm: SettingsViewModel by viewModels()
     private val watch: com.cerclerouge.app.ui.watch.WatchViewModel by viewModels()
     private val sosRequested = androidx.compose.runtime.mutableStateOf(false)
+    private val armRequested = androidx.compose.runtime.mutableStateOf(false)
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         if (intent.getBooleanExtra(SosIntents.EXTRA_SOS, false)) sosRequested.value = true
+        if (intent.getBooleanExtra(SosIntents.EXTRA_ARM, false)) armRequested.value = true
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,6 +104,7 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
         enableEdgeToEdge()
         setShowWhenLocked(true) // le SOS de la tuile, du widget ou de la notification s'ouvre par-dessus l'écran verrouillé
         sosRequested.value = intent.getBooleanExtra(SosIntents.EXTRA_SOS, false)
+        armRequested.value = intent.getBooleanExtra(SosIntents.EXTRA_ARM, false)
         setContent {
             CercleRougeTheme {
                 var screen by remember { mutableStateOf(Screen.LOADING) }
@@ -132,7 +135,9 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                             onSettings = { screen = Screen.SETTINGS },
                             onHistory = { screen = Screen.HISTORY },
                             sosRequested = sosRequested.value,
-                            onSosConsumed = { sosRequested.value = false }
+                            onSosConsumed = { sosRequested.value = false },
+                            armRequested = armRequested.value,
+                            onArmConsumed = { armRequested.value = false }
                         )
                         Screen.CONTACTS -> {
                             BackHandler { screen = Screen.HOME }

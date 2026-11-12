@@ -511,4 +511,13 @@
     <string name="outcome_arrived">rive</string>
     <string name="outcome_stopped">sispann</string>
     <string name="outcome_ended">fini</string>
+    <string name="detect_discreet">Mòd diskrè</string>
+    <string name="detect_discreet_off">Dezaktive</string>
+    <string name="detect_discreet_on">Aktive</string>
+    <string name="detect_discreet_ex">Notifikasyon net, pa gen son ni tèks alèt sou ekran an ; se sèlman vibrasyon kode k ap avèti w. Endikatè mikwo Android la rete vizib : li obligatwa.</string>
+    <string name="discreet_finish">Fini</string>
+    <string name="discreet_call">Rele 114</string>
+    <string name="widget_arm_a11y">Aktive pwoteksyon an</string>
+    <string name="widget_arm_tile">Pwoteksyon</string>
+    <string name="widget_arm">ON</string>
 </resources>

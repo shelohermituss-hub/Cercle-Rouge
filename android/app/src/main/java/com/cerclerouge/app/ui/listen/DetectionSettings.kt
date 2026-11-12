@@ -45,7 +45,8 @@ internal fun DetectionSettings(
     now: Instant,
     onSensitivity: (Sensitivity) -> Unit,
     onVerify: (Int) -> Unit,
-    onContext: (IgnoreContext, ContextDuration?) -> Unit
+    onContext: (IgnoreContext, ContextDuration?) -> Unit,
+    onDiscreet: (Boolean) -> Unit = {}
 ) {
     val c = Cr.colors
     Text(stringResource(R.string.detect_title).uppercase(), style = PxType.label, color = c.lime)
@@ -63,6 +64,13 @@ internal fun DetectionSettings(
             Choice(stringResource(R.string.detect_seconds, sec), sec == prefs.verifySeconds) { onVerify(sec) }
         }
     }
+
+    Text(stringResource(R.string.detect_discreet), style = PxType.bodyBold)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Choice(stringResource(R.string.detect_discreet_off), !prefs.discreet) { onDiscreet(false) }
+        Choice(stringResource(R.string.detect_discreet_on), prefs.discreet) { onDiscreet(true) }
+    }
+    Text(stringResource(R.string.detect_discreet_ex), style = PxType.caption, color = c.muted)
 
     Text(stringResource(R.string.detect_contexts), style = PxType.bodyBold)
     Text(stringResource(R.string.detect_contexts_ex), style = PxType.caption, color = c.muted)

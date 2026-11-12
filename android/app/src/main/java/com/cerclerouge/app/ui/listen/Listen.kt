@@ -101,6 +101,8 @@ class ListenViewModel @Inject constructor(
 
     fun setSensitivity(s: com.cerclerouge.alert.Sensitivity) = viewModelScope.launch { listen.setSensitivity(s) }
 
+    fun setDiscreet(on: Boolean) = viewModelScope.launch { listen.setDiscreet(on) }
+
     fun setVerify(seconds: Int) = viewModelScope.launch { listen.setVerifySeconds(seconds) }
 
     /** Contexte à ignorer : 1 h, 3 h ou jusqu'à demain 7 h ; null l'arrête. */
@@ -344,7 +346,7 @@ fun ListenScreen(vm: ListenViewModel, onBack: () -> Unit) {
                 Text(stringResource(R.string.listen_confidence, (it * 100).toInt()), style = PxType.caption, color = c.muted)
             }
 
-            DetectionSettings(prefs, vm.now(), vm::setSensitivity, vm::setVerify, vm::setContext)
+            DetectionSettings(prefs, vm.now(), vm::setSensitivity, vm::setVerify, vm::setContext, vm::setDiscreet)
 
             Keywords(vm, ui, granted, busy)
         }

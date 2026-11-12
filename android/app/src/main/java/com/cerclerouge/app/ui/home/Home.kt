@@ -130,6 +130,7 @@ class HomeViewModel @Inject constructor(
     val security: SecuritySettings,
     val audio: AudioListener,
     val brain: com.cerclerouge.app.protection.RiskBrain,
+    val listen: com.cerclerouge.app.protection.ListenSettings,
     val device: com.cerclerouge.app.device.DeviceMonitor,
     val history: com.cerclerouge.app.history.HistoryRepository,
     private val guardians: GuardianSync
@@ -137,6 +138,7 @@ class HomeViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             contacts.load()
+            listen.load()
             contacts.applyServerStatuses(server.contactStatuses()) // accord des proches (accepté, refusé, STOP)
             guardians.refresh() // 12–15 ans : l'adulte référent a-t-il confirmé ?
         }
@@ -166,7 +168,9 @@ fun HomeScreen(
     onSettings: () -> Unit = {},
     onHistory: () -> Unit = {},
     sosRequested: Boolean = false,
-    onSosConsumed: () -> Unit = {}
+    onSosConsumed: () -> Unit = {},
+    armRequested: Boolean = false,
+    onArmConsumed: () -> Unit = {}
 ) {
     val c = Cr.colors
     val context = LocalContext.current
@@ -178,6 +182,7 @@ fun HomeScreen(
     val audioStatus by vm.audio.status.collectAsState()
     val decision by vm.brain.decision.collectAsState()
     val device by vm.device.status.collectAsState()
+    val listenPrefs by vm.listen.prefs.collectAsState()
     var lastAlert by remember { mutableStateOf<com.cerclerouge.privacy.db.HistoryEntity?>(null) }
     var lastTrip by remember { mutableStateOf<com.cerclerouge.privacy.db.HistoryEntity?>(null) }
     LaunchedEffect(state.protection, state.alert?.id) {
@@ -252,8 +257,16 @@ fun HomeScreen(
         }
     }
 
+    // Armer depuis la tuile ou le widget : une seule fois, et seulement si la protection est coupée (désarmer demande le PIN).
+    LaunchedEffect(armRequested) {
+        if (armRequested) {
+            if (state.protection == com.cerclerouge.domain.ProtectionState.OFF) toggleProtection()
+            onArmConsumed()
+        }
+    }
     Box(Modifier.fillMaxSize().background(c.surface).pixelGrid(c.grid).safeDrawingPadding()) {
         when {
+            state.protection.isAlert && listenPrefs.discreet -> DiscreetScreen(onSafe = { guarded(Guarded.IM_SAFE) }, onCall = ::dial114)
             state.protection.isAlert -> EmergencyScreen(vm, state, onSafe = { guarded(Guarded.IM_SAFE) }, onCall = ::dial114)
             sos == SosStep.HOLD -> SosHoldScreen(onBack = { sos = SosStep.NONE }, onTrigger = { sos = SosStep.COUNTDOWN })
             sos == SosStep.COUNTDOWN -> CountdownScreen(
@@ -827,4 +840,22 @@ internal fun RejectReason.message(): Int = when (this) {
     RejectReason.PIN_REQUIRED -> R.string.reject_pin
     RejectReason.PIN_INVALID -> R.string.pin_wrong
     RejectReason.LOCATION_REQUIRED -> R.string.reject_location
+}
+
+/**
+ * Écran d'une alerte en mode discret (R-HOME-03) : aucun mot « alerte », « danger » ni « urgence », aucun son, aspect d'une
+ * simple application de suivi. Deux gestes seulement : terminer (PIN/biométrie, comme « Je vais bien ») et appeler le 114.
+ */
+@Composable
+internal fun DiscreetScreen(onSafe: () -> Unit, onCall: () -> Unit) {
+    SecureScreen()
+    val c = Cr.colors
+    Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        PxPanel(Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.service_text_armed).uppercase(), style = PxType.display, color = c.muted)
+        }
+        Spacer(Modifier.weight(1f))
+        PxButton(stringResource(R.string.discreet_finish), onSafe, variant = PxVariant.OUTLINE)
+        PxButton(stringResource(R.string.discreet_call), onCall, variant = PxVariant.DARK)
+    }
 }

@@ -12,6 +12,18 @@ import com.cerclerouge.app.MainActivity
  */
 object SosIntents {
     const val EXTRA_SOS = "com.cerclerouge.app.EXTRA_SOS"
+    const val EXTRA_ARM = "com.cerclerouge.app.EXTRA_ARM"
+
+    /** Armer la protection depuis la tuile ou le widget : l'application s'ouvre et demande les autorisations en contexte. */
+    fun armIntent(context: Context): Intent = Intent(context, MainActivity::class.java).putExtra(EXTRA_ARM, true)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
+    fun armPending(context: Context, requestCode: Int): PendingIntent = PendingIntent.getActivity(
+        context,
+        requestCode,
+        armIntent(context),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+    )
 
     fun launch(context: Context): Intent = Intent(context, MainActivity::class.java)
         .putExtra(EXTRA_SOS, true)

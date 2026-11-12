@@ -511,4 +511,13 @@
     <string name="outcome_arrived">arrivé</string>
     <string name="outcome_stopped">arrêté</string>
     <string name="outcome_ended">terminée</string>
+    <string name="detect_discreet">Mode discret</string>
+    <string name="detect_discreet_off">Désactivé</string>
+    <string name="detect_discreet_on">Activé</string>
+    <string name="detect_discreet_ex">Notifications neutres, aucun son ni texte d\'alerte à l\'écran ; seules des vibrations codées te préviennent. L\'indicateur micro d\'Android reste visible : il est obligatoire.</string>
+    <string name="discreet_finish">Terminer</string>
+    <string name="discreet_call">Appeler le 114</string>
+    <string name="widget_arm">ON</string>
+    <string name="widget_arm_a11y">Activer la protection</string>
+    <string name="widget_arm_tile">Protection</string>
 </resources>

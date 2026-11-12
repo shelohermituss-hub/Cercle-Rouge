@@ -393,6 +393,63 @@ select set_config('request.jwt.claims', '', true);
 select tests.expect((select last_lat from public.trips where id = (select v::uuid from s3 where k = 'trip')) is null, 'fin du trajet : position effacée');
 select tests.expect(not exists (select 1 from private.trip_recipients where trip_id = (select v::uuid from s3 where k = 'trip') and phone_enc is not null), 'fin du trajet : numéros effacés');
 
+-- ===== 1.8, 0.2 · Envoi serveur automatique (SMS, e-mail), accusés et déduplication =====
+select tests.as_user(:'guardian'); set local role authenticated;
+select tests.expect(public.set_alert_recipients((select v::uuid from s3 where k = 'g_alert'),
+  '[{"ref":"contact-aaaa1","phone":"+50934100001","email":"a@example.org","message":"Alerte Cercle Rouge: Maman demande de l aide","lang":"ht","channels":["sms","email"]},
+    {"ref":"contact-bbbb2","phone":"+50932000002","message":"Alerte Cercle Rouge: Maman demande de l aide","lang":"fr","channels":["sms"]}]'::jsonb) = 1,
+  'destinataires enregistrés, numéro STOP ignoré');
+select tests.expect_error($$select public.set_alert_recipients((select v::uuid from s3 where k = 'g_alert'),
+  '[{"ref":"contact-cccc3","phone":"+50934100003","message":"un texte sans la marque","lang":"fr","channels":["sms"]}]'::jsonb)$$, '%invalid_message%');
+select tests.expect_error($$select public.set_alert_recipients((select v::uuid from s3 where k = 'g_alert'),
+  '[{"ref":"contact-cccc3","phone":"123","message":"Alerte Cercle Rouge: test message","lang":"fr","channels":["sms"]}]'::jsonb)$$, '%invalid_phone%');
+select tests.expect_error($$select public.set_alert_recipients((select v::uuid from s3 where k = 'g_alert'), (select jsonb_agg(jsonb_build_object(
+  'ref', 'contact-' || i || 'xxxx', 'phone', '+5093410000' || i, 'message', 'Alerte Cercle Rouge: test message', 'lang', 'fr', 'channels', jsonb_build_array('sms'))) from generate_series(1, 6) i))$$, '%invalid_recipients%');
+select tests.expect_error($$select * from private.alert_recipients$$, '%permission denied%');
+select tests.expect_error($$select * from private.deliveries$$, '%permission denied%');
+select tests.expect_error($$select private.alert_sends_due()$$, '%permission denied%');
+reset role;
+select tests.as_user(:'stranger'); set local role authenticated;
+select tests.expect_error($$select public.set_alert_recipients((select v::uuid from s3 where k = 'g_alert'),
+  '[{"ref":"contact-dddd4","phone":"+50934100004","message":"Alerte Cercle Rouge: test message","lang":"fr","channels":["sms"]}]'::jsonb)$$, '%not_found%');
+select tests.expect_error($$select public.report_delivery((select v::uuid from s3 where k = 'g_alert'), '+50934100001', 'sms')$$, '%not_found%');
+select tests.expect((select count(*) from public.alert_deliveries((select v::uuid from s3 where k = 'g_alert'))) = 0, 'un tiers ne voit pas les accusés');
+reset role;
+set local role anon;
+select tests.expect_error($$select public.set_alert_recipients(gen_random_uuid(), '[]'::jsonb)$$, '%permission denied%');
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect(not exists (select 1 from private.alert_recipients where position(convert_to('50934100001', 'UTF8') in phone_enc) > 0
+  or position(convert_to('a@example.org', 'UTF8') in email_enc) > 0), 'numéros, e-mails et textes chiffrés');
+select tests.expect((select count(*) from private.alert_sends_due((select v::uuid from s3 where k = 'g_alert'))
+  where channel = 'email' and email = 'a@example.org') = 1, 'l''e-mail part tout de suite');
+select tests.expect((select count(*) from private.alert_sends_due((select v::uuid from s3 where k = 'g_alert')) where channel = 'sms') = 0,
+  'le SMS du serveur attend 20 s : le téléphone est le premier canal');
+select tests.expect((select phone from private.alert_sends_due((select v::uuid from s3 where k = 'g_alert'), interval '0 seconds') where channel = 'sms') = '+50934100001',
+  'après le délai, le SMS est à faire, numéro déchiffré');
+select tests.as_user(:'guardian'); set local role authenticated;
+select public.report_delivery((select v::uuid from s3 where k = 'g_alert'), '+50934100001', 'sms');
+select public.report_delivery((select v::uuid from s3 where k = 'g_alert'), '+50934100001', 'sms');
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect((select count(*) from private.alert_sends_due((select v::uuid from s3 where k = 'g_alert'), interval '0 seconds') where channel = 'sms') = 0,
+  'R-NET-03 : SMS déjà envoyé par le téléphone, le serveur ne le renvoie pas');
+select tests.expect(private.alert_send_claim((select v::uuid from s3 where k = 'g_alert'), public.phone_hash('+50934100001'), 'email'), 'envoi réservé');
+select tests.expect(not private.alert_send_claim((select v::uuid from s3 where k = 'g_alert'), public.phone_hash('+50934100001'), 'email'), 'une seule réservation (R-NET-02)');
+select tests.expect((select count(*) from private.alert_sends_due((select v::uuid from s3 where k = 'g_alert')) where channel = 'email') = 0,
+  'e-mail en cours d''envoi : pas repris tout de suite');
+select private.alert_send_done((select v::uuid from s3 where k = 'g_alert'), public.phone_hash('+50934100001'), 'email', 'sent', 'mail-1');
+select tests.expect(private.server_email_allowed('22222222-2222-2222-2222-222222222222', (select v::uuid from s3 where k = 'g_alert')), 'e-mail permis');
+select tests.as_user(:'guardian'); set local role authenticated;
+select tests.expect((select count(*) from public.alert_deliveries((select v::uuid from s3 where k = 'g_alert'))) = 2, 'le propriétaire voit 2 accusés (téléphone et serveur)');
+select tests.expect((select count(*) from public.alert_deliveries((select v::uuid from s3 where k = 'g_alert')) where source = 'phone' and channel = 'sms') = 1, 'dont le SMS du téléphone');
+reset role;
+select set_config('request.jwt.claims', '', true);
+update public.alerts set status = 'closed', closure = 'USER_SAFE', closed_at = now() - interval '2 hours' where id = (select v::uuid from s3 where k = 'g_alert');
+select tests.expect(private.alert_notify_tick() = 0, 'alerte close : plus rien à envoyer');
+select tests.expect(not exists (select 1 from private.alert_recipients where phone_enc is not null or email_enc is not null or message_enc is not null),
+  'une heure après la fin : numéros, e-mails et textes effacés');
+
 -- ===== Fonctions : jamais exécutables par anon ni par PUBLIC =====
 select tests.expect(
   not exists (

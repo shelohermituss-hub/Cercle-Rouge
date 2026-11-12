@@ -1,10 +1,6 @@
 package com.cerclerouge.app.audio
 
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.BatteryManager
 import android.os.PowerManager
 import androidx.core.content.ContextCompat
 import com.cerclerouge.privacy.log.EventLog
@@ -24,7 +20,8 @@ import kotlinx.coroutines.launch
 class DeviceHealth @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val audio: AudioListener,
-    private val log: EventLog
+    private val log: EventLog,
+    private val monitor: com.cerclerouge.app.device.DeviceMonitor
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var lowBattery = false
@@ -35,21 +32,14 @@ class DeviceHealth @Inject constructor(
     fun start() {
         if (started) return
         started = true
-        ContextCompat.registerReceiver(
-            context,
-            object : BroadcastReceiver() {
-                override fun onReceive(c: Context, i: Intent) {
-                    val level = i.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-                    val scale = i.getIntExtra(BatteryManager.EXTRA_SCALE, 100).coerceAtLeast(1)
-                    val charging = i.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0
-                    if (level < 0) return
-                    val pct = level * 100 / scale
-                    update(battery = if (lowBattery) !charging && pct < RESUME_PCT else !charging && pct < LOW_PCT, heat = hot)
-                }
-            },
-            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
+        monitor.start()
+        scope.launch {
+            monitor.status.collect { st ->
+                val pct = st.batteryPct ?: return@collect
+                val low = if (lowBattery) !st.charging && pct < RESUME_PCT else !st.charging && pct < LOW_PCT
+                update(battery = low, heat = hot)
+            }
+        }
         context.getSystemService(PowerManager::class.java)?.addThermalStatusListener(ContextCompat.getMainExecutor(context)) { status ->
             update(battery = lowBattery, heat = status >= PowerManager.THERMAL_STATUS_SEVERE)
         }

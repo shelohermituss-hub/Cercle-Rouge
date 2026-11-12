@@ -70,6 +70,7 @@ dependencies {
     implementation(project(":privacy-engine"))
     implementation(project(":contacts-engine"))
     implementation(project(":location-engine"))
+    implementation(project(":sensor-engine"))
     implementation(project(":audio-engine"))
     implementation(project(":evidence-engine"))
     implementation(libs.androidx.core.ktx)

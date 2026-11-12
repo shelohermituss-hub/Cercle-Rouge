@@ -1,9 +1,6 @@
 package com.cerclerouge.app.alert
 
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.telephony.TelephonyManager
 import com.cerclerouge.alert.DispatchKind
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.contacts.ContactsRepository
@@ -56,7 +53,8 @@ class AlertDispatcher @Inject constructor(
     private val location: LocationProvider,
     private val log: EventLog,
     private val clock: Clock,
-    private val server: ServerSync
+    private val server: ServerSync,
+    private val monitor: com.cerclerouge.app.device.DeviceMonitor
 ) {
     private val drainLock = Mutex()
 
@@ -239,11 +237,6 @@ class AlertDispatcher @Inject constructor(
         }
     )
 
-    @Suppress("DEPRECATION")
-    private fun deviceStatus(): DeviceStatus {
-        val cm = context.getSystemService(ConnectivityManager::class.java)
-        val hasData = cm.getNetworkCapabilities(cm.activeNetwork)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-        val sim = context.getSystemService(TelephonyManager::class.java).simState == TelephonyManager.SIM_STATE_READY
-        return DeviceStatus(hasData = hasData, canSendSms = sim)
-    }
+    /** État réel de l'appareil : données validées, SMS possible (SIM prête, mode avion coupé). */
+    private fun deviceStatus(): DeviceStatus = monitor.refresh().let { DeviceStatus(hasData = it.hasData, canSendSms = it.canSendSms) }
 }

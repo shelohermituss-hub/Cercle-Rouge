@@ -18,7 +18,7 @@
 <ul>
   <li>Cercle Rouge sert à alerter <strong>tes proches</strong> quand tu es en danger. Pas de publicité, pas de revente, pas de profilage.</li>
   <li>L'écoute de ta phrase secrète se fait <strong>sur ton téléphone</strong> : aucun son n'est envoyé.</li>
-  <li>Ta position n'est partagée <strong>que pendant une alerte</strong>, avec les proches que tu as choisis.</li>
+  <li>Ta position n'est partagée <strong>que pendant une alerte</strong>, ou pendant un trajet si tu as coché « Prévenir mes proches si mon téléphone se tait ».</li>
   <li>Tu peux tout <strong>effacer</strong> à tout moment (Réglages → Supprimer mon compte).</li>
 </ul>
 
@@ -26,11 +26,12 @@
 <table>
   <tr><th>Donnée</th><th>Où</th><th>Avec qui</th><th>Combien de temps</th></tr>
   <tr><td>Prénom, année et mois de naissance, langue</td><td>Téléphone ; serveur (prénom, langue, âge pour les règles des mineurs)</td><td>Le prénom est montré à tes proches pendant une alerte</td><td>Jusqu'à la suppression du compte</td></tr>
-  <tr><td>Contacts de confiance (nom, numéro)</td><td>Téléphone seulement (chiffré)</td><td>Ton opérateur, pour envoyer les SMS que tu déclenches</td><td>Jusqu'à ce que tu les retires</td></tr>
+  <tr><td>Contacts de confiance (nom, numéro)</td><td>Téléphone (chiffré) ; serveur : empreinte du numéro pour l'invitation, numéro chiffré pendant un trajet suivi</td><td>Ton opérateur ou Vonage, pour envoyer les SMS</td><td>Jusqu'à ce que tu les retires ; numéros du trajet effacés à la fin du trajet</td></tr>
   <tr><td>Position</td><td>Téléphone ; serveur pendant une alerte</td><td>Tes proches, par un lien personnel valable 2 à 6 h</td><td>Effacée du serveur 24 h après la fin de l'alerte</td></tr>
   <tr><td>Alerte (heure, niveau, raison, réponses des proches)</td><td>Téléphone ; serveur</td><td>Tes proches pendant l'alerte</td><td>30 jours après la fin sur le serveur</td></tr>
   <tr><td>Enregistrements audio d'une alerte</td><td>Téléphone seulement, chiffrés</td><td>Personne, sauf si tu les exportes toi-même</td><td>Durée choisie : 24 h (par défaut), 7 ou 30 jours, ou à la fin de l'alerte ; 90 jours au plus si tu choisis de les garder</td></tr>
   <tr><td>Empreinte de ta phrase secrète (pas de son)</td><td>Téléphone seulement, chiffrée</td><td>Personne</td><td>Jusqu'à ce que tu la supprimes</td></tr>
+  <tr><td>Trajet suivi par le serveur (si tu l'as choisi) : heure d'arrivée prévue, mode, dernière position, batterie</td><td>Serveur, pendant le trajet</td><td>Jusqu'à 3 proches ayant accepté, par SMS, seulement si ton téléphone se tait 10 min</td><td>Position et numéros effacés à la fin du trajet (au plus 2 h après l'arrivée prévue)</td></tr>
   <tr><td>Lieux favoris, journal des événements</td><td>Téléphone seulement, chiffrés</td><td>Personne</td><td>Jusqu'à suppression ; effacement d'urgence possible</td></tr>
   <tr><td>Texte d'une recherche d'adresse (si tu l'as autorisée)</td><td>Transmis au service de recherche de Google</td><td>Google</td><td>Selon Google ; ta position n'est jamais envoyée</td></tr>
 </table>
@@ -42,7 +43,7 @@
 <p>La protection automatique demande l'accord d'un adulte référent (parent, tuteur ou adulte de confiance). Cet adulte ne voit aucune donnée du jeune ; il peut retirer son accord à tout moment. Le SOS manuel reste toujours disponible.</p>
 
 <h2>Prestataires</h2>
-<p>Supabase (hébergement de la base, États-Unis) ; GitHub Pages (page de suivi des proches) ; OpenStreetMap et OpenFreeMap (fonds de carte : ils voient l'adresse IP et la zone affichée, jamais ta position) ; Google (recherche d'adresse, seulement si tu l'autorises). Plus tard : un fournisseur de SMS et Firebase (notifications), qui seront ajoutés ici avant leur mise en service.</p>
+<p>Supabase (hébergement de la base, États-Unis) ; GitHub Pages (page de suivi des proches) ; OpenStreetMap et OpenFreeMap (fonds de carte : ils voient l'adresse IP et la zone affichée, jamais ta position) ; Google (recherche d'adresse, seulement si tu l'autorises). Vonage (envoi des SMS du serveur : invitations, secours, trajet suivi ; il voit le numéro et le texte). Plus tard : Firebase (notifications), ajouté ici avant sa mise en service.</p>
 
 <h2>Tes droits</h2>
 <p>Accès et portabilité : Réglages → Exporter mes données. Effacement : Réglages → Supprimer mon compte (serveur et téléphone). Retrait d'un consentement : à tout moment, dans l'app. Contact : <em>adresse à compléter</em>.</p>

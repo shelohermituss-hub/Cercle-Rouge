@@ -19,11 +19,11 @@ Le Sprint 3 (IA audio) est mis de côté pour l'instant, à la demande du porteu
 | S4.04 Banc de rejeu GPX | ✅ | Scénarios synthétiques ; **traces réelles de S0.21 à ajouter** (👤) |
 | S4.05 Écran Trajet | 🟡 | Destination (carte, favoris, recherche), mode (marche, voiture, tap-tap, taxi, moto), heure prévue (−5/+5), démarrage avec PIN, « Je fais un arrêt » (10 à 60 min), « Je suis arrivé·e » (PIN), arrivée détectée proposée. « Contacts qui suivent » : avec le serveur (S4.07) |
 | S4.06 Événement de trajet → vérification (niveau 1 au plus) | ✅ (moteur) / 🟡 (branchement) | `TripIssue` → vérification ; sans réponse, escalade normale |
-| S4.07 `trips` + RPC + battement | ⏸ | Serveur |
-| S4.08 Chien de garde `pg_cron` | ⏸ | Serveur |
+| S4.07 `trips` + RPC + battement | ✅ (serveur) / 🟡 (app) | ADR-0024. Opt-in sur l'écran Trajet, numéro vérifié, 3 proches ayant accepté ; battement 2 min. `security.sql` vert en local et sur le projet |
+| S4.08 Chien de garde `pg_cron` | ✅ (serveur) / 🟡 (SMS réel) | 10 min sans battement → SMS Vonage (`trip-watchdog`), puis « de nouveau joignable ». Chaîne cron → `pg_net` → fonction vérifiée (200) ; **envoi d'un vrai SMS à vérifier** (👤) |
 | S4.09 Dernier message à l'extinction | ⏸ | Opt-in à définir + test sur appareil |
 | S4.10 Carte dans la page des proches | ⏸ | Serveur et page web |
-| S4.11 Fin de trajet : suppression des points | ✅ (local) | Aucun point gardé ; 3 dernières positions en mémoire, effacées à la fin ; résumé sans coordonnées au journal. Partie serveur avec S4.07 |
+| S4.11 Fin de trajet : suppression des points | ✅ (local) | Aucun point gardé ; 3 dernières positions en mémoire, effacées à la fin ; résumé sans coordonnées au journal. Serveur : `end_trip` efface position et numéros ; arrêt automatique 2 h après l'arrivée prévue |
 
 ## À vérifier sur un vrai téléphone (👤)
 
@@ -31,3 +31,4 @@ Le Sprint 3 (IA audio) est mis de côté pour l'instant, à la demande du porteu
 2. Arrêt de 12 min sans le déclarer : vérification « Es-tu en sécurité ? ».
 3. Recherche d'adresse : avis affiché une fois ; résultats en Haïti.
 4. Téléphone sans Play Services (si disponible) : position par repli.
+5. Surveillance serveur : numéro vérifié, un proche ayant accepté, case cochée ; démarrer un trajet puis passer en mode avion 11 min → le proche reçoit le SMS « plus de nouvelles » ; réactiver le réseau → SMS « de nouveau joignable ».

@@ -61,7 +61,7 @@ Légende : 🧑 action du porteur du projet · 🤖 développement · 📱 test 
 
 ### Dès maintenant (sans compte supplémentaire)
 - ~~**Écran Réglages**~~ ✅ fait (suppression du compte, export, langue, conservation, interrupteurs, biométrie, effacement d'urgence, batterie). Sensibilité de l'écoute : avec les mots-clés.
-- **Trajet suivi par le serveur** (S4.07, S4.08) : table `trips`, battement toutes les 2 min (opt-in), **chien de garde `pg_cron`** → alerte « perte de contact » si le téléphone se tait 10 min. C'est la protection quand le téléphone est éteint ou cassé.
+- ✅ (2026-11-12, ADR-0024 ; SMS réel à vérifier) **Trajet suivi par le serveur** (S4.07, S4.08) : table `trips`, battement toutes les 2 min (opt-in), **chien de garde `pg_cron`** → alerte « perte de contact » si le téléphone se tait 10 min. C'est la protection quand le téléphone est éteint ou cassé.
 - **Carte dans la page des proches pendant un trajet** (S4.10).
 - **Dernier message à l'extinction** du téléphone (S4.09), si tu le veux (opt-in).
 - **Envoi des preuves** (S6.04, S6.05) : bucket privé chiffré, envoi reprenable, priorités réseau (position > texte > audio), Wi-Fi seulement hors urgence.

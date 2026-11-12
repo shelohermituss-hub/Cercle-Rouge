@@ -120,6 +120,15 @@ class MessagesTest {
         assertFalse("aide" in m || "18.5392" in m, m)
     }
 
+    @Test fun tripShareCarriesTheFollowLinkAndIsGsm7() { // S4.10
+        for (lang in Language.entries) {
+            val m = Messages.sms(input(lang, kind = MessageKind.TRIP_SHARE))
+            assertTrue("https://cr.example/s/AbC123" in m && "Marie" in m, m)
+            assertTrue(Gsm7.isGsm7(m) && Gsm7.segments(m) <= 2, "$lang : $m")
+            assertFalse("aide" in m || "help" in m || "18.5392" in m, m) // ni appel à l'aide ni position dans le SMS
+        }
+    }
+
     @Test fun unconsentedContactsGetTheMentionAndStop() { // ADR-0015
         val fr = Messages.sms(input(Language.FR, unconsented = true))
         assertTrue("pas inscrit" in fr && "STOP" in fr && "Marie" in fr, fr)

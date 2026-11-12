@@ -18,7 +18,10 @@ enum class MessageKind {
     PROTECTION_STOPPED,
 
     /** Arrivée confirmée (PIN) d'un trajet suivi par les proches. */
-    TRIP_ARRIVED
+    TRIP_ARRIVED,
+
+    /** Départ d'un trajet suivi : le proche reçoit son lien de suivi (S4.10). */
+    TRIP_SHARE
 }
 
 /**
@@ -76,6 +79,11 @@ object Messages {
             MessageKind.PIN_FAILURES -> "${t.pinFailures(m.name)} Ref $id"
             MessageKind.PROTECTION_STOPPED -> "${t.protectionStopped(m.name, time)} Ref $id"
             MessageKind.TRIP_ARRIVED -> "${t.tripArrived(m.name, time)} Ref $id"
+            MessageKind.TRIP_SHARE -> buildString {
+                append(t.tripShare(m.name))
+                m.link?.let { append(' ').append(t.follow).append(' ').append(it) }
+                append(" Ref ").append(id)
+            }
         }
         return buildString {
             if (m.test || m.kind == MessageKind.TEST) append("[TEST] ")
@@ -107,6 +115,7 @@ private interface Texts {
     fun callback(phone: String): String
     fun protectionStopped(name: String, time: String): String
     fun tripArrived(name: String, time: String): String
+    fun tripShare(name: String): String
     fun alert(name: String, reason: String, time: String): String
     fun reason(r: Reason): String
     fun position(coords: String, accuracy: Int): String
@@ -145,6 +154,7 @@ private object Fr : Texts {
     override fun callback(phone: String) = "Appeler: $phone."
     override fun protectionStopped(name: String, time: String) = "Cercle Rouge: $name a coupé sa protection à $time."
     override fun tripArrived(name: String, time: String) = "Cercle Rouge: $name est bien arrivé(e) à $time."
+    override fun tripShare(name: String) = "Cercle Rouge: $name a commencé un trajet et te laisse le suivre."
     override fun alert(name: String, reason: String, time: String) = "Alerte Cercle Rouge: $name demande de l'aide ($reason). $time."
     override fun reason(r: Reason) = when (r) {
         Reason.SOS -> "SOS déclenché"
@@ -184,6 +194,7 @@ private object Ht : Texts {
     override fun callback(phone: String) = "Rele: $phone."
     override fun protectionStopped(name: String, time: String) = "Cercle Rouge: $name kanpe pwoteksyon li a $time."
     override fun tripArrived(name: String, time: String) = "Cercle Rouge: $name rive byen a $time."
+    override fun tripShare(name: String) = "Cercle Rouge: $name kòmanse yon trajè e li kite w swiv li."
     override fun alert(name: String, reason: String, time: String) = "Alèt Cercle Rouge: $name bezwen èd ($reason). $time."
     override fun reason(r: Reason) = when (r) {
         Reason.SOS -> "li voye SOS"
@@ -217,6 +228,7 @@ private object En : Texts {
     override fun callback(phone: String) = "Call: $phone."
     override fun protectionStopped(name: String, time: String) = "Cercle Rouge: $name turned off their protection at $time."
     override fun tripArrived(name: String, time: String) = "Cercle Rouge: $name arrived safely at $time."
+    override fun tripShare(name: String) = "Cercle Rouge: $name started a trip and lets you follow it."
     override fun alert(name: String, reason: String, time: String) = "Cercle Rouge alert: $name needs help ($reason). $time."
     override fun reason(r: Reason) = when (r) {
         Reason.SOS -> "SOS triggered"

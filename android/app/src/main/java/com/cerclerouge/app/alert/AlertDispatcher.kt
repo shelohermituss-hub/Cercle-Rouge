@@ -158,6 +158,33 @@ class AlertDispatcher @Inject constructor(
         drain(null)
     }
 
+    /**
+     * Départ d'un trajet suivi (S4.10) : chaque proche choisi reçoit par SMS son lien de suivi (`links` : id du contact → lien).
+     * Même file que les alertes : repris au retour du réseau, jamais en double.
+     */
+    suspend fun shareTrip(tripId: String, links: Map<String, String>) {
+        if (links.isEmpty()) return
+        val now = clock.instant()
+        val id = "tripshare-$tripId"
+        links.forEach { (contactId, url) ->
+            settings.put(com.cerclerouge.privacy.db.SettingEntity("$TRIP_LINK$contactId", url))
+            outbox.enqueue(
+                OutboxJob(
+                    OutboxJob.key(id, contactId, Channel.SMS, MessageKind.TRIP_SHARE),
+                    id,
+                    contactId,
+                    Channel.SMS,
+                    MessageKind.TRIP_SHARE,
+                    JobPriority.UPDATE,
+                    now
+                )
+            )
+        }
+        log.append("dispatch_queue", "TRIP_SHARE jobs=${links.size}")
+        OutboxWork.schedule(context)
+        drain(null)
+    }
+
     /** Test d'alerte : même chemin, marqueur « [TEST] », 3 par jour et par contact (S2.12, R-CON-06). */
     suspend fun sendTest(contactId: String) {
         contacts.load()
@@ -216,7 +243,11 @@ class AlertDispatcher @Inject constructor(
                 zone = ZoneId.systemDefault(),
                 position = if (isAlert) position() else LocationShare.NotShared,
                 // Lien de suivi (S3.06) : attente bornée à 10 s, sinon le SMS part avec les coordonnées seules.
-                link = if (isAlert && alert != null) server.trackingLink(alert, contact.id, contact.name) else null,
+                link = when {
+                    isAlert && alert != null -> server.trackingLink(alert, contact.id, contact.name)
+                    job.kind == MessageKind.TRIP_SHARE -> settings.get("$TRIP_LINK${contact.id}")
+                    else -> null
+                },
                 language = contact.language,
                 alertId = job.alertId,
                 test = job.kind == MessageKind.TEST,
@@ -322,6 +353,7 @@ class AlertDispatcher @Inject constructor(
         /** Message personnalisé ajouté aux alertes (Réglages, PDF 5.1). */
         const val CUSTOM_MESSAGE = "alert.custom"
         private const val TRIP_WATCH = "trip.server_watch"
+        private const val TRIP_LINK = "trip.share.link."
         private const val TRIP_RECIPIENTS = 3
     }
 }

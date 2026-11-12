@@ -49,6 +49,7 @@ class ServerSync @Inject constructor(
     private val tracker: LocationTracker,
     private val log: EventLog,
     private val clock: Clock,
+    private val monitor: com.cerclerouge.app.device.DeviceMonitor,
     db: PrivacyDatabase
 ) {
     private val settings = db.settings()
@@ -288,8 +289,19 @@ class ServerSync @Inject constructor(
     private fun startFollowing(alert: Alert) {
         follow?.cancel()
         follow = scope.launch {
+            var round = 0
             while (isActive && current?.id == alert.id) {
                 val id = serverId(alert.id)
+                // Batterie et réseau pour la page des proches : toutes les minutes (1.9).
+                if (id != null && round++ % DEVICE_EVERY_ROUNDS == 0) {
+                    val d = monitor.refresh()
+                    quietly("device") {
+                        api.rpc(
+                            "set_alert_device",
+                            JSONObject().put("p_alert_id", id).put("p_battery", d.batteryPct ?: JSONObject.NULL).put("p_online", d.hasData)
+                        )
+                    }
+                }
                 if (id != null) {
                     quietly("feedback") { api.rpc("alert_feedback", JSONObject().put("p_alert_id", id)) }?.let { body ->
                         val arr = JSONArray(body)
@@ -370,5 +382,6 @@ class ServerSync @Inject constructor(
         const val LINK_TTL_MIN = 240
         const val DOWN_PAUSE_S = 60L
         const val MESSAGE_MAX = 480
+        const val DEVICE_EVERY_ROUNDS = 4 // un tour = 15 s
     }
 }

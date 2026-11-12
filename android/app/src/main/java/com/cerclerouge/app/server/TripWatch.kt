@@ -58,6 +58,7 @@ class TripWatch @Inject constructor(
     private val contacts: ContactsRepository,
     private val tracker: LocationTracker,
     private val log: EventLog,
+    private val dispatcher: com.cerclerouge.app.alert.AlertDispatcher,
     db: PrivacyDatabase
 ) {
     private val settings = db.settings()
@@ -120,6 +121,17 @@ class TripWatch @Inject constructor(
                 JSONObject().put("p_trip_id", id).put("p_phones", JSONArray(chosen.map { it.phone.value }))
                     .put("p_langs", JSONArray(chosen.map { it.language.name.lowercase() }))
             ).trim().toIntOrNull() ?: 0
+            // Chaque proche choisi reçoit son lien de suivi du trajet par SMS (S4.10) ; sans réseau : le serveur surveille quand même.
+            val links = chosen.mapNotNull { c ->
+                runCatching {
+                    api.rpc(
+                        "create_trip_link",
+                        JSONObject().put("p_trip_id", id).put("p_label", c.name.take(40)).put("p_ttl_minutes", LINK_TTL_MIN)
+                    )
+                        .trim().trim('"')
+                }.getOrNull()?.let { c.id to com.cerclerouge.app.BuildConfig.TRACK_PAGE_URL + it }
+            }.toMap()
+            dispatcher.shareTrip(id, links)
             _status.value = if (n > 0) WatchStatus.On(n) else WatchStatus.Failed("no_recipients")
             log.append("trip", "server_watch_on recipients=$n")
             heartbeat(id)
@@ -179,6 +191,7 @@ class TripWatch @Inject constructor(
         const val ENABLED = "trip.server_watch"
         const val SERVER_ID = "trip.server_id"
         const val MAX = 3
+        const val LINK_TTL_MIN = 240
         const val HEARTBEAT_MS = 120_000L
     }
 }

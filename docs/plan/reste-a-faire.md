@@ -128,7 +128,7 @@ Estimation de développement restant (hors attentes) : **environ 8 à 10 semaine
 
 ---
 
-## Backlog « application complète » (2026-11-12)
+## Backlog du MVP (version 1) — ce qui reste, 2026-11-12
 
 Ce qui peut avancer **sans compte ni donnée externe** (🤖), dans l'ordre :
 
@@ -137,12 +137,13 @@ Ce qui peut avancer **sans compte ni donnée externe** (🤖), dans l'ordre :
 | 1 | Suivi du trajet en direct par les proches (lien + carte dans la page) | S4.10 | à faire |
 | 2 | Envoi des preuves chiffrées vers le cloud (reprenable, Wi-Fi hors urgence) | S6.04, S6.05 | à faire |
 | 3 | Fermeture forcée détectée par le serveur (« Protection interrompue à HH:MM ») | S7.03 | à faire |
-| 4 | Capteurs : arrachage violent, chute (alerte de vérification, jamais d'appel seul) | V2 « capteurs » | à faire |
-| 5 | Contextes à ignorer et sensibilité de l'écoute | S5.09 | à faire |
-| 6 | Dernier message à l'extinction (opt-in) | S4.09 | à faire |
-| 7 | Vue « proche » dans l'app pour un parent inscrit | S3.09 | à faire |
-| 8 | Console admin minimale (`web/admin`, aucun contenu visible) | S7.07 | à faire |
-| 9 | Historique des trajets (décision du porteur : oui / non, quelles données) | — | ❓ |
-| 10 | Audit : modèle de menace, MASVS L2, test d'intrusion RLS, couverture ≥ 90 % | S7.08, S7.09, S8.01 | à faire |
+| 4 | Contextes à ignorer et sensibilité de l'écoute | S5.09 | à faire |
+| 5 | Dernier message à l'extinction (opt-in) | S4.09 | à faire |
+| 6 | Vue « proche » dans l'app pour un parent inscrit | S3.09 | à faire |
+| 7 | Console admin minimale (`web/admin`, aucun contenu visible) | S7.07 | à faire |
+| 8 | Historique des trajets (décision du porteur : oui / non, quelles données) | — | ❓ |
+| 9 | Audit : modèle de menace, MASVS L2, test d'intrusion RLS, couverture ≥ 90 % | S7.08, S7.09, S8.01 | à faire |
+
+Les capteurs (arrachage, chute) et tout le reste des fonctions avancées sont dans `v2.md`.
 
 **Bloqué par une action humaine** : tests sur téléphone (phase 1), Firebase (mis de côté), Play `SEND_SMS`, juriste, collecte audio créole (KWS), calibration terrain.

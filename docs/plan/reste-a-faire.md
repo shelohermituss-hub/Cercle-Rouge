@@ -4,17 +4,17 @@ Mis à jour le 2026-11-11. Détail par sprint : `suivi-S0.md` à `suivi-S6.md` ;
 
 Légende : 🧑 action du porteur du projet · 🤖 développement · 📱 test sur un vrai téléphone · ⏸ bloqué par une autre étape
 
-## Où on en est
+## Où on en est (2026-11-12)
 
 | Sprint | État |
 |---|---|
-| S1 Socle Android + Supabase | ✅ fait (inscription par SMS et parcours parent : en attente du fournisseur SMS) |
-| S2 Alertes locales, SMS | ✅ code fait — **jamais testé avec un vrai SMS** |
-| S3 Serveur et page des proches | 🟡 ~60 % : alertes, liens de suivi, page web, synchronisation faits ; notifications push, SMS serveur, compte vérifié restent |
-| S4 Trajet protégé | 🟡 partie téléphone faite ; partie serveur (battement, perte de contact) reste |
-| S5 Écoute IA | 🟡 phrase secrète faite ; mots-clés en créole attendent des enregistrements |
-| S6 Preuves chiffrées | 🟡 partie téléphone faite ; envoi et partage aux proches restent |
-| S7 Sécurité | 🟡 fait le 2026-11-11 : PIN faux → proches, biométrie, captures bloquées, effacement d'urgence, guides batterie ; console admin et audit restent |
+| S1 Socle Android + Supabase | ✅ fait ; code SMS Vonage branché ; parcours parent réel fait (ADR-0022) |
+| S2 Alertes locales, SMS | ✅ code fait ; SMS de secours par le serveur (Vonage) ; accord des proches (accepter / refuser / STOP) — **jamais testé avec un vrai SMS de bout en bout** |
+| S3 Serveur et page des proches | 🟡 alertes, liens de suivi, page web, synchronisation, accord des proches faits ; **push (Firebase) mis de côté** |
+| S4 Trajet protégé | 🟡 téléphone + surveillance serveur (perte de contact) + route tracée faits ; **suivi en direct par les proches (S4.10) et dernier message (S4.09) restent** |
+| S5 Écoute IA | 🟡 phrase secrète (DTW, sans modèle entraîné) ; visualiseurs ; mots-clés créole attendent les enregistrements |
+| S6 Preuves chiffrées | 🟡 partie téléphone faite ; **envoi cloud et partage aux proches restent** |
+| S7 Sécurité | 🟡 PIN faux, biométrie, captures bloquées, effacement d'urgence, mode dégradé faits ; **console admin, fermeture forcée, audit restent** |
 | S8 Tests terrain et lancement | ⏳ pas commencé |
 
 **Le plus gros risque aujourd'hui** : rien n'a encore été vérifié sur un vrai téléphone (SMS, écran éteint, micro, GPS, batterie).
@@ -125,3 +125,24 @@ IA audio avancée (cris, vitres, coups de feu), appels automatiques, vidéo de p
 4. **Puis** : campagne terrain, bêta fermée, lancement pilote.
 
 Estimation de développement restant (hors attentes) : **environ 8 à 10 semaines**, plus les délais des démarches (Play, fournisseur SMS, juriste) qui peuvent dépasser.
+
+---
+
+## Backlog « application complète » (2026-11-12)
+
+Ce qui peut avancer **sans compte ni donnée externe** (🤖), dans l'ordre :
+
+| # | Sujet | Réf. | État |
+|---|---|---|---|
+| 1 | Suivi du trajet en direct par les proches (lien + carte dans la page) | S4.10 | à faire |
+| 2 | Envoi des preuves chiffrées vers le cloud (reprenable, Wi-Fi hors urgence) | S6.04, S6.05 | à faire |
+| 3 | Fermeture forcée détectée par le serveur (« Protection interrompue à HH:MM ») | S7.03 | à faire |
+| 4 | Capteurs : arrachage violent, chute (alerte de vérification, jamais d'appel seul) | V2 « capteurs » | à faire |
+| 5 | Contextes à ignorer et sensibilité de l'écoute | S5.09 | à faire |
+| 6 | Dernier message à l'extinction (opt-in) | S4.09 | à faire |
+| 7 | Vue « proche » dans l'app pour un parent inscrit | S3.09 | à faire |
+| 8 | Console admin minimale (`web/admin`, aucun contenu visible) | S7.07 | à faire |
+| 9 | Historique des trajets (décision du porteur : oui / non, quelles données) | — | ❓ |
+| 10 | Audit : modèle de menace, MASVS L2, test d'intrusion RLS, couverture ≥ 90 % | S7.08, S7.09, S8.01 | à faire |
+
+**Bloqué par une action humaine** : tests sur téléphone (phase 1), Firebase (mis de côté), Play `SEND_SMS`, juriste, collecte audio créole (KWS), calibration terrain.

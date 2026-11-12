@@ -402,7 +402,7 @@
     <string name="detect_low">Low</string>
     <string name="detect_normal">Normal</string>
     <string name="detect_high">High</string>
-    <string name="detect_verify">Time to answer "I\'m safe"</string>
+    <string name="detect_verify">Time to answer “I\'m safe”</string>
     <string name="detect_seconds">%1$d s</string>
     <string name="detect_contexts">Contexts to ignore</string>
     <string name="detect_contexts_ex">During a concert, sport, driving or sleep, usual sounds (shouts, impacts, horns, alarms) count less. The secret phrase, sure keywords and SOS always work.</string>

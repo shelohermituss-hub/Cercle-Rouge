@@ -33,3 +33,9 @@ Le Sprint 3 (IA audio) est mis de côté pour l'instant, à la demande du porteu
 3. Recherche d'adresse : avis affiché une fois ; résultats en Haïti.
 4. Téléphone sans Play Services (si disponible) : position par repli.
 5. Surveillance serveur : numéro vérifié, un proche ayant accepté, case cochée ; démarrer un trajet puis passer en mode avion 11 min → le proche reçoit le SMS « plus de nouvelles » ; réactiver le réseau → SMS « de nouveau joignable ».
+
+## Envoi serveur automatique (1.8, 0.2) — 2026-11-13
+- Le téléphone envoie ses SMS d'abord, puis déclare chaque envoi (`report_delivery`). Il donne aussi au serveur le texte et les proches (`set_alert_recipients`, chiffrés, effacés 1 h après la fin).
+- Le serveur (`notify-alert`) envoie l'e-mail tout de suite, et le SMS seulement si le téléphone ne l'a pas déclaré après 20 s ; jamais deux fois le même canal pour le même proche (réservation en base).
+- **À fournir (👤)** pour l'e-mail : secrets de la fonction `RESEND_API_KEY` et `MAIL_FROM` (compte Resend et domaine d'envoi). Sans eux, l'e-mail est marqué « skipped », le SMS de secours marche déjà.
+- Testé : `security.sql` (local et projet, `ALL_PASS`), refus sans secret (401), compilation et tests. **À vérifier sur téléphone** : alerte avec le téléphone sans crédit SMS → SMS de secours du serveur après ~20 s.

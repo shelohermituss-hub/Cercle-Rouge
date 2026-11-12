@@ -112,6 +112,36 @@ class ServerSync @Inject constructor(
         return BuildConfig.TRACK_PAGE_URL + token
     }
 
+    /**
+     * 1.8 : donne au serveur de quoi prévenir ce proche si le téléphone ne le fait pas (SMS de secours après 20 s) et par e-mail
+     * (si `email`). N'attend rien : le téléphone envoie ses SMS d'abord. Le texte est celui que le téléphone envoie.
+     */
+    fun shareRecipient(alert: Alert, contact: TrustedContact, message: String, email: Boolean) {
+        if (!api.configured) return
+        scope.launch {
+            val id = ensureAlert(alert) ?: return@launch
+            val channels = JSONArray().put("sms").also { if (email) it.put("email") }
+            val item = JSONObject().put("ref", contact.id).put("phone", contact.phone.value).put("message", message.take(MESSAGE_MAX))
+                .put("lang", contact.language.name.lowercase()).put("channels", channels)
+            contact.email?.takeIf { email }?.let { item.put("email", it) }
+            quietly("recipients") {
+                api.rpc("set_alert_recipients", JSONObject().put("p_alert_id", id).put("p_items", JSONArray().put(item)))
+            } ?: return@launch
+            quietly("notify") { api.function("notify-alert", JSONObject().put("alert_id", id)) }
+        }
+    }
+
+    /** Le téléphone a envoyé ce SMS : le serveur ne l'enverra pas à ce proche (R-NET-03). Sans attente. */
+    fun reportDelivery(alert: Alert, phoneE164: String) {
+        if (!api.configured) return
+        scope.launch {
+            val id = serverId(alert.id) ?: ensureAlert(alert) ?: return@launch
+            quietly("delivery") {
+                api.rpc("report_delivery", JSONObject().put("p_alert_id", id).put("p_phone", phoneE164).put("p_channel", "sms"))
+            }
+        }
+    }
+
     /** Suit le cycle de l'alerte (effets `Dispatch` du moteur). Ne bloque jamais l'envoi des SMS. */
     fun onDispatch(alert: Alert, kind: DispatchKind) {
         scope.launch {
@@ -339,5 +369,6 @@ class ServerSync @Inject constructor(
         const val LINK_TIMEOUT_MS = 10_000L
         const val LINK_TTL_MIN = 240
         const val DOWN_PAUSE_S = 60L
+        const val MESSAGE_MAX = 480
     }
 }

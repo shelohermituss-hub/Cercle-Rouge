@@ -193,21 +193,21 @@ class AlertDispatcher @Inject constructor(
         }
     }
 
-    private suspend fun process(job: OutboxJob, alert: Alert?, ledger: SendLedger, position: suspend () -> LocationShare) {
-        val now = clock.instant()
-        val contact = contacts.book.value.contacts.firstOrNull { it.id == job.contactId }
-        if (contact == null || job.channel != Channel.SMS) { // contact retiré, ou canal pas encore disponible (push : Sprint 3)
-            outbox.gaveUp(job)
-            return
-        }
+    /** Le texte envoyé à un proche (le même par SMS, par le serveur et par e-mail). */
+    private suspend fun messageFor(
+        job: OutboxJob,
+        alert: Alert?,
+        contact: com.cerclerouge.contacts.TrustedContact,
+        now: java.time.Instant,
+        viaServer: Boolean,
+        position: suspend () -> LocationShare
+    ): String {
         val unconsented = contact.status != ContactStatus.ACCEPTED && job.kind == MessageKind.ALERT
         val name = account.account.value?.displayName ?: context.getString(com.cerclerouge.app.R.string.app_name)
-        // Secours par le serveur (Vonage) : pas de permission SMS, ou un premier envoi local a échoué (pas de crédit…).
-        val viaServer = alert != null && job.kind != MessageKind.TEST && (job.attempts > 0 || !sms.canSendDirect)
         val isAlert = job.kind == MessageKind.ALERT
         val device = if (isAlert) monitor.refresh() else null
         val automatic = alert != null && (alert.trigger == Trigger.AUTOMATIC || alert.trigger == Trigger.TRIP)
-        val text = Messages.sms(
+        return Messages.sms(
             MessageInput(
                 name = name,
                 reason = alert?.reason ?: Reason.SOS,
@@ -229,6 +229,39 @@ class AlertDispatcher @Inject constructor(
                 callback = if (isAlert && viaServer) api.verifiedPhone() else null
             )
         )
+    }
+
+    /** E-mail demandé pour ce proche : adresse connue, canal choisi, accord donné (le serveur l'envoie, 1.8). */
+    private fun wantsEmail(c: com.cerclerouge.contacts.TrustedContact) =
+        c.status == ContactStatus.ACCEPTED && Channel.EMAIL in c.channels && !c.email.isNullOrBlank()
+
+    private suspend fun process(job: OutboxJob, alert: Alert?, ledger: SendLedger, position: suspend () -> LocationShare) {
+        val now = clock.instant()
+        val contact = contacts.book.value.contacts.firstOrNull { it.id == job.contactId }
+        if (contact == null) { // contact retiré
+            outbox.gaveUp(job)
+            return
+        }
+        // Canal e-mail : c'est le serveur qui envoie ; on lui donne le texte et le proche (1.8).
+        if (job.channel == Channel.EMAIL) {
+            if (alert == null || job.kind != MessageKind.ALERT) {
+                outbox.gaveUp(job)
+                return
+            }
+            server.shareRecipient(alert, contact, messageFor(job, alert, contact, now, viaServer = true, position = position), email = true)
+            outbox.succeeded(job, now)
+            log.append("email", "handed_to_server ${job.alertId.take(6)}/${job.contactId.take(6)}")
+            return
+        }
+        if (job.channel != Channel.SMS) { // WhatsApp, appel, push : pas encore disponibles
+            outbox.gaveUp(job)
+            return
+        }
+        // Secours par le serveur (Vonage) : pas de permission SMS, ou un premier envoi local a échoué (pas de crédit…).
+        val viaServer = alert != null && job.kind != MessageKind.TEST && (job.attempts > 0 || !sms.canSendDirect)
+        val text = messageFor(job, alert, contact, now, viaServer, position)
+        // Filet du serveur : si le téléphone ne déclare pas son SMS dans les 20 s, le serveur l'envoie (S3.06, R-SY-05).
+        if (alert != null && job.kind == MessageKind.ALERT) server.shareRecipient(alert, contact, text, email = wantsEmail(contact))
         when (val d = ledger.check(job.contactId, job.alertId, job.kind == MessageKind.TEST, Gsm7.segments(text), now)) {
             Decision.Allow -> {
                 if (viaServer && alert != null && server.sendSms(alert, contact.phone.value, text)) {
@@ -237,6 +270,13 @@ class AlertDispatcher @Inject constructor(
                     return
                 }
                 sendLocally(job, contact.phone.value, text, now)
+                // Envoyé par le téléphone : le serveur ne le renverra pas (R-NET-03).
+                if (alert != null &&
+                    job.kind == MessageKind.ALERT &&
+                    outbox.all().firstOrNull { it.key == job.key }?.state == JobState.DONE
+                ) {
+                    server.reportDelivery(alert, contact.phone.value)
+                }
             }
             is Decision.Block -> {
                 log.append("sms", "blocked ${d.reason}")

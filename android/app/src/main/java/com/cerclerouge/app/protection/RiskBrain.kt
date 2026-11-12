@@ -51,6 +51,7 @@ class RiskBrain @Inject constructor(
     private val monitor: DeviceMonitor,
     private val account: AccountRepository,
     private val listen: ListenSettings,
+    private val motion: com.cerclerouge.app.device.MotionSensors,
     private val log: EventLog,
     private val clock: Clock
 ) {
@@ -72,6 +73,11 @@ class RiskBrain @Inject constructor(
         scope.launch { listen.load() }
         scope.launch { trips.tripEvents.collect { onTripEvent(it) } }
         scope.launch { trips.trip.collect { if (it == null) mutex.withLock { tripHold = null } } }
+        // Capteurs seulement protection active (batterie, R-SE-01).
+        scope.launch {
+            controller.state.collect { if (it.protection == ProtectionState.OFF) motion.stop() else motion.start() }
+        }
+        scope.launch { motion.events.collect { onMotion(it) } }
         scope.launch {
             while (isActive) {
                 delay(TICK_MS)
@@ -86,6 +92,20 @@ class RiskBrain @Inject constructor(
             mutex.withLock { state = RiskDecider.observe(state, o, context(), clock.instant()) }
             tick()
         }
+    }
+
+    /** Chute, lutte, arrachage → B (bruit/geste de violence) ; immobilité prolongée → D. Jamais une alerte à eux seuls. */
+    private suspend fun onMotion(e: com.cerclerouge.sensor.MotionEvent) {
+        val now = clock.instant()
+        val o = when (e.kind) {
+            com.cerclerouge.sensor.MotionKind.FALL -> Observation(Component.B, e.strength, Reason.VIOLENCE_SOUND, "sensor.fall", now)
+            com.cerclerouge.sensor.MotionKind.VIOLENT_MOTION ->
+                Observation(Component.B, e.strength, Reason.VIOLENCE_SOUND, "sensor.violent", now)
+            com.cerclerouge.sensor.MotionKind.SNATCH -> Observation(Component.B, e.strength, Reason.VIOLENCE_SOUND, "sensor.snatch", now)
+            com.cerclerouge.sensor.MotionKind.STILL -> Observation(Component.D, 0.5, Reason.CONTACT_LOST, "sensor.still", now)
+        }
+        log.append("sensor", "${e.kind.name.lowercase()} strength=${"%.2f".format(java.util.Locale.ROOT, e.strength)}")
+        observe(o)
     }
 
     private suspend fun onTripEvent(e: TripEvent) {

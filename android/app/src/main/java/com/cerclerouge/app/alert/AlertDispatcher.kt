@@ -34,9 +34,10 @@ import java.time.Duration
 import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.Channel as WakeChannel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Du moteur d'alerte aux SMS : transforme un effet `Dispatch` en envois dans la file persistante (idempotents), puis vide la
@@ -58,6 +59,25 @@ class AlertDispatcher @Inject constructor(
     private val server: ServerSync
 ) {
     private val drainLock = Mutex()
+
+    /** Réveille la boucle d'envoi avant la fin de son attente (retour du réseau). */
+    private val wakeups = WakeChannel<Unit>(WakeChannel.CONFLATED)
+
+    /**
+     * Reprend la file (démarrage, redémarrage, tâche WorkManager) : vide ce qui reste à envoyer. Si une boucle tourne déjà,
+     * elle est seulement réveillée. `alert` : l'alerte en cours du moteur, pour le contenu des messages (null hors alerte).
+     */
+    suspend fun resume(alert: Alert?) {
+        if (drainLock.isLocked) wakeups.trySend(Unit) else drain(alert)
+    }
+
+    /** Retour du réseau (R-NET-06) : tout ce qui attend part tout de suite, sans attendre la fin de l'attente de 2 à 60 s. */
+    suspend fun onNetworkBack(alert: Alert?) {
+        if (!outbox.hasPending()) return
+        outbox.retryNow(clock.instant())
+        log.append("dispatch_queue", "network_back")
+        resume(alert)
+    }
 
     /** Effet `Dispatch` du moteur. Les avis sans alerte (ex. protection désactivée) ne partent à personne. */
     suspend fun onDispatch(alert: Alert?, kind: DispatchKind) {
@@ -106,6 +126,7 @@ class AlertDispatcher @Inject constructor(
         }
         jobs.forEach { outbox.enqueue(it) }
         log.append("dispatch_queue", "${kind.name} jobs=${jobs.size}")
+        OutboxWork.schedule(context) // si le processus meurt, la file repart au retour du réseau (R-NET-01)
         drain(alert)
     }
 
@@ -134,7 +155,7 @@ class AlertDispatcher @Inject constructor(
             val due = outbox.due(now)
             if (due.isEmpty()) {
                 val next = outbox.nextWakeUp() ?: return
-                delay(Duration.between(now, next).toMillis().coerceIn(1_000, 60_000))
+                withTimeoutOrNull(Duration.between(now, next).toMillis().coerceIn(1_000, 60_000)) { wakeups.receive() }
                 continue
             }
             // Position prise une seule fois par passage (jusqu'à 10 s), seulement s'il y a une vraie alerte à envoyer.

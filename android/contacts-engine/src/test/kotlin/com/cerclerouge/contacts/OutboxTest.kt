@@ -78,6 +78,17 @@ class OutboxTest {
         assertEquals(JobState.GAVE_UP, Outbox.gaveUp(job()).state)
     }
 
+    @Test fun networkBackMakesWaitingJobsDueAtOnce() { // R-NET-06 : la file se vide dès le retour du réseau
+        val waiting = Outbox.failed(job(), t0) // prochaine tentative dans 2 s
+        val done = Outbox.succeeded(job(contact = "c2"), t0)
+        val given = Outbox.gaveUp(job(contact = "c3"))
+        val q = Outbox.retryNow(listOf(waiting, done, given), t0.plusMillis(500))
+        assertEquals(listOf(waiting.key), Outbox.due(q, t0.plusMillis(500)).map { it.key })
+        assertEquals(1, q.first().attempts) // pas de tentative comptée en plus
+        assertEquals(done, q[1])
+        assertEquals(given, q[2])
+    }
+
     @Test fun keyIsStablePerAlertContactChannelAndKind() {
         assertEquals("A1|c1|SMS|ALERT", OutboxJob.key("A1", "c1", Channel.SMS, MessageKind.ALERT))
     }

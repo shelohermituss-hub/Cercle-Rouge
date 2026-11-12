@@ -41,6 +41,15 @@ class OutboxRepository @Inject constructor(db: PrivacyDatabase) {
         dao.get(key)?.toJob()?.let { save(Outbox.reopened(it, now)) }
     }
 
+    /** Retour du réseau : les envois en attente sont à faire tout de suite (R-NET-06). */
+    suspend fun retryNow(now: Instant) {
+        val before = all()
+        Outbox.retryNow(before, now).zip(before).filter { (a, b) -> a != b }.forEach { (job, _) -> save(job) }
+    }
+
+    /** Vrai s'il reste au moins un envoi à faire. */
+    suspend fun hasPending(): Boolean = nextWakeUp() != null
+
     suspend fun all(): List<OutboxJob> = dao.all().map { it.toJob() }
 
     private suspend fun save(job: OutboxJob) = dao.update(job.key, job.attempts, job.nextAttemptAt.toEpochMilli(), job.state.name)

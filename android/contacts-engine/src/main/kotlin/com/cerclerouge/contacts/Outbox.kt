@@ -71,6 +71,13 @@ object Outbox {
         }
     }
 
+    /**
+     * Retour du réseau (R-NET-06) : les envois en attente redeviennent à faire tout de suite, sans compter une tentative de plus.
+     * Les envois déjà faits ou abandonnés ne bougent pas.
+     */
+    fun retryNow(queue: List<OutboxJob>, now: Instant): List<OutboxJob> =
+        queue.map { if (it.state == JobState.PENDING && it.nextAttemptAt > now) it.copy(nextAttemptAt = now) else it }
+
     /** Prochain réveil nécessaire pour vider la file, ou null s'il n'y a plus rien en attente. */
     fun nextWakeUp(queue: List<OutboxJob>): Instant? = queue.filter { it.state == JobState.PENDING }.minOfOrNull { it.nextAttemptAt }
 }

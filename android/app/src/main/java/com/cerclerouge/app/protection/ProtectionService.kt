@@ -10,11 +10,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.net.ConnectivityManager
+import android.net.Network
 import android.os.Build
 import android.os.IBinder
 import androidx.core.content.ContextCompat
 import com.cerclerouge.app.MainActivity
 import com.cerclerouge.app.R
+import com.cerclerouge.app.alert.AlertDispatcher
 import com.cerclerouge.app.sos.SosIntents
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -36,7 +39,16 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class ProtectionService : Service() {
     @Inject lateinit var controller: ProtectionController
+
+    @Inject lateinit var dispatcher: AlertDispatcher
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    /** Retour du réseau : la file d'envoi repart tout de suite (R-NET-06), sans attendre la fin de son attente. */
+    private val network = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(n: Network) {
+            scope.launch(Dispatchers.Default) { dispatcher.onNetworkBack(controller.state.value.alert) }
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -46,6 +58,7 @@ class ProtectionService : Service() {
             NotificationChannel(CHANNEL, getString(R.string.channel_status), NotificationManager.IMPORTANCE_LOW)
         )
         startForegroundTyped()
+        getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(network)
         scope.launch {
             controller.ensureRestored()
             controller.state.map { it.protection }.collect { p ->
@@ -94,6 +107,7 @@ class ProtectionService : Service() {
     }
 
     override fun onDestroy() {
+        runCatching { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(network) }
         scope.cancel()
         super.onDestroy()
     }

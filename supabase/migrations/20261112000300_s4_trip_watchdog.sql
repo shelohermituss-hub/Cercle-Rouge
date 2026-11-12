@@ -170,7 +170,7 @@ begin
   where status = 'active' and lost_at is null and lost_notified_at is null and last_heartbeat_at < now() - interval '10 minutes';
   select count(*) into n from public.trips
   where (lost_at is not null and lost_notified_at is null) or (recovered_at is not null and recovery_notified_at is null);
-  if n > 0 and private.secret('cr_functions_url') is not null then
+  if n > 0 and private.secret('cr_functions_url') is not null and exists (select 1 from pg_extension where extname = 'pg_net') then
     perform net.http_post(
       url := private.secret('cr_functions_url') || '/trip-watchdog',
       headers := jsonb_build_object('Content-Type', 'application/json', 'x-cr-cron', private.secret('cr_cron_secret')),

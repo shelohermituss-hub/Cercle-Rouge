@@ -75,7 +75,7 @@ class AppViewModel @Inject constructor(
     val health: DeviceHealth
 ) : ViewModel()
 
-private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN, VAULT, SETTINGS }
+private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN, VAULT, SETTINGS, WATCH }
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() { // FragmentActivity : requis par BiometricPrompt (S7.02)
@@ -87,6 +87,7 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
     private val listen: ListenViewModel by viewModels()
     private val vault: VaultViewModel by viewModels()
     private val settingsVm: SettingsViewModel by viewModels()
+    private val watch: com.cerclerouge.app.ui.watch.WatchViewModel by viewModels()
     private val sosRequested = androidx.compose.runtime.mutableStateOf(false)
 
     override fun onNewIntent(intent: Intent) {
@@ -133,7 +134,15 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                         )
                         Screen.CONTACTS -> {
                             BackHandler { screen = Screen.HOME }
-                            Box(Modifier.safeDrawingPadding()) { ContactsScreen(contacts) { screen = Screen.HOME } }
+                            Box(Modifier.safeDrawingPadding()) {
+                                ContactsScreen(contacts, onWatch = { screen = Screen.WATCH }) { screen = Screen.HOME }
+                            }
+                        }
+                        Screen.WATCH -> {
+                            BackHandler { screen = Screen.CONTACTS }
+                            Box(Modifier.safeDrawingPadding()) {
+                                com.cerclerouge.app.ui.watch.WatchScreen(watch) { screen = Screen.CONTACTS }
+                            }
                         }
                         Screen.TRIP -> {
                             BackHandler { screen = Screen.HOME }

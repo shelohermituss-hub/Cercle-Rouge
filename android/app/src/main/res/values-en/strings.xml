@@ -455,4 +455,22 @@
     <string name="contacts_channel_email">E-mail</string>
     <string name="contacts_channel_whatsapp">WhatsApp</string>
     <string name="contacts_channel_call">Call</string>
+    <string name="watch_open">Those who chose me</string>
+    <string name="watch_title">Those who chose me</string>
+    <string name="watch_intro">If someone chose you as a contact and you accepted their invitation, their current alert or trip shows here, with their last position. Your number must be verified (Settings).</string>
+    <string name="watch_none">Nobody has an alert or trip in progress.</string>
+    <string name="watch_unreachable">Cannot reach the server: retrying automatically.</string>
+    <string name="watch_alert">%1$s needs help</string>
+    <string name="watch_trip">%1$s is on a trip</string>
+    <string name="watch_trip_lost">No news from %1$s</string>
+    <string name="watch_since">Since %1$s</string>
+    <string name="watch_arrival">Expected arrival at %1$s</string>
+    <string name="watch_battery">Battery %1$d%%</string>
+    <string name="watch_online">Online</string>
+    <string name="watch_offline">No Internet</string>
+    <string name="watch_position">Last position %1$s ago</string>
+    <string name="watch_no_position">Position not received yet.</string>
+    <string name="watch_open_map">Open in a map app</string>
+    <string name="watch_seconds">%1$d s</string>
+    <string name="watch_minutes">%1$d min</string>
 </resources>

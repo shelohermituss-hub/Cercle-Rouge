@@ -456,4 +456,22 @@
     <string name="contacts_channel_email">Imèl</string>
     <string name="contacts_channel_whatsapp">WhatsApp</string>
     <string name="contacts_channel_call">Apèl</string>
+    <string name="watch_open">Moun ki chwazi m</string>
+    <string name="watch_title">Moun ki chwazi m</string>
+    <string name="watch_intro">Si yon moun chwazi w kòm pwòch li e ou aksepte envitasyon li, alèt li oswa trajè li ki an kou a parèt isit la, ak dènye pozisyon li. Fò w verifye nimewo w (Paramèt).</string>
+    <string name="watch_none">Pa gen moun ki gen alèt oswa trajè an kou.</string>
+    <string name="watch_unreachable">Pa ka konekte ak sèvè a : ap eseye ankò.</string>
+    <string name="watch_alert">%1$s bezwen èd</string>
+    <string name="watch_trip">%1$s nan yon trajè</string>
+    <string name="watch_trip_lost">Pa gen nouvèl %1$s ankò</string>
+    <string name="watch_since">Depi %1$s</string>
+    <string name="watch_arrival">L ap rive a %1$s</string>
+    <string name="watch_battery">Batri %1$d %%</string>
+    <string name="watch_online">Konekte</string>
+    <string name="watch_offline">San Entènèt</string>
+    <string name="watch_position">Dènye pozisyon gen %1$s</string>
+    <string name="watch_no_position">Pozisyon an poko resevwa.</string>
+    <string name="watch_open_map">Louvri l nan yon aplikasyon kat</string>
+    <string name="watch_seconds">%1$d s</string>
+    <string name="watch_minutes">%1$d min</string>
 </resources>

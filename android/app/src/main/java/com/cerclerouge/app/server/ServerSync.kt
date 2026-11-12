@@ -33,6 +33,23 @@ import org.json.JSONObject
 /** Demande d'accord reçue par un adulte référent. */
 data class GuardianRequest(val linkId: String, val minorName: String, val ageBand: String, val relationship: String)
 
+/** Une alerte ou un trajet en cours d'une personne qui m'a choisi comme proche (S3.09). */
+data class Watched(
+    val kind: String,
+    val name: String,
+    val status: String,
+    val level: Int,
+    val reason: String?,
+    val since: Instant,
+    val battery: Int?,
+    val online: Boolean?,
+    val lat: Double?,
+    val lon: Double?,
+    val accuracy: Double?,
+    val positionAt: Instant?,
+    val plannedArrival: Instant?
+)
+
 /** Réponse d'un proche, vue dans l'écran d'urgence. */
 data class ContactFeedback(val action: String, val label: String?, val at: Instant)
 
@@ -276,6 +293,32 @@ class ServerSync @Inject constructor(
         null
     } catch (e: ServerException) {
         e.code
+    }
+
+    /** Alertes et trajets en cours de ceux qui m'ont choisi (numéro vérifié et invitation acceptée). Null si le serveur est injoignable. */
+    suspend fun watched(): List<Watched>? {
+        if (!api.configured) return null
+        val body = quietly("watched") { api.rpc("my_watched", JSONObject()) } ?: return null
+        val arr = JSONArray(body)
+        fun JSONObject.time(k: String) = if (isNull(k)) null else Instant.parse(normalize(getString(k)))
+        return (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            Watched(
+                kind = o.getString("kind"),
+                name = o.getString("owner_name"),
+                status = o.getString("status"),
+                level = o.optInt("level"),
+                reason = o.optString("reason").ifEmpty { null },
+                since = Instant.parse(normalize(o.getString("since"))),
+                battery = if (o.isNull("battery")) null else o.getInt("battery"),
+                online = if (o.isNull("online")) null else o.getBoolean("online"),
+                lat = if (o.isNull("lat")) null else o.getDouble("lat"),
+                lon = if (o.isNull("lon")) null else o.getDouble("lon"),
+                accuracy = if (o.isNull("accuracy")) null else o.getDouble("accuracy"),
+                positionAt = o.time("position_at"),
+                plannedArrival = o.time("planned_arrival")
+            )
+        }
     }
 
     /** Suppression du compte serveur et de toutes ses données (S3.12). */

@@ -456,4 +456,22 @@
     <string name="contacts_channel_email">E-mail</string>
     <string name="contacts_channel_whatsapp">WhatsApp</string>
     <string name="contacts_channel_call">Appel</string>
+    <string name="watch_open">Ceux qui m\'ont choisi</string>
+    <string name="watch_title">Ceux qui m\'ont choisi</string>
+    <string name="watch_intro">Si quelqu\'un t\'a choisi comme proche et que tu as accepté son invitation, son alerte ou son trajet en cours apparaît ici, avec sa dernière position. Il faut avoir vérifié ton numéro (Réglages).</string>
+    <string name="watch_none">Personne n\'a d\'alerte ni de trajet en cours.</string>
+    <string name="watch_unreachable">Connexion au serveur impossible : réessai automatique.</string>
+    <string name="watch_alert">%1$s a besoin d\'aide</string>
+    <string name="watch_trip">%1$s est en trajet</string>
+    <string name="watch_trip_lost">Plus de nouvelles de %1$s</string>
+    <string name="watch_since">Depuis %1$s</string>
+    <string name="watch_arrival">Arrivée prévue à %1$s</string>
+    <string name="watch_battery">Batterie %1$d %%</string>
+    <string name="watch_online">Connecté</string>
+    <string name="watch_offline">Sans Internet</string>
+    <string name="watch_position">Dernière position il y a %1$s</string>
+    <string name="watch_no_position">Position pas encore reçue.</string>
+    <string name="watch_open_map">Ouvrir dans une application de carte</string>
+    <string name="watch_seconds">%1$d s</string>
+    <string name="watch_minutes">%1$d min</string>
 </resources>

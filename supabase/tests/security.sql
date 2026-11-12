@@ -498,6 +498,40 @@ select tests.expect(private.track_read((select v from s3 where k = 'tlink')) ->>
   and jsonb_array_length(private.track_read((select v from s3 where k = 'tlink')) -> 'positions') = 0, 'trajet fini : plus de position');
 reset role;
 
+-- ===== S3.09 · Vue « proche » : my_watched =====
+select set_config('request.jwt.claims', '', true);
+update auth.users set phone_confirmed_at = now() where id = :'admin';
+insert into s3 values ('wtok', private.contact_invite_create(:'guardian', 'contact-w0001', 'Admin', '+50930000005'));
+select tests.expect(private.contact_invite_decide((select v from s3 where k = 'wtok'), 'accept'), 'le proche inscrit accepte l''invitation');
+select tests.as_user(:'guardian'); set local role authenticated;
+insert into s3 values ('trip10', public.start_trip('trip-0000010', 'WALK', now() + interval '30 minutes')::text);
+select public.set_trip_recipients((select v::uuid from s3 where k = 'trip10'), array['+50930000005'], array['fr']);
+select public.trip_heartbeat((select v::uuid from s3 where k = 'trip10'), 18.55, -72.34, 15, 71);
+reset role;
+select tests.as_user(:'admin'); set local role authenticated;
+select tests.expect((select count(*) from public.my_watched()) = 2, 'le proche voit l''alerte et le trajet qui le concernent');
+select tests.expect((select owner_name from public.my_watched() where kind = 'alert') = 'Maman', 'avec le prénom');
+select tests.expect((select battery from public.my_watched() where kind = 'alert') = 55 and (select online from public.my_watched() where kind = 'alert'), 'batterie et réseau de l''alerte');
+select tests.expect((select battery from public.my_watched() where kind = 'trip') = 71 and (select lat from public.my_watched() where kind = 'trip') = 18.55, 'dernière position du trajet');
+reset role;
+select tests.as_user(:'stranger'); set local role authenticated;
+select tests.expect((select count(*) from public.my_watched()) = 0, 'un tiers ne voit rien');
+reset role;
+set local role anon;
+select tests.expect_error($$select * from public.my_watched()$$, '%permission denied%');
+reset role;
+select set_config('request.jwt.claims', '', true);
+update public.alerts set level = 1 where id = (select v::uuid from s3 where k = 'g2');
+select tests.as_user(:'admin'); set local role authenticated;
+select tests.expect((select count(*) from public.my_watched() where kind = 'alert') = 0, 'une vérification (niveau 1) n''est pas montrée aux proches');
+reset role;
+select set_config('request.jwt.claims', '', true);
+update public.alerts set level = 2 where id = (select v::uuid from s3 where k = 'g2');
+update private.trip_recipients set phone_hash = public.phone_hash('+50930000099') where trip_id = (select v::uuid from s3 where k = 'trip10');
+select tests.as_user(:'admin'); set local role authenticated;
+select tests.expect((select count(*) from public.my_watched() where kind = 'trip') = 0, 'un trajet n''est montré qu''aux proches choisis pour ce trajet');
+reset role;
+
 -- ===== Fonctions : jamais exécutables par anon ni par PUBLIC =====
 select tests.expect(
   not exists (

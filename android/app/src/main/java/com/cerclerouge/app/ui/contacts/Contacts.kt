@@ -182,7 +182,7 @@ data class ContactEdit(
 
 /** Contacts de confiance : 5 au maximum, ordre d'alerte, répondant principal, langue des messages (module produit 7). */
 @Composable
-fun ContactsScreen(vm: ContactsViewModel, onBack: () -> Unit) {
+fun ContactsScreen(vm: ContactsViewModel, onWatch: () -> Unit = {}, onBack: () -> Unit) {
     val c = Cr.colors
     val book by vm.book.collectAsState()
     val message by vm.message.collectAsState()
@@ -230,6 +230,7 @@ fun ContactsScreen(vm: ContactsViewModel, onBack: () -> Unit) {
                 searching = true
             }, variant = PxVariant.OUTLINE, icon = PixelIcon.USERS, enabled = !full)
             PxButton(stringResource(R.string.contacts_manual), { manual = true }, variant = PxVariant.OUTLINE, enabled = !full)
+            PxButton(stringResource(R.string.watch_open), onWatch, variant = PxVariant.DARK, icon = PixelIcon.SHIELD)
         }
     }
     if (searching) {

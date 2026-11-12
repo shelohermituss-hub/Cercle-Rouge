@@ -56,7 +56,8 @@ internal fun ListenPanels(
     status: AudioStatus,
     armed: Boolean,
     onOpen: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    decision: com.cerclerouge.alert.Decision? = null
 ) {
     val stage = stageText(activity, status, armed)
     val open = stringResource(R.string.viz_open_a11y, stage)
@@ -71,6 +72,7 @@ internal fun ListenPanels(
             activity,
             armed,
             stage,
+            decision,
             Modifier.weight(1f).fillMaxHeight().clickable(role = Role.Button, onClickLabel = open, onClick = onOpen)
         )
     }
@@ -146,7 +148,13 @@ private const val LEVELS = 28
 
 /** « Réflexion » de l'IA : orbe qui respire avec la voix, et le fil des dernières étapes de l'analyse (style terminal). */
 @Composable
-private fun ThoughtPanel(activity: ListenActivity, armed: Boolean, stage: String, modifier: Modifier = Modifier) {
+private fun ThoughtPanel(
+    activity: ListenActivity,
+    armed: Boolean,
+    stage: String,
+    decision: com.cerclerouge.alert.Decision?,
+    modifier: Modifier = Modifier
+) {
     val c = Cr.colors
     val on = armed && activity.stage != ListenStage.IDLE
     val level = activity.levels.lastOrNull() ?: 0f
@@ -167,6 +175,15 @@ private fun ThoughtPanel(activity: ListenActivity, armed: Boolean, stage: String
                 GradientOrb(active = on, size = 48.dp, modifier = Modifier.scale(1f + level * 0.18f))
                 Spacer(Modifier.width(8.dp))
                 Text(stage, style = PxType.caption, color = if (on) c.ink else c.muted, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            }
+            // Score réel du cerveau (RiskDecider) : risque fusionné et nombre de signaux indépendants.
+            if (on && decision != null) {
+                Text(
+                    stringResource(R.string.viz_risk, (decision.risk * 100).toInt(), decision.signals),
+                    style = PxType.caption,
+                    color = if (decision.engaged >= com.cerclerouge.alert.RecommendedAction.VERIFY) c.warn else c.muted,
+                    maxLines = 1
+                )
             }
             val lines = events(activity.events, armed)
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
@@ -202,7 +219,7 @@ private fun events(events: List<ListenEvent>, armed: Boolean): List<String> {
                 stringResource(if (e.kind == ListenEventKind.HIT) R.string.viz_ev_hit else R.string.viz_ev_miss)
             )
         }
-    }.takeLast(MAX_LINES)
+    }.takeLast(MAX_LINES - 1)
 }
 
 private const val MAX_LINES = 3

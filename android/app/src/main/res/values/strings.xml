@@ -396,4 +396,5 @@
     <string name="trip_route_consent_title">Tracer la route</string>
     <string name="trip_route_consent_text">Pour tracer la route par les rues, le départ et l\'arrivée de ce trajet (deux coordonnées, sans nom ni identifiant) sont envoyés à un service de routage d\'OpenStreetMap, qui voit aussi ton adresse IP. Cercle Rouge ne garde rien. Sans cet accord, une ligne droite est tracée.</string>
     <string name="trip_route_consent_ok">J\'accepte</string>
+    <string name="viz_risk">Risque %1$d %% · signaux %2$d</string>
 </resources>

@@ -43,6 +43,8 @@ class ProtectionService : Service() {
     @Inject lateinit var dispatcher: AlertDispatcher
 
     @Inject lateinit var monitor: com.cerclerouge.app.device.DeviceMonitor
+
+    @Inject lateinit var brain: RiskBrain
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     /** Retour du réseau : la file d'envoi repart tout de suite (R-NET-06), sans attendre la fin de son attente. */
@@ -61,6 +63,7 @@ class ProtectionService : Service() {
         )
         startForegroundTyped()
         monitor.start()
+        brain.start()
         getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(network)
         scope.launch {
             controller.ensureRestored()

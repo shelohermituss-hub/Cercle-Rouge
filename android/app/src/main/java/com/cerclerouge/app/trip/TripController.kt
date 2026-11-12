@@ -26,7 +26,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -74,6 +76,11 @@ class TripController @Inject constructor(
 
     private val _trip = MutableStateFlow<TripUi?>(null)
     val trip: StateFlow<TripUi?> = _trip
+
+    private val _tripEvents = MutableSharedFlow<TripEvent>(extraBufferCapacity = 8)
+
+    /** Incidents du trajet (écart, arrêt, retard, zone non sûre…), aussi transmis au cerveau ([com.cerclerouge.app.protection.RiskBrain]). */
+    val tripEvents: SharedFlow<TripEvent> = _tripEvents
 
     init {
         scope.launch { protection.state.map { it.protection }.distinctUntilChanged().collect { onProtection(it) } }
@@ -176,6 +183,7 @@ class TripController @Inject constructor(
             }
             val reason = e.reason ?: continue
             incidents++
+            _tripEvents.tryEmit(e)
             log.append("trip", "event ${e.type}")
             protection.send { Input.TripIssue(it, reason) }
         }

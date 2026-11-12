@@ -395,4 +395,5 @@
     <string name="trip_route_consent_title">Trace the route</string>
     <string name="trip_route_consent_text">To trace the route along streets, the start and end of this trip (two coordinates, no name or identifier) are sent to an OpenStreetMap routing service, which also sees your IP address. Cercle Rouge keeps nothing. Without this consent, a straight line is drawn.</string>
     <string name="trip_route_consent_ok">I agree</string>
+    <string name="viz_risk">Risk %1$d%% · signals %2$d</string>
 </resources>

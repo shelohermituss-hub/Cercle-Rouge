@@ -129,6 +129,7 @@ class HomeViewModel @Inject constructor(
     val server: ServerSync,
     val security: SecuritySettings,
     val audio: AudioListener,
+    val brain: com.cerclerouge.app.protection.RiskBrain,
     private val guardians: GuardianSync
 ) : ViewModel() {
     init {
@@ -172,6 +173,7 @@ fun HomeScreen(
     val book by vm.contacts.book.collectAsState()
     val activity by vm.audio.activity.collectAsState()
     val audioStatus by vm.audio.status.collectAsState()
+    val decision by vm.brain.decision.collectAsState()
     val contactsReady = book.contacts.count { it.status == ContactStatus.ACCEPTED }
     var sos by remember { mutableStateOf(SosStep.NONE) }
     var pinFor by remember { mutableStateOf<Guarded?>(null) }
@@ -270,7 +272,8 @@ fun HomeScreen(
                 ),
                 map = { armed, showMe, modifier -> LiveMap(armed, showMe, modifier, coveredBottom = 28.dp) },
                 activity = activity,
-                audioStatus = audioStatus
+                audioStatus = audioStatus,
+                decision = decision
             )
         }
     }
@@ -318,7 +321,8 @@ internal fun HomeConsole(
     onListen: () -> Unit = onToggle,
     onSettings: () -> Unit = onSoon,
     activity: ListenActivity = ListenActivity(),
-    audioStatus: AudioStatus = AudioStatus.STOPPED
+    audioStatus: AudioStatus = AudioStatus.STOPPED,
+    decision: com.cerclerouge.alert.Decision? = null
 ) {
     val c = Cr.colors
     val armed = state.protection.isArmed
@@ -420,7 +424,7 @@ internal fun HomeConsole(
             }
         }
         Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ListenPanels(activity, audioStatus, armed, onOpen = onListen)
+            ListenPanels(activity, audioStatus, armed, onOpen = onListen, decision = decision)
             SosBar(onTrigger = onSosTrigger, onTap = onSosTap)
             PxNavBar(nav, selected = 0)
         }

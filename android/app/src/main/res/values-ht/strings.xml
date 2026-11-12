@@ -396,4 +396,5 @@
     <string name="trip_route_consent_title">Trase wout la</string>
     <string name="trip_route_consent_text">Pou trase wout la sou ri yo, kote w pati ak kote w ale nan trajè sa a (de kowòdone, san non ni idantifyan) ap voye bay yon sèvis routaj OpenStreetMap, ki wè adrès IP ou tou. Cercle Rouge pa kenbe anyen. San aksepte sa a, y ap trase yon liy dwat.</string>
     <string name="trip_route_consent_ok">M aksepte</string>
+    <string name="viz_risk">Risk %1$d %% · siyal %2$d</string>
 </resources>

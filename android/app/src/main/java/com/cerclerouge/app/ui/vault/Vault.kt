@@ -203,7 +203,7 @@ class VaultViewModel @Inject constructor(
 }
 
 /** Source de lecture en mémoire (déchiffrée), pour MediaPlayer. */
-private class MemorySource(private val data: ByteArray) : MediaDataSource() {
+internal class MemorySource(private val data: ByteArray) : MediaDataSource() {
     override fun readAt(position: Long, buffer: ByteArray, offset: Int, size: Int): Int {
         if (position >= data.size) return -1
         val n = minOf(size.toLong(), data.size - position).toInt()

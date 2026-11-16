@@ -534,4 +534,12 @@
     <string name="vault_manual">Kenbe jiskaske ou efase l</string>
     <string name="vault_details">Detay alèt la</string>
     <string name="vault_details_empty">Pa gen detay ki anrejistre pou alèt sa a.</string>
+    <string name="shared_title">Anrejistreman yo konfye w</string>
+    <string name="shared_intro">Chifre de bout an bout : se sèlman aplikasyon ou ki ka koute yo. Anyen pa rete sou telefòn ou.</string>
+    <string name="shared_item">Alèt %1$s</string>
+    <string name="shared_meta">%1$s · ap efase %2$s</string>
+    <string name="shared_meta_open">%1$s · alèt an kou, voye an kou · ap efase %2$s</string>
+    <string name="shared_opening">Ap dechifre…</string>
+    <string name="shared_unreadable">Pa ka louvri anrejistreman sa a ak telefòn sa a (aplikasyon reyenstale oswa lòt telefòn).</string>
+    <string name="shared_no_audio">Pa gen odyo pou alèt sa a, sèlman detay yo.</string>
 </resources>

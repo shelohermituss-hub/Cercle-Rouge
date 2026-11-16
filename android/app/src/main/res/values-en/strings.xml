@@ -533,4 +533,12 @@
     <string name="vault_manual">Kept until you delete it</string>
     <string name="vault_details">Alert details</string>
     <string name="vault_details_empty">No details recorded for this alert.</string>
+    <string name="shared_title">Recordings shared with you</string>
+    <string name="shared_intro">End-to-end encrypted: only your app can play them. Nothing is kept on your phone.</string>
+    <string name="shared_item">Alert from %1$s</string>
+    <string name="shared_meta">%1$s · deleted on %2$s</string>
+    <string name="shared_meta_open">%1$s · alert in progress, still uploading · deleted on %2$s</string>
+    <string name="shared_opening">Decrypting…</string>
+    <string name="shared_unreadable">This recording cannot be opened on this phone (app reinstalled or another phone).</string>
+    <string name="shared_no_audio">No audio for this alert, only the details.</string>
 </resources>

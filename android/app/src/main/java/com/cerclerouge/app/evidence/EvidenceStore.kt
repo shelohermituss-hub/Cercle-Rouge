@@ -103,6 +103,12 @@ class EvidenceStore(private val root: File, private val dao: EvidenceDao, privat
     /** Fichier des métadonnées tel qu'il est sur le disque (chiffré). */
     suspend fun encryptedNotes(alertId: String): ByteArray? = mutex.withLock { notesFile(alertId).takeIf { it.exists() }?.readBytes() }
 
+    /** Keyset de l'alerte en clair, pour l'envelopper aussitôt vers un proche (1.16). L'appelant l'efface après usage. */
+    suspend fun keysetForSharing(alertId: String): ByteArray? = mutex.withLock {
+        val wrapped = dao.alert(alertId)?.wrappedKey ?: return@withLock null
+        keys.exportForSharing(alertId, wrapped)
+    }
+
     /** Chaîne d'intégrité de l'alerte (pour la racine signée). */
     suspend fun chain(alertId: String): List<SegmentEntry> = dao.segments(alertId).map { it.toEntry() }
 

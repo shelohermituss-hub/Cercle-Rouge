@@ -534,4 +534,12 @@
     <string name="vault_manual">Gardée jusqu\'à ce que tu la supprimes</string>
     <string name="vault_details">Détails de l\'alerte</string>
     <string name="vault_details_empty">Aucun détail enregistré pour cette alerte.</string>
+    <string name="shared_title">Enregistrements confiés</string>
+    <string name="shared_intro">Chiffrés de bout en bout : seule ton application peut les écouter. Rien n\'est gardé sur ton téléphone.</string>
+    <string name="shared_item">Alerte de %1$s</string>
+    <string name="shared_meta">%1$s · effacé le %2$s</string>
+    <string name="shared_meta_open">%1$s · alerte en cours, envoi en cours · effacé le %2$s</string>
+    <string name="shared_opening">Déchiffrement…</string>
+    <string name="shared_unreadable">Impossible d\'ouvrir cet enregistrement avec ce téléphone (application réinstallée ou autre téléphone).</string>
+    <string name="shared_no_audio">Pas d\'audio pour cette alerte, seulement les détails.</string>
 </resources>

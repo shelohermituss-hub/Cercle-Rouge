@@ -42,4 +42,8 @@ object AppModule {
     @Provides @Singleton
     fun evidenceStore(@ApplicationContext context: Context, db: PrivacyDatabase) =
         EvidenceStore(File(context.filesDir, "evidence"), db.evidence(), EvidenceKeys.android(context))
+
+    /** Paire de clés de partage des preuves (ADR-0016, 1.16), clé privée chiffrée par le Keystore. */
+    @Provides @Singleton
+    fun shareKeys(@ApplicationContext context: Context) = com.cerclerouge.privacy.crypto.ShareKeys.android(context)
 }

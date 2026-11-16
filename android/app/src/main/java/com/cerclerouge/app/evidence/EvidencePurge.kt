@@ -38,6 +38,7 @@ class EvidencePurge @Inject constructor(
     }
 
     fun schedule() {
+        uploader.publishSoon() // clé publique de partage (1.16)
         uploader.scheduleBackground() // copies de secours restées en attente : au prochain Wi-Fi (1.15)
         val alarms = context.getSystemService(AlarmManager::class.java)
         val pending = PendingIntent.getBroadcast(

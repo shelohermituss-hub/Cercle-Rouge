@@ -1,6 +1,7 @@
 package com.cerclerouge.app.ui.watch
 
 import android.content.Intent
+import android.media.MediaPlayer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,9 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cerclerouge.app.R
+import com.cerclerouge.app.evidence.SharedEvidence
+import com.cerclerouge.app.evidence.SharedItem
+import com.cerclerouge.app.security.SecureScreen
 import com.cerclerouge.app.server.ServerSync
 import com.cerclerouge.app.server.Watched
 import com.cerclerouge.app.ui.components.PixelIcon
@@ -33,30 +37,90 @@ import com.cerclerouge.app.ui.components.PxVariant
 import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
+import com.cerclerouge.app.ui.vault.MemorySource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-data class WatchUi(val items: List<Watched> = emptyList(), val loaded: Boolean = false, val unreachable: Boolean = false)
+data class WatchUi(
+    val items: List<Watched> = emptyList(),
+    val loaded: Boolean = false,
+    val unreachable: Boolean = false,
+    /** Preuves confiées par les personnes qui m'ont choisi (1.16). */
+    val shared: List<SharedItem> = emptyList(),
+    val opening: String? = null,
+    val playing: String? = null,
+    /** Message court (enveloppe illisible, rien à écouter). */
+    val message: Int? = null,
+    val details: List<String>? = null
+)
 
 @HiltViewModel
-class WatchViewModel @Inject constructor(private val server: ServerSync) : ViewModel() {
+class WatchViewModel @Inject constructor(private val server: ServerSync, private val evidence: SharedEvidence) : ViewModel() {
     private val _ui = MutableStateFlow(WatchUi())
     val ui: StateFlow<WatchUi> = _ui
+    private var player: MediaPlayer? = null
 
     fun refresh() {
         viewModelScope.launch {
             val items = server.watched()
-            _ui.value = if (items == null) _ui.value.copy(loaded = true, unreachable = true) else WatchUi(items, loaded = true)
+            val shared = evidence.list()
+            _ui.update {
+                it.copy(
+                    items = items ?: it.items,
+                    loaded = true,
+                    unreachable = items == null,
+                    shared = shared ?: it.shared
+                )
+            }
         }
     }
+
+    /** Télécharge (chiffré), déchiffre en mémoire et lit. Rien n'est écrit sur le disque. */
+    fun play(item: SharedItem) = viewModelScope.launch {
+        stop()
+        _ui.update { it.copy(opening = item.alertId, message = null) }
+        val content = withContext(Dispatchers.IO) { runCatching { evidence.open(item) }.getOrNull() }
+        _ui.update { it.copy(opening = null) }
+        when {
+            content == null -> _ui.update { it.copy(message = R.string.shared_unreadable) }
+            content.audio.isEmpty() -> _ui.update { it.copy(message = R.string.shared_no_audio, details = content.notes) }
+            else -> {
+                val bytes = content.audio.fold(ByteArray(0)) { acc, b -> acc + b }
+                content.wipe()
+                player = MediaPlayer().apply {
+                    setDataSource(MemorySource(bytes))
+                    setOnCompletionListener { stop() }
+                    prepare()
+                    start()
+                }
+                _ui.update { it.copy(playing = item.alertId, details = content.notes) }
+            }
+        }
+    }
+
+    fun stop() {
+        player?.runCatching {
+            stop()
+            release()
+        }
+        player = null
+        _ui.update { it.copy(playing = null) }
+    }
+
+    fun closeDetails() = _ui.update { it.copy(details = null) }
+
+    override fun onCleared() = stop()
 }
 
 /**
@@ -93,9 +157,49 @@ fun WatchScreen(vm: WatchViewModel, onBack: () -> Unit) {
                 PxPanel(Modifier.fillMaxWidth()) { Text(stringResource(R.string.watch_none), style = PxType.body) }
             }
             ui.items.forEach { WatchCard(it) }
+            if (ui.shared.isNotEmpty()) {
+                SecureScreen() // preuves d'un tiers à l'écran : pas de capture (S7.04)
+                Text(stringResource(R.string.shared_title).uppercase(), style = PxType.label, color = c.lime)
+                Text(stringResource(R.string.shared_intro), style = PxType.caption, color = c.muted)
+                ui.message?.let { Text(stringResource(it), style = PxType.label, color = c.warn) }
+                ui.shared.forEach { SharedCard(it, ui, vm) }
+            }
         }
     }
 }
+
+@Composable
+private fun SharedCard(item: SharedItem, ui: WatchUi, vm: WatchViewModel) {
+    val c = Cr.colors
+    PxPanel(Modifier.fillMaxWidth(), border = if (ui.playing == item.alertId) c.lime else c.lineControl) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(stringResource(R.string.shared_item, item.ownerName).uppercase(), style = PxType.bodyBold)
+            Text(
+                stringResource(
+                    if (item.complete) R.string.shared_meta else R.string.shared_meta_open,
+                    WHEN.format(item.openedAt.atZone(ZoneId.systemDefault())),
+                    WHEN.format(item.deleteAt.atZone(ZoneId.systemDefault()))
+                ),
+                style = PxType.caption,
+                color = c.muted
+            )
+            when {
+                ui.opening == item.alertId -> Text(stringResource(R.string.shared_opening), style = PxType.caption, color = c.muted)
+                ui.playing == item.alertId -> PxButton(stringResource(R.string.vault_stop), { vm.stop() }, icon = PixelIcon.CROSS)
+                else -> PxButton(stringResource(R.string.vault_play), { vm.play(item) }, icon = PixelIcon.MIC)
+            }
+            if (ui.playing == item.alertId) {
+                ui.details?.takeIf { it.isNotEmpty() }?.let { lines ->
+                    Text(stringResource(R.string.vault_details).uppercase(), style = PxType.label, color = c.muted)
+                    lines.takeLast(DETAIL_LINES).forEach { Text(it, style = PxType.caption) }
+                }
+            }
+        }
+    }
+}
+
+private val WHEN: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM HH:mm")
+private const val DETAIL_LINES = 40
 
 @Composable
 private fun WatchCard(w: Watched) {

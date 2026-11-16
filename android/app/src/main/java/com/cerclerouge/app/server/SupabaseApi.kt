@@ -72,6 +72,36 @@ class SupabaseApi @Inject constructor(db: PrivacyDatabase, private val clock: Cl
         }
     }
 
+    /** Lit un objet d'un bucket privé (la RLS de Storage décide). Null s'il n'existe pas (encore). */
+    suspend fun download(bucket: String, path: String): ByteArray? = withContext(Dispatchers.IO) {
+        fun get(token: String): Pair<Int, ByteArray?> {
+            val c = URL("$base/storage/v1/object/authenticated/$bucket/$path").openConnection() as HttpURLConnection
+            return try {
+                c.connectTimeout = TIMEOUT_MS
+                c.readTimeout = TIMEOUT_MS * 2
+                c.setRequestProperty("apikey", key)
+                c.setRequestProperty("Authorization", "Bearer $token")
+                val code = c.responseCode
+                code to (if (code in 200..299) c.inputStream.use { it.readBytes() } else null)
+            } catch (e: IOException) {
+                throw ServerException("network", 0)
+            } finally {
+                c.disconnect()
+            }
+        }
+        var (code, body) = get(accessToken())
+        if (code == 401) {
+            val retry = get(accessToken(forceRefresh = true))
+            code = retry.first
+            body = retry.second
+        }
+        when {
+            code in 200..299 -> body
+            code == 400 || code == 404 -> null // Storage répond 400 « Object not found » pour un objet absent ou interdit
+            else -> throw ServerException("http_$code", code)
+        }
+    }
+
     private suspend fun send(path: String, bytes: ByteArray, bearer: String) = withContext(Dispatchers.IO) {
         val c = URL(base + path).openConnection() as HttpURLConnection
         try {

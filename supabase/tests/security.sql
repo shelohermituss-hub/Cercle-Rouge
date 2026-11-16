@@ -562,6 +562,58 @@ select tests.expect((select count(*) from private.evidence_due()) = 1, 'la purge
 select private.evidence_purged((select alert_id from private.evidence_due() limit 1));
 select tests.expect((select count(*) from public.evidence_uploads) = 0, 'puis retire la ligne');
 
+-- ===== 1.16 · Partage des preuves de bout en bout =====
+select set_config('request.jwt.claims', '', true);
+insert into auth.users (id) values ('00000000-0000-0000-0000-0000000000e1');
+insert into public.profiles (id, display_name, locale, birth_year, birth_month, is_adult_attested)
+values ('00000000-0000-0000-0000-0000000000e1', 'SansNumero', 'fr', 1990, 1, true);
+select tests.as_user('00000000-0000-0000-0000-0000000000e1'); set local role authenticated;
+select tests.expect_error($$select public.publish_public_key(repeat('k', 60), null, null)$$, '%phone_required%');
+reset role;
+select tests.as_user(:'admin'); set local role authenticated;
+select public.publish_public_key(repeat('k', 60), 'device', 'sig');
+select tests.expect((select count(*) from public.user_public_keys) = 1, 'le proche publie sa clé publique');
+select tests.expect_error($$insert into public.evidence_key_wraps values (gen_random_uuid(), auth.uid(), repeat('w', 60))$$, '%permission denied%');
+reset role;
+select tests.as_user(:'guardian'); set local role authenticated;
+select public.begin_evidence_upload((select v::uuid from s3 where k = 'g2'));
+select tests.expect((select count(*) from public.evidence_recipients((select v::uuid from s3 where k = 'g2'))) = 1, 'un seul proche peut recevoir la clé');
+select tests.expect((select recipient_id from public.evidence_recipients((select v::uuid from s3 where k = 'g2'))) = :'admin', 'c''est le proche qui a accepté et a l''app');
+select tests.expect((select count(*) from public.user_public_keys) = 0, 'la personne protégée ne lit pas la table des clés des autres');
+select public.share_evidence_key((select v::uuid from s3 where k = 'g2'), :'admin', repeat('w', 60));
+select public.share_evidence_key((select v::uuid from s3 where k = 'g2'), :'admin', repeat('z', 60));
+select tests.expect_error(format('select public.share_evidence_key(%L, %L, repeat(''w'', 60))', (select v from s3 where k = 'g2'), :'stranger'), '%recipient_not_allowed%');
+reset role;
+select tests.as_user(:'admin'); set local role authenticated;
+select tests.expect((select count(*) from public.my_shared_evidence()) = 1, 'le proche voit la preuve partagée');
+select tests.expect((select wrapped from public.my_shared_evidence()) = repeat('w', 60), 'une enveloppe déposée ne change plus');
+select tests.expect((select owner_name from public.my_shared_evidence()) = 'Maman', 'avec le prénom');
+select tests.expect(public.evidence_readable(:'guardian', (select v from s3 where k = 'g2')), 'le proche peut lire les objets de cette alerte');
+select tests.expect(not public.evidence_readable(:'guardian', gen_random_uuid()::text), 'mais pas ceux d''une autre alerte');
+reset role;
+select tests.as_user(:'stranger'); set local role authenticated;
+select tests.expect((select count(*) from public.my_shared_evidence()) = 0, 'un tiers ne voit aucune preuve');
+select tests.expect((select count(*) from public.evidence_key_wraps) = 0, 'ni aucune enveloppe');
+select tests.expect(not public.evidence_readable(:'guardian', (select v from s3 where k = 'g2')), 'ni le droit de lire les objets');
+select tests.expect_error(format('select * from public.evidence_recipients(%L)', (select v from s3 where k = 'g2')), '%upload_not_found%');
+reset role;
+set local role anon;
+select tests.expect_error($$select * from public.my_shared_evidence()$$, '%permission denied%');
+reset role;
+select set_config('request.jwt.claims', '', true);
+update public.contact_invites set status = 'stopped' where token_hash = private.token_hash((select v from s3 where k = 'wtok'));
+select tests.as_user(:'admin'); set local role authenticated;
+select tests.expect((select count(*) from public.my_shared_evidence()) = 0, 'une invitation retirée coupe l''accès aux preuves');
+reset role;
+select set_config('request.jwt.claims', '', true);
+update public.contact_invites set status = 'accepted' where token_hash = private.token_hash((select v from s3 where k = 'wtok'));
+select tests.as_user(:'guardian'); set local role authenticated;
+select public.forget_evidence();
+reset role;
+select tests.as_user(:'admin'); set local role authenticated;
+select tests.expect((select count(*) from public.my_shared_evidence()) = 0, 'une preuve effacée par son propriétaire n''est plus partagée');
+reset role;
+
 -- ===== Fonctions : jamais exécutables par anon ni par PUBLIC =====
 select tests.expect(
   not exists (

@@ -53,6 +53,7 @@ class EvidenceUploader @Inject constructor(
     private val store: EvidenceStore,
     private val prefs: Settings,
     private val deviceKey: DeviceKey,
+    private val shareKeys: com.cerclerouge.privacy.crypto.ShareKeys,
     private val log: EventLog,
     private val clock: Clock,
     db: PrivacyDatabase
@@ -74,6 +75,64 @@ class EvidenceUploader @Inject constructor(
         WorkManager.getInstance(context).enqueueUniqueWork(WORK, ExistingWorkPolicy.KEEP, request)
     }
 
+    /** Au démarrage de l'app : publie la clé publique de partage si besoin (pour recevoir les preuves de ses proches). */
+    fun publishSoon() = scope.launch { publishKey() }
+
+    /**
+     * Publie la clé publique de partage (1.16), signée par `K_device`, une fois par clé. Exige un numéro vérifié : c'est lui qui
+     * relie cette app aux invitations acceptées. Sans numéro : rien (réessai au prochain démarrage).
+     */
+    private suspend fun publishKey() {
+        if (!api.configured || api.verifiedPhone() == null) return
+        val pk = runCatching { shareKeys.publicKey() }.getOrNull() ?: return
+        val digest = Chain.sha256(pk.toByteArray())
+        if (settings.get(PUBLISHED) == digest) return
+        try {
+            api.rpc(
+                "publish_public_key",
+                JSONObject().put("p_public_key", pk)
+                    .put("p_device_key", runCatching { deviceKey.publicKey() }.getOrNull() ?: JSONObject.NULL)
+                    .put(
+                        "p_signature",
+                        runCatching { deviceKey.sign("cercle-rouge/share-key/v1/$pk".toByteArray()) }.getOrNull() ?: JSONObject.NULL
+                    )
+            )
+            settings.put(SettingEntity(PUBLISHED, digest))
+            log.append("evidence", "share_key_published")
+        } catch (e: ServerException) {
+            log.append("evidence", "share_key_failed ${e.code}")
+        }
+    }
+
+    /**
+     * Enveloppe la clé de l'alerte pour chaque proche qui a l'app et a accepté (1.16, ADR-0016). Idempotent côté serveur ; rejoué
+     * à chaque passage tant que l'alerte n'est pas close (un proche peut installer l'app entre-temps).
+     */
+    private suspend fun share(alertId: String, serverId: String) {
+        val rows = org.json.JSONArray(api.rpc("evidence_recipients", JSONObject().put("p_alert_id", serverId)))
+        val done = shared.getOrPut(alertId) { mutableSetOf() }
+        for (i in 0 until rows.length()) {
+            val r = rows.getJSONObject(i)
+            val recipient = r.getString("recipient_id")
+            if (recipient in done) continue
+            val keyset = store.keysetForSharing(alertId) ?: return
+            val wrapped = runCatching { shareKeys.wrap(r.getString("public_key"), alertId, keyset) }.getOrNull()
+            keyset.fill(0)
+            if (wrapped == null) { // clé publique illisible : ce proche est ignoré, les autres reçoivent la leur
+                log.append("evidence", "share_bad_key")
+                continue
+            }
+            api.rpc(
+                "share_evidence_key",
+                JSONObject().put("p_alert_id", serverId).put("p_recipient_id", recipient).put("p_wrapped", wrapped)
+            )
+            done += recipient
+            log.append("evidence", "key_shared")
+        }
+    }
+
+    private val shared = mutableMapOf<String, MutableSet<String>>()
+
     /** Vrai quand plus rien n'attend (ou qu'il n'y a pas de serveur). */
     suspend fun sync(): Boolean = mutex.withLock {
         if (!api.configured) return@withLock true
@@ -85,6 +144,7 @@ class EvidenceUploader @Inject constructor(
             try {
                 val folder = settings.get(FOLDER + a.alertId) ?: api.rpc("begin_evidence_upload", JSONObject().put("p_alert_id", sid))
                     .trim().trim('"').also { settings.put(SettingEntity(FOLDER + a.alertId, it)) }
+                runCatching { share(a.alertId, sid) }.onFailure { log.append("evidence", "share_failed") }
                 for (s in dao.pendingUploads().filter { it.alertId == a.alertId }) {
                     val bytes = store.encryptedSegment(a.alertId, s.seq) ?: continue
                     api.upload(BUCKET, "$folder/${s.seq}.bin", bytes)
@@ -150,6 +210,7 @@ class EvidenceUploader @Inject constructor(
         const val WORK = "cr-evidence-upload"
         const val FOLDER = "evidence.folder."
         const val ROOT = "evidence.root."
+        const val PUBLISHED = "evidence.share_key"
     }
 }
 

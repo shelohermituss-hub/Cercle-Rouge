@@ -2,6 +2,7 @@ package com.cerclerouge.privacy.crypto
 
 import android.content.Context
 import com.google.crypto.tink.Aead
+import com.google.crypto.tink.InsecureSecretKeyAccess
 import com.google.crypto.tink.KeyTemplates
 import com.google.crypto.tink.KeysetHandle
 import com.google.crypto.tink.RegistryConfiguration
@@ -30,6 +31,14 @@ class EvidenceKeys(private val master: Aead) {
 
     fun open(alertId: String, wrapped: ByteArray): StreamingAead = TinkProtoKeysetFormat.parseEncryptedKeyset(wrapped, master, aad(alertId))
         .getPrimitive(RegistryConfiguration.get(), StreamingAead::class.java)
+
+    /**
+     * Keyset de l'alerte **en clair**, seulement pour l'envelopper aussitôt vers un proche (1.16). L'appelant l'efface après usage.
+     */
+    fun exportForSharing(alertId: String, wrapped: ByteArray): ByteArray = TinkProtoKeysetFormat.serializeKeyset(
+        TinkProtoKeysetFormat.parseEncryptedKeyset(wrapped, master, aad(alertId)),
+        InsecureSecretKeyAccess.get()
+    )
 
     private fun aad(alertId: String) = "cercle-rouge/evidence-key/v1/$alertId".toByteArray()
 

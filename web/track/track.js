@@ -41,6 +41,7 @@ const T = {
     pos: (age, acc) => `Dernière position il y a ${age}${acc ? `, précision ${acc} m` : ""}.`,
     noPos: "Position pas encore disponible.",
     openMap: "Ouvrir dans une application de carte",
+    listenApp: "Les enregistrements sont chiffrés : installe Cercle Rouge pour les écouter.",
     tookContact: "J'ai pris contact",
     call114: "Appeler les secours (114)",
     falseAlarm: "C'est une fausse alerte",
@@ -89,6 +90,7 @@ const T = {
     pos: (age, acc) => `Dènye pozisyon gen ${age}${acc ? `, presizyon ${acc} m` : ""}.`,
     noPos: "Pozisyon an poko disponib.",
     openMap: "Louvri l nan yon aplikasyon kat",
+    listenApp: "Anrejistreman yo chifre : enstale Cercle Rouge pou koute yo.",
     tookContact: "Mwen pran kontak",
     call114: "Rele sekou (114)",
     falseAlarm: "Se yon fo alèt",
@@ -137,6 +139,7 @@ const T = {
     pos: (age, acc) => `Last position ${age} ago${acc ? `, accuracy ${acc} m` : ""}.`,
     noPos: "Position not available yet.",
     openMap: "Open in a map app",
+    listenApp: "Recordings are encrypted: install Cercle Rouge to listen to them.",
     tookContact: "I made contact",
     call114: "Call emergency services (114)",
     falseAlarm: "It's a false alarm",
@@ -220,6 +223,7 @@ function renderTrip() {
   }
   $("live").hidden = !open;
   $("actions").hidden = true;
+  $("listen-app").hidden = true;
   $("act-msg").textContent = "";
   $("device").textContent = data.battery != null ? t().battery(data.battery) + " · " + t().deviceAge(ago(data.last_heartbeat_at)) : "";
   if (open) renderPosition(true);
@@ -232,6 +236,7 @@ function render() {
   if (!data) return;
   if (data.kind === "trip") return renderTrip();
   $("actions").hidden = false;
+  $("listen-app").hidden = !(data.level >= 2); // ADR-0016 : l'audio ne s'écoute que dans l'app
   const name = data.name || "?";
   const open = data.status === "open";
   if (open) {

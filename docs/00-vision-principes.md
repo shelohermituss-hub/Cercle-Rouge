@@ -31,7 +31,7 @@ Réduire le temps entre le moment où une personne est en danger et celui où qu
 | N3 | Envoyer de l'audio brut au cloud en fonctionnement normal | IA locale d'abord |
 | N4 | Appeler la police ou les secours automatiquement sans consentement explicite préalable | L'IA ne décide pas seule ; Android l'interdit de toute façon pour les numéros d'urgence |
 | N5 | Partager la position, l'audio ou la vidéo hors d'un trajet protégé ou d'une urgence déclarée | Données minimales |
-| N6 | Conserver des preuves sans limite de durée par défaut | Rétention limitée |
+| N6 | Conserver des preuves sans limite de durée par défaut | Rétention limitée ; « Manuel » seulement sur choix explicite et averti (ADR-0027) |
 | N7 | Entraîner un modèle sur les données personnelles sans consentement explicite et séparé | Vie privée |
 | N8 | Bloquer une fonctionnalité essentielle parce qu'une permission non indispensable est refusée | Dégradation gracieuse |
 | N9 | Servir à surveiller quelqu'un à son insu (usage « stalkerware ») | L'utilisateur protégé est toujours le détenteur du téléphone et le seul à armer la protection |

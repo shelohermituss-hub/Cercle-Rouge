@@ -466,7 +466,8 @@ private fun RetentionStep(ui: OnboardingUi, vm: OnboardingViewModel) {
         Triple(Retention.HOURS_24, R.string.retention_24h, R.string.retention_24h_ex),
         Triple(Retention.DAYS_7, R.string.retention_7d, R.string.retention_7d_ex),
         Triple(Retention.DAYS_30, R.string.retention_30d, R.string.retention_30d_ex),
-        Triple(Retention.ON_CLOSURE, R.string.retention_closure, R.string.retention_closure_ex)
+        Triple(Retention.ON_CLOSURE, R.string.retention_closure, R.string.retention_closure_ex),
+        Triple(Retention.MANUAL, R.string.retention_manual, R.string.retention_manual_ex)
     ).forEach { (value, title, example) ->
         val selected = ui.retention == value
         PxPanel(
@@ -480,6 +481,11 @@ private fun RetentionStep(ui: OnboardingUi, vm: OnboardingViewModel) {
                     Text(stringResource(example), style = PxType.caption, color = c.muted)
                 }
             }
+        }
+    }
+    if (ui.retention == Retention.MANUAL) {
+        PxPanel(Modifier.fillMaxWidth(), border = c.warn) {
+            Text(stringResource(R.string.retention_manual_warning), style = PxType.caption)
         }
     }
     // Q23 : avis sur l'enregistrement (autres voix possibles, valeur en justice non garantie, interrupteur au coffre-fort).

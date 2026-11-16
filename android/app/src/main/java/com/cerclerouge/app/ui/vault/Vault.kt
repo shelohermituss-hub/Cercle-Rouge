@@ -79,7 +79,9 @@ data class VaultUi(
     val playing: String? = null,
     val verified: Map<String, Boolean> = emptyMap(),
     /** Export prêt : le code (affiché une seule fois) et l'archive à enregistrer. */
-    val export: Pair<String, ByteArray>? = null
+    val export: Pair<String, ByteArray>? = null,
+    /** Conservation manuelle (ADR-0027) : rien n'est supprimé automatiquement. */
+    val manual: Boolean = false
 )
 
 @HiltViewModel
@@ -182,8 +184,9 @@ class VaultViewModel @Inject constructor(
     }
 
     private suspend fun refresh() {
-        val items = withContext(Dispatchers.IO) { store.list(settings.retention(), clock.instant()) }
-        _ui.update { it.copy(items = items) }
+        val retention = settings.retention()
+        val items = withContext(Dispatchers.IO) { store.list(retention, clock.instant()) }
+        _ui.update { it.copy(items = items, manual = retention == com.cerclerouge.domain.Retention.MANUAL) }
     }
 
     override fun onCleared() = stopPlaying()
@@ -326,7 +329,7 @@ private fun EvidenceCard(item: EvidenceSummary, ui: VaultUi, vm: VaultViewModel,
             )
             Text(
                 item.deleteAt?.let { stringResource(if (item.kept) R.string.vault_kept_until else R.string.vault_delete_at, it.short()) }
-                    ?: stringResource(R.string.vault_open_alert),
+                    ?: stringResource(if (ui.manual) R.string.vault_manual else R.string.vault_open_alert),
                 style = PxType.caption,
                 color = c.warn
             )

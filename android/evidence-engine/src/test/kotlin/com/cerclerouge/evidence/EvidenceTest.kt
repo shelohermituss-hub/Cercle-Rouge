@@ -139,4 +139,13 @@ class ExportTest {
         assertTrue(code.none { it in "01OIL" })
         assertEquals(14, EvidenceExport.formatCode(code).length)
     }
+
+    @Test fun manualRetentionNeverDeletesAutomatically() { // ADR-0027 : seulement à la demande de l'utilisateur
+        val closed = EvidenceAlert("a", T0, T0.plusSeconds(600), T0.plusSeconds(600))
+        val orphan = EvidenceAlert("b", T0, null, T0.plusSeconds(60))
+        val kept = closed.copy(alertId = "c", keptUntil = T0.plus(Duration.ofDays(30)))
+        val farFuture = T0.plus(Duration.ofDays(3_650))
+        listOf(closed, orphan, kept).forEach { assertNull(RetentionPolicy.deleteAt(it, Retention.MANUAL, farFuture)) }
+        assertTrue(RetentionPolicy.due(listOf(closed, orphan, kept), Retention.MANUAL, farFuture).isEmpty())
+    }
 }

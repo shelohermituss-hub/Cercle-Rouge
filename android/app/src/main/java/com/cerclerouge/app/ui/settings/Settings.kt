@@ -292,7 +292,8 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
                 Retention.HOURS_24 to R.string.retention_24h,
                 Retention.DAYS_7 to R.string.retention_7d,
                 Retention.DAYS_30 to R.string.retention_30d,
-                Retention.ON_CLOSURE to R.string.retention_closure
+                Retention.ON_CLOSURE to R.string.retention_closure,
+                Retention.MANUAL to R.string.retention_manual
             ).forEach { (r, label) ->
                 val selected = ui.retention == r || (ui.retention == null && r == Retention.HOURS_24)
                 Row(
@@ -302,6 +303,11 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
                 ) {
                     PxCheck(selected)
                     Text(stringResource(label), style = PxType.body)
+                }
+            }
+            if (ui.retention == Retention.MANUAL) {
+                PxPanel(Modifier.fillMaxWidth(), border = c.warn) {
+                    Text(stringResource(R.string.retention_manual_warning), style = PxType.caption)
                 }
             }
             Toggle(R.string.vault_audio_toggle, R.string.vault_audio_toggle_ex, ui.recording) { vm.setRecording(it) }

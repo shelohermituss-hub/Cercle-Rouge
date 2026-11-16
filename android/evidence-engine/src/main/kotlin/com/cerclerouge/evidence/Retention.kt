@@ -18,24 +18,28 @@ data class EvidenceAlert(
 
 /**
  * Rétention des preuves (S6.08, ADR-0017) : 24 h, 7 j, 30 j après la **clôture**, ou à la clôture ; 24 h si rien n'est choisi.
- * Jamais de conservation illimitée (N6) : une alerte jamais close est traitée comme close à son dernier segment + 1 h,
- * et « Conserver » est plafonné à 90 jours.
+ * `MANUAL` (ADR-0027, choix explicite de l'utilisateur) : aucune suppression automatique, seulement à sa demande. Sinon
+ * jamais de conservation illimitée (N6) : une alerte jamais close est traitée comme close à son dernier segment + 1 h, et
+ * « Conserver » est plafonné à 90 jours.
  */
 object RetentionPolicy {
     val MAX_KEEP: Duration = Duration.ofDays(90)
     private val ORPHAN_GRACE: Duration = Duration.ofHours(1)
 
-    fun duration(choice: Retention?): Duration = when (choice ?: Retention.HOURS_24) {
+    /** Délai après la clôture ; null pour `MANUAL` (pas de suppression automatique). */
+    fun duration(choice: Retention?): Duration? = when (choice ?: Retention.HOURS_24) {
         Retention.HOURS_24 -> Duration.ofHours(24)
         Retention.DAYS_7 -> Duration.ofDays(7)
         Retention.DAYS_30 -> Duration.ofDays(30)
         Retention.ON_CLOSURE -> Duration.ZERO
+        Retention.MANUAL -> null
     }
 
-    /** Date de suppression ; null tant que l'alerte est ouverte et récente. */
+    /** Date de suppression ; null tant que l'alerte est ouverte et récente, ou si la conservation est manuelle. */
     fun deleteAt(a: EvidenceAlert, choice: Retention?, now: Instant): Instant? {
+        val keep = duration(choice) ?: return null
         val closed = a.closedAt ?: a.lastWriteAt.plus(ORPHAN_GRACE).takeIf { !it.isAfter(now) } ?: return null
-        val auto = closed.plus(duration(choice))
+        val auto = closed.plus(keep)
         return a.keptUntil?.takeIf { it.isAfter(auto) } ?: auto
     }
 

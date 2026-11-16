@@ -180,6 +180,7 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 
 ### 1.13 Rétention « Manuel » (décision porteur)
 - 🤖 `Retention.MANUAL` (`core-domain/Model.kt`, `evidence-engine/Retention.kt`) ; avertissement clair à l'onboarding et aux réglages ; purge seulement à la suppression ; ADR qui amende ADR-0021 et N6.
+- ✅ Fait : `Retention.MANUAL`, avertissement (onboarding + Réglages), coffre-fort « gardée jusqu'à ce que tu la supprimes », test du moteur, ADR-0027, N6 mis à jour.
 - ⏱ 1 j.
 
 ### 1.14 Métadonnées de preuve (PDF 5.6, 11.1)

@@ -41,7 +41,10 @@ data class TripDraft(
     val destination: GeoPoint,
     val mode: TransportMode,
     val plannedArrival: Instant,
-    val unsafeZones: List<UnsafeZone> = emptyList()
+    val unsafeZones: List<UnsafeZone> = emptyList(),
+    /** Route par les rues à suivre (vide : ligne droite). */
+    val route: List<GeoPoint> = emptyList(),
+    val thresholds: ModeThresholds? = null
 )
 
 /** Ce que l'écran affiche d'un trajet en cours. */
@@ -105,7 +108,18 @@ class TripController @Inject constructor(
     suspend fun start(origin: GeoPoint, draft: TripDraft, pin: String?, biometricVerified: Boolean = false) {
         val now = clock.instant()
         mutex.withLock {
-            pending = TripPlan(origin, draft.destination, draft.mode, now, draft.plannedArrival, draft.unsafeZones, tracker.approximateOnly)
+            pending = TripPlan(
+                origin,
+                draft.destination,
+                draft.mode,
+                now,
+                draft.plannedArrival,
+                draft.unsafeZones,
+                tracker.approximateOnly,
+                draft.route,
+                draft.thresholds?.stopMinutes ?: draft.mode.stopMinutes,
+                draft.thresholds?.offRouteMeters ?: draft.mode.offRouteMeters
+            )
         }
         val auth = if (biometricVerified) Auth.VERIFIED else protection.authFor(pin)
         protection.send { Input.StartTrip(it, auth) }

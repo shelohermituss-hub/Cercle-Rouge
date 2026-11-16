@@ -41,6 +41,9 @@ object Geo {
     }
 
     /** Médiane composante par composante de 1 à 3 points : écarte une position aberrante isolée. */
+    /** Distance en mètres au tracé le plus proche d'une ligne brisée (au moins 2 points). */
+    fun distanceToPath(p: GeoPoint, path: List<GeoPoint>): Double = path.zipWithNext().minOf { (a, b) -> distanceToSegment(p, a, b) }
+
     fun median(points: List<GeoPoint>): GeoPoint {
         require(points.isNotEmpty())
         val lats = points.map { it.lat }.sorted()

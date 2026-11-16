@@ -5,16 +5,25 @@ import java.time.Duration
 import java.time.Instant
 
 /**
- * Modes de transport et seuils par défaut (module produit 4). ⚠ Points de départ à calibrer avec des données de terrain
- * (pilote à Port-au-Prince) : `stopMinutes` = arrêt inhabituel, `offRouteMeters` = écart au corridor, `speedMps` = vitesse
- * moyenne pour estimer la durée d'un trajet (circulation dense : plus lente que la limite).
+ * Modes de transport et seuils (module produit 4, PDF 9.2). ⚠ Points de départ à calibrer avec des données de terrain (pilote à
+ * Port-au-Prince) : `stopMinutes` = arrêt inhabituel, `offRouteMeters` = écart au corridor, `speedMps` = vitesse moyenne pour
+ * estimer la durée (circulation dense). `stopRange` et `offRouteRange` : bornes dans lesquelles l'utilisateur peut régler ces
+ * seuils. Tap-tap et moto ne figurent pas au PDF : bornes du bus et du taxi.
  */
-enum class TransportMode(val stopMinutes: Int, val offRouteMeters: Int, val speedMps: Double) {
-    WALK(10, 300, 1.3),
-    CAR(8, 1_000, 5.5),
-    TAP_TAP(10, 800, 4.5),
-    TAXI(8, 1_000, 5.5),
-    MOTO(8, 1_000, 6.0)
+enum class TransportMode(
+    val stopMinutes: Int,
+    val offRouteMeters: Int,
+    val speedMps: Double,
+    val stopRange: IntRange,
+    val offRouteRange: IntRange
+) {
+    WALK(10, 300, 1.3, 10..15, 100..300),
+    CAR(15, 1_000, 5.5, 15..30, 300..1_000),
+    TAP_TAP(10, 800, 4.5, 10..40, 500..1_000),
+    TAXI(10, 1_000, 5.5, 10..20, 300..1_000),
+    MOTO(10, 1_000, 6.0, 10..20, 300..1_000),
+    BUS(20, 1_000, 4.5, 20..40, 500..1_000),
+    TRAIN(30, 3_000, 12.0, 30..60, 1_000..3_000)
 }
 
 /** Zone non sûre : cercle marqué par l'utilisateur, stocké seulement sur le téléphone, chiffré (R-TRIP-07). */
@@ -40,7 +49,12 @@ data class TripPlan(
     val startedAt: Instant,
     val plannedArrival: Instant,
     val unsafeZones: List<UnsafeZone> = emptyList(),
-    val approximateOnly: Boolean = false
+    val approximateOnly: Boolean = false,
+    /** Route par les rues (au moins 2 points) : le corridor la suit ; vide : ligne droite départ → arrivée. */
+    val route: List<GeoPoint> = emptyList(),
+    /** Seuils de ce trajet : ceux du mode, ou ceux réglés par l'utilisateur (bornés par le mode). */
+    val stopMinutes: Int = mode.stopMinutes,
+    val offRouteMeters: Int = mode.offRouteMeters
 ) {
     companion object {
         /** Durée estimée en ligne droite à la vitesse moyenne du mode, minimum 5 min : proposée puis modifiable. */
@@ -57,6 +71,9 @@ enum class TripEventType {
     TOO_LONG,
     ARRIVAL_OVERDUE,
     UNSAFE_ZONE_ENTERED,
+
+    /** Plus aucune position utilisable depuis 5 min (GPS coupé, tunnel, téléphone masqué). */
+    SIGNAL_LOST,
     ARRIVED
 }
 
@@ -70,6 +87,7 @@ data class TripEvent(val type: TripEventType, val at: Instant, val meters: Doubl
             TripEventType.UNSAFE_ZONE_ENTERED
             -> Reason.TRIP_DEVIATION
             TripEventType.PROLONGED_STOP -> Reason.PROLONGED_STOP
+            TripEventType.SIGNAL_LOST -> Reason.CONTACT_LOST
             TripEventType.TOO_LONG, TripEventType.ARRIVAL_OVERDUE -> Reason.ARRIVAL_OVERDUE
             TripEventType.ARRIVED -> null
         }

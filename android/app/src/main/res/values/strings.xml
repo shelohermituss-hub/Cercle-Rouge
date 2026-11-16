@@ -520,4 +520,12 @@
     <string name="widget_arm">ON</string>
     <string name="widget_arm_a11y">Activer la protection</string>
     <string name="widget_arm_tile">Protection</string>
+    <string name="trip_mode_bus">Bus</string>
+    <string name="trip_mode_train">Train</string>
+    <string name="trip_thresholds">Seuils de ce moyen de transport</string>
+    <string name="trip_threshold_off">Écart toléré : %1$d m (de %2$d à %3$d)</string>
+    <string name="trip_threshold_stop">Arrêt toléré : %1$d min (de %2$d à %3$d)</string>
+    <string name="trip_recipients">Proches à prévenir pour les trajets</string>
+    <string name="trip_recipients_default">Aucun choisi : les 3 premiers proches ayant accepté sont prévenus.</string>
+    <string name="trip_recipients_ex">3 proches au plus. Ils reçoivent le lien de suivi si la surveillance du trajet est activée.</string>
 </resources>

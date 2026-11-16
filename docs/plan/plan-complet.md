@@ -172,6 +172,8 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 - 🤖 **Corridor sur la route** : `TripMonitor` utilise les points de `RouteService` (`trip/Routes.kt`) au lieu de la ligne droite quand la route existe.
 - 🤖 Événements manquants : **trajet anormalement long** (durée > estimée × 1,5), **retour vers le départ**, **perte de signal** (D), **entrée en zone non sûre** (zones existantes `UnsafeZone`) ; vérifier chaque cas dans le banc GPX.
 - 🤖 **`ACCESS_BACKGROUND_LOCATION`** (décision porteur) : demandée après explication, utilisée pour reprendre le suivi si le service est relancé par le système ; ADR qui remplace ADR-0006 ; dossier Play (vidéo).
+- ✅ Fait : modes BUS et TRAIN (app + contrainte serveur `s5_trip_modes`), seuils d'écart et d'arrêt réglables par mode dans l'écran Trajet (bornés), proches choisis pour les trajets (3 au plus), corridor sur la route par les rues quand elle existe, événement « perte de signal » (5 min sans position utilisable). Trajet trop long, retour au départ et zone non sûre existaient déjà ; tous sont couverts par le banc de rejeu.
+- ⏳ **Reste** : `ACCESS_BACKGROUND_LOCATION` et la reprise du suivi après relance du service (touche la machine à états, R-SM-08) + l'ADR qui remplace ADR-0006 : la permission ne sera déclarée qu'avec la fonction qui s'en sert.
 - ⏱ 4 j.
 
 ## Bloc C — Preuves

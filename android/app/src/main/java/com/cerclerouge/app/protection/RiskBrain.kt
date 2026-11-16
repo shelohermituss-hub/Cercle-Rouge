@@ -139,10 +139,11 @@ class RiskBrain @Inject constructor(
         val plan = trips.trip.value?.plan
         val value = when (e.type) {
             // C = 0,5 au seuil du mode, 1 au double (docs/ia/modele-ia-locale.md).
-            TripEventType.OFF_ROUTE -> plan?.let { p -> ((e.meters ?: 0.0) / p.mode.offRouteMeters * 0.5) } ?: 0.6
+            TripEventType.OFF_ROUTE -> plan?.let { p -> ((e.meters ?: 0.0) / p.offRouteMeters * 0.5) } ?: 0.6
             TripEventType.UNSAFE_ZONE_ENTERED -> 0.8
             TripEventType.RETURN_TO_ORIGIN -> 0.7
             TripEventType.WRONG_DIRECTION, TripEventType.PROLONGED_STOP, TripEventType.ARRIVAL_OVERDUE -> 0.6
+            TripEventType.SIGNAL_LOST -> 0.5
             TripEventType.TOO_LONG -> 0.5
             TripEventType.ARRIVED -> return
         }.coerceIn(0.0, 1.0)

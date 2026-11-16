@@ -56,12 +56,14 @@ import com.cerclerouge.app.security.SecuritySettings
 import com.cerclerouge.app.server.TripWatch
 import com.cerclerouge.app.server.WatchStatus
 import com.cerclerouge.app.trip.AddressSearch
+import com.cerclerouge.app.trip.ModeThresholds
 import com.cerclerouge.app.trip.Place
 import com.cerclerouge.app.trip.PlacesRepository
 import com.cerclerouge.app.trip.RouteLine
 import com.cerclerouge.app.trip.RouteService
 import com.cerclerouge.app.trip.TripController
 import com.cerclerouge.app.trip.TripDraft
+import com.cerclerouge.app.trip.TripPrefs
 import com.cerclerouge.app.trip.TripUi
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PixelIconView
@@ -108,7 +110,12 @@ data class PlannerUi(
     val searchAllowed: Boolean = false,
     val route: RouteLine? = null,
     val routing: Boolean = false,
-    val routeAllowed: Boolean = false
+    val routeAllowed: Boolean = false,
+    /** Seuils du mode choisi (réglables dans les bornes du mode). */
+    val thresholds: ModeThresholds? = null,
+    /** Proches ayant accepté (identifiant, prénom) et ceux choisis pour les trajets (vide : les 3 premiers). */
+    val contacts: List<Pair<String, String>> = emptyList(),
+    val recipients: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -120,6 +127,8 @@ class TripViewModel @Inject constructor(
     private val security: SecuritySettings,
     private val watch: TripWatch,
     private val routes: RouteService,
+    private val prefs: TripPrefs,
+    private val contactsRepo: com.cerclerouge.app.contacts.ContactsRepository,
     val controller: ProtectionController,
     private val clock: Clock
 ) : ViewModel() {
@@ -133,11 +142,44 @@ class TripViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             _ui.update { it.copy(favorites = places.favorites(), searchAllowed = places.searchAllowed(), routeAllowed = routes.allowed()) }
+            contactsRepo.load()
+            val accepted = contactsRepo.book.value.contacts
+                .filter { it.status == com.cerclerouge.contacts.ContactStatus.ACCEPTED }.sortedBy { it.position }
+            val ids = accepted.map { it.id }.toSet()
+            _ui.update {
+                it.copy(
+                    thresholds = prefs.thresholds(it.mode),
+                    contacts = accepted.map { c -> c.id to c.name.substringBefore(' ') },
+                    recipients = prefs.recipients().intersect(ids)
+                )
+            }
             val origin = trips.currentPosition()
             _ui.update { it.copy(origin = origin, originLoading = false) }
             reestimate()
             reroute()
         }
+    }
+
+    /** Règle un seuil du mode choisi, gardé pour les prochains trajets ; les bornes du mode s'appliquent. */
+    fun adjust(stopDelta: Int = 0, offRouteDelta: Int = 0) = viewModelScope.launch {
+        val s = _ui.value
+        val t = s.thresholds ?: prefs.thresholds(s.mode)
+        val saved = prefs.setThresholds(s.mode, ModeThresholds(t.stopMinutes + stopDelta, t.offRouteMeters + offRouteDelta))
+        _ui.update { it.copy(thresholds = saved) }
+    }
+
+    /** Coche ou décoche un proche pour les trajets (3 au plus, comme la surveillance serveur). */
+    fun toggleRecipient(id: String) = viewModelScope.launch {
+        val now = _ui.value.recipients
+        val next = if (id in now) {
+            now - id
+        } else if (now.size < MAX_RECIPIENTS) {
+            now + id
+        } else {
+            now
+        }
+        prefs.setRecipients(next)
+        _ui.update { it.copy(recipients = next) }
     }
 
     fun choose(place: Place) {
@@ -147,7 +189,8 @@ class TripViewModel @Inject constructor(
     }
 
     fun mode(mode: TransportMode) {
-        _ui.update { it.copy(mode = mode) }
+        _ui.update { it.copy(mode = mode, thresholds = null) }
+        viewModelScope.launch { _ui.update { it.copy(thresholds = prefs.thresholds(mode)) } }
         reestimate()
         reroute()
     }
@@ -219,7 +262,11 @@ class TripViewModel @Inject constructor(
         val origin = s.origin ?: return false
         val dest = s.destination ?: return false
         val arrival = clock.instant().plus(Duration.ofMinutes(s.minutes.toLong()))
-        viewModelScope.launch { trips.start(origin, TripDraft(dest.point, s.mode, arrival), pin, biometricVerified) }
+        // Le corridor suit la route par les rues si elle a été calculée pour ce départ, cette arrivée et ce mode.
+        val road = s.route?.takeIf { it.road && it.origin == origin && it.destination == dest.point && it.mode == s.mode }?.points.orEmpty()
+        viewModelScope.launch {
+            trips.start(origin, TripDraft(dest.point, s.mode, arrival, route = road, thresholds = s.thresholds), pin, biometricVerified)
+        }
         return true
     }
 
@@ -247,6 +294,7 @@ class TripViewModel @Inject constructor(
     private companion object {
         const val MIN_MINUTES = 5
         const val MAX_MINUTES = 240
+        const val MAX_RECIPIENTS = 3
     }
 }
 
@@ -257,6 +305,8 @@ private val TransportMode.label: Int
         TransportMode.TAP_TAP -> R.string.trip_mode_taptap
         TransportMode.TAXI -> R.string.trip_mode_taxi
         TransportMode.MOTO -> R.string.trip_mode_moto
+        TransportMode.BUS -> R.string.trip_mode_bus
+        TransportMode.TRAIN -> R.string.trip_mode_train
     }
 
 private val HHMM: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -328,7 +378,9 @@ private fun Planner(vm: TripViewModel) {
         if (s.destination != null) RouteStatus(s, onAsk = { routeConsent = true })
         Text(stringResource(R.string.trip_mode).uppercase(), style = PxType.label, color = c.lime)
         ModePicker(s.mode, vm::mode)
+        s.thresholds?.let { ThresholdPicker(s.mode, it, vm::adjust) }
         ArrivalPicker(s.minutes, vm::shift)
+        if (s.contacts.isNotEmpty()) RecipientPicker(s.contacts, s.recipients, vm::toggleRecipient)
         WatchChoice(vm)
         if (!s.originLoading && s.origin == null) {
             Text(noPosition, style = PxType.label, color = c.warn, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
@@ -523,6 +575,59 @@ private fun ModePicker(selected: TransportMode, onPick: (TransportMode) -> Unit)
             ) { Text(stringResource(m.label).uppercase(), style = PxType.button, color = if (on) c.lime else c.ink) }
         }
     }
+}
+
+/** Seuils du mode (PDF 9.2) : écart toléré autour de la route et arrêt toléré, réglables dans les bornes du mode. */
+@Composable
+private fun ThresholdPicker(mode: TransportMode, t: ModeThresholds, onAdjust: (Int, Int) -> Unit) {
+    val c = Cr.colors
+    Text(stringResource(R.string.trip_thresholds).uppercase(), style = PxType.label, color = c.lime)
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        StepButton("−", stringResource(R.string.trip_less)) { onAdjust(0, -OFF_ROUTE_STEP) }
+        Text(
+            stringResource(R.string.trip_threshold_off, t.offRouteMeters, mode.offRouteRange.first, mode.offRouteRange.last),
+            style = PxType.body,
+            modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }
+        )
+        StepButton("+", stringResource(R.string.trip_more)) { onAdjust(0, OFF_ROUTE_STEP) }
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        StepButton("−", stringResource(R.string.trip_less)) { onAdjust(-STOP_STEP, 0) }
+        Text(
+            stringResource(R.string.trip_threshold_stop, t.stopMinutes, mode.stopRange.first, mode.stopRange.last),
+            style = PxType.body,
+            modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }
+        )
+        StepButton("+", stringResource(R.string.trip_more)) { onAdjust(STOP_STEP, 0) }
+    }
+}
+
+private const val OFF_ROUTE_STEP = 100
+private const val STOP_STEP = 5
+
+/** Proches à prévenir pour les trajets (PDF 5.4) : 3 au plus ; aucun coché = les 3 premiers ayant accepté. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RecipientPicker(contacts: List<Pair<String, String>>, chosen: Set<String>, onToggle: (String) -> Unit) {
+    val c = Cr.colors
+    Text(stringResource(R.string.trip_recipients).uppercase(), style = PxType.label, color = c.lime)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        contacts.forEach { (id, name) ->
+            val on = id in chosen
+            Box(
+                Modifier.heightIn(min = 48.dp).border(2.dp, if (on) c.lime else c.lineControl)
+                    .clickable(role = Role.Checkbox) { onToggle(id) }
+                    .semantics { this.selected = on }
+                    .padding(horizontal = 14.dp),
+                contentAlignment = Alignment.Center
+            ) { Text(name.uppercase(), style = PxType.button, color = if (on) c.lime else c.ink) }
+        }
+    }
+    Text(
+        stringResource(if (chosen.isEmpty()) R.string.trip_recipients_default else R.string.trip_recipients_ex),
+        style = PxType.caption,
+        color = c.muted
+    )
 }
 
 @Composable

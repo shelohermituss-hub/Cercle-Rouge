@@ -63,6 +63,7 @@ class RouteService @Inject constructor(db: PrivacyDatabase) {
         _last.value?.takeIf { it.origin == origin && it.destination == destination } ?: straight(origin, destination, mode)
 
     private suspend fun fetch(origin: GeoPoint, destination: GeoPoint, mode: TransportMode): List<GeoPoint>? = withContext(Dispatchers.IO) {
+        if (mode == TransportMode.TRAIN) return@withContext null // pas de routage ferroviaire : ligne droite, corridor large
         val (service, profile) = if (mode == TransportMode.WALK) "routed-foot" to "foot" else "routed-car" to "driving"
         val coords = listOf(origin, destination).joinToString(";") { String.format(Locale.ROOT, "%.5f,%.5f", it.lon, it.lat) }
         val url = URL("https://routing.openstreetmap.de/$service/route/v1/$profile/$coords?overview=full&geometries=geojson")

@@ -520,4 +520,12 @@
     <string name="widget_arm_a11y">Aktive pwoteksyon an</string>
     <string name="widget_arm_tile">Pwoteksyon</string>
     <string name="widget_arm">ON</string>
+    <string name="trip_mode_bus">Bis</string>
+    <string name="trip_mode_train">Tren</string>
+    <string name="trip_thresholds">Limit pou mwayen transpò sa a</string>
+    <string name="trip_threshold_off">Distans tolere : %1$d m (soti %2$d rive %3$d)</string>
+    <string name="trip_threshold_stop">Kanpe tolere : %1$d min (soti %2$d rive %3$d)</string>
+    <string name="trip_recipients">Pwòch pou avèti pou trajè yo</string>
+    <string name="trip_recipients_default">Pa gen youn chwazi : 3 premye pwòch ki aksepte yo ap avèti.</string>
+    <string name="trip_recipients_ex">3 pwòch pou pi plis. Y ap resevwa lyen swivi a si siveyans trajè a aktive.</string>
 </resources>

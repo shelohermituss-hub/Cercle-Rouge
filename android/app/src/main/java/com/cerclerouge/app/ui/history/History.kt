@@ -54,6 +54,8 @@ fun reasonLabel(e: HistoryEntity): String = stringResource(
         "TAP_TAP" -> R.string.trip_mode_taptap
         "TAXI" -> R.string.trip_mode_taxi
         "CAR" -> R.string.trip_mode_car
+        "BUS" -> R.string.trip_mode_bus
+        "TRAIN" -> R.string.trip_mode_train
         else -> R.string.history_unknown
     }
 )

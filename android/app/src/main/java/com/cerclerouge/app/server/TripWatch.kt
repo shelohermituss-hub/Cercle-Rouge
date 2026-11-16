@@ -59,6 +59,7 @@ class TripWatch @Inject constructor(
     private val tracker: LocationTracker,
     private val log: EventLog,
     private val dispatcher: com.cerclerouge.app.alert.AlertDispatcher,
+    private val prefs: com.cerclerouge.app.trip.TripPrefs,
     db: PrivacyDatabase
 ) {
     private val settings = db.settings()
@@ -103,7 +104,10 @@ class TripWatch @Inject constructor(
             return
         }
         _status.value = WatchStatus.Starting
-        val chosen = contacts.book.value.contacts.filter { it.status == ContactStatus.ACCEPTED }.sortedBy { it.position }.take(MAX)
+        // Proches choisis pour les trajets (PDF 5.4) ; à défaut, ou s'ils n'ont plus donné leur accord : les 3 premiers.
+        val accepted = contacts.book.value.contacts.filter { it.status == ContactStatus.ACCEPTED }.sortedBy { it.position }
+        val wanted = prefs.recipients()
+        val chosen = (accepted.filter { it.id in wanted }.ifEmpty { accepted }).take(MAX)
         if (chosen.isEmpty()) {
             _status.value = WatchStatus.Failed("no_recipients")
             return

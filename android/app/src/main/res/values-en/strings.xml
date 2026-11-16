@@ -519,4 +519,12 @@
     <string name="widget_arm_a11y">Turn protection on</string>
     <string name="widget_arm_tile">Protection</string>
     <string name="widget_arm">ON</string>
+    <string name="trip_mode_bus">Bus</string>
+    <string name="trip_mode_train">Train</string>
+    <string name="trip_thresholds">Limits for this transport</string>
+    <string name="trip_threshold_off">Allowed detour: %1$d m (%2$d to %3$d)</string>
+    <string name="trip_threshold_stop">Allowed stop: %1$d min (%2$d to %3$d)</string>
+    <string name="trip_recipients">Contacts to notify for trips</string>
+    <string name="trip_recipients_default">None chosen: the first 3 contacts who accepted are notified.</string>
+    <string name="trip_recipients_ex">3 contacts at most. They get the tracking link if trip watch is on.</string>
 </resources>

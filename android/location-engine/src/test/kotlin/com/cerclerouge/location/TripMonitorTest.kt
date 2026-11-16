@@ -1,5 +1,6 @@
 package com.cerclerouge.location
 
+import com.cerclerouge.domain.Reason
 import java.time.Duration
 import java.time.Instant
 import kotlin.test.Test
@@ -94,7 +95,7 @@ class TripMonitorTest {
     @Test fun trafficJamShorterThanTheThresholdIsNotAnUnusualStop() {
         val s = Scenario(TransportMode.CAR)
         for (i in 0..5) s.at(i * 10L, i * 50.0, speed = 5f)
-        for (i in 0..35) s.at(60 + i * 10L, 250.0, speed = 0f) // 6 min à l'arrêt (< 8 min)
+        for (i in 0..35) s.at(60 + i * 10L, 250.0, speed = 0f) // 6 min à l'arrêt (< 15 min)
         for (i in 0..5) s.at(420 + i * 10L, 250.0 + i * 50.0, speed = 5f)
         assertFalse(TripEventType.PROLONGED_STOP in s.replay("embouteillage-6min").types())
     }
@@ -102,11 +103,11 @@ class TripMonitorTest {
     @Test fun longStopTriggersOnceAfterTheThreshold() {
         val s = Scenario(TransportMode.CAR)
         for (i in 0..5) s.at(i * 10L, i * 50.0, speed = 5f)
-        for (i in 0..80) s.at(60 + i * 10L, 250.0, speed = 0f) // 13 min
-        val events = s.replay("arret-13min")
+        for (i in 0..125) s.at(60 + i * 10L, 250.0, speed = 0f) // 21 min
+        val events = s.replay("arret-21min")
         assertEquals(1, events.count { it.type == TripEventType.PROLONGED_STOP })
         val at = events.first { it.type == TripEventType.PROLONGED_STOP }.at
-        assertTrue(Duration.between(s.t0.plusSeconds(60), at) >= Duration.ofMinutes(8))
+        assertTrue(Duration.between(s.t0.plusSeconds(60), at) >= Duration.ofMinutes(15))
     }
 
     @Test fun declaredStopSuspendsStopDetection() { // « Je fais un arrêt »
@@ -169,6 +170,58 @@ class TripMonitorTest {
         val events = s.replay("signal-perdu", tickAt = s.t0.plus(Duration.ofMinutes(46)))
         assertTrue(TripEventType.ARRIVAL_OVERDUE in events.types())
         assertTrue(TripEventType.TOO_LONG in events.types()) // 46 min > 30 × 1,5 = 45 et > 30 + 15
+    }
+
+    @Test fun noUsablePositionForFiveMinutesIsASignalLossUntilAFixComesBack() {
+        val s = Scenario()
+        for (i in 0..6) s.at(i * 10L, i * 13.0, speed = 1.3f)
+        assertFalse(TripEventType.SIGNAL_LOST in s.replay("signal-4min", tickAt = s.t0.plusSeconds(60 + 240)).types())
+        val lost = s.replay("signal-5min", tickAt = s.t0.plusSeconds(60 + 300))
+        assertEquals(Reason.CONTACT_LOST, lost.single { it.type == TripEventType.SIGNAL_LOST }.reason)
+        // Des positions imprécises (> 100 m) ne comptent pas comme un signal.
+        for (i in 0..35) s.at(70 + i * 10L, 100.0, accuracy = 400f)
+        assertTrue(TripEventType.SIGNAL_LOST in s.replay("signal-imprecis", tickAt = s.t0.plusSeconds(60 + 330)).types())
+    }
+
+    @Test fun corridorFollowsTheRoadRouteWhenThereIsOne() {
+        // Route en L : 1 km au nord puis 2 km à l'est. Sur la route, on est à ~700 m de la ligne droite : pas un écart.
+        val origin = GeoPoint(18.5392, -72.3364)
+        val corner = Geo.offset(origin, 0.0, 1_000.0)
+        val destination = Geo.offset(corner, 90.0, 2_000.0)
+        val t0 = Instant.parse("2026-11-11T14:00:00Z")
+        fun events(route: List<GeoPoint>): List<TripEventType> {
+            val plan = TripPlan(origin, destination, TransportMode.WALK, t0, t0.plus(Duration.ofMinutes(60)), route = route)
+            val monitor = TripMonitor(plan)
+            var state = monitor.start()
+            val out = mutableListOf<TripEventType>()
+            for (i in 0..60) {
+                val p = if (i <= 30) Geo.offset(origin, 0.0, i * 33.0) else Geo.offset(corner, 90.0, (i - 30) * 33.0)
+                val step = monitor.onFix(state, TrackFix(p, 10f, t0.plusSeconds(i * 25L), 1.3f))
+                state = step.state
+                out += step.events.map { it.type }
+            }
+            return out
+        }
+        assertFalse(TripEventType.OFF_ROUTE in events(listOf(origin, corner, destination)))
+        assertTrue(TripEventType.OFF_ROUTE in events(emptyList())) // sans route : la ligne droite, donc un écart
+    }
+
+    @Test fun userThresholdsReplaceTheModeDefaults() {
+        val s = Scenario()
+        for (i in 0..5) s.at(i * 10L, i * 13.0, speed = 1.3f)
+        for (i in 0..12) s.at(60 + i * 10L, 80.0, side = 200.0, speed = 1.3f) // 200 m d'écart pendant 2 min
+        assertFalse(TripEventType.OFF_ROUTE in s.replay("ecart-200m").types()) // seuil à pied par défaut : 300 m
+        val strict = TripMonitor(s.plan.copy(offRouteMeters = 100))
+        var state = strict.start()
+        val out = s.fixes.flatMap { f -> strict.onFix(state, f).also { state = it.state }.events }
+        assertTrue(out.any { it.type == TripEventType.OFF_ROUTE })
+    }
+
+    @Test fun everyModeDefaultSitsInsideItsAdjustableRange() {
+        TransportMode.entries.forEach {
+            assertTrue(it.stopMinutes in it.stopRange, "${it.name} arrêt")
+            assertTrue(it.offRouteMeters in it.offRouteRange, "${it.name} écart")
+        }
     }
 
     @Test fun arrivalIsDetectedWithin100mAndStopsEverythingAfter() {

@@ -44,6 +44,7 @@ class TripMonitor(private val plan: TripPlan) {
         if (fix.accuracyMeters > MAX_ACCURACY_M) return Step(state, emptyList(), ignored = true)
         val events = mutableListOf<TripEvent>()
         val active = state.active.toMutableSet()
+        active.remove(TripEventType.SIGNAL_LOST) // une position utilisable est revenue
         fun emit(type: TripEventType, meters: Double? = null) {
             if (active.add(type)) events += TripEvent(type, fix.time, meters)
         }
@@ -60,10 +61,10 @@ class TripMonitor(private val plan: TripPlan) {
         }
 
         // Écart au corridor : plus de 60 s au-delà du seuil du mode. Position approximative : seuils sous 1 km désactivés.
-        val threshold = plan.mode.offRouteMeters
+        val threshold = plan.offRouteMeters
         val offRouteEnabled = !(plan.approximateOnly && threshold < APPROXIMATE_MIN_M)
         var offRouteSince = state.offRouteSince
-        val corridor = Geo.distanceToSegment(pos, plan.origin, plan.destination)
+        val corridor = Geo.distanceToPath(pos, plan.route.takeIf { it.size >= 2 } ?: listOf(plan.origin, plan.destination))
         if (offRouteEnabled && corridor > threshold) {
             offRouteSince = offRouteSince ?: fix.time
             if (Duration.between(offRouteSince, fix.time) >= OFF_ROUTE_SUSTAIN) emit(TripEventType.OFF_ROUTE, corridor)
@@ -100,7 +101,7 @@ class TripMonitor(private val plan: TripPlan) {
         if (stationary && !plannedStop && !plan.approximateOnly) {
             stoppedSince = stoppedSince ?: fix.time
             if (Duration.between(stoppedSince, fix.time) >=
-                Duration.ofMinutes(plan.mode.stopMinutes.toLong())
+                Duration.ofMinutes(plan.stopMinutes.toLong())
             ) {
                 emit(TripEventType.PROLONGED_STOP)
             }
@@ -147,6 +148,10 @@ class TripMonitor(private val plan: TripPlan) {
         ) {
             events += TripEvent(TripEventType.TOO_LONG, now)
         }
+        val last = state.lastTime ?: plan.startedAt
+        if (Duration.between(last, now) >= SIGNAL_LOST_AFTER && active.add(TripEventType.SIGNAL_LOST)) {
+            events += TripEvent(TripEventType.SIGNAL_LOST, now)
+        }
         if (now >= plan.plannedArrival.plus(OVERDUE_MARGIN) && active.add(TripEventType.ARRIVAL_OVERDUE)) {
             events += TripEvent(TripEventType.ARRIVAL_OVERDUE, now)
         }
@@ -172,6 +177,7 @@ class TripMonitor(private val plan: TripPlan) {
         private const val APPROXIMATE_MIN_M = 1_000
         private val OFF_ROUTE_SUSTAIN: Duration = Duration.ofSeconds(60)
         private val WRONG_DIRECTION_AFTER: Duration = Duration.ofMinutes(5)
+        private val SIGNAL_LOST_AFTER: Duration = Duration.ofMinutes(5)
         private val OVERDUE_MARGIN: Duration = Duration.ofMinutes(15)
     }
 }

@@ -394,6 +394,9 @@ class ServerSync @Inject constructor(
 
     private suspend fun serverId(localId: String): String? = settings.get("server.alert.$localId")
 
+    /** Identifiant serveur d'une alerte locale, si elle a été synchronisée (preuves, 1.15). */
+    suspend fun serverAlertId(localId: String): String? = serverId(localId)
+
     private suspend fun pushProfile() {
         val a = account.account.value ?: account.load() ?: throw ServerException("no_local_profile", 0)
         val locale = Locale.getDefault().language.takeIf { it in setOf("fr", "ht", "en") } ?: "fr"

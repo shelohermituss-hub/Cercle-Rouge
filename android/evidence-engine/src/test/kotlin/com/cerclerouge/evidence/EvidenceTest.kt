@@ -153,6 +153,15 @@ class ExportTest {
         assertEquals(14, EvidenceExport.formatCode(code).length)
     }
 
+    @Test fun serverCopyFollowsLocalRetentionCappedAtThirtyDays() { // ADR-0028
+        val closed = EvidenceAlert("a", T0, T0, T0)
+        assertEquals(24, RetentionPolicy.serverKeepHours(closed, Retention.HOURS_24, T0))
+        assertEquals(0, RetentionPolicy.serverKeepHours(closed, Retention.ON_CLOSURE, T0))
+        assertEquals(720, RetentionPolicy.serverKeepHours(closed, Retention.DAYS_30, T0))
+        assertEquals(720, RetentionPolicy.serverKeepHours(closed, Retention.MANUAL, T0))
+        assertEquals(720, RetentionPolicy.serverKeepHours(closed.copy(keptUntil = T0.plus(Duration.ofDays(90))), Retention.HOURS_24, T0))
+    }
+
     @Test fun manualRetentionNeverDeletesAutomatically() { // ADR-0027 : seulement à la demande de l'utilisateur
         val closed = EvidenceAlert("a", T0, T0.plusSeconds(600), T0.plusSeconds(600))
         val orphan = EvidenceAlert("b", T0, null, T0.plusSeconds(60))

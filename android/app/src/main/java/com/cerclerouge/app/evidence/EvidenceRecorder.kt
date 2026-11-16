@@ -35,7 +35,8 @@ class EvidenceRecorder @Inject constructor(
     private val store: EvidenceStore,
     private val settings: EvidenceSettings,
     private val log: EventLog,
-    private val clock: Clock
+    private val clock: Clock,
+    private val uploader: EvidenceUploader
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _recording = MutableStateFlow<String?>(null)
@@ -189,6 +190,7 @@ class EvidenceRecorder @Inject constructor(
             segmentSamples = 0
             segments++
             runBlocking { store.append(alertId, content, started, durationMs, clock.instant()) }
+            uploader.kick() // copie de secours tout de suite, pendant l'alerte (1.15)
             if (final) content.fill(0)
         }
     }

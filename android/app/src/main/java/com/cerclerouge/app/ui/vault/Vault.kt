@@ -95,7 +95,8 @@ class VaultViewModel @Inject constructor(
     private val pins: PinRepository,
     private val security: SecuritySettings,
     private val log: EventLog,
-    private val clock: Clock
+    private val clock: Clock,
+    private val uploader: com.cerclerouge.app.evidence.EvidenceUploader
 ) : ViewModel() {
     private val _ui = MutableStateFlow(VaultUi())
     val ui: StateFlow<VaultUi> = _ui
@@ -171,6 +172,7 @@ class VaultViewModel @Inject constructor(
     fun delete(alertId: String) = viewModelScope.launch {
         if (_ui.value.playing == alertId) stopPlaying()
         withContext(Dispatchers.IO) { store.delete(alertId) }
+        uploader.forget(alertId)
         log.append("evidence", "deleted_by_user")
         _ui.update { it.copy(message = R.string.vault_deleted) }
         refresh()

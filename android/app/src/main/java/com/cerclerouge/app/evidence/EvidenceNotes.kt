@@ -33,7 +33,8 @@ class EvidenceNotes @Inject constructor(
     private val tracker: LocationTracker,
     private val device: DeviceMonitor,
     private val log: EventLog,
-    private val clock: Clock
+    private val clock: Clock,
+    private val uploader: EvidenceUploader
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
@@ -86,6 +87,8 @@ class EvidenceNotes @Inject constructor(
         add("closed")
         flush()
         mutex.withLock { current = null }
+        store.close(alertId, clock.instant())
+        uploader.kick() // fin de l'alerte : derniers segments, métadonnées et racine signée
     }
 
     private suspend fun add(text: String, at: Instant = clock.instant()) = mutex.withLock { pending += "$at $text" }

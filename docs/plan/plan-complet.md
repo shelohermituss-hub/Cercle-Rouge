@@ -193,6 +193,7 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 - 🤖 Racine de chaîne signée par `K_device` → RPC `register_chain_root`.
 - 🤖 Purge serveur alignée sur la rétention choisie (dont « Manuel »).
 - ✅ 📱 coupure réseau en plein envoi → reprise.
+- ✅ Fait (ADR-0028) : bucket privé `evidence` + RLS, migration `s6_evidence_upload` (begin_evidence_upload, register_chain_root, forget_evidence, purge horaire), Edge Function `evidence-purge`, envoi segment par segment (reprise = segments manquants, pas de TUS), Wi-Fi hors urgence (WorkManager), racine signée par `K_device`, garde serveur = rétention plafonnée à 30 j (« Manuel » compris). Testé : security.sql local + essai réel sur le projet (comptes jetables supprimés). **Reste 📱** : coupure réseau en plein envoi sur un vrai téléphone.
 - ⏱ 5 j.
 
 ### 1.16 Partage de bout en bout (S6.06, S1.13b, ADR-0016)

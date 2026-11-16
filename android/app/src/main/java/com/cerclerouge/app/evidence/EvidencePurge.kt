@@ -28,14 +28,17 @@ class EvidencePurge @Inject constructor(
     private val store: EvidenceStore,
     private val settings: Settings,
     private val log: EventLog,
-    private val clock: Clock
+    private val clock: Clock,
+    private val uploader: EvidenceUploader
 ) {
     suspend fun run() {
-        val n = store.purgeExpired(settings.retention(), clock.instant())
-        if (n > 0) log.append("evidence", "purged alerts=$n")
+        val ids = store.purgeExpired(settings.retention(), clock.instant())
+        if (ids.isNotEmpty()) log.append("evidence", "purged alerts=${ids.size}")
+        ids.forEach { uploader.forget(it) } // la copie serveur suit la suppression locale
     }
 
     fun schedule() {
+        uploader.scheduleBackground() // copies de secours restées en attente : au prochain Wi-Fi (1.15)
         val alarms = context.getSystemService(AlarmManager::class.java)
         val pending = PendingIntent.getBroadcast(
             context,

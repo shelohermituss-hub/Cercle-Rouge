@@ -1,6 +1,7 @@
 package com.cerclerouge.privacy.db
 
 import android.content.Context
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
@@ -106,7 +107,9 @@ data class EvidenceSegmentEntity(
     val bytes: Long,
     val sha256: String,
     val prevHash: String,
-    val entryHash: String
+    val entryHash: String,
+    /** Copie chiffrée envoyée au serveur (1.15) : le segment n'est plus à envoyer. Même défaut que la migration v6 → v7. */
+    @ColumnInfo(defaultValue = "0") val uploaded: Boolean = false
 )
 
 /**
@@ -163,6 +166,12 @@ interface EvidenceDao {
 
     @Query("SELECT * FROM evidence_segments WHERE alertId = :id ORDER BY seq")
     suspend fun segments(id: String): List<EvidenceSegmentEntity>
+
+    @Query("SELECT * FROM evidence_segments WHERE uploaded = 0 ORDER BY alertId, seq")
+    suspend fun pendingUploads(): List<EvidenceSegmentEntity>
+
+    @Query("UPDATE evidence_segments SET uploaded = 1 WHERE alertId = :id AND seq = :seq")
+    suspend fun markUploaded(id: String, seq: Int)
 
     @Insert suspend fun insertSegment(s: EvidenceSegmentEntity)
 
@@ -267,7 +276,7 @@ interface OutboxDao {
         EventLogEntity::class, ConsentEntity::class, SettingEntity::class, ContactEntity::class, OutboxEntity::class,
         EvidenceAlertEntity::class, EvidenceSegmentEntity::class, HistoryEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class PrivacyDatabase : RoomDatabase() {
@@ -287,6 +296,13 @@ abstract class PrivacyDatabase : RoomDatabase() {
 
     companion object {
         const val NAME = "cercle-rouge.db"
+
+        /** v6 → v7 : suivi de l'envoi des segments au serveur (1.15). Tout le reste est conservé. */
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `evidence_segments` ADD COLUMN `uploaded` INTEGER NOT NULL DEFAULT 0")
+            }
+        }
 
         /** v5 → v6 : historique des alertes et des trajets (PDF 16.1), sans coordonnées. Tout le reste est conservé. */
         val MIGRATION_5_6 = object : Migration(5, 6) {
@@ -360,7 +376,7 @@ abstract class PrivacyDatabase : RoomDatabase() {
             }
             return Room.databaseBuilder(context, PrivacyDatabase::class.java, NAME)
                 .openHelperFactory(factory)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 .build()
         }
     }

@@ -47,6 +47,16 @@ object RetentionPolicy {
     fun due(alerts: List<EvidenceAlert>, choice: Retention?, now: Instant): List<String> =
         alerts.filter { a -> deleteAt(a, choice, now)?.let { !it.isAfter(now) } ?: false }.map { it.alertId }
 
+    /** Garde serveur maximale de la copie de secours (ADR-0028), même en `MANUAL`. */
+    val SERVER_MAX: Duration = Duration.ofDays(30)
+
+    /** Heures de garde de la copie serveur à partir de `now` : l'échéance locale, plafonnée à 30 jours ; `MANUAL` : 30 jours. */
+    fun serverKeepHours(a: EvidenceAlert, choice: Retention?, now: Instant): Int {
+        val local = deleteAt(a, choice, now) ?: now.plus(SERVER_MAX)
+        val hours = Duration.between(now, local).toHours()
+        return hours.coerceIn(0, SERVER_MAX.toHours()).toInt()
+    }
+
     /** « Conserver cette preuve » : plafonné à 90 jours à partir de maintenant. */
     fun keep(now: Instant, wanted: Duration): Instant = now.plus(if (wanted > MAX_KEEP) MAX_KEEP else wanted)
 }

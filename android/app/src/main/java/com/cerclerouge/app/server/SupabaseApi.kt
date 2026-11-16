@@ -55,6 +55,53 @@ class SupabaseApi @Inject constructor(db: PrivacyDatabase, private val clock: Cl
     }
 
     /**
+     * Dépose un objet (déjà chiffré sur le téléphone) dans un bucket Storage privé. Jamais de remplacement : un objet déjà
+     * présent (envoi repris après une coupure) compte comme envoyé.
+     */
+    suspend fun upload(bucket: String, path: String, bytes: ByteArray) {
+        val token = accessToken()
+        try {
+            send("/storage/v1/object/$bucket/$path", bytes, token)
+        } catch (e: ServerException) {
+            if (e.http == 401) {
+                send("/storage/v1/object/$bucket/$path", bytes, accessToken(forceRefresh = true))
+                return
+            }
+            if (e.http == 409 || e.code.contains("Duplicate", ignoreCase = true) || e.code.contains("exists")) return
+            throw e
+        }
+    }
+
+    private suspend fun send(path: String, bytes: ByteArray, bearer: String) = withContext(Dispatchers.IO) {
+        val c = URL(base + path).openConnection() as HttpURLConnection
+        try {
+            c.requestMethod = "POST"
+            c.connectTimeout = TIMEOUT_MS
+            c.readTimeout = TIMEOUT_MS * 2
+            c.doOutput = true
+            c.setFixedLengthStreamingMode(bytes.size)
+            c.setRequestProperty("apikey", key)
+            c.setRequestProperty("Authorization", "Bearer $bearer")
+            c.setRequestProperty("Content-Type", "application/octet-stream")
+            c.setRequestProperty("x-upsert", "false")
+            c.outputStream.use { it.write(bytes) }
+            val code = c.responseCode
+            if (code !in 200..299) {
+                val text = c.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                val msg = runCatching { JSONObject(text).let { o -> o.optString("error").ifEmpty { o.optString("message") } } }.getOrNull()
+                // Storage répond parfois 400 avec un statusCode 409 dans le corps pour un doublon.
+                val status = runCatching { JSONObject(text).optString("statusCode").toInt() }.getOrNull() ?: code
+                throw ServerException(msg?.take(64)?.ifEmpty { null } ?: "http_$code", status)
+            }
+        } catch (e: IOException) {
+            if (e is ServerException) throw e
+            throw ServerException("network", 0)
+        } finally {
+            c.disconnect()
+        }
+    }
+
+    /**
      * Rattache un numéro au compte (anonyme) : Supabase envoie un code par SMS (Vonage). Le compte et ses données sont gardés.
      */
     suspend fun requestPhoneCode(phoneE164: String) {

@@ -96,6 +96,16 @@ class EvidenceStore(private val root: File, private val dao: EvidenceDao, privat
         tmp.renameTo(file)
     }
 
+    /** Fichier d'un segment **tel qu'il est sur le disque** (déjà chiffré) : c'est cela, et rien d'autre, qui part au serveur. */
+    suspend fun encryptedSegment(alertId: String, seq: Int): ByteArray? =
+        mutex.withLock { segmentFile(alertId, seq).takeIf { it.exists() }?.readBytes() }
+
+    /** Fichier des métadonnées tel qu'il est sur le disque (chiffré). */
+    suspend fun encryptedNotes(alertId: String): ByteArray? = mutex.withLock { notesFile(alertId).takeIf { it.exists() }?.readBytes() }
+
+    /** Chaîne d'intégrité de l'alerte (pour la racine signée). */
+    suspend fun chain(alertId: String): List<SegmentEntry> = dao.segments(alertId).map { it.toEntry() }
+
     /** Métadonnées déchiffrées (coffre-fort, après PIN). */
     suspend fun notes(alertId: String): List<String> = mutex.withLock {
         val aead = primitive(alertId) ?: return@withLock emptyList()
@@ -156,14 +166,14 @@ class EvidenceStore(private val root: File, private val dao: EvidenceDao, privat
         dao.deleteAlert(alertId)
     }
 
-    /** Purge des preuves arrivées à échéance (S6.08). Rend le nombre d'alertes supprimées. */
-    suspend fun purgeExpired(retention: Retention?, now: Instant): Int {
+    /** Purge des preuves arrivées à échéance (S6.08). Rend les alertes supprimées (la copie serveur suit, 1.15). */
+    suspend fun purgeExpired(retention: Retention?, now: Instant): List<String> {
         val due = RetentionPolicy.due(dao.alerts().map { it.toDomain() }, retention, now)
         due.forEach { delete(it) }
         // Fichiers orphelins (suppression interrompue après la destruction de la clé) : illisibles, on les retire.
         val known = dao.alerts().map { dirName(it.alertId) }.toSet()
         root.listFiles()?.filter { it.name !in known }?.forEach { it.deleteRecursively() }
-        return due.size
+        return due
     }
 
     /** Effacement d'urgence (R-EVD-06) : toutes les clés d'abord (rapide), puis les fichiers. */

@@ -32,10 +32,12 @@ class DataControl @Inject constructor(
     private val audio: AudioListener,
     private val server: ServerSync,
     private val log: EventLog,
-    private val clock: Clock
+    private val clock: Clock,
+    private val uploader: com.cerclerouge.app.evidence.EvidenceUploader
 ) {
     suspend fun emergencyWipe() = withContext(Dispatchers.IO) {
         evidence.wipeAll() // les clés d'abord : illisible même si la suite est interrompue
+        uploader.forgetAll() // copies serveur effacées dans l'heure (déjà illisibles : la clé n'existe plus)
         phrases.delete()
         keywords.clear()
         audio.restartWith(null)

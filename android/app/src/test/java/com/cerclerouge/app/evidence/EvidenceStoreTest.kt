@@ -43,6 +43,12 @@ private class FakeDao : EvidenceDao {
 
     override suspend fun segments(id: String) = segs.filter { it.alertId == id }.sortedBy { it.seq }
 
+    override suspend fun pendingUploads() = segs.filter { !it.uploaded }.sortedWith(compareBy({ it.alertId }, { it.seq }))
+
+    override suspend fun markUploaded(id: String, seq: Int) {
+        segs.replaceAll { if (it.alertId == id && it.seq == seq) it.copy(uploaded = true) else it }
+    }
+
     override suspend fun insertSegment(s: EvidenceSegmentEntity) {
         segs += s
     }
@@ -119,10 +125,10 @@ class EvidenceStoreTest {
         store.open("a1", t0)
         store.append("a1", marker.copyOf(), t0, 30_000, t0.plusSeconds(30))
         store.close("a1", t0.plusSeconds(60))
-        assertEquals(0, store.purgeExpired(Retention.HOURS_24, t0.plus(Duration.ofHours(23))))
-        assertEquals(1, store.purgeExpired(Retention.HOURS_24, t0.plus(Duration.ofHours(25))))
+        assertEquals(0, store.purgeExpired(Retention.HOURS_24, t0.plus(Duration.ofHours(23))).size)
+        assertEquals(listOf("a1"), store.purgeExpired(Retention.HOURS_24, t0.plus(Duration.ofHours(25))))
         assertTrue(root.walk().none { it.isFile })
-        assertEquals(0, store.purgeExpired(Retention.HOURS_24, t0.plus(Duration.ofHours(26)))) // idempotent
+        assertEquals(0, store.purgeExpired(Retention.HOURS_24, t0.plus(Duration.ofHours(26))).size) // idempotent
     }
 
     @Test fun shreddedKeyLeavesOrphanFilesThatPurgeRemoves() = runBlocking {

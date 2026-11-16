@@ -532,6 +532,36 @@ select tests.as_user(:'admin'); set local role authenticated;
 select tests.expect((select count(*) from public.my_watched() where kind = 'trip') = 0, 'un trajet n''est montré qu''aux proches choisis pour ce trajet');
 reset role;
 
+-- ===== 1.15 · Copie de secours des preuves =====
+select tests.as_user(:'guardian'); set local role authenticated;
+select tests.expect(public.begin_evidence_upload((select v::uuid from s3 where k = 'g2')) = :'guardian' || '/' || (select v from s3 where k = 'g2'), 'l''envoi s''ouvre dans le dossier du propriétaire');
+select tests.expect(public.begin_evidence_upload((select v::uuid from s3 where k = 'g2')) is not null, 'ouvrir deux fois ne change rien (idempotent)');
+select tests.expect((select count(*) from public.evidence_uploads) = 1, 'le propriétaire voit son envoi');
+select tests.expect_error($$update public.evidence_uploads set delete_after = now() + interval '1 year'$$, '%permission denied%');
+select tests.expect_error($$insert into public.evidence_uploads (alert_id, owner_id, delete_after) values (gen_random_uuid(), auth.uid(), now())$$, '%permission denied%');
+select tests.expect_error($$select public.register_chain_root((select v::uuid from s3 where k = 'g2'), repeat('a', 64), 3, 'sig', 'pk', 9999)$$, '%invalid_keep%');
+select public.register_chain_root((select v::uuid from s3 where k = 'g2'), repeat('a', 64), 3, 'sig', 'pk', 24);
+select tests.expect((select delete_after <= now() + interval '24 hours 1 minute' from public.evidence_uploads), 'la garde serveur suit la rétention choisie');
+select public.register_chain_root((select v::uuid from s3 where k = 'g2'), repeat('a', 64), 3, 'sig', 'pk', 24);
+select tests.expect_error($$select public.register_chain_root((select v::uuid from s3 where k = 'g2'), repeat('b', 64), 3, 'sig', 'pk', 24)$$, '%root_already_registered%');
+reset role;
+select tests.as_user(:'stranger'); set local role authenticated;
+select tests.expect_error($$select public.begin_evidence_upload((select v::uuid from s3 where k = 'g2'))$$, '%alert_not_found%');
+select tests.expect((select count(*) from public.evidence_uploads) = 0, 'un tiers ne voit pas les envois des autres');
+select tests.expect(public.forget_evidence((select v::uuid from s3 where k = 'g2')) = 0, 'un tiers ne peut pas effacer les preuves des autres');
+reset role;
+set local role anon;
+select tests.expect_error($$select public.begin_evidence_upload(gen_random_uuid())$$, '%permission denied%');
+reset role;
+select tests.as_user(:'guardian'); set local role authenticated;
+select tests.expect(public.forget_evidence() = 1, 'le propriétaire efface toutes ses preuves (effacement d''urgence)');
+select tests.expect_error($$select public.begin_evidence_upload((select v::uuid from s3 where k = 'g2'))$$, '%upload_closed%');
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect((select count(*) from private.evidence_due()) = 1, 'la purge voit le dossier échu');
+select private.evidence_purged((select alert_id from private.evidence_due() limit 1));
+select tests.expect((select count(*) from public.evidence_uploads) = 0, 'puis retire la ligne');
+
 -- ===== Fonctions : jamais exécutables par anon ni par PUBLIC =====
 select tests.expect(
   not exists (

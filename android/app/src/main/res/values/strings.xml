@@ -532,4 +532,6 @@
     <string name="retention_manual_ex">Rien n\'est effacé tout seul : tu supprimes toi-même dans le coffre-fort.</string>
     <string name="retention_manual_warning">⚠ Tes preuves resteront sur ce téléphone sans limite de temps. Toute personne qui obtient ton PIN pourrait les écouter. Pense à les supprimer quand tu n\'en as plus besoin ; l\'effacement d\'urgence les détruit aussi.</string>
     <string name="vault_manual">Gardée jusqu\'à ce que tu la supprimes</string>
+    <string name="vault_details">Détails de l\'alerte</string>
+    <string name="vault_details_empty">Aucun détail enregistré pour cette alerte.</string>
 </resources>

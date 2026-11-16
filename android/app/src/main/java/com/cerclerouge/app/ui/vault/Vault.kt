@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
@@ -81,7 +82,9 @@ data class VaultUi(
     /** Export prêt : le code (affiché une seule fois) et l'archive à enregistrer. */
     val export: Pair<String, ByteArray>? = null,
     /** Conservation manuelle (ADR-0027) : rien n'est supprimé automatiquement. */
-    val manual: Boolean = false
+    val manual: Boolean = false,
+    /** Métadonnées affichées (alerte, lignes), déchiffrées en mémoire. */
+    val details: Pair<String, List<String>>? = null
 )
 
 @HiltViewModel
@@ -147,6 +150,11 @@ class VaultViewModel @Inject constructor(
         }
         player = null
         _ui.update { it.copy(playing = null) }
+    }
+
+    fun details(alertId: String?) = viewModelScope.launch {
+        val lines = alertId?.let { withContext(Dispatchers.IO) { store.notes(it) } }
+        _ui.update { it.copy(details = alertId?.let { id -> id to lines.orEmpty() }) }
     }
 
     fun verify(alertId: String) = viewModelScope.launch {
@@ -313,6 +321,28 @@ fun VaultScreen(vm: VaultViewModel, onBack: () -> Unit) {
         }
     }
     ui.export?.let { (code, archive) -> ExportDialog(code, archive, vm) }
+    ui.details?.let { (_, lines) -> DetailsDialog(lines) { vm.details(null) } }
+}
+
+/** Métadonnées de l'alerte (positions, batterie, réseau, journal), déchiffrées en mémoire seulement. */
+@Composable
+private fun DetailsDialog(lines: List<String>, onDismiss: () -> Unit) {
+    val c = Cr.colors
+    Dialog(onDismissRequest = onDismiss) {
+        PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(stringResource(R.string.vault_details).uppercase(), style = PxType.title)
+                Column(
+                    Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    if (lines.isEmpty()) Text(stringResource(R.string.vault_details_empty), style = PxType.caption, color = c.muted)
+                    lines.forEach { Text(it, style = PxType.caption) }
+                }
+                PxButton(stringResource(R.string.action_finish), onDismiss, variant = PxVariant.DARK)
+            }
+        }
+    }
 }
 
 @Composable
@@ -353,6 +383,7 @@ private fun EvidenceCard(item: EvidenceSummary, ui: VaultUi, vm: VaultViewModel,
                     PxButton(stringResource(R.string.vault_keep), { keepMenu = true }, variant = PxVariant.OUTLINE)
                 }
             }
+            PxButton(stringResource(R.string.vault_details), { vm.details(item.alertId) }, variant = PxVariant.OUTLINE)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column(Modifier.weight(1f)) {
                     PxButton(stringResource(R.string.vault_export), { vm.export(item.alertId) }, variant = PxVariant.OUTLINE)

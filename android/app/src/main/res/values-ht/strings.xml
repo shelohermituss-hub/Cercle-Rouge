@@ -532,4 +532,6 @@
     <string name="retention_manual_ex">Anyen p ap efase pou kont li : se ou ki efase nan kòf la.</string>
     <string name="retention_manual_warning">⚠ Prèv ou yo ap rete sou telefòn sa a san limit tan. Nenpòt moun ki jwenn PIN ou ta ka koute yo. Sonje efase yo lè ou pa bezwen yo ankò ; efasman ijans la detwi yo tou.</string>
     <string name="vault_manual">Kenbe jiskaske ou efase l</string>
+    <string name="vault_details">Detay alèt la</string>
+    <string name="vault_details_empty">Pa gen detay ki anrejistre pou alèt sa a.</string>
 </resources>

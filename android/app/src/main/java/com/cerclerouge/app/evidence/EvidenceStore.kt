@@ -37,6 +37,11 @@ data class EvidenceSummary(
  * Suppression : clé détruite, puis fichiers, puis métadonnées, dans cet ordre (R-EE-02) ; reprise sûre si interrompue.
  */
 class EvidenceStore(private val root: File, private val dao: EvidenceDao, private val keys: EvidenceKeys) {
+    private companion object {
+        /** Numéro réservé dans les données associées : le fichier de métadonnées ne peut pas passer pour un segment. */
+        const val NOTES_SEQ = -1
+    }
+
     private val mutex = Mutex()
     private val primitives = mutableMapOf<String, StreamingAead>()
 
@@ -76,6 +81,37 @@ class EvidenceStore(private val root: File, private val dao: EvidenceDao, privat
 
     suspend fun close(alertId: String, at: Instant) = dao.close(alertId, at.toEpochMilli())
 
+    /**
+     * Ajoute des lignes de métadonnées (PDF 5.6, 11.1), chiffrées par la clé de l'alerte dans un fichier à part. Le fichier est
+     * réécrit en entier (quelques dizaines de Ko au plus) : un flux chiffrant ne s'allonge pas. Sans clé (alerte supprimée) : rien.
+     */
+    suspend fun note(alertId: String, lines: List<String>) = mutex.withLock {
+        if (lines.isEmpty()) return@withLock
+        val aead = primitive(alertId) ?: return@withLock
+        val all = (readNotes(aead, alertId) + lines).takeLast(EvidenceExport.MAX_NOTES)
+        val file = notesFile(alertId)
+        file.parentFile?.mkdirs()
+        val tmp = File(file.parentFile, "meta.tmp")
+        aead.newEncryptingStream(FileOutputStream(tmp), aad(alertId, NOTES_SEQ)).use { it.write(all.joinToString("\n").toByteArray()) }
+        tmp.renameTo(file)
+    }
+
+    /** Métadonnées déchiffrées (coffre-fort, après PIN). */
+    suspend fun notes(alertId: String): List<String> = mutex.withLock {
+        val aead = primitive(alertId) ?: return@withLock emptyList()
+        readNotes(aead, alertId)
+    }
+
+    private fun readNotes(aead: StreamingAead, alertId: String): List<String> {
+        val file = notesFile(alertId)
+        if (!file.exists()) return emptyList()
+        return runCatching {
+            aead.newDecryptingStream(file.inputStream(), aad(alertId, NOTES_SEQ)).use {
+                String(it.readBytes())
+            }.lines().filter { it.isNotBlank() }
+        }.getOrDefault(emptyList())
+    }
+
     suspend fun list(retention: Retention?, now: Instant): List<EvidenceSummary> = dao.alerts().filter { it.wrappedKey != null }.map { a ->
         val segs = dao.segments(a.alertId)
         EvidenceSummary(
@@ -103,7 +139,12 @@ class EvidenceStore(private val root: File, private val dao: EvidenceDao, privat
         val (contents, ok) = decryptAll(alertId) ?: return@withLock null
         if (!ok) return@withLock null
         val entries = dao.segments(alertId).map { it.toEntry() }
-        EvidenceExport.seal(ExportBundle(alertId, entries, contents), code).also { contents.forEach { c -> c.fill(0) } }
+        EvidenceExport.seal(
+            ExportBundle(alertId, entries, contents, readNotes(primitive(alertId) ?: return@withLock null, alertId)),
+            code
+        ).also {
+            contents.forEach { c -> c.fill(0) }
+        }
     }
 
     /** Crypto-shredding (R-EE-02) : clé, puis fichiers, puis métadonnées. Rejouable sans risque. */
@@ -158,6 +199,8 @@ class EvidenceStore(private val root: File, private val dao: EvidenceDao, privat
     private fun dirName(alertId: String) = Chain.sha256(alertId.toByteArray()).take(24)
 
     private fun alertDir(alertId: String) = File(root, dirName(alertId))
+
+    private fun notesFile(alertId: String) = File(alertDir(alertId), "meta.bin")
 
     private fun segmentFile(alertId: String, seq: Int) = File(alertDir(alertId), "%04d.bin".format(seq))
 

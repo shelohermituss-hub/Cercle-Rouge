@@ -531,4 +531,6 @@
     <string name="retention_manual_ex">Nothing is erased automatically: you delete them yourself in the vault.</string>
     <string name="retention_manual_warning">⚠ Your evidence will stay on this phone with no time limit. Anyone who gets your PIN could listen to it. Remember to delete it when you no longer need it; the emergency wipe destroys it too.</string>
     <string name="vault_manual">Kept until you delete it</string>
+    <string name="vault_details">Alert details</string>
+    <string name="vault_details_empty">No details recorded for this alert.</string>
 </resources>

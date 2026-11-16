@@ -14,7 +14,16 @@ import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
 /** Contenu d'un export : la chaîne et les segments en clair (seulement dans l'archive chiffrée, jamais sur disque). */
-class ExportBundle(val alertId: String, val entries: List<SegmentEntry>, val segments: List<ByteArray>)
+/**
+ * Contenu d'une archive. `notes` : métadonnées de l'alerte (positions, batterie, réseau, événements détectés, extrait du
+ * journal), une ligne par fait (PDF 5.6, 11.1). Section facultative à la fin : les archives sans métadonnées restent lisibles.
+ */
+class ExportBundle(
+    val alertId: String,
+    val entries: List<SegmentEntry>,
+    val segments: List<ByteArray>,
+    val notes: List<String> = emptyList()
+)
 
 /**
  * Export chiffré (S6.09) pour un avocat ou la police : archive AES-256-GCM, clé dérivée (PBKDF2-HMAC-SHA256, 210 000 tours)
@@ -91,6 +100,8 @@ object EvidenceExport {
                 writeInt(data.size)
                 write(data)
             }
+            writeInt(b.notes.size)
+            b.notes.forEach { writeUTF(it.take(MAX_NOTE_CHARS)) }
         }
     }.toByteArray()
 
@@ -110,10 +121,19 @@ object EvidenceExport {
             require(size in 0..MAX_SEGMENT_BYTES)
             segments += ByteArray(size).also(input::readFully)
         }
-        return ExportBundle(alertId, entries, segments)
+        val notes = if (input.available() > 0) {
+            val count = input.readInt()
+            require(count in 0..MAX_NOTES)
+            List(count) { input.readUTF() }
+        } else {
+            emptyList()
+        }
+        return ExportBundle(alertId, entries, segments, notes)
     }
 
     private const val MAX_SEGMENT_BYTES = 8 * 1024 * 1024
+    const val MAX_NOTES = 20_000
+    private const val MAX_NOTE_CHARS = 500
 }
 
 /**
@@ -136,11 +156,16 @@ object VerifyTool {
         println("Alerte ${bundle.alertId} : ${bundle.entries.size} segment(s)")
         bundle.entries.forEach { println("  #${it.seq} ${it.startedAt} ${it.durationMs / 1000} s sha256=${it.sha256}") }
         println("Racine de la chaîne : ${Chain.root(bundle.entries)}")
+        if (bundle.notes.isNotEmpty()) {
+            println("Métadonnées (${bundle.notes.size} ligne(s)) :")
+            bundle.notes.forEach { println("  $it") }
+        }
         val check = EvidenceExport.verify(bundle)
         println(if (check.ok) "Chaîne intacte." else "ALTÉRATION au segment #${check.firstBad} : ${check.reason}")
         args.getOrNull(2)?.let { dir ->
             File(dir).mkdirs()
             bundle.segments.forEachIndexed { i, data -> File(dir, "segment-%03d.aac".format(i)).writeBytes(data) }
+            if (bundle.notes.isNotEmpty()) File(dir, "metadonnees.txt").writeText(bundle.notes.joinToString("\n"))
             println("Segments écrits dans $dir")
         }
     }

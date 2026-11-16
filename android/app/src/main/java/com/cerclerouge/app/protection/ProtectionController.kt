@@ -68,6 +68,7 @@ class ProtectionController @Inject constructor(
     private val phrases: PhraseRepository,
     private val keywords: com.cerclerouge.app.audio.KeywordRepository,
     private val recorder: EvidenceRecorder,
+    private val notes: com.cerclerouge.app.evidence.EvidenceNotes,
     private val listen: ListenSettings,
     private val history: com.cerclerouge.app.history.HistoryRepository,
     db: PrivacyDatabase
@@ -191,8 +192,14 @@ class ProtectionController @Inject constructor(
                 }
             }
             // Preuves (S6.01) : niveau 2 ou SOS seulement ; l'enregistreur respecte l'interrupteur de l'utilisateur.
-            is Effect.StartRecording -> recorder.start(effect.alertId)
-            is Effect.StopRecording -> recorder.stop(effect.alertId)
+            is Effect.StartRecording -> {
+                notes.begin(effect.alertId) // métadonnées (1.14), même si l'enregistrement audio est coupé
+                recorder.start(effect.alertId)
+            }
+            is Effect.StopRecording -> {
+                recorder.stop(effect.alertId)
+                notes.end(effect.alertId)
+            }
             is Effect.ShowVerification, Effect.DismissVerification
             -> Unit
         }

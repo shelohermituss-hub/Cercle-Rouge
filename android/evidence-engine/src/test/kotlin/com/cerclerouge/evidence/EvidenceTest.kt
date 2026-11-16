@@ -118,6 +118,19 @@ class ExportTest {
         assertTrue(back.segments.zip(data).all { (a, b) -> a.contentEquals(b) })
     }
 
+    @Test fun metadataTravelsEncryptedWithTheArchive() { // PDF 11.1 : positions, batterie, réseau, événements
+        val (entries, data) = chain(2)
+        val notes =
+            listOf(
+                "2026-11-11T14:00:00Z position lat=18.53920 lon=-72.33640 acc=12",
+                "2026-11-11T14:00:05Z device battery=41 network=CELLULAR"
+            )
+        val code = EvidenceExport.newCode()
+        val archive = EvidenceExport.seal(ExportBundle("alert-1", entries, data, notes), code)
+        assertEquals(notes, assertNotNull(EvidenceExport.open(archive, code)).notes)
+        assertFalse(String(archive, Charsets.ISO_8859_1).contains("lat=18.53920"))
+    }
+
     @Test fun wrongCodeOrTamperedArchiveFails() {
         val (entries, data) = chain(2)
         val archive = EvidenceExport.seal(ExportBundle("alert-1", entries, data), "ABCDEFGHJKMN")

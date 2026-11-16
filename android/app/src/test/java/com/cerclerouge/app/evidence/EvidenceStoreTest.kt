@@ -148,6 +148,23 @@ class EvidenceStoreTest {
         assertTrue(bundle.segments[0].contentEquals(marker))
     }
 
+    @Test fun metadataIsEncryptedAppendedExportedAndShredded() = runBlocking {
+        // 1.14 (PDF 5.6, 11.1) : positions, batterie, réseau, journal, chiffrés par la clé de l'alerte
+        store.open("a1", t0)
+        store.note("a1", listOf("$t0 position lat=18.53920 lon=-72.33640 acc=12"))
+        store.note("a1", listOf("$t0 device battery=40 network=CELLULAR gps=true", "$t0 closed"))
+        assertFalse(allFileBytes().contains("lat=18.53920"))
+        assertEquals(3, store.notes("a1").size)
+        assertTrue(store.notes("a1")[0].contains("position"))
+        val code = EvidenceExport.newCode()
+        val bundle = assertNotNull(EvidenceExport.open(assertNotNull(store.export("a1", code)), code))
+        assertEquals(store.notes("a1"), bundle.notes)
+        assertTrue(bundle.segments.isEmpty()) // audio coupé : les métadonnées restent
+        store.delete("a1")
+        assertTrue(store.notes("a1").isEmpty())
+        assertTrue(root.walk().none { it.isFile })
+    }
+
     @Test fun wipeAllRemovesEverything() = runBlocking {
         // R-EVD-06
         listOf("a1", "a2").forEach {

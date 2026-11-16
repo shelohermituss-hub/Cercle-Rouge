@@ -185,6 +185,7 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 
 ### 1.14 Métadonnées de preuve (PDF 5.6, 11.1)
 - 🤖 Chaque alerte enregistre dans son coffre : positions, horodatage, **batterie**, **réseau**, **événements détectés** (décisions 1.1), extrait du journal ; tout chiffré par la clé de l'alerte.
+- ✅ Fait : `EvidenceNotes` (positions toutes les 15 s, batterie/réseau/GPS à chaque changement, extrait du journal à la clôture), fichier `meta.bin` chiffré par la clé de l'alerte (même si l'audio est coupé), « Détails de l'alerte » au coffre-fort, métadonnées dans l'export (section facultative, anciennes archives lisibles) et dans `VerifyTool` (`metadonnees.txt`). Tests : magasin + export.
 - ⏱ 2 j.
 
 ### 1.15 Envoi des preuves au serveur (S6.03–S6.05 ; R-EVD-04/05 ; R-SY-04)

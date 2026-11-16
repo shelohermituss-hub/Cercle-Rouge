@@ -198,6 +198,7 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 
 ### 1.16 Partage de bout en bout (S6.06, S1.13b, ADR-0016)
 - 🤖 Paire de clés Tink hybride par appareil, publication signée (`publish_public_key`) ; clé d'alerte enveloppée pour chaque proche qui a l'app (`evidence_key_wraps`) ; lecture dans la vue « proche » ; page web : « Installe Cercle Rouge pour écouter ».
+- ✅ Fait : HPKE (`ShareKeys`), clé publique signée par `K_device`, enveloppes par proche ayant accepté, lecture en mémoire dans « Ceux qui m'ont choisi », page web « installe l'app », migrations `s6_evidence_share` + `s6_evidence_share_fix` (corrige aussi `current_phone_hash()` pour les comptes sans numéro). Testé : JVM, security.sql, essai réel (comptes jetables supprimés). **Reste** : empreinte de sécurité comparable (écran Contact > Vérifier), test sur deux vrais téléphones.
 - ⏱ 5 j.
 
 ## Bloc D — Sécurité, avertissements, comptes

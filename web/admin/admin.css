@@ -1,0 +1,23 @@
+:root { --bg: #121416; --raised: #1b1e21; --ink: #e6e8ea; --muted: #9ba1a8; --line: #3a3f45; --lime: #a0e705; --on-lime: #0e1012; --danger: #ff6b5a; --red: #ed1b24; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 960px; margin: 0 auto; padding: 0 16px 32px; }
+.top { display: flex; align-items: center; gap: 10px; padding: 14px 0; }
+.logo { width: 22px; height: 22px; border-radius: 50%; border: 4px solid var(--red); }
+.top button { margin-left: auto; }
+.note { color: var(--muted); border: 2px solid var(--line); padding: 10px; background: var(--raised); }
+label { display: block; margin: 10px 0; }
+input, select { display: block; margin-top: 4px; min-height: 44px; width: 100%; max-width: 420px; background: var(--raised); color: var(--ink); border: 2px solid var(--line); padding: 8px; font: inherit; }
+button { min-height: 44px; padding: 0 16px; background: var(--lime); color: var(--on-lime); border: 0; font-weight: 700; cursor: pointer; }
+button.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); }
+button.danger { background: var(--danger); }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--lime); outline-offset: 2px; }
+table { width: 100%; border-collapse: collapse; margin: 8px 0 24px; font-size: .9rem; }
+th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
+th { color: var(--muted); }
+#qr { background: #fff; padding: 8px; width: 200px; height: 200px; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; }
+dt { color: var(--muted); }
+#msg { color: var(--danger); min-height: 1.5em; }
+[hidden] { display: none !important; }
+.small { font-size: .875rem; color: var(--muted); }

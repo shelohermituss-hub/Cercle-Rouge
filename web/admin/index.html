@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://lvxdpmjyeelrxfbrtvay.supabase.co; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta name="theme-color" content="#121416">
+<title>Cercle Rouge · Administration</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<header class="top">
+  <span class="logo" aria-hidden="true"></span>
+  <strong>Cercle Rouge · Administration</strong>
+  <button type="button" id="logout" class="ghost" hidden>Se déconnecter</button>
+</header>
+<main>
+  <p class="note">Aucun contenu, aucune position, aucun numéro, aucun nom n'est accessible ici (R-ADM-03). Chaque consultation est inscrite au journal d'audit.</p>
+  <p id="msg" role="status" aria-live="polite"></p>
+
+  <section id="login">
+    <h1>Connexion</h1>
+    <label>E-mail <input id="email" type="email" autocomplete="username" required></label>
+    <label>Mot de passe <input id="password" type="password" autocomplete="current-password" required></label>
+    <button type="button" id="do-login">Se connecter</button>
+  </section>
+
+  <section id="mfa" hidden>
+    <h1>Double authentification</h1>
+    <div id="enroll" hidden>
+      <p>Première connexion : scanne ce code avec une application d'authentification (TOTP), puis entre le code à 6 chiffres.</p>
+      <img id="qr" alt="Code QR de la double authentification">
+      <p class="small">Clé manuelle : <code id="secret"></code></p>
+    </div>
+    <label>Code à 6 chiffres <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
+    <button type="button" id="do-verify">Vérifier</button>
+  </section>
+
+  <section id="console" hidden>
+    <h2>Santé des envois</h2>
+    <label>Jours <select id="days"><option>1</option><option selected>7</option><option>30</option></select></label>
+    <table id="health"><thead><tr><th>Jour</th><th>Canal</th><th>Source</th><th>Statut</th><th>Nombre</th></tr></thead><tbody></tbody></table>
+
+    <h2>Abus et plafonds</h2>
+    <table id="abuse"><thead><tr><th>Jour</th><th>Action</th><th>Comptes</th><th>Max</th><th>Code du plus actif</th></tr></thead><tbody></tbody></table>
+
+    <h2>Support</h2>
+    <label>Code de support <input id="support-code" maxlength="10" autocomplete="off"></label>
+    <button type="button" id="do-support">Chercher</button>
+    <dl id="support"></dl>
+    <button type="button" id="do-reset" class="danger" hidden>Lever les plafonds du jour</button>
+
+    <h2>Journal d'audit</h2>
+    <table id="audit"><thead><tr><th>Quand</th><th>Action</th><th>Admin</th><th>Détail</th></tr></thead><tbody></tbody></table>
+  </section>
+</main>
+<script src="config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

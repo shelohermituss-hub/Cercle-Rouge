@@ -591,4 +591,5 @@
     <string name="perm_mic">Microphone: to recognise your secret phrase and distress words. Everything is analysed on the phone; no sound leaves it.</string>
     <string name="perm_location">Location: to share it with your contacts only during an alert or a watched trip.</string>
     <string name="perm_partial">You can refuse either one: protection then works partly, and SOS is always available.</string>
+    <string name="settings_support_code">Support code: %1$s (give it to support if asked; it reveals neither your name nor your number)</string>
 </resources>

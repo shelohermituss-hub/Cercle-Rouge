@@ -113,6 +113,11 @@ class SettingsViewModel @Inject constructor(
     private val _ui = MutableStateFlow(SettingsUi())
     val ui: StateFlow<SettingsUi> = _ui
 
+    private val _supportCode = MutableStateFlow<String?>(null)
+
+    /** Code de support (1.21) à donner au support : il ne révèle ni nom, ni numéro. Null sans serveur. */
+    val supportCode: StateFlow<String?> = _supportCode
+
     private val _emergencyChoice = MutableStateFlow<String?>(null)
 
     /** Pays choisi pour les numéros d'urgence ; null : automatique (carte SIM). */
@@ -122,6 +127,8 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _emergencyChoice.value = emergency.choice()
             emergency.load()
+            _supportCode.value = runCatching { api.rpc("my_support_code", org.json.JSONObject()).trim().trim('"') }.getOrNull()
+                ?.takeIf { it.length == SUPPORT_CODE_LENGTH }
         }
     }
 
@@ -276,6 +283,8 @@ class SettingsViewModel @Inject constructor(
         loadGuardianRequests()
     }
 }
+
+private const val SUPPORT_CODE_LENGTH = 10
 
 private enum class Guarded { WIPE, DELETE, BIOMETRIC_ALERTS, SIGN_OUT }
 
@@ -442,6 +451,8 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             Text(stringResource(R.string.slogan), style = PxType.bodyBold)
             PxPanel(Modifier.fillMaxWidth(), border = c.warn) { Text(stringResource(R.string.disclaimer_full), style = PxType.caption) }
             Text(stringResource(R.string.safety_message), style = PxType.caption, color = c.muted)
+            val supportCode by vm.supportCode.collectAsState()
+            supportCode?.let { Text(stringResource(R.string.settings_support_code, it), style = PxType.caption, color = c.muted) }
             Text(stringResource(R.string.settings_version, BuildConfig.VERSION_NAME), style = PxType.caption, color = c.muted)
         }
     }

@@ -674,6 +674,40 @@ set local role anon;
 select tests.expect_error($$select public.restore_contacts()$$, '%permission denied%');
 reset role;
 
+-- ===== 1.21 · Console d'administration =====
+-- Sans MFA (aal1) : refusé, même pour un admin.
+select tests.as_user(:'admin'); set local role authenticated;
+select tests.expect_error($$select * from public.admin_delivery_health(7)$$, '%forbidden%');
+reset role;
+-- Admin avec MFA (aal2).
+select set_config('request.jwt.claims', json_build_object('sub', :'admin', 'role', 'authenticated', 'aal', 'aal2')::text, true);
+set local role authenticated;
+select tests.expect((select count(*) from public.admin_delivery_health(7)) >= 0, 'l''admin MFA voit la santé des envois');
+select tests.expect((select count(*) from public.admin_abuse(7)) >= 0, 'et les abus');
+reset role;
+select set_config('request.jwt.claims', '', true);
+insert into s3 values ('code', private.support_code(:'guardian'));
+select set_config('request.jwt.claims', json_build_object('sub', :'admin', 'role', 'authenticated', 'aal', 'aal2')::text, true);
+set local role authenticated;
+select tests.expect((select phone_verified from public.admin_support((select v from s3 where k = 'code'))), 'le support retrouve un compte par son code');
+select tests.expect_error($$select * from public.admin_support('ZZZZZZZZZZ')$$, '%not_found%');
+select public.admin_reset_limits((select v from s3 where k = 'code'));
+select tests.expect((select count(*) from public.admin_audit(50) where action = 'admin.reset_limits') = 1, 'chaque action admin est journalisée');
+select tests.expect_error($$update public.audit_logs set action = 'x'$$, '%permission denied%');
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect_error($$update public.audit_logs set action = 'x'$$, '%audit_logs_append_only%');
+select tests.expect_error($$delete from public.audit_logs$$, '%audit_logs_append_only%');
+-- Un utilisateur ordinaire, même avec MFA : refusé.
+select set_config('request.jwt.claims', json_build_object('sub', :'stranger', 'role', 'authenticated', 'aal', 'aal2')::text, true);
+set local role authenticated;
+select tests.expect_error($$select * from public.admin_support('ABC')$$, '%forbidden%');
+select tests.expect(char_length(public.my_support_code()) = 10, 'chacun lit son propre code de support');
+reset role;
+set local role anon;
+select tests.expect_error($$select * from public.admin_audit(10)$$, '%permission denied%');
+reset role;
+
 -- ===== Fonctions : jamais exécutables par anon ni par PUBLIC =====
 select tests.expect(
   not exists (

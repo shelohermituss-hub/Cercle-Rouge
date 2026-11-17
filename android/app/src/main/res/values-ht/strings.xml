@@ -592,4 +592,5 @@
     <string name="perm_mic">Mikwo : pou rekonèt fraz sekrè ou ak mo detrès ou yo. Tout analize sou telefòn nan ; okenn son pa soti.</string>
     <string name="perm_location">Pozisyon : pou bay pwòch ou yo li sèlman pandan yon alèt oswa yon trajè swiv.</string>
     <string name="perm_partial">Ou ka refize youn oswa lòt : pwoteksyon an mache an pati, epi SOS la toujou disponib.</string>
+    <string name="settings_support_code">Kòd sipò : %1$s (bay sipò a si l mande l ; li pa montre non ou ni nimewo ou)</string>
 </resources>

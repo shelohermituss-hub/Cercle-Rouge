@@ -592,4 +592,5 @@
     <string name="perm_mic">Micro : pour reconnaître ta phrase secrète et tes mots de détresse. Tout est analysé sur le téléphone ; aucun son ne part.</string>
     <string name="perm_location">Position : pour la donner à tes proches seulement pendant une alerte ou un trajet suivi.</string>
     <string name="perm_partial">Tu peux refuser l\'une ou l\'autre : la protection marche alors en partie, et le SOS reste toujours disponible.</string>
+    <string name="settings_support_code">Code de support : %1$s (à donner au support s\'il te le demande ; il ne révèle ni ton nom ni ton numéro)</string>
 </resources>

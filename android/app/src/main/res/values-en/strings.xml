@@ -571,4 +571,24 @@
     <string name="settings_contact_backup_ex">To get them back on a new phone. They are encrypted on the Cercle Rouge server (like numbers sent during an alert). Turning this off erases the backup.</string>
     <string name="settings_signout">Sign out of this phone</string>
     <string name="settings_signout_confirm">This phone will be fully erased (evidence included). Your account stays on the server: you can recover it with your number.</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="theme_dark">Dark (default)</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_system">Same as phone</string>
+    <string name="theme_contrast">High contrast</string>
+    <string name="theme_font_hint">To enlarge text, use Android\'s font size (Settings › Display): the app follows up to 200%.</string>
+    <string name="summary_mic">Listening (microphone)</string>
+    <string name="summary_location">Location</string>
+    <string name="summary_notifications">Notifications</string>
+    <string name="summary_pin">PIN code</string>
+    <string name="summary_contacts">Trusted contacts</string>
+    <string name="summary_active">On</string>
+    <string name="summary_inactive">Off</string>
+    <string name="summary_partial">What is off can be turned on later. SOS and SMS to contacts work even without microphone or location.</string>
+    <string name="sos_guide">Tip: Android also has an Emergency SOS (press the power button 5 times on most recent phones). You can turn it on in addition to Cercle Rouge.</string>
+    <string name="sos_guide_open">Open Android safety settings</string>
+    <string name="perm_title">Before turning on</string>
+    <string name="perm_mic">Microphone: to recognise your secret phrase and distress words. Everything is analysed on the phone; no sound leaves it.</string>
+    <string name="perm_location">Location: to share it with your contacts only during an alert or a watched trip.</string>
+    <string name="perm_partial">You can refuse either one: protection then works partly, and SOS is always available.</string>
 </resources>

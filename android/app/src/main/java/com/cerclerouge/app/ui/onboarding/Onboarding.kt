@@ -1,6 +1,7 @@
 package com.cerclerouge.app.ui.onboarding
 
 import android.Manifest
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,6 +28,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +40,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -51,6 +54,7 @@ import com.cerclerouge.app.contacts.ContactsRepository
 import com.cerclerouge.app.ui.components.Orb
 import com.cerclerouge.app.ui.components.PinPad
 import com.cerclerouge.app.ui.components.PixelIcon
+import com.cerclerouge.app.ui.components.PixelIconView
 import com.cerclerouge.app.ui.components.Poster
 import com.cerclerouge.app.ui.components.PxButton
 import com.cerclerouge.app.ui.components.PxCheck
@@ -169,6 +173,12 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun cancelLogin() = _login.update { LoginUi() }
+
+    /** Résumé final (1.20) : PIN posé, nombre de proches. Les autorisations sont lues par l'écran. */
+    suspend fun summary(): Pair<Boolean, Int> {
+        contacts.load()
+        return pins.isConfigured() to contacts.book.value.contacts.size
+    }
 
     private val _ui = MutableStateFlow(OnboardingUi())
     val ui: StateFlow<OnboardingUi> = _ui
@@ -342,6 +352,8 @@ fun OnboardingScreen(vm: OnboardingViewModel, onSos: () -> Unit, onDone: () -> U
             Step.NOTIFICATIONS -> Form(R.string.notif_screen_title, back, vm) { NotificationsStep(vm) }
             Step.SUMMARY -> Form(R.string.summary_title, back, vm) {
                 Intro(null, R.string.summary_off)
+                SummaryStatus(vm)
+                SosGuide()
                 Note(PixelIcon.LOCK, stringResource(R.string.summary_privacy))
                 Note(PixelIcon.ALERT, stringResource(R.string.disclaimer_full), warn = true)
                 PxButton(stringResource(R.string.action_finish), { vm.finish(onDone) }, icon = PixelIcon.CHECK, tall = true)
@@ -634,4 +646,60 @@ private fun LoginStep(vm: OnboardingViewModel, onRestored: () -> Unit) {
         PxButton(stringResource(R.string.action_cancel), { vm.cancelLogin() }, variant = PxVariant.OUTLINE)
     }
     Note(PixelIcon.LOCK, stringResource(R.string.login_privacy))
+}
+
+/**
+ * Résumé « actif / inactif » (1.20, R-ONB-07) : ce qui marchera tout de suite et ce qui manque, sans bloquer. L'app reste
+ * utilisable en partie sans autorisation : le SOS et les SMS marchent sans micro ; l'écoute marche sans position, etc.
+ */
+@Composable
+private fun SummaryStatus(vm: OnboardingViewModel) {
+    val c = Cr.colors
+    val context = LocalContext.current
+    var summary by remember { mutableStateOf<Pair<Boolean, Int>?>(null) }
+    LaunchedEffect(Unit) { summary = vm.summary() }
+    fun granted(p: String) = context.checkSelfPermission(p) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    val rows = listOf(
+        R.string.summary_mic to granted(android.Manifest.permission.RECORD_AUDIO),
+        R.string.summary_location to (
+            granted(android.Manifest.permission.ACCESS_FINE_LOCATION) ||
+                granted(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+            ),
+        R.string.summary_notifications to androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled(),
+        R.string.summary_pin to (summary?.first == true),
+        R.string.summary_contacts to ((summary?.second ?: 0) > 0)
+    )
+    PxPanel(Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            rows.forEach { (label, on) ->
+                Row(
+                    Modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    PixelIconView(if (on) PixelIcon.CHECK else PixelIcon.CROSS, 16.dp, if (on) c.lime else c.warn)
+                    Text(stringResource(label), style = PxType.body, modifier = Modifier.weight(1f))
+                    Text(
+                        stringResource(if (on) R.string.summary_active else R.string.summary_inactive).uppercase(),
+                        style = PxType.label,
+                        color = if (on) c.lime else c.warn
+                    )
+                }
+            }
+        }
+    }
+    Text(stringResource(R.string.summary_partial), style = PxType.caption, color = c.muted)
+}
+
+/** Guide « Urgence SOS d'Android » (5 pressions sur le bouton marche/arrêt) : complément du SOS de l'app, en un geste. */
+@Composable
+private fun SosGuide() {
+    val context = LocalContext.current
+    Note(PixelIcon.PHONE, stringResource(R.string.sos_guide))
+    PxButton(stringResource(R.string.sos_guide_open), {
+        val safety = Intent("android.intent.action.SAFETY_CENTER")
+        runCatching { context.startActivity(safety) }.recoverCatching {
+            context.startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
+        }
+    }, variant = PxVariant.OUTLINE)
 }

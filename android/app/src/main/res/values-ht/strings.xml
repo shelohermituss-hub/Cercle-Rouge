@@ -572,4 +572,24 @@
     <string name="settings_contact_backup_ex">Pou jwenn yo sou yon nouvo telefòn. Yo chifre sou sèvè Cercle Rouge (tankou nimewo ki voye pandan yon alèt). Dezaktive efase sovgad la.</string>
     <string name="settings_signout">Dekonekte sou telefòn sa a</string>
     <string name="settings_signout_confirm">Telefòn sa a ap efase nèt (prèv yo tou). Kont ou rete sou sèvè a : w ap ka jwenn li ak nimewo ou.</string>
+    <string name="settings_section_appearance">Aparans</string>
+    <string name="theme_dark">Fonse (pa defo)</string>
+    <string name="theme_light">Klè</string>
+    <string name="theme_system">Tankou telefòn nan</string>
+    <string name="theme_contrast">Kontras wo</string>
+    <string name="theme_font_hint">Pou fè tèks la pi gwo, sèvi ak gwosè polis Android (Paramèt › Ekran) : aplikasyon an swiv li jiska 200 %.</string>
+    <string name="summary_mic">Koute (mikwo)</string>
+    <string name="summary_location">Pozisyon</string>
+    <string name="summary_notifications">Notifikasyon</string>
+    <string name="summary_pin">Kòd PIN</string>
+    <string name="summary_contacts">Pwòch konfyans</string>
+    <string name="summary_active">Aktif</string>
+    <string name="summary_inactive">Inaktif</string>
+    <string name="summary_partial">Sa ki inaktif ka aktive pita. SOS la ak SMS bay pwòch yo mache menm san mikwo ni pozisyon.</string>
+    <string name="sos_guide">Konsèy : Android gen yon « SOS ijans » tou (peze bouton limen/etenn nan 5 fwa sou pi fò telefòn resan). Ou ka aktive l anplis Cercle Rouge.</string>
+    <string name="sos_guide_open">Louvri paramèt sekirite Android</string>
+    <string name="perm_title">Anvan ou aktive</string>
+    <string name="perm_mic">Mikwo : pou rekonèt fraz sekrè ou ak mo detrès ou yo. Tout analize sou telefòn nan ; okenn son pa soti.</string>
+    <string name="perm_location">Pozisyon : pou bay pwòch ou yo li sèlman pandan yon alèt oswa yon trajè swiv.</string>
+    <string name="perm_partial">Ou ka refize youn oswa lòt : pwoteksyon an mache an pati, epi SOS la toujou disponib.</string>
 </resources>

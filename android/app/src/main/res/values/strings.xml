@@ -572,4 +572,24 @@
     <string name="settings_contact_backup_ex">Pour les retrouver sur un nouveau téléphone. Ils sont chiffrés sur le serveur de Cercle Rouge (comme les numéros envoyés pendant une alerte). Désactiver efface la sauvegarde.</string>
     <string name="settings_signout">Se déconnecter de ce téléphone</string>
     <string name="settings_signout_confirm">Ce téléphone sera entièrement effacé (preuves comprises). Ton compte reste sur le serveur : tu pourras le retrouver avec ton numéro.</string>
+    <string name="settings_section_appearance">Apparence</string>
+    <string name="theme_dark">Sombre (par défaut)</string>
+    <string name="theme_light">Clair</string>
+    <string name="theme_system">Comme le téléphone</string>
+    <string name="theme_contrast">Contraste élevé</string>
+    <string name="theme_font_hint">Pour agrandir le texte, utilise la taille de police d\'Android (Réglages › Affichage) : l\'app suit jusqu\'à 200 %.</string>
+    <string name="summary_mic">Écoute (micro)</string>
+    <string name="summary_location">Position</string>
+    <string name="summary_notifications">Notifications</string>
+    <string name="summary_pin">Code PIN</string>
+    <string name="summary_contacts">Proches de confiance</string>
+    <string name="summary_active">Actif</string>
+    <string name="summary_inactive">Inactif</string>
+    <string name="summary_partial">Ce qui est inactif peut s\'activer plus tard. Le SOS et les SMS aux proches marchent même sans micro ni position.</string>
+    <string name="sos_guide">Astuce : Android a aussi un « SOS d\'urgence » (appuyer 5 fois sur le bouton marche/arrêt sur la plupart des téléphones récents). Tu peux l\'activer en plus de Cercle Rouge.</string>
+    <string name="sos_guide_open">Ouvrir les réglages de sécurité d\'Android</string>
+    <string name="perm_title">Avant d\'activer</string>
+    <string name="perm_mic">Micro : pour reconnaître ta phrase secrète et tes mots de détresse. Tout est analysé sur le téléphone ; aucun son ne part.</string>
+    <string name="perm_location">Position : pour la donner à tes proches seulement pendant une alerte ou un trajet suivi.</string>
+    <string name="perm_partial">Tu peux refuser l\'une ou l\'autre : la protection marche alors en partie, et le SOS reste toujours disponible.</string>
 </resources>

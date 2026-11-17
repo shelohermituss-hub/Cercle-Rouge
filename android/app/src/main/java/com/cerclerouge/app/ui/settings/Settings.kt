@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -106,7 +107,8 @@ class SettingsViewModel @Inject constructor(
     val data: DataControl,
     val emergency: EmergencyNumberRepository,
     val protectionWatch: com.cerclerouge.app.server.ProtectionWatch,
-    val restore: com.cerclerouge.app.account.AccountRestore
+    val restore: com.cerclerouge.app.account.AccountRestore,
+    val appearance: com.cerclerouge.app.settings.Appearance
 ) : ViewModel() {
     private val _ui = MutableStateFlow(SettingsUi())
     val ui: StateFlow<SettingsUi> = _ui
@@ -180,6 +182,8 @@ class SettingsViewModel @Inject constructor(
         data.emergencyWipe()
         _ui.update { it.copy(busy = false, message = R.string.settings_wiped) }
     }
+
+    fun setTheme(mode: com.cerclerouge.app.ui.theme.ThemeMode) = viewModelScope.launch { appearance.set(mode) }
 
     fun setContactBackup(on: Boolean) = viewModelScope.launch { restore.setBackup(on) }
 
@@ -384,6 +388,26 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
                 runCatching { context.startActivity(Intent(AndroidSettings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
                     .onFailure { context.startActivity(Intent(AndroidSettings.ACTION_SETTINGS)) }
             }, variant = PxVariant.OUTLINE)
+
+            Section(R.string.settings_section_appearance)
+            val themeMode by vm.appearance.mode.collectAsState()
+            listOf(
+                com.cerclerouge.app.ui.theme.ThemeMode.DARK to R.string.theme_dark,
+                com.cerclerouge.app.ui.theme.ThemeMode.LIGHT to R.string.theme_light,
+                com.cerclerouge.app.ui.theme.ThemeMode.SYSTEM to R.string.theme_system,
+                com.cerclerouge.app.ui.theme.ThemeMode.HIGH_CONTRAST to R.string.theme_contrast
+            ).forEach { (mode, label) ->
+                val selected = themeMode == mode
+                Row(
+                    Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected, role = Role.RadioButton) { vm.setTheme(mode) },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    PxCheck(selected)
+                    Text(stringResource(label), style = PxType.body)
+                }
+            }
+            Text(stringResource(R.string.theme_font_hint), style = PxType.caption, color = c.muted)
 
             Section(R.string.settings_section_language)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

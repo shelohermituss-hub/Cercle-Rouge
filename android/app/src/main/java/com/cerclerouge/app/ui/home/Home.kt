@@ -248,7 +248,17 @@ fun HomeScreen(
         }
     }
 
+    // 1.20 : avant la demande d'Android, on explique pourquoi (micro, position) ; refuser n'empêche pas d'armer en partie.
+    var rationale by remember { mutableStateOf(false) }
+    fun missingPermissions() = listOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_FINE_LOCATION)
+        .any { context.checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+
     fun toggleProtection() {
+        if (state.protection == com.cerclerouge.domain.ProtectionState.OFF && missingPermissions() && !rationale) {
+            rationale = true
+            return
+        }
+        rationale = false
         if (state.protection == com.cerclerouge.domain.ProtectionState.OFF) {
             armLauncher.launch(
                 arrayOf(
@@ -316,6 +326,21 @@ fun HomeScreen(
         }
     }
 
+    if (rationale) {
+        Dialog(onDismissRequest = { rationale = false }) {
+            PxPanel(fill = Cr.colors.surface, padding = PaddingValues(16.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.perm_title).uppercase(), style = PxType.title)
+                    Text(stringResource(R.string.perm_mic), style = PxType.body)
+                    Text(stringResource(R.string.perm_location), style = PxType.body)
+                    Text(stringResource(R.string.perm_partial), style = PxType.caption, color = Cr.colors.muted)
+                    PxButton(stringResource(R.string.action_continue), { toggleProtection() }, icon = PixelIcon.ARROW_RIGHT)
+                    PxButton(stringResource(R.string.action_cancel), { rationale = false }, variant = PxVariant.OUTLINE)
+                }
+            }
+        }
+    }
+
     pinFor?.let { action ->
         PinDialog(
             onDismiss = { pinFor = null },
@@ -380,7 +405,15 @@ internal fun HomeConsole(
         Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             LogoMark(26.dp)
             Spacer(Modifier.width(10.dp))
-            Text(stringResource(R.string.app_name).uppercase(), style = PxType.brand, color = accent, modifier = Modifier.weight(1f))
+            // Logo : taille fixe (le texte courant, lui, suit la police d'Android jusqu'à 200 %).
+            val fontScale = androidx.compose.ui.platform.LocalDensity.current.fontScale
+            Text(
+                stringResource(R.string.app_name).uppercase(),
+                style = PxType.brand.copy(fontSize = PxType.brand.fontSize / fontScale, lineHeight = PxType.brand.lineHeight / fontScale),
+                color = accent,
+                maxLines = 1,
+                modifier = Modifier.weight(1f)
+            )
             PxPanel(Modifier.width(56.dp), padding = PaddingValues(8.dp)) {
                 Text(
                     LocalConfiguration.current.locales[0].language.uppercase(),
@@ -407,10 +440,14 @@ internal fun HomeConsole(
             Column(Modifier.padding(start = 12.dp, end = 76.dp)) {
                 Text(
                     stringResource(if (showMe) R.string.home_map_caption_on else R.string.home_map_caption).uppercase(),
-                    style = PxType.caption,
+                    style = com.cerclerouge.app.ui.components.cappedScale(PxType.caption),
                     color = if (showMe) c.lime else c.muted
                 )
-                Text(MapStyle.ATTRIBUTION, style = PxType.caption.copy(fontSize = PxType.caption.fontSize * 0.85f), color = c.muted)
+                Text(
+                    MapStyle.ATTRIBUTION,
+                    style = com.cerclerouge.app.ui.components.cappedScale(PxType.caption.copy(fontSize = PxType.caption.fontSize * 0.85f)),
+                    color = c.muted
+                )
             }
             // Les boutons, empilés dans le coin supérieur droit : ON/OFF d'abord, puis une couleur par fonction.
             Column(
@@ -455,11 +492,18 @@ internal fun HomeConsole(
                 )
             }
             // État de la protection, en bas de la carte.
-            Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(stringResource(if (armed) R.string.home_protected else R.string.home_standby), style = PxType.label, color = accent)
+            Column(
+                Modifier.align(Alignment.BottomCenter).padding(start = 12.dp, end = 76.dp, bottom = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    stringResource(if (armed) R.string.home_protected else R.string.home_standby),
+                    style = com.cerclerouge.app.ui.components.cappedScale(PxType.label),
+                    color = accent
+                )
                 Text(
                     stringResource(if (listening) R.string.home_listen_on else R.string.home_tap_activate).uppercase(),
-                    style = PxType.caption,
+                    style = com.cerclerouge.app.ui.components.cappedScale(PxType.caption),
                     color = c.muted,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 2.dp, start = 24.dp, end = 24.dp)
@@ -468,7 +512,10 @@ internal fun HomeConsole(
         }
         Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             StatusStrip(device, contactNames, lastAlert, lastTrip, onHistory)
-            ListenPanels(activity, audioStatus, armed, onOpen = onListen, decision = decision)
+            // Grande police (≥ 150 %) : les visualiseurs cèdent la place, la carte, le SOS et la navigation restent visibles.
+            if (androidx.compose.ui.platform.LocalDensity.current.fontScale < LARGE_FONT) {
+                ListenPanels(activity, audioStatus, armed, onOpen = onListen, decision = decision)
+            }
             SosBar(onTrigger = onSosTrigger, onTap = onSosTap)
             PxNavBar(nav, selected = 0)
         }
@@ -509,7 +556,8 @@ internal fun StatusStrip(
         padding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
                     stringResource(if (device.gpsEnabled) R.string.status_gps_on else R.string.status_gps_off),
                     style = PxType.caption,
@@ -529,6 +577,8 @@ internal fun StatusStrip(
         }
     }
 }
+
+private const val LARGE_FONT = 1.5f
 
 /** ON/OFF de la protection : le bouton principal, en haut à droite (rempli quand la protection est active). */
 @Composable

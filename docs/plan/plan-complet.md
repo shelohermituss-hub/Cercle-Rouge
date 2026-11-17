@@ -226,6 +226,7 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 ### 1.20 Onboarding final et accessibilité (PDF 15.3, 16.3 ; R-ONB-07, R-UI-01..07)
 - 🤖 Écran résumé « actif / inactif » ; guide « Urgence SOS d'Android » (5 pressions) ; explication de chaque permission au moment de la demande ; utilisation partielle sans permission vérifiée.
 - 🤖 **Mode clair** et **contraste élevé** ; TalkBack sur tous les écrans ; police 200 % sans troncature ; cibles ≥ 48 dp ; actions critiques en bas.
+- ✅ Fait : résumé « actif / inactif » (micro, position, notifications, PIN, proches) + utilisation partielle expliquée, guide « SOS d'urgence Android », explication avant la demande de micro et position, thèmes **clair**, **contraste élevé** et « comme le téléphone » (Réglages › Apparence ; sombre par défaut), police 200 % vérifiée par captures (accueil, historique) : SOS et navigation toujours visibles, visualiseurs masqués au-delà de 150 %, onglets et légendes plafonnés à 130 %. **Reste 📱** : passage TalkBack complet sur un vrai téléphone ; les autres écrans n'ont pas eu de capture à 200 %.
 - ⏱ 4 j.
 
 ### 1.21 Console admin et audit (S7.07–S7.09 ; R-ADM-01..05)

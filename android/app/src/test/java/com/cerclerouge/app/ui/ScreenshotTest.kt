@@ -67,12 +67,22 @@ import org.robolectric.annotation.GraphicsMode
 class ScreenshotTest {
     @get:Rule val rule = createComposeRule()
 
-    private fun capture(name: String, content: @Composable () -> Unit) {
+    private fun capture(
+        name: String,
+        mode: com.cerclerouge.app.ui.theme.ThemeMode = com.cerclerouge.app.ui.theme.ThemeMode.DARK,
+        fontScale: Float = 1f,
+        content: @Composable () -> Unit
+    ) {
         // Les orbes animent sans fin : horloge manuelle, sinon Compose n'est jamais « au repos ».
         rule.mainClock.autoAdvance = false
         rule.setContent {
-            CercleRougeTheme {
-                Box(Modifier.fillMaxSize().background(Cr.colors.surface).pixelGrid(Cr.colors.grid)) { content() }
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density, fontScale)
+            ) {
+                CercleRougeTheme(mode) {
+                    Box(Modifier.fillMaxSize().background(Cr.colors.surface).pixelGrid(Cr.colors.grid)) { content() }
+                }
             }
         }
         rule.mainClock.advanceTimeBy(600)
@@ -103,6 +113,35 @@ class ScreenshotTest {
     }
 
     @Test fun homeOff() = capture("home-off") { HomeConsole(EngineState(), {}, {}, 0, {}, {}, {}, nav, fakeMap) }
+
+    /** 1.20 : thème clair, contraste élevé, police à 200 % (pas de texte coupé ni de contrôle masqué). */
+    @Test fun homeLight() = capture("home-light", com.cerclerouge.app.ui.theme.ThemeMode.LIGHT) { ArmedHome() }
+
+    @Test fun homeContrast() = capture("home-contrast", com.cerclerouge.app.ui.theme.ThemeMode.HIGH_CONTRAST) { ArmedHome() }
+
+    @Test fun homeLargeFont() = capture("home-font200", fontScale = 2f) { ArmedHome() }
+
+    @Test fun historyLargeFont() = capture("history-font200", fontScale = 2f) {
+        com.cerclerouge.app.ui.history.HistoryContent(
+            listOf(com.cerclerouge.privacy.db.HistoryEntity("a", "alert", System.currentTimeMillis(), null, "SOS", 2, null)),
+            onBack = {},
+            onClear = {}
+        )
+    }
+
+    @androidx.compose.runtime.Composable
+    private fun ArmedHome() = HomeConsole(
+        EngineState(protection = ProtectionState.ARMED_FULL, micGranted = true, locationGranted = true),
+        {},
+        {},
+        2,
+        {},
+        {},
+        {},
+        nav,
+        fakeMap,
+        contactNames = listOf("Marie", "Jean")
+    )
 
     @Test fun homeOn() = capture("home-on") {
         HomeConsole(

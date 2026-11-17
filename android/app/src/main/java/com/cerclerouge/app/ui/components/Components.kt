@@ -238,7 +238,7 @@ fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifi
     PxPanel(
         modifier
             .fillMaxWidth()
-            .height(72.dp)
+            .heightIn(min = 72.dp)
             .semantics {
                 role = Role.Button
                 contentDescription = a11y
@@ -272,8 +272,13 @@ fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifi
     ) {
         // Rouge du logo (#ED1B24), texte blanc. Remplissage par paliers de 1/12, comme les 12 carrés de l'écran SOS.
         val steps = (progress.value * 12).toInt() / 12f
-        Box(Modifier.fillMaxHeight().fillMaxWidth(steps).background(Color.Black.copy(alpha = 0.28f)))
-        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.matchParentSize()) { Box(Modifier.fillMaxHeight().fillMaxWidth(steps).background(Color.Black.copy(alpha = 0.28f))) }
+        // Hauteur : 72 dp, ou plus si la police d'Android est grande (texte jamais coupé).
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = 72.dp).padding(vertical = 6.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             PixelIconView(PixelIcon.ALERT, 28.dp, Color.White)
             Spacer(Modifier.width(14.dp))
             Text(stringResource(R.string.sos), style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.28f), color = Color.White)
@@ -418,20 +423,33 @@ fun TopBar(title: String, onBack: (() -> Unit)?) {
     }
 }
 
+/**
+ * Texte court et non essentiel (onglets, légendes de carte) : suit la police d'Android jusqu'à 130 % seulement, pour ne pas
+ * couper un mot ni masquer la carte à 200 %. Le texte courant, lui, suit jusqu'à 200 % (R-UI). TalkBack lit tout.
+ */
+@Composable
+fun cappedScale(style: androidx.compose.ui.text.TextStyle, max: Float = 1.3f): androidx.compose.ui.text.TextStyle {
+    val scale = androidx.compose.ui.platform.LocalDensity.current.fontScale
+    if (scale <= max) return style
+    val k = max / scale
+    return style.copy(fontSize = style.fontSize * k, lineHeight = style.lineHeight * k)
+}
+
 data class NavItem(val label: String, val icon: PixelIcon, val onClick: () -> Unit)
 
 /** Barre de navigation : 4 onglets, l'onglet courant en lime avec un trait au-dessus. */
 @Composable
 fun PxNavBar(items: List<NavItem>, selected: Int) {
     val c = Cr.colors
-    PxPanel(Modifier.fillMaxWidth().height(68.dp), fill = c.surface, padding = PaddingValues(0.dp)) {
-        Row(Modifier.fillMaxSize()) {
+    PxPanel(Modifier.fillMaxWidth().heightIn(min = 68.dp), fill = c.surface, padding = PaddingValues(0.dp)) {
+        Row(Modifier.fillMaxWidth()) {
             items.forEachIndexed { i, item ->
                 val active = i == selected
                 Box(
                     Modifier
                         .weight(1f)
-                        .fillMaxHeight()
+                        .heightIn(min = 68.dp)
+                        .padding(vertical = 6.dp)
                         .clickable(role = Role.Tab, onClick = item.onClick)
                         .semantics { if (active) stateDescription = "sélectionné" },
                     contentAlignment = Alignment.Center
@@ -439,7 +457,12 @@ fun PxNavBar(items: List<NavItem>, selected: Int) {
                     if (active) Box(Modifier.align(Alignment.TopCenter).fillMaxWidth(0.6f).height(4.dp).background(c.lime))
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         PixelIconView(item.icon, 20.dp, if (active) c.lime else c.muted)
-                        Text(item.label.uppercase(), style = PxType.label, color = if (active) c.lime else c.muted)
+                        Text(
+                            item.label.uppercase(),
+                            style = cappedScale(PxType.label),
+                            color = if (active) c.lime else c.muted,
+                            maxLines = 1
+                        )
                     }
                 }
             }

@@ -72,6 +72,54 @@ val PixelLime = CrColors(
     scrim = Color(0xCC0A0B0C)
 )
 
+/**
+ * Thème clair (1.20, R-UI) : fonds blanc cassé ; le lime, illisible sur blanc, devient un vert profond (5,9:1 sur blanc) pour le
+ * texte et les bordures, le rouge et le jaune sont assombris pour garder ≥ 4,5:1.
+ */
+val PixelLight = CrColors(
+    void = Color(0xFFE6E9E3),
+    surface = Color(0xFFF5F6F2),
+    raised = Color(0xFFFFFFFF),
+    forestDeep = Color(0xFFDDE2D8),
+    forest = Color(0xFF007A37),
+    forestShade = Color(0xFF00430F),
+    lime = Color(0xFF2F6B00),
+    glow = Color(0x332F6B00),
+    onLime = Color(0xFFFFFFFF),
+    ink = Color(0xFF121416),
+    muted = Color(0xFF4C535A),
+    line = Color(0xFFC6CBD0),
+    lineControl = Color(0xFF6B7279),
+    grid = Color(0x146B7279),
+    danger = Color(0xFFB3261E),
+    warn = Color(0xFF7A5C00),
+    scrim = Color(0xCCF5F6F2)
+)
+
+/** Contraste élevé (1.20) : noir pur, texte blanc, bordures blanches, couleurs vives (≥ 7:1 sur noir). */
+val PixelHighContrast = CrColors(
+    void = Color(0xFF000000),
+    surface = Color(0xFF000000),
+    raised = Color(0xFF000000),
+    forestDeep = Color(0xFF1A1A1A),
+    forest = Color(0xFF00C853),
+    forestShade = Color(0xFF00430F),
+    lime = Color(0xFFC6FF3D),
+    glow = Color(0x66C6FF3D),
+    onLime = Color(0xFF000000),
+    ink = Color(0xFFFFFFFF),
+    muted = Color(0xFFE0E0E0),
+    line = Color(0xFFFFFFFF),
+    lineControl = Color(0xFFFFFFFF),
+    grid = Color(0x00000000),
+    danger = Color(0xFFFF8A80),
+    warn = Color(0xFFFFE066),
+    scrim = Color(0xE6000000)
+)
+
+/** Choix d'apparence (Réglages › Apparence). SOMBRE par défaut : c'est le design de référence. */
+enum class ThemeMode { DARK, LIGHT, SYSTEM, HIGH_CONTRAST }
+
 /** Titres et chiffres en pixels : Silkscreen (lettres nettes, 5 et S distincts ; toujours en capitales). */
 val Pixel = FontFamily(Font(R.font.silkscreen_bold, FontWeight.Bold))
 val Digit = Pixel
@@ -116,11 +164,17 @@ private val CrTypography = Typography(
 
 val LocalCrColors = staticCompositionLocalOf { PixelLime }
 
-/** Le design « Pixel Lime » n'existe qu'en sombre : un seul thème, quel que soit le réglage du système. */
+/** Thème de l'app : sombre (référence), clair, celui du système, ou contraste élevé (1.20). */
 @Composable
-fun CercleRougeTheme(content: @Composable () -> Unit) {
-    val t = PixelLime
-    val scheme = darkColorScheme(
+fun CercleRougeTheme(mode: ThemeMode = ThemeMode.DARK, content: @Composable () -> Unit) {
+    val light = mode == ThemeMode.LIGHT || (mode == ThemeMode.SYSTEM && !androidx.compose.foundation.isSystemInDarkTheme())
+    val t = when {
+        mode == ThemeMode.HIGH_CONTRAST -> PixelHighContrast
+        light -> PixelLight
+        else -> PixelLime
+    }
+    val base = if (light) androidx.compose.material3.lightColorScheme() else darkColorScheme()
+    val scheme = base.copy(
         primary = t.lime,
         onPrimary = t.onLime,
         background = t.surface,

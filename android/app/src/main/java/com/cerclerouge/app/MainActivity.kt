@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -73,7 +74,8 @@ class AppViewModel @Inject constructor(
     val trips: TripController,
     val purge: EvidencePurge,
     val health: DeviceHealth,
-    val history: com.cerclerouge.app.history.HistoryRepository
+    val history: com.cerclerouge.app.history.HistoryRepository,
+    val appearance: com.cerclerouge.app.settings.Appearance
 ) : ViewModel()
 
 private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN, VAULT, SETTINGS, WATCH, HISTORY }
@@ -106,7 +108,9 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
         sosRequested.value = intent.getBooleanExtra(SosIntents.EXTRA_SOS, false)
         armRequested.value = intent.getBooleanExtra(SosIntents.EXTRA_ARM, false)
         setContent {
-            CercleRougeTheme {
+            val themeMode by app.appearance.mode.collectAsState()
+            LaunchedEffect(Unit) { app.appearance.load() }
+            CercleRougeTheme(themeMode) {
                 var screen by remember { mutableStateOf(Screen.LOADING) }
                 LaunchedEffect(Unit) {
                     app.account.load()

@@ -18,7 +18,7 @@
     <string name="profile_month">Mois</string>
     <string name="profile_year">Année</string>
     <string name="profile_min_age">Cercle Rouge est disponible à partir de 12 ans.</string>
-    <string name="profile_under_12">Cercle Rouge est disponible à partir de 12 ans. En cas d\'urgence, appelle le 114.</string>
+    <string name="profile_under_12">Cercle Rouge est disponible à partir de 12 ans. En cas d\'urgence, appelle le %1$s.</string>
     <string name="profile_adult">J\'atteste avoir 18 ans ou plus</string>
     <string name="profile_holder">Ce téléphone est le mien et c\'est moi qui active la protection</string>
     <string name="guardian_title">Un parent ou un adulte de confiance doit confirmer</string>
@@ -58,11 +58,11 @@
     <string name="summary_title">Tout est prêt</string>
     <string name="summary_off">La protection est désactivée. Active-la quand tu sors.</string>
     <string name="summary_privacy">Rien ne quitte ton téléphone tant qu\'il n\'y a pas d\'alerte.</string>
-    <string name="home_sat_call">Appeler le 114</string>
+    <string name="home_sat_call">Appeler le %1$s</string>
     <string name="home_soon">Bientôt disponible</string>
     <string name="sos">SOS</string>
     <string name="sos_a11y">SOS. Appui long pour alerter</string>
-    <string name="emergency_no_contacts">Aucun contact de confiance pour l\'instant : appelle le 114.</string>
+    <string name="emergency_no_contacts">Aucun contact de confiance pour l\'instant : appelle le %1$s.</string>
     <string name="mic_needed">Le micro est nécessaire pour l\'écoute IA. Le SOS fonctionne sans.</string>
     <string name="reject_consent">Ton adulte référent doit d\'abord confirmer.</string>
     <string name="reject_sensor">Autorise le micro ou la position pour activer la protection.</string>
@@ -516,7 +516,7 @@
     <string name="detect_discreet_on">Activé</string>
     <string name="detect_discreet_ex">Notifications neutres, aucun son ni texte d\'alerte à l\'écran ; seules des vibrations codées te préviennent. L\'indicateur micro d\'Android reste visible : il est obligatoire.</string>
     <string name="discreet_finish">Terminer</string>
-    <string name="discreet_call">Appeler le 114</string>
+    <string name="discreet_call">Appeler le %1$s</string>
     <string name="widget_arm">ON</string>
     <string name="widget_arm_a11y">Activer la protection</string>
     <string name="widget_arm_tile">Protection</string>
@@ -542,4 +542,17 @@
     <string name="shared_opening">Déchiffrement…</string>
     <string name="shared_unreadable">Impossible d\'ouvrir cet enregistrement avec ce téléphone (application réinstallée ou autre téléphone).</string>
     <string name="shared_no_audio">Pas d\'audio pour cette alerte, seulement les détails.</string>
+    <string name="slogan">Ton cercle veille sur toi.</string>
+    <string name="disclaimer_short">Cercle Rouge aide à alerter vite, mais ne remplace pas les secours.</string>
+    <string name="disclaimer_full">Cercle Rouge peut aider à alerter rapidement, mais il ne remplace pas les secours. En cas de danger immédiat, appelle les services d\'urgence. L\'application ne peut pas garantir qu\'une alerte arrive (réseau, batterie, téléphone éteint) et ne prédit pas le danger.</string>
+    <string name="safety_message">Ta sécurité d\'abord : si tu le peux, éloigne-toi du danger, va vers un lieu fréquenté et éclairé, et appelle les secours. N\'affronte pas un agresseur pour protéger ton téléphone.</string>
+    <string name="settings_section_emergency">Numéros d\'urgence</string>
+    <string name="settings_section_about">À propos</string>
+    <string name="emergency_country_ex">Choisis le pays, ou laisse « Auto » : le pays de ta carte SIM est utilisé. Toucher un numéro ouvre le composeur ; rien n\'est appelé sans toi.</string>
+    <string name="emergency_auto">Auto</string>
+    <string name="emergency_number_line">%1$s : %2$s</string>
+    <string name="emergency_general">Urgences</string>
+    <string name="emergency_police">Police</string>
+    <string name="emergency_ambulance">Ambulance</string>
+    <string name="emergency_fire">Pompiers</string>
 </resources>

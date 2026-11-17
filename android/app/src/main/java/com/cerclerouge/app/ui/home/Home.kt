@@ -133,12 +133,14 @@ class HomeViewModel @Inject constructor(
     val listen: com.cerclerouge.app.protection.ListenSettings,
     val device: com.cerclerouge.app.device.DeviceMonitor,
     val history: com.cerclerouge.app.history.HistoryRepository,
+    val emergency: com.cerclerouge.app.settings.EmergencyNumberRepository,
     private val guardians: GuardianSync
 ) : ViewModel() {
     init {
         viewModelScope.launch {
             contacts.load()
             listen.load()
+            emergency.load()
             contacts.applyServerStatuses(server.contactStatuses()) // accord des proches (accepté, refusé, STOP)
             guardians.refresh() // 12–15 ans : l'adulte référent a-t-il confirmé ?
         }
@@ -199,7 +201,10 @@ fun HomeScreen(
     }
     val soon = stringResource(R.string.home_soon)
 
-    fun dial114() = context.startActivity(Intent(Intent.ACTION_DIAL, "tel:114".toUri())) // R-HOME-07 : toujours le composeur
+    val emergencyCountry by vm.emergency.country.collectAsState()
+
+    // R-HOME-07 : toujours le composeur, jamais d'appel direct ; numéro du pays (1.18).
+    fun dial114() = context.startActivity(Intent(Intent.ACTION_DIAL, "tel:${emergencyCountry.primary}".toUri()))
 
     // Activation : micro (écoute) et position (point sur la carte, trajet) demandés ensemble, en contexte (R-PLAY-02).
     val armLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
@@ -266,8 +271,12 @@ fun HomeScreen(
     }
     Box(Modifier.fillMaxSize().background(c.surface).pixelGrid(c.grid).safeDrawingPadding()) {
         when {
-            state.protection.isAlert && listenPrefs.discreet -> DiscreetScreen(onSafe = { guarded(Guarded.IM_SAFE) }, onCall = ::dial114)
-            state.protection.isAlert -> EmergencyScreen(vm, state, onSafe = { guarded(Guarded.IM_SAFE) }, onCall = ::dial114)
+            state.protection.isAlert && listenPrefs.discreet -> DiscreetScreen(emergencyCountry.primary, onSafe = {
+                guarded(Guarded.IM_SAFE)
+            }, onCall = ::dial114)
+            state.protection.isAlert -> EmergencyScreen(vm, state, emergencyCountry.primary, onSafe = {
+                guarded(Guarded.IM_SAFE)
+            }, onCall = ::dial114)
             sos == SosStep.HOLD -> SosHoldScreen(onBack = { sos = SosStep.NONE }, onTrigger = { sos = SosStep.COUNTDOWN })
             sos == SosStep.COUNTDOWN -> CountdownScreen(
                 onCancel = { sos = SosStep.NONE },
@@ -703,7 +712,7 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit) {
 
 /** Maquette « Urgence » : bandeau d'alerte, contacts, journal, « Je suis en sécurité » et 114. */
 @Composable
-private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, onSafe: () -> Unit, onCall: () -> Unit) {
+private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, number: String, onSafe: () -> Unit, onCall: () -> Unit) {
     SecureScreen() // S7.04 : pas de capture de l'écran d'urgence
     val c = Cr.colors
     val resources = LocalResources.current
@@ -734,7 +743,7 @@ private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, onSafe: () ->
                 PixelIconView(if (replied) PixelIcon.CHECK else PixelIcon.USERS, 24.dp, if (replied) c.lime else c.warn)
                 Column {
                     when {
-                        book.contacts.isEmpty() -> Text(stringResource(R.string.emergency_no_contacts), style = PxType.body)
+                        book.contacts.isEmpty() -> Text(stringResource(R.string.emergency_no_contacts, number), style = PxType.body)
                         feedback.isEmpty() -> Text(
                             pluralStringResource(R.plurals.urgent_notified, book.contacts.size, book.contacts.size),
                             style = PxType.body
@@ -760,7 +769,9 @@ private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, onSafe: () ->
             rows.forEachIndexed { i, row -> TraceLine(row, last = i == rows.lastIndex) }
         }
         PxButton(stringResource(R.string.urgent_safe), onSafe, icon = PixelIcon.CHECK, tall = true)
-        PxButton(stringResource(R.string.home_sat_call), onCall, variant = PxVariant.DARK_DANGER, icon = PixelIcon.PHONE)
+        PxButton(stringResource(R.string.home_sat_call, number), onCall, variant = PxVariant.DARK_DANGER, icon = PixelIcon.PHONE)
+        // PDF 20 : l'app aide à alerter, elle ne remplace pas les secours.
+        Text(stringResource(R.string.disclaimer_short), style = PxType.caption, color = Cr.colors.muted)
     }
 }
 
@@ -847,7 +858,7 @@ internal fun RejectReason.message(): Int = when (this) {
  * simple application de suivi. Deux gestes seulement : terminer (PIN/biométrie, comme « Je vais bien ») et appeler le 114.
  */
 @Composable
-internal fun DiscreetScreen(onSafe: () -> Unit, onCall: () -> Unit) {
+internal fun DiscreetScreen(number: String, onSafe: () -> Unit, onCall: () -> Unit) {
     SecureScreen()
     val c = Cr.colors
     Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -856,6 +867,6 @@ internal fun DiscreetScreen(onSafe: () -> Unit, onCall: () -> Unit) {
         }
         Spacer(Modifier.weight(1f))
         PxButton(stringResource(R.string.discreet_finish), onSafe, variant = PxVariant.OUTLINE)
-        PxButton(stringResource(R.string.discreet_call), onCall, variant = PxVariant.DARK)
+        PxButton(stringResource(R.string.discreet_call, number), onCall, variant = PxVariant.DARK)
     }
 }

@@ -213,6 +213,7 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 ### 1.18 Avertissements et numéros d'urgence (PDF 20, 22, 23)
 - 🤖 Numéros d'urgence **par pays** (114/115/116 Haïti, 17/15/18/112 France, 112 UE, 911 US/CA), détectés par le pays de la SIM, modifiables ; remplace `tel:114` codé en dur (`Home.kt:185`).
 - 🤖 Avertissement « Cercle Rouge peut aider à alerter rapidement, mais il ne remplace pas les secours… » à l'onboarding, dans Réglages › À propos et sur l'écran d'urgence ; message de sécurité (section 23) ; slogan sur l'écran d'accueil de l'onboarding.
+- ✅ Fait : `EmergencyNumbers` (HT 114/115/116, FR 112/17/15/18, UE 112, US/CA/DO 911, BE, CH ; inconnu → 112 ; rien → Haïti), choix du pays dans Réglages › Numéros d'urgence (Auto = carte SIM), plus aucun 114 codé en dur ; avertissement (onboarding, écran d'urgence, Réglages › À propos), message de sécurité, slogan. ⚠ **Slogan et textes provisoires, à valider par le porteur** (texte exact du PDF à reprendre).
 - ⏱ 1,5 j.
 
 ### 1.19 Inscription et connexion (PDF 14.1, 19 point 1)

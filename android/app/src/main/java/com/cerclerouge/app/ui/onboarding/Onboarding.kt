@@ -32,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
@@ -245,6 +246,9 @@ fun OnboardingScreen(vm: OnboardingViewModel, onSos: () -> Unit, onDone: () -> U
                 // R-ONB-06 : le SOS fonctionne dès le premier écran.
                 Spacer(Modifier.height(20.dp))
                 SosBar(onTrigger = onSos, onTap = {})
+                Spacer(Modifier.height(12.dp))
+                Text(stringResource(R.string.slogan), style = PxType.bodyBold, color = Cr.colors.onLime)
+                Text(stringResource(R.string.disclaimer_short), style = PxType.caption, color = Cr.colors.onLime)
             }
             Step.AI -> Poster(
                 2,
@@ -281,6 +285,7 @@ fun OnboardingScreen(vm: OnboardingViewModel, onSos: () -> Unit, onDone: () -> U
             Step.SUMMARY -> Form(R.string.summary_title, back, vm) {
                 Intro(null, R.string.summary_off)
                 Note(PixelIcon.LOCK, stringResource(R.string.summary_privacy))
+                Note(PixelIcon.ALERT, stringResource(R.string.disclaimer_full), warn = true)
                 PxButton(stringResource(R.string.action_finish), { vm.finish(onDone) }, icon = PixelIcon.CHECK, tall = true)
             }
         }
@@ -364,7 +369,16 @@ private fun ProfileStep(ui: OnboardingUi, vm: OnboardingViewModel) {
     }
     val band = ui.band
     if (band == AgeBand.UNDER_12) {
-        Note(PixelIcon.ALERT, stringResource(R.string.profile_under_12), warn = true)
+        Note(
+            PixelIcon.ALERT,
+            stringResource(
+                R.string.profile_under_12,
+                LocalContext.current.getSystemService(android.telephony.TelephonyManager::class.java).let {
+                    com.cerclerouge.domain.EmergencyNumbers.resolve(null, it?.simCountryIso, it?.networkCountryIso).primary
+                }
+            ),
+            warn = true
+        )
         return
     }
     if (band == AgeBand.ADULT) {

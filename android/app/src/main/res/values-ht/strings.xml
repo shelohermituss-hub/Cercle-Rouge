@@ -18,7 +18,7 @@
     <string name="profile_month">Mwa</string>
     <string name="profile_year">Ane</string>
     <string name="profile_min_age">Cercle Rouge disponib apati 12 an.</string>
-    <string name="profile_under_12">Cercle Rouge disponib apati 12 an. Si gen ijans, rele 114.</string>
+    <string name="profile_under_12">Cercle Rouge disponib apati 12 an. Si gen ijans, rele %1$s.</string>
     <string name="profile_adult">Mwen sètifye mwen gen 18 an oswa plis</string>
     <string name="profile_holder">Telefòn sa a se pa m, se mwen menm ki aktive pwoteksyon an</string>
     <string name="guardian_title">Yon paran oswa yon granmoun ou fè konfyans dwe konfime</string>
@@ -58,11 +58,11 @@
     <string name="summary_title">Tout bagay pare</string>
     <string name="summary_off">Pwoteksyon an dezaktive. Aktive l lè w ap soti.</string>
     <string name="summary_privacy">Anyen pa kite telefòn ou toutotan pa gen alèt.</string>
-    <string name="home_sat_call">Rele 114</string>
+    <string name="home_sat_call">Rele %1$s</string>
     <string name="home_soon">Byento disponib</string>
     <string name="sos">SOS</string>
     <string name="sos_a11y">SOS. Peze lontan pou bay alèt</string>
-    <string name="emergency_no_contacts">Pa gen kontak konfyans pou kounye a : rele 114.</string>
+    <string name="emergency_no_contacts">Pa gen kontak konfyans pou kounye a : rele %1$s.</string>
     <string name="mic_needed">Mikwo a nesesè pou koute IA. SOS la mache san li.</string>
     <string name="reject_consent">Granmoun referans ou dwe konfime anvan.</string>
     <string name="reject_sensor">Pèmèt mikwo a oswa pozisyon an pou aktive pwoteksyon an.</string>
@@ -516,7 +516,7 @@
     <string name="detect_discreet_on">Aktive</string>
     <string name="detect_discreet_ex">Notifikasyon net, pa gen son ni tèks alèt sou ekran an ; se sèlman vibrasyon kode k ap avèti w. Endikatè mikwo Android la rete vizib : li obligatwa.</string>
     <string name="discreet_finish">Fini</string>
-    <string name="discreet_call">Rele 114</string>
+    <string name="discreet_call">Rele %1$s</string>
     <string name="widget_arm_a11y">Aktive pwoteksyon an</string>
     <string name="widget_arm_tile">Pwoteksyon</string>
     <string name="widget_arm">ON</string>
@@ -542,4 +542,17 @@
     <string name="shared_opening">Ap dechifre…</string>
     <string name="shared_unreadable">Pa ka louvri anrejistreman sa a ak telefòn sa a (aplikasyon reyenstale oswa lòt telefòn).</string>
     <string name="shared_no_audio">Pa gen odyo pou alèt sa a, sèlman detay yo.</string>
+    <string name="slogan">Sèk ou a ap veye sou ou.</string>
+    <string name="disclaimer_short">Cercle Rouge ede avèti vit, men li pa ranplase sekou yo.</string>
+    <string name="disclaimer_full">Cercle Rouge ka ede avèti rapidman, men li pa ranplase sekou yo. Si gen yon danje touswit, rele sèvis ijans yo. Aplikasyon an pa ka garanti yon alèt ap rive (rezo, batri, telefòn etenn) epi li pa prevwa danje.</string>
+    <string name="safety_message">Sekirite w an premye : si w kapab, ale lwen danje a, al nan yon kote ki gen moun epi ki klere, epi rele sekou. Pa goumen ak yon agresè pou pwoteje telefòn ou.</string>
+    <string name="settings_section_emergency">Nimewo ijans</string>
+    <string name="settings_section_about">Konsènan</string>
+    <string name="emergency_country_ex">Chwazi peyi a, oswa kite « Auto » : peyi kat SIM ou a sèvi. Touche yon nimewo louvri konpozè a ; anyen pa rele san ou.</string>
+    <string name="emergency_auto">Auto</string>
+    <string name="emergency_number_line">%1$s : %2$s</string>
+    <string name="emergency_general">Ijans</string>
+    <string name="emergency_police">Lapolis</string>
+    <string name="emergency_ambulance">Anbilans</string>
+    <string name="emergency_fire">Ponpye</string>
 </resources>

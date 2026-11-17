@@ -17,7 +17,7 @@
     <string name="profile_month">Month</string>
     <string name="profile_year">Year</string>
     <string name="profile_min_age">Cercle Rouge is available from age 12.</string>
-    <string name="profile_under_12">Cercle Rouge is available from age 12. In an emergency, call 114.</string>
+    <string name="profile_under_12">Cercle Rouge is available from age 12. In an emergency, call %1$s.</string>
     <string name="profile_adult">I confirm I am 18 or older</string>
     <string name="profile_holder">This is my phone and I am the one turning protection on</string>
     <string name="guardian_title">A parent or trusted adult needs to confirm</string>
@@ -57,11 +57,11 @@
     <string name="summary_title">You\'re all set</string>
     <string name="summary_off">Protection is off. Turn it on when you go out.</string>
     <string name="summary_privacy">Nothing leaves your phone unless there is an alert.</string>
-    <string name="home_sat_call">Call 114</string>
+    <string name="home_sat_call">Call %1$s</string>
     <string name="home_soon">Coming soon</string>
     <string name="sos">SOS</string>
     <string name="sos_a11y">SOS. Press and hold to alert</string>
-    <string name="emergency_no_contacts">No trusted contacts yet: call 114.</string>
+    <string name="emergency_no_contacts">No trusted contacts yet: call %1$s.</string>
     <string name="mic_needed">The microphone is needed for AI listening. SOS works without it.</string>
     <string name="reject_consent">Your trusted adult must confirm first.</string>
     <string name="reject_sensor">Allow the microphone or location to turn protection on.</string>
@@ -515,7 +515,7 @@
     <string name="detect_discreet_on">On</string>
     <string name="detect_discreet_ex">Neutral notifications, no sound and no alert text on screen; only coded vibrations tell you. Android\'s microphone indicator stays visible: it is mandatory.</string>
     <string name="discreet_finish">Finish</string>
-    <string name="discreet_call">Call 114</string>
+    <string name="discreet_call">Call %1$s</string>
     <string name="widget_arm_a11y">Turn protection on</string>
     <string name="widget_arm_tile">Protection</string>
     <string name="widget_arm">ON</string>
@@ -541,4 +541,17 @@
     <string name="shared_opening">Decrypting…</string>
     <string name="shared_unreadable">This recording cannot be opened on this phone (app reinstalled or another phone).</string>
     <string name="shared_no_audio">No audio for this alert, only the details.</string>
+    <string name="slogan">Your circle watches over you.</string>
+    <string name="disclaimer_short">Cercle Rouge helps you alert quickly, but does not replace emergency services.</string>
+    <string name="disclaimer_full">Cercle Rouge can help you alert quickly, but it does not replace emergency services. In immediate danger, call emergency services. The app cannot guarantee an alert gets through (network, battery, phone off) and does not predict danger.</string>
+    <string name="safety_message">Your safety first: if you can, move away from danger, go to a busy, well-lit place, and call for help. Do not fight an attacker to protect your phone.</string>
+    <string name="settings_section_emergency">Emergency numbers</string>
+    <string name="settings_section_about">About</string>
+    <string name="emergency_country_ex">Choose the country, or leave Auto: your SIM card\'s country is used. Tapping a number opens the dialer; nothing is called without you.</string>
+    <string name="emergency_auto">Auto</string>
+    <string name="emergency_number_line">%1$s: %2$s</string>
+    <string name="emergency_general">Emergency</string>
+    <string name="emergency_police">Police</string>
+    <string name="emergency_ambulance">Ambulance</string>
+    <string name="emergency_fire">Fire</string>
 </resources>

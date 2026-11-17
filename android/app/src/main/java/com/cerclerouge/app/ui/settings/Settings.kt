@@ -56,6 +56,7 @@ import com.cerclerouge.app.server.GuardianRequest
 import com.cerclerouge.app.server.ServerSync
 import com.cerclerouge.app.server.SupabaseApi
 import com.cerclerouge.app.settings.DataControl
+import com.cerclerouge.app.settings.EmergencyNumberRepository
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PxButton
 import com.cerclerouge.app.ui.components.PxCheck
@@ -102,10 +103,28 @@ class SettingsViewModel @Inject constructor(
     private val pins: PinRepository,
     private val api: SupabaseApi,
     private val server: ServerSync,
-    val data: DataControl
+    val data: DataControl,
+    val emergency: EmergencyNumberRepository
 ) : ViewModel() {
     private val _ui = MutableStateFlow(SettingsUi())
     val ui: StateFlow<SettingsUi> = _ui
+
+    private val _emergencyChoice = MutableStateFlow<String?>(null)
+
+    /** Pays choisi pour les numéros d'urgence ; null : automatique (carte SIM). */
+    val emergencyChoice: StateFlow<String?> = _emergencyChoice
+
+    init {
+        viewModelScope.launch {
+            _emergencyChoice.value = emergency.choice()
+            emergency.load()
+        }
+    }
+
+    fun chooseEmergencyCountry(iso: String?) = viewModelScope.launch {
+        emergency.choose(iso)
+        _emergencyChoice.value = iso
+    }
 
     fun setCustomMessage(text: String) = viewModelScope.launch {
         settings.setCustomMessage(text)
@@ -359,6 +378,9 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
                 Text(stringResource(R.string.settings_language_old), style = PxType.caption, color = c.muted)
             }
 
+            Section(R.string.settings_section_emergency)
+            EmergencySection(vm)
+
             Section(R.string.settings_section_data)
             PxButton(stringResource(R.string.settings_export), {
                 saveExport.launch("cercle-rouge-mes-donnees.json")
@@ -368,6 +390,10 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, PRIVACY_URL.toUri())) }
             }, variant = PxVariant.OUTLINE)
             PxButton(stringResource(R.string.settings_delete), { confirm = Guarded.DELETE }, variant = PxVariant.DANGER, enabled = !ui.busy)
+            Section(R.string.settings_section_about)
+            Text(stringResource(R.string.slogan), style = PxType.bodyBold)
+            PxPanel(Modifier.fillMaxWidth(), border = c.warn) { Text(stringResource(R.string.disclaimer_full), style = PxType.caption) }
+            Text(stringResource(R.string.safety_message), style = PxType.caption, color = c.muted)
             Text(stringResource(R.string.settings_version, BuildConfig.VERSION_NAME), style = PxType.caption, color = c.muted)
         }
     }
@@ -568,3 +594,47 @@ object BatteryGuide {
 }
 
 private const val PRIVACY_URL = "https://shelohermituss-hub.github.io/Cercle-Rouge/confidentialite.html"
+
+/** Numéros d'urgence (1.18) : pays automatique (carte SIM) ou choisi ; chaque numéro ouvre le composeur, jamais d'appel direct. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun EmergencySection(vm: SettingsViewModel) {
+    val c = Cr.colors
+    val context = LocalContext.current
+    val country by vm.emergency.country.collectAsState()
+    val choice by vm.emergencyChoice.collectAsState()
+    Text(stringResource(R.string.emergency_country_ex), style = PxType.caption, color = c.muted)
+    androidx.compose.foundation.layout.FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        val options = listOf<String?>(null) + com.cerclerouge.domain.EmergencyNumbers.all.map { it.iso }
+        options.forEach { iso ->
+            val on = choice == iso
+            PxButton(
+                iso ?: stringResource(R.string.emergency_auto),
+                { vm.chooseEmergencyCountry(iso) },
+                variant = if (on) PxVariant.LIME else PxVariant.OUTLINE
+            )
+        }
+    }
+    country.numbers.forEach { (service, number) ->
+        PxButton(
+            stringResource(
+                R.string.emergency_number_line,
+                stringResource(
+                    when (service) {
+                        com.cerclerouge.domain.EmergencyService.GENERAL -> R.string.emergency_general
+                        com.cerclerouge.domain.EmergencyService.POLICE -> R.string.emergency_police
+                        com.cerclerouge.domain.EmergencyService.AMBULANCE -> R.string.emergency_ambulance
+                        com.cerclerouge.domain.EmergencyService.FIRE -> R.string.emergency_fire
+                    }
+                ),
+                number
+            ),
+            { context.startActivity(Intent(Intent.ACTION_DIAL, "tel:$number".toUri())) },
+            variant = PxVariant.DARK,
+            icon = PixelIcon.PHONE
+        )
+    }
+}

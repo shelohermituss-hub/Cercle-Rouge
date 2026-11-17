@@ -647,6 +647,33 @@ set local role anon;
 select tests.expect_error($$select public.register_log_root(1, repeat('c', 64))$$, '%permission denied%');
 reset role;
 
+-- ===== 1.19 · Profil et sauvegarde des contacts =====
+select set_config('request.jwt.claims', '', true);
+do $$ begin
+  if not exists (select 1 from vault.secrets where name = 'cr_alert_key') then perform vault.create_secret('test-key', 'cr_alert_key', ''); end if;
+end $$;
+select tests.as_user(:'guardian'); set local role authenticated;
+select tests.expect((select display_name from public.my_profile()) = 'Maman', 'on relit son propre profil');
+select public.backup_contacts('[{"id":"c1","name":"Ti Jan","phone":"+50930000001"}]'::jsonb);
+select tests.expect((select public.restore_contacts() -> 0 ->> 'name') = 'Ti Jan', 'la sauvegarde revient telle quelle');
+select tests.expect_error($$select public.backup_contacts('[1,2,3,4,5,6]'::jsonb)$$, '%invalid_backup%');
+select tests.expect_error($$select public.backup_contacts('{"a":1}'::jsonb)$$, '%invalid_backup%');
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect((select position('Ti Jan' in encode(data_enc, 'escape')) = 0 from private.contact_backups limit 1), 'stockée chiffrée');
+select tests.as_user(:'stranger'); set local role authenticated;
+select tests.expect(public.restore_contacts() is null, 'un tiers ne récupère rien');
+select tests.expect((select count(*) from public.my_profile()) <= 1, 'ni le profil des autres');
+select tests.expect_error($$select * from private.contact_backups$$, '%permission denied%');
+reset role;
+select tests.as_user(:'guardian'); set local role authenticated;
+select public.forget_contact_backup();
+select tests.expect(public.restore_contacts() = '[]'::jsonb, 'désactiver vide la sauvegarde');
+reset role;
+set local role anon;
+select tests.expect_error($$select public.restore_contacts()$$, '%permission denied%');
+reset role;
+
 -- ===== Fonctions : jamais exécutables par anon ni par PUBLIC =====
 select tests.expect(
   not exists (

@@ -561,4 +561,15 @@
     <string name="settings_shutdown_sms">Prévenir si mon téléphone s\'éteint</string>
     <string name="settings_shutdown_sms_ex">Si le téléphone est éteint pendant la protection, un dernier SMS part tout de suite vers 3 proches, avec ta position si elle est connue.</string>
     <string name="watch_protection">%1$s a activé sa protection</string>
+    <string name="login_have_account">J\'ai déjà un compte</string>
+    <string name="login_title">Retrouver mon compte</string>
+    <string name="login_body">Entre le numéro vérifié de ton compte : un code arrive par SMS. Ton profil revient, et tes contacts aussi si leur sauvegarde était activée.</string>
+    <string name="login_privacy">Les enregistrements (preuves) de l\'ancien téléphone ne sont pas transférés : ils restent chiffrés là où ils ont été faits.</string>
+    <string name="login_failed">Impossible de se connecter. Vérifie le numéro et le réseau, puis réessaie.</string>
+    <string name="login_no_profile">Aucun compte trouvé pour ce numéro. Crée ton profil.</string>
+    <string name="settings_phone_change">Changer de numéro</string>
+    <string name="settings_contact_backup">Sauvegarder mes contacts</string>
+    <string name="settings_contact_backup_ex">Pour les retrouver sur un nouveau téléphone. Ils sont chiffrés sur le serveur de Cercle Rouge (comme les numéros envoyés pendant une alerte). Désactiver efface la sauvegarde.</string>
+    <string name="settings_signout">Se déconnecter de ce téléphone</string>
+    <string name="settings_signout_confirm">Ce téléphone sera entièrement effacé (preuves comprises). Ton compte reste sur le serveur : tu pourras le retrouver avec ton numéro.</string>
 </resources>

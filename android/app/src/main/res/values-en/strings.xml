@@ -560,4 +560,15 @@
     <string name="settings_shutdown_sms">Notify if my phone shuts down</string>
     <string name="settings_shutdown_sms_ex">If the phone is turned off during protection, a last SMS goes straight to 3 contacts, with your position if known.</string>
     <string name="watch_protection">%1$s turned on their protection</string>
+    <string name="login_have_account">I already have an account</string>
+    <string name="login_title">Recover my account</string>
+    <string name="login_body">Enter your account\'s verified number: a code arrives by SMS. Your profile comes back, and your contacts too if their backup was on.</string>
+    <string name="login_privacy">Recordings (evidence) from the old phone are not transferred: they stay encrypted where they were made.</string>
+    <string name="login_failed">Could not sign in. Check the number and the network, then try again.</string>
+    <string name="login_no_profile">No account found for this number. Create your profile.</string>
+    <string name="settings_phone_change">Change number</string>
+    <string name="settings_contact_backup">Back up my contacts</string>
+    <string name="settings_contact_backup_ex">To get them back on a new phone. They are encrypted on the Cercle Rouge server (like numbers sent during an alert). Turning this off erases the backup.</string>
+    <string name="settings_signout">Sign out of this phone</string>
+    <string name="settings_signout_confirm">This phone will be fully erased (evidence included). Your account stays on the server: you can recover it with your number.</string>
 </resources>

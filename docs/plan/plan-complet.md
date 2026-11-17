@@ -208,6 +208,7 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 - 🤖 Au redémarrage : « Protection interrompue à HH:MM » (notification + journal).
 - 🤖 `ACTION_SHUTDOWN` → dernier SMS (opt-in) avec position.
 - 🤖 Racine du journal anti-effacement envoyée au serveur pendant une alerte ou un trajet.
+- ✅ Fait : session `trips` de mode PROTECTION (battement 5 min, SMS « dernière activité » après 10 min de silence, opt-in, numéro vérifié), `watch_alerts_due` + textes dédiés dans `trip-watchdog`, vue proche « a activé sa protection » (position seulement si contact perdu), « Protection interrompue à HH:MM » (dernière activité notée chaque minute), SMS direct à l'extinction (opt-in, ACTION_SHUTDOWN reçu par le service), racines du journal (`register_log_root`, purge 30 j). **Reste 📱** : tester force-stop et extinction réelle (Android peut couper l'app avant l'envoi).
 - ⏱ 3 j.
 
 ### 1.18 Avertissements et numéros d'urgence (PDF 20, 22, 23)
@@ -219,6 +220,7 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 ### 1.19 Inscription et connexion (PDF 14.1, 19 point 1)
 - 🤖 **Connexion sur un nouveau téléphone** par code SMS (Supabase Auth, Vonage déjà configuré) : retrouver le compte serveur ; contacts restaurés depuis le serveur (après 1.8) ; preuves locales non transférées (vie privée).
 - 🤖 Déconnexion ; changement de numéro.
+- ✅ Fait : « J'ai déjà un compte » (OTP SMS `create_user=false`), profil restauré (`my_profile`), contacts restaurés si leur **sauvegarde opt-in** était active (chiffrée serveur, cr_alert_key), déconnexion (session révoquée, téléphone effacé), changement de numéro. Preuves non transférées. **Reste 📱** : essai avec un vrai numéro (code SMS).
 - ⏱ 3 j.
 
 ### 1.20 Onboarding final et accessibilité (PDF 15.3, 16.3 ; R-ONB-07, R-UI-01..07)

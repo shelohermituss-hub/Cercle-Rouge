@@ -396,6 +396,9 @@ class ServerSync @Inject constructor(
 
     private suspend fun serverId(localId: String): String? = settings.get("server.alert.$localId")
 
+    /** Déconnexion : session révoquée si le réseau le permet, oubliée dans tous les cas. */
+    suspend fun signOutQuietly() = api.signOut()
+
     /** Identifiant serveur d'une alerte locale, si elle a été synchronisée (preuves, 1.15). */
     suspend fun serverAlertId(localId: String): String? = serverId(localId)
 

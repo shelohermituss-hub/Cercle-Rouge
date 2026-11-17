@@ -29,6 +29,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
@@ -78,7 +81,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class Step { WELCOME, AI, CIRCLE, PROFILE, GUARDIAN, RETENTION, PIN, NOTIFICATIONS, SUMMARY }
+enum class Step { WELCOME, LOGIN, AI, CIRCLE, PROFILE, GUARDIAN, RETENTION, PIN, NOTIFICATIONS, SUMMARY }
+
+data class LoginUi(val pending: String? = null, val busy: Boolean = false, val message: Int? = null)
 
 data class OnboardingUi(
     val step: Step = Step.WELCOME,
@@ -114,8 +119,57 @@ class OnboardingViewModel @Inject constructor(
     private val pins: PinRepository,
     private val contacts: ContactsRepository,
     private val guardians: GuardianSync,
-    private val clock: Clock
+    private val clock: Clock,
+    private val api: com.cerclerouge.app.server.SupabaseApi,
+    private val restore: com.cerclerouge.app.account.AccountRestore
 ) : ViewModel() {
+    /** Connexion sur un nouveau téléphone (1.19) : numéro en attente de code, message, travail en cours. */
+    private val _login = MutableStateFlow(LoginUi())
+    val login: StateFlow<LoginUi> = _login
+
+    fun requestLogin(raw: String) = viewModelScope.launch {
+        val phone = (com.cerclerouge.contacts.Phone.normalize(raw) as? com.cerclerouge.contacts.PhoneResult.Valid)?.number?.value
+        if (phone == null) {
+            _login.update { it.copy(message = R.string.settings_phone_invalid) }
+            return@launch
+        }
+        _login.update { it.copy(busy = true, message = null) }
+        val ok = runCatching { api.requestLoginCode(phone) }.isSuccess
+        _login.update {
+            it.copy(
+                busy = false,
+                pending = if (ok) phone else null,
+                message = if (ok) R.string.settings_phone_sent else R.string.login_failed
+            )
+        }
+    }
+
+    fun verifyLogin(code: String, onRestored: () -> Unit) = viewModelScope.launch {
+        val phone = _login.value.pending ?: return@launch
+        _login.update { it.copy(busy = true, message = null) }
+        if (runCatching { api.verifyLoginCode(phone, code.trim()) }.isFailure) {
+            _login.update { it.copy(busy = false, message = R.string.settings_phone_wrong_code) }
+            return@launch
+        }
+        val result = restore.restoreAfterLogin()
+        _login.update {
+            it.copy(
+                busy = false,
+                message = when (result) {
+                    com.cerclerouge.app.account.RestoreResult.RESTORED -> null
+                    com.cerclerouge.app.account.RestoreResult.NO_PROFILE -> R.string.login_no_profile
+                    com.cerclerouge.app.account.RestoreResult.FAILED -> R.string.login_failed
+                }
+            )
+        }
+        if (result == com.cerclerouge.app.account.RestoreResult.RESTORED) {
+            account.load()?.let { a -> edit { copy(name = a.displayName, year = a.birthYear.toString(), month = a.birthMonth.toString()) } }
+            onRestored()
+        }
+    }
+
+    fun cancelLogin() = _login.update { LoginUi() }
+
     private val _ui = MutableStateFlow(OnboardingUi())
     val ui: StateFlow<OnboardingUi> = _ui
 
@@ -216,6 +270,7 @@ class OnboardingViewModel @Inject constructor(
 /** Étape précédente pour la flèche « retour » des formulaires (les affiches n'en ont pas). */
 private fun Step.previous(ui: OnboardingUi): Step? = when (this) {
     Step.WELCOME, Step.AI, Step.CIRCLE -> null
+    Step.LOGIN -> Step.WELCOME
     Step.PROFILE -> Step.CIRCLE
     Step.GUARDIAN -> Step.PROFILE
     Step.RETENTION -> if (ui.band?.needsGuardian == true) Step.GUARDIAN else Step.PROFILE
@@ -249,6 +304,8 @@ fun OnboardingScreen(vm: OnboardingViewModel, onSos: () -> Unit, onDone: () -> U
                 Spacer(Modifier.height(12.dp))
                 Text(stringResource(R.string.slogan), style = PxType.bodyBold, color = Cr.colors.onLime)
                 Text(stringResource(R.string.disclaimer_short), style = PxType.caption, color = Cr.colors.onLime)
+                Spacer(Modifier.height(8.dp))
+                PxButton(stringResource(R.string.login_have_account), { vm.goTo(Step.LOGIN) }, variant = PxVariant.DARK)
             }
             Step.AI -> Poster(
                 2,
@@ -270,6 +327,7 @@ fun OnboardingScreen(vm: OnboardingViewModel, onSos: () -> Unit, onDone: () -> U
                 { vm.goTo(Step.PROFILE) },
                 null
             )
+            Step.LOGIN -> Form(R.string.login_title, back, vm) { LoginStep(vm) { vm.goTo(Step.RETENTION) } }
             Step.PROFILE -> Form(R.string.profile_screen_title, back, vm) { ProfileStep(ui, vm) }
             Step.GUARDIAN -> Form(R.string.guardian_screen_title, back, vm) { GuardianStep(ui, vm, onSos) }
             Step.RETENTION -> Form(R.string.retention_screen_title, back, vm) { RetentionStep(ui, vm) }
@@ -531,4 +589,49 @@ private fun NotificationsStep(vm: OnboardingViewModel) {
         vm.recordConsent(ConsentScope.NOTIFICATIONS, false)
         vm.goTo(Step.SUMMARY)
     }, variant = PxVariant.OUTLINE)
+}
+
+/**
+ * « J'ai déjà un compte » (1.19) : numéro vérifié + code SMS. Le profil revient, les contacts aussi si leur sauvegarde était
+ * activée. Les preuves de l'ancien téléphone ne sont pas transférées. On reprend ensuite à la durée de conservation (locale).
+ */
+@Composable
+private fun LoginStep(vm: OnboardingViewModel, onRestored: () -> Unit) {
+    val c = Cr.colors
+    val s by vm.login.collectAsState()
+    var number by remember { mutableStateOf("+509") }
+    var code by remember { mutableStateOf("") }
+    Intro(R.string.login_title, R.string.login_body)
+    s.message?.let { Text(stringResource(it), style = PxType.label, color = c.warn) }
+    val pending = s.pending
+    if (pending == null) {
+        androidx.compose.material3.OutlinedTextField(
+            number,
+            { number = it.filter { ch -> ch.isDigit() || ch == '+' || ch == ' ' }.take(20) },
+            label = { Text(stringResource(R.string.settings_phone_label)) },
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Phone
+            ),
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+        PxButton(stringResource(R.string.settings_phone_send), { vm.requestLogin(number) }, enabled = !s.busy && number.length >= 8)
+    } else {
+        Text(stringResource(R.string.settings_phone_code_for, pending), style = PxType.body)
+        androidx.compose.material3.OutlinedTextField(
+            code,
+            { code = it.filter(Char::isDigit).take(8) },
+            label = { Text(stringResource(R.string.settings_phone_code_label)) },
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword
+            ),
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+        PxButton(stringResource(R.string.settings_phone_verify), {
+            vm.verifyLogin(code, onRestored)
+        }, enabled = !s.busy && code.length >= 6)
+        PxButton(stringResource(R.string.action_cancel), { vm.cancelLogin() }, variant = PxVariant.OUTLINE)
+    }
+    Note(PixelIcon.LOCK, stringResource(R.string.login_privacy))
 }

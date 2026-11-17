@@ -149,6 +149,29 @@ class SupabaseApi @Inject constructor(db: PrivacyDatabase, private val clock: Cl
         }
     }
 
+    /**
+     * Connexion sur un nouveau téléphone (1.19) : Supabase envoie un code par SMS au numéro **déjà vérifié** d'un compte.
+     * `create_user = false` : jamais de nouveau compte par ce chemin.
+     */
+    suspend fun requestLoginCode(phoneE164: String) {
+        post("/auth/v1/otp", JSONObject().put("phone", phoneE164).put("create_user", false).toString(), null)
+    }
+
+    /** Vérifie le code : la session du compte existant remplace celle du téléphone (anonyme ou vide). */
+    suspend fun verifyLoginCode(phoneE164: String, code: String) {
+        val session = post("/auth/v1/verify", JSONObject().put("type", "sms").put("phone", phoneE164).put("token", code).toString(), null)
+        mutex.withLock {
+            save(JSONObject(session))
+            settings.put(SettingEntity(PHONE, phoneE164))
+        }
+    }
+
+    /** Déconnexion (1.19) : la session est révoquée côté serveur si possible, puis oubliée ici. */
+    suspend fun signOut() {
+        runCatching { post("/auth/v1/logout", "{}", accessToken()) }
+        forget()
+    }
+
     /** Numéro vérifié du compte, ou null. */
     suspend fun verifiedPhone(): String? = settings.get(PHONE)
 

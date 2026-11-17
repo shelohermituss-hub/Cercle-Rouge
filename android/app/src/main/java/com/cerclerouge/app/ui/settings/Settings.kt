@@ -105,7 +105,8 @@ class SettingsViewModel @Inject constructor(
     private val server: ServerSync,
     val data: DataControl,
     val emergency: EmergencyNumberRepository,
-    val protectionWatch: com.cerclerouge.app.server.ProtectionWatch
+    val protectionWatch: com.cerclerouge.app.server.ProtectionWatch,
+    val restore: com.cerclerouge.app.account.AccountRestore
 ) : ViewModel() {
     private val _ui = MutableStateFlow(SettingsUi())
     val ui: StateFlow<SettingsUi> = _ui
@@ -178,6 +179,16 @@ class SettingsViewModel @Inject constructor(
         _ui.update { it.copy(busy = true) }
         data.emergencyWipe()
         _ui.update { it.copy(busy = false, message = R.string.settings_wiped) }
+    }
+
+    fun setContactBackup(on: Boolean) = viewModelScope.launch { restore.setBackup(on) }
+
+    /** Changer de numéro (1.19) : on repart de la saisie ; le nouveau numéro remplace l'ancien après son code. */
+    fun changePhone() = _ui.update { it.copy(phone = null, pendingPhone = null, message = null) }
+
+    suspend fun signOut() {
+        _ui.update { it.copy(busy = true) }
+        data.signOut()
     }
 
     /** Vrai si tout est effacé : l'app redémarre alors sur l'accueil d'inscription. */
@@ -262,7 +273,7 @@ class SettingsViewModel @Inject constructor(
     }
 }
 
-private enum class Guarded { WIPE, DELETE, BIOMETRIC_ALERTS }
+private enum class Guarded { WIPE, DELETE, BIOMETRIC_ALERTS, SIGN_OUT }
 
 /**
  * Réglages (S3.12, S5.13, S7.02, S7.05, S7.06) : conservation des preuves, enregistrement, biométrie, effacement d'urgence,
@@ -399,6 +410,9 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             PxButton(stringResource(R.string.settings_privacy), {
                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, PRIVACY_URL.toUri())) }
             }, variant = PxVariant.OUTLINE)
+            PxButton(stringResource(R.string.settings_signout), {
+                confirm = Guarded.SIGN_OUT
+            }, variant = PxVariant.OUTLINE, enabled = !ui.busy)
             PxButton(stringResource(R.string.settings_delete), { confirm = Guarded.DELETE }, variant = PxVariant.DANGER, enabled = !ui.busy)
             Section(R.string.settings_section_about)
             Text(stringResource(R.string.slogan), style = PxType.bodyBold)
@@ -412,10 +426,10 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
         Dialog(onDismissRequest = { confirm = null }) {
             PxPanel(border = c.danger, fill = c.surface, padding = PaddingValues(16.dp)) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    val (title, body) = if (what == Guarded.WIPE) {
-                        R.string.settings_wipe to R.string.settings_wipe_confirm
-                    } else {
-                        R.string.settings_delete to R.string.settings_delete_confirm
+                    val (title, body) = when (what) {
+                        Guarded.WIPE -> R.string.settings_wipe to R.string.settings_wipe_confirm
+                        Guarded.SIGN_OUT -> R.string.settings_signout to R.string.settings_signout_confirm
+                        else -> R.string.settings_delete to R.string.settings_delete_confirm
                     }
                     Text(stringResource(title).uppercase(), style = PxType.title)
                     Text(stringResource(body), style = PxType.body)
@@ -446,6 +460,16 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
                 when (what) {
                     Guarded.WIPE -> vm.wipe()
                     Guarded.BIOMETRIC_ALERTS -> vm.setBiometricAlerts(true)
+                    Guarded.SIGN_OUT -> scope.launch {
+                        vm.signOut()
+                        // Téléphone effacé, compte gardé sur le serveur : retour à l'accueil (« J'ai déjà un compte »).
+                        context.packageManager.getLaunchIntentForPackage(context.packageName)?.let {
+                            it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                            context.startActivity(it)
+                        }
+                        activity?.finishAffinity()
+                        Process.killProcess(Process.myPid())
+                    }
                     Guarded.DELETE -> scope.launch {
                         if (vm.deleteAll()) {
                             // Tout est effacé : on repart de zéro (inscription), dans un processus neuf.
@@ -487,7 +511,12 @@ private fun PhoneSection(ui: SettingsUi, vm: SettingsViewModel) {
     var number by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
     when {
-        ui.phone != null -> Text(stringResource(R.string.settings_phone_verified, ui.phone), style = PxType.bodyBold, color = c.lime)
+        ui.phone != null -> {
+            Text(stringResource(R.string.settings_phone_verified, ui.phone), style = PxType.bodyBold, color = c.lime)
+            PxButton(stringResource(R.string.settings_phone_change), { vm.changePhone() }, variant = PxVariant.OUTLINE)
+            val backupOn by vm.restore.backup.collectAsState()
+            Toggle(R.string.settings_contact_backup, R.string.settings_contact_backup_ex, backupOn) { vm.setContactBackup(it) }
+        }
         ui.pendingPhone == null -> {
             Text(stringResource(R.string.settings_phone_ex), style = PxType.caption, color = c.muted)
             Field(number, {

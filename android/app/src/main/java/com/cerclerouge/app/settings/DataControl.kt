@@ -57,6 +57,14 @@ class DataControl @Inject constructor(
         true
     }
 
+    /** Déconnexion (1.19) : le compte reste sur le serveur ; ce téléphone est entièrement effacé (preuves comprises). */
+    suspend fun signOut() = withContext(Dispatchers.IO) {
+        server.signOutQuietly()
+        evidence.wipeAll()
+        audio.restartWith(null)
+        db.clearAllTables()
+    }
+
     suspend fun export(): String = withContext(Dispatchers.IO) {
         val s = db.settings()
         val account = JSONObject()

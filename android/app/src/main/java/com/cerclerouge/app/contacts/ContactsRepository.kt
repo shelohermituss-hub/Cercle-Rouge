@@ -120,6 +120,12 @@ class ContactsRepository @Inject constructor(db: PrivacyDatabase) {
     }
 
     /** Statuts relus sur le serveur (accord, refus, STOP) : seuls les contacts connus du serveur changent. */
+    /** Remplace le carnet par une sauvegarde (connexion sur un nouveau téléphone, 1.19). */
+    suspend fun restore(entities: List<com.cerclerouge.privacy.db.ContactEntity>) = mutex.withLock {
+        dao.replaceAll(entities.take(5))
+        _book.value = ContactBook(dao.all().map { it.toContact() })
+    }
+
     suspend fun applyServerStatuses(statuses: Map<String, ContactStatus>) = mutex.withLock {
         if (statuses.isEmpty()) return@withLock
         val book = _book.value

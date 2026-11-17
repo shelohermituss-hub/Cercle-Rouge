@@ -561,4 +561,15 @@
     <string name="settings_shutdown_sms">Avèti si telefòn mwen etenn</string>
     <string name="settings_shutdown_sms_ex">Si yo etenn telefòn nan pandan pwoteksyon an, yon dènye SMS pati touswit bay 3 pwòch, ak pozisyon ou si li konnen.</string>
     <string name="watch_protection">%1$s aktive pwoteksyon li</string>
+    <string name="login_have_account">Mwen gen yon kont deja</string>
+    <string name="login_title">Jwenn kont mwen</string>
+    <string name="login_body">Mete nimewo verifye kont ou a : yon kòd ap rive pa SMS. Pwofil ou ap tounen, ak kontak ou yo tou si sovgad yo te aktive.</string>
+    <string name="login_privacy">Anrejistreman (prèv) ansyen telefòn nan pa transfere : yo rete chifre kote yo te fèt la.</string>
+    <string name="login_failed">Pa ka konekte. Verifye nimewo a ak rezo a, epi eseye ankò.</string>
+    <string name="login_no_profile">Pa jwenn okenn kont pou nimewo sa a. Kreye pwofil ou.</string>
+    <string name="settings_phone_change">Chanje nimewo</string>
+    <string name="settings_contact_backup">Sove kontak mwen yo</string>
+    <string name="settings_contact_backup_ex">Pou jwenn yo sou yon nouvo telefòn. Yo chifre sou sèvè Cercle Rouge (tankou nimewo ki voye pandan yon alèt). Dezaktive efase sovgad la.</string>
+    <string name="settings_signout">Dekonekte sou telefòn sa a</string>
+    <string name="settings_signout_confirm">Telefòn sa a ap efase nèt (prèv yo tou). Kont ou rete sou sèvè a : w ap ka jwenn li ak nimewo ou.</string>
 </resources>

@@ -1,0 +1,16 @@
+# Audit des dépendances (1.21) : vulnérabilités connues (OSV) des bibliothèques Android et des Edge Functions.
+name: Audit des dépendances
+on:
+  push:
+    paths: ["android/gradle/libs.versions.toml", "supabase/functions/**", "tools/osv-check.py", ".github/workflows/deps-audit.yml"]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  osv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/osv-check.py

@@ -232,6 +232,7 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 ### 1.21 Console admin et audit (S7.07–S7.09 ; R-ADM-01..05)
 - 🤖 `web/admin` (accès conditionnel, MFA) : santé des envois (`deliveries`), abus (quotas), support par code ; aucun contenu, aucune position (R-ADM-03) ; journal append-only des actions admin.
 - 🤖 Revue du modèle de menace T1–T14, OWASP MASVS L2, tests d'intrusion automatisés de la RLS et des Edge Functions (scripts dans `supabase/tests/`), audit des dépendances.
+- ✅ Fait : migration `s7_admin_console` (rôle admin + MFA aal2, agrégats seulement : santé des envois, abus, support par code, levée des plafonds, journal), journal d'audit en ajout seul (trigger), code de support dans Réglages, console `web/admin` (sans dépendance, CSP stricte, session en mémoire). Audit : `docs/securite/audit-mvp.md` (T1–T14, MASVS L2), `supabase/tests/pentest.sh` (94/94 sur le vrai projet), audit OSV automatisé (`tools/osv-check.py`, CI hebdomadaire). **Reste 👤** : comptes admin, test d'intrusion par un tiers, Play Integrity, premier résultat OSV.
 - ⏱ 6 j.
 
 ### 1.22 Qualité et lancement du MVP (S8)

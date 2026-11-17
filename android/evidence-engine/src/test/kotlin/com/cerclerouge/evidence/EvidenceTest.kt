@@ -131,6 +131,33 @@ class ExportTest {
         assertFalse(String(archive, Charsets.ISO_8859_1).contains("lat=18.53920"))
     }
 
+    @Test fun offlineVerifierPrintsTheChainAndWritesSegmentsAndMetadata() { // R-EE-03 : outil remis à un avocat ou à la police
+        val (entries, data) = chain(2)
+        val code = EvidenceExport.newCode()
+        val dir = java.nio.file.Files.createTempDirectory("verify").toFile()
+        val archive = java.io.File(dir, "preuve.crx").apply {
+            writeBytes(EvidenceExport.seal(ExportBundle("alert-1", entries, data, listOf("2026-11-11T14:00:00Z closed")), code))
+        }
+        val out = java.io.File(dir, "sortie")
+        fun run(vararg args: String): String {
+            val buffer = java.io.ByteArrayOutputStream()
+            val old = System.out
+            System.setOut(java.io.PrintStream(buffer, true, "UTF-8"))
+            try {
+                VerifyTool.main(arrayOf(*args))
+            } finally {
+                System.setOut(old)
+            }
+            return buffer.toString("UTF-8")
+        }
+        val ok = run(archive.path, code, out.path)
+        assertTrue("Chaîne intacte." in ok && "2 segment(s)" in ok && "Métadonnées (1 ligne(s))" in ok, ok)
+        assertTrue(java.io.File(out, "segment-000.aac").exists() && java.io.File(out, "segment-001.aac").exists())
+        assertEquals("2026-11-11T14:00:00Z closed", java.io.File(out, "metadonnees.txt").readText())
+        assertTrue("code faux" in run(archive.path, "ABCDEFGHJKMN"))
+        assertTrue("Usage" in run())
+    }
+
     @Test fun wrongCodeOrTamperedArchiveFails() {
         val (entries, data) = chain(2)
         val archive = EvidenceExport.seal(ExportBundle("alert-1", entries, data), "ABCDEFGHJKMN")

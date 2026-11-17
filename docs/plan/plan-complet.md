@@ -240,6 +240,7 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 - 🤖 Test « aucun audio ne sort » (S5.11) ; banc `tools/audio-eval/` (S5.10).
 - 👤📱 Campagne téléphones (Tecno, Infinix, Itel, Samsung A ; Android 10–15), réseau faible, Digicel/Natcom, batterie (≤ 4 %/h écoute, ≤ 3 %/h trajet), 40 h d'écoute réelle.
 - 👤 Dossier Play (sécurité des données, types de service, `SEND_SMS`, `CALL_PHONE`, localisation en arrière-plan, `READ_CONTACTS`, vidéos), juriste (conditions, confidentialité FR/HT/EN, consentement parental), bêta fermée, lancement progressif.
+- ✅ Fait : JaCoCo sur les 7 modules de logique, seuil de 90 % des lignes vérifié par `check` (core-domain 99,0 %, alert-engine 99,8 %, contacts-engine 98,1 %, location-engine 98,5 %, evidence-engine 99,4 %, audio-engine 93,8 %, sensor-engine 99,0 %) ; test « aucun audio ne sort » (`NoAudioLeavesTest`, règle d'architecture) ; banc `tools/audio-eval/` (`AudioEvalBench`, rapport `audio-eval.md`) : **75 % au calme, 0 % dès 10 dB de bruit, 0 fausse alerte** — limite à annoncer, à corriger en phase 2. **Reste** : tests de bout en bout sur staging (pas de projet staging), capture réseau 10 min sur téléphone, et tous les points 👤📱 ci-dessus.
 - ⏱ 2 semaines de dev + délais externes.
 
 ---

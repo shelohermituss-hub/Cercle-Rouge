@@ -74,7 +74,6 @@ enum class ConsentScope {
 
 data class Consent(val scope: ConsentScope, val granted: Boolean, val textVersion: String, val locale: String, val at: Instant)
 
-/** Durée de conservation des preuves, choisie à l'onboarding (ADR-0017). */
 /**
  * Durée de conservation des preuves (ADR-0017, ADR-0027). `MANUAL` : gardées jusqu'à ce que l'utilisateur les supprime,
  * choix explicite avec avertissement ; jamais proposé par défaut.

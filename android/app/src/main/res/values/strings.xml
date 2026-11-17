@@ -555,4 +555,10 @@
     <string name="emergency_police">Police</string>
     <string name="emergency_ambulance">Ambulance</string>
     <string name="emergency_fire">Pompiers</string>
+    <string name="notif_interrupted_at">Protection interrompue à %1$s. Ouvre l\'app pour la réactiver.</string>
+    <string name="settings_prot_watch">Surveillance de ma protection par le serveur</string>
+    <string name="settings_prot_watch_ex">Pendant la protection, ton téléphone donne signe de vie toutes les 5 min. S\'il se tait 10 min (application fermée de force, téléphone éteint, cassé ou volé), 3 proches reçoivent un SMS avec ta dernière position. Il faut un numéro vérifié.</string>
+    <string name="settings_shutdown_sms">Prévenir si mon téléphone s\'éteint</string>
+    <string name="settings_shutdown_sms_ex">Si le téléphone est éteint pendant la protection, un dernier SMS part tout de suite vers 3 proches, avec ta position si elle est connue.</string>
+    <string name="watch_protection">%1$s a activé sa protection</string>
 </resources>

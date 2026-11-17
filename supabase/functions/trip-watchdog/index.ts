@@ -9,13 +9,29 @@ const KEY = Deno.env.get("VONAGE_API_KEY") ?? "";
 const SECRET = Deno.env.get("VONAGE_API_SECRET") ?? "";
 const FROM = Deno.env.get("VONAGE_FROM") ?? "CercleRouge";
 
-type Due = { trip_id: string; kind: "lost" | "recovered"; name: string | null; phone: string; lang: string; lat: number | null; lon: number | null; at: Date };
+type Due = { trip_id: string; kind: "lost" | "recovered"; mode: string; name: string | null; phone: string; lang: string; lat: number | null; lon: number | null; at: Date };
 
 const hhmm = (d: Date) =>
   new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Port-au-Prince" }).format(d);
 const where = (d: Due) => (d.lat != null && d.lon != null ? ` https://maps.google.com/?q=${d.lat.toFixed(5)},${d.lon.toFixed(5)}` : "");
 
 // GSM-7 (sans accents), un ou deux SMS au plus.
+// Protection armée sans trajet (1.17) : « dernière activité », même gabarit GSM-7.
+const PROTECTION: Record<string, Record<Due["kind"], (d: Due, n: string) => string>> = {
+  fr: {
+    lost: (d, n) => `Cercle Rouge: plus de nouvelles du telephone de ${n} depuis ${hhmm(d.at)} (heure d'Haiti) alors que sa protection etait active (appli fermee, telephone eteint ou casse ?). Derniere position:${where(d) || " inconnue"}. Essaie de l'appeler.`,
+    recovered: (_d, n) => `Cercle Rouge: le telephone de ${n} est de nouveau joignable.`,
+  },
+  ht: {
+    lost: (d, n) => `Cercle Rouge: telefon ${n} pa bay nouvel depi ${hhmm(d.at)} (le Ayiti) pandan pwoteksyon l te aktive (aplikasyon femen, telefon etenn oswa kraze ?). Denye pozisyon:${where(d) || " enkoni"}. Eseye rele l.`,
+    recovered: (_d, n) => `Cercle Rouge: telefon ${n} ap reponn anko.`,
+  },
+  en: {
+    lost: (d, n) => `Cercle Rouge: no news from ${n}'s phone since ${hhmm(d.at)} (Haiti time) while their protection was on (app closed, phone off or broken?). Last position:${where(d) || " unknown"}. Try calling them.`,
+    recovered: (_d, n) => `Cercle Rouge: ${n}'s phone is reachable again.`,
+  },
+};
+
 const TEXT: Record<string, Record<Due["kind"], (d: Due, n: string) => string>> = {
   fr: {
     lost: (d, n) => `Cercle Rouge: plus de nouvelles du telephone de ${n} depuis ${hhmm(d.at)} (heure d'Haiti) pendant un trajet. Derniere position:${where(d) || " inconnue"}. Essaie de l'appeler.`,
@@ -63,10 +79,11 @@ Deno.serve(async (req) => {
   if (!sameSecret(req.headers.get("x-cr-cron") ?? "", expected ?? "")) return json(401, { error: "unauthorized" });
   if (!KEY || !SECRET) return json(503, { error: "not_configured" });
 
-  const due = await sql<Due[]>`select * from private.trip_alerts_due()`;
+  const due = await sql<Due[]>`select * from private.watch_alerts_due()`;
   const byTrip = new Map<string, { kind: Due["kind"]; ok: boolean }>();
   for (const d of due) {
-    const t = TEXT[d.lang] ?? TEXT.fr;
+    const texts = d.mode === "PROTECTION" ? PROTECTION : TEXT;
+    const t = texts[d.lang] ?? texts.fr;
     const ok = await send(d.phone, t[d.kind](d, d.name?.slice(0, 30) || "?")).catch(() => false);
     const prev = byTrip.get(d.trip_id);
     byTrip.set(d.trip_id, { kind: d.kind, ok: (prev?.ok ?? false) || ok });

@@ -214,6 +214,7 @@ private fun WatchCard(w: Watched) {
                     when {
                         alert -> R.string.watch_alert
                         w.status == "lost" -> R.string.watch_trip_lost
+                        w.kind == "protection" -> R.string.watch_protection
                         else -> R.string.watch_trip
                     },
                     w.name

@@ -614,6 +614,39 @@ select tests.as_user(:'admin'); set local role authenticated;
 select tests.expect((select count(*) from public.my_shared_evidence()) = 0, 'une preuve effacée par son propriétaire n''est plus partagée');
 reset role;
 
+-- ===== 1.17 · Surveillance de la protection et racine du journal =====
+select tests.as_user(:'guardian'); set local role authenticated;
+insert into s3 values ('prot1', public.start_trip('prot-0000001', 'PROTECTION', now() + interval '12 hours')::text);
+select public.set_trip_recipients((select v::uuid from s3 where k = 'prot1'), array['+50930000005'], array['fr']);
+select public.trip_heartbeat((select v::uuid from s3 where k = 'prot1'), 18.55, -72.34, 15, 64);
+reset role;
+select tests.as_user(:'admin'); set local role authenticated;
+select tests.expect((select count(*) from public.my_watched() where kind = 'protection') = 1, 'le proche voit la protection active');
+select tests.expect((select lat from public.my_watched() where kind = 'protection') is null, 'sans position tant que le contact n''est pas perdu');
+reset role;
+select set_config('request.jwt.claims', '', true);
+update public.trips set lost_at = now() where id = (select v::uuid from s3 where k = 'prot1');
+select tests.as_user(:'admin'); set local role authenticated;
+select tests.expect((select lat from public.my_watched() where kind = 'protection') = 18.55, 'avec la dernière position une fois le contact perdu');
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect((select mode from private.watch_alerts_due() where trip_id = (select v::uuid from s3 where k = 'prot1')) = 'PROTECTION', 'le chien de garde connaît le mode');
+select tests.as_user(:'guardian'); set local role authenticated;
+select tests.expect_error($$select * from private.watch_alerts_due()$$, '%permission denied%');
+select public.register_log_root(12, repeat('a', 64));
+select public.register_log_root(12, repeat('a', 64));
+select tests.expect((select count(*) from public.log_roots) = 1, 'une même racine n''est déposée qu''une fois');
+select tests.expect_error($$select public.register_log_root(13, 'pas-un-hachage')$$, '%invalid_root%');
+select tests.expect_error($$insert into public.log_roots (owner_id, seq, root) values (auth.uid(), 1, repeat('b', 64))$$, '%permission denied%');
+select tests.expect_error($$delete from public.log_roots$$, '%permission denied%');
+reset role;
+select tests.as_user(:'stranger'); set local role authenticated;
+select tests.expect((select count(*) from public.log_roots) = 0, 'un tiers ne voit pas les racines des autres');
+reset role;
+set local role anon;
+select tests.expect_error($$select public.register_log_root(1, repeat('c', 64))$$, '%permission denied%');
+reset role;
+
 -- ===== Fonctions : jamais exécutables par anon ni par PUBLIC =====
 select tests.expect(
   not exists (

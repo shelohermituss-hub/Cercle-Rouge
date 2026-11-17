@@ -118,7 +118,19 @@ class ProtectionController @Inject constructor(
             restored = true
             settings.get(STATE_KEY)?.let(EngineStateCodec::decode)?.let { _state.value = it }
         }
-        if (_state.value != EngineState()) dispatch(Input.ProcessRestored("restored-${clock.millis()}"))
+        if (_state.value != EngineState()) {
+            // 1.17 : heure de la dernière activité connue (écrite chaque minute par le service), pour l'avis et le journal.
+            settings.get(LAST_ALIVE)?.toLongOrNull()?.let { at ->
+                val instant = Instant.ofEpochMilli(at)
+                notifier.interruptedAt = instant
+                if (_state.value.protection !=
+                    com.cerclerouge.domain.ProtectionState.OFF
+                ) {
+                    log.append("protection", "interrupted_at=$instant")
+                }
+            }
+            dispatch(Input.ProcessRestored("restored-${clock.millis()}"))
+        }
     }
 
     /** Vérifie le PIN (si configuré) puis transmet le résultat au moteur. */
@@ -205,7 +217,13 @@ class ProtectionController @Inject constructor(
         }
     }
 
+    /** Appelé chaque minute par le service tant que la protection tourne ; effacé quand elle s'arrête. */
+    suspend fun markAlive(on: Boolean) {
+        if (on) settings.put(SettingEntity(LAST_ALIVE, clock.millis().toString())) else settings.remove(LAST_ALIVE)
+    }
+
     private companion object {
+        const val LAST_ALIVE = "protection.last_alive"
         const val STATE_KEY = "engine.state"
     }
 }

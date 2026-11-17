@@ -47,6 +47,24 @@ class ProtectionService : Service() {
     @Inject lateinit var brain: RiskBrain
 
     @Inject lateinit var listen: ListenSettings
+
+    /** Instanciée ici : elle suit l'état de la protection pour le battement serveur (1.17). */
+    @Inject lateinit var protectionWatch: com.cerclerouge.app.server.ProtectionWatch
+
+    /** Extinction du téléphone pendant la protection : dernier SMS (opt-in, 1.17). Reçu seulement tant que le service vit. */
+    private val shutdown = object : android.content.BroadcastReceiver() {
+        override fun onReceive(c: android.content.Context, i: Intent) {
+            if (controller.state.value.protection == com.cerclerouge.domain.ProtectionState.OFF) return
+            val pending = goAsync()
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    kotlinx.coroutines.withTimeoutOrNull(SHUTDOWN_BUDGET_MS) { dispatcher.notifyShutdown() }
+                } finally {
+                    pending.finish()
+                }
+            }
+        }
+    }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     /** Retour du réseau : la file d'envoi repart tout de suite (R-NET-06), sans attendre la fin de son attente. */
@@ -67,10 +85,24 @@ class ProtectionService : Service() {
         monitor.start()
         brain.start()
         getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(network)
+        androidx.core.content.ContextCompat.registerReceiver(
+            this,
+            shutdown,
+            android.content.IntentFilter(Intent.ACTION_SHUTDOWN),
+            androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        // 1.17 : dernière activité connue, pour « Protection interrompue à HH:MM » si le processus est tué.
+        scope.launch(Dispatchers.Default) {
+            while (true) {
+                controller.markAlive(controller.state.value.protection != com.cerclerouge.domain.ProtectionState.OFF)
+                kotlinx.coroutines.delay(ALIVE_EVERY_MS)
+            }
+        }
         scope.launch {
             controller.ensureRestored()
             controller.state.map { it.protection }.collect { p ->
                 if (p == com.cerclerouge.domain.ProtectionState.OFF) {
+                    controller.markAlive(false) // arrêt voulu : pas d'avis d'interruption au prochain démarrage
                     stopSelf()
                 } else {
                     getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, build(alert = p.isAlert))
@@ -116,6 +148,7 @@ class ProtectionService : Service() {
 
     override fun onDestroy() {
         runCatching { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(network) }
+        runCatching { unregisterReceiver(shutdown) }
         scope.cancel()
         super.onDestroy()
     }
@@ -145,6 +178,8 @@ class ProtectionService : Service() {
     companion object {
         private const val CHANNEL = "protection_service"
         private const val NOTIFICATION_ID = 4100
+        private const val ALIVE_EVERY_MS = 60_000L
+        private const val SHUTDOWN_BUDGET_MS = 5_000L
 
         /** À appeler depuis l'application au premier plan (Android 12+ interdit de démarrer un service depuis l'arrière-plan). */
         fun start(context: Context) = ContextCompat.startForegroundService(context, Intent(context, ProtectionService::class.java))

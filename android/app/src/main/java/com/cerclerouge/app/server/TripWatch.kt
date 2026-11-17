@@ -59,6 +59,7 @@ class TripWatch @Inject constructor(
     private val tracker: LocationTracker,
     private val log: EventLog,
     private val dispatcher: com.cerclerouge.app.alert.AlertDispatcher,
+    private val roots: LogRoots,
     private val prefs: com.cerclerouge.app.trip.TripPrefs,
     db: PrivacyDatabase
 ) {
@@ -164,6 +165,7 @@ class TripWatch @Inject constructor(
         }
         try {
             api.rpc("trip_heartbeat", args)
+            roots.push() // racine du journal anti-effacement (1.17)
         } catch (e: ServerException) {
             // Sans réseau, le serveur préviendra les proches au bout de 10 min : c'est le but. Rien d'autre à faire ici.
             log.append("trip", "heartbeat_failed ${e.code}")

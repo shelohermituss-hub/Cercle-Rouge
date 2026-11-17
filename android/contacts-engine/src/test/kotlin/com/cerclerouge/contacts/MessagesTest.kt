@@ -120,6 +120,15 @@ class MessagesTest {
         assertFalse("aide" in m || "18.5392" in m, m)
     }
 
+    @Test fun phoneShutdownGivesTimeAndPositionInGsm7() { // 1.17
+        for (lang in Language.entries) {
+            val m = Messages.sms(input(lang, kind = MessageKind.PHONE_SHUTDOWN))
+            assertTrue("Marie" in m, m)
+            assertTrue("18.5392" in m, "position attendue : $m")
+            assertTrue(Gsm7.isGsm7(m) && Gsm7.segments(m) <= 2, "$lang : $m")
+        }
+    }
+
     @Test fun tripShareCarriesTheFollowLinkAndIsGsm7() { // S4.10
         for (lang in Language.entries) {
             val m = Messages.sms(input(lang, kind = MessageKind.TRIP_SHARE))

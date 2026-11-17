@@ -555,4 +555,10 @@
     <string name="emergency_police">Lapolis</string>
     <string name="emergency_ambulance">Anbilans</string>
     <string name="emergency_fire">Ponpye</string>
+    <string name="notif_interrupted_at">Pwoteksyon an te koupe a %1$s. Louvri aplikasyon an pou reaktive l.</string>
+    <string name="settings_prot_watch">Sèvè a siveye pwoteksyon mwen</string>
+    <string name="settings_prot_watch_ex">Pandan pwoteksyon an, telefòn ou bay siy lavi chak 5 min. Si li pa di anyen pandan 10 min (aplikasyon fèmen pa fòs, telefòn etenn, kraze oswa vòlè), 3 pwòch resevwa yon SMS ak dènye pozisyon ou. Fò w gen yon nimewo verifye.</string>
+    <string name="settings_shutdown_sms">Avèti si telefòn mwen etenn</string>
+    <string name="settings_shutdown_sms_ex">Si yo etenn telefòn nan pandan pwoteksyon an, yon dènye SMS pati touswit bay 3 pwòch, ak pozisyon ou si li konnen.</string>
+    <string name="watch_protection">%1$s aktive pwoteksyon li</string>
 </resources>

@@ -554,4 +554,10 @@
     <string name="emergency_police">Police</string>
     <string name="emergency_ambulance">Ambulance</string>
     <string name="emergency_fire">Fire</string>
+    <string name="notif_interrupted_at">Protection interrupted at %1$s. Open the app to turn it back on.</string>
+    <string name="settings_prot_watch">Server watch of my protection</string>
+    <string name="settings_prot_watch_ex">While protection is on, your phone checks in every 5 min. If it goes silent for 10 min (app force-closed, phone off, broken or stolen), 3 contacts get an SMS with your last position. Requires a verified number.</string>
+    <string name="settings_shutdown_sms">Notify if my phone shuts down</string>
+    <string name="settings_shutdown_sms_ex">If the phone is turned off during protection, a last SMS goes straight to 3 contacts, with your position if known.</string>
+    <string name="watch_protection">%1$s turned on their protection</string>
 </resources>

@@ -159,6 +159,41 @@ class AlertDispatcher @Inject constructor(
     }
 
     /**
+     * Le téléphone s'éteint pendant la protection (1.17, opt-in) : un dernier SMS **direct** aux 3 premiers proches ayant
+     * accepté, avec la position si elle arrive en 2 s. Pas de file d'attente : il ne reste que quelques secondes avant l'arrêt.
+     */
+    suspend fun notifyShutdown() {
+        if (settings.get(SHUTDOWN_SMS) != "1") return
+        contacts.load()
+        val now = clock.instant()
+        val position = withTimeoutOrNull(SHUTDOWN_POSITION_MS) { location.share() } ?: LocationShare.NotShared
+        val name = account.account.value?.displayName ?: context.getString(com.cerclerouge.app.R.string.app_name)
+        val id = "shutdown-${now.toEpochMilli()}"
+        val recipients = contacts.book.value.contacts.filter { it.status == ContactStatus.ACCEPTED }.sortedBy { it.position }
+            .take(TRIP_RECIPIENTS)
+        recipients.forEach { c ->
+            val text = Messages.sms(
+                MessageInput(
+                    c.name.let { name },
+                    Reason.SOS,
+                    MessageKind.PHONE_SHUTDOWN,
+                    now,
+                    ZoneId.systemDefault(),
+                    position,
+                    null,
+                    c.language,
+                    id,
+                    test = false,
+                    unconsented = false,
+                    custom = null
+                )
+            )
+            sms.send("$id-${c.id}", c.phone.value, text)
+        }
+        log.append("dispatch", "shutdown_sms recipients=${recipients.size}")
+    }
+
+    /**
      * Départ d'un trajet suivi (S4.10) : chaque proche choisi reçoit par SMS son lien de suivi (`links` : id du contact → lien).
      * Même file que les alertes : repris au retour du réseau, jamais en double.
      */
@@ -355,5 +390,7 @@ class AlertDispatcher @Inject constructor(
         private const val TRIP_WATCH = "trip.server_watch"
         private const val TRIP_LINK = "trip.share.link."
         private const val TRIP_RECIPIENTS = 3
+        const val SHUTDOWN_SMS = "protection.shutdown_sms"
+        private const val SHUTDOWN_POSITION_MS = 2_000L
     }
 }

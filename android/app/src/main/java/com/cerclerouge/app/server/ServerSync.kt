@@ -67,6 +67,7 @@ class ServerSync @Inject constructor(
     private val log: EventLog,
     private val clock: Clock,
     private val monitor: com.cerclerouge.app.device.DeviceMonitor,
+    private val roots: LogRoots,
     db: PrivacyDatabase
 ) {
     private val settings = db.settings()
@@ -344,6 +345,7 @@ class ServerSync @Inject constructor(
                             JSONObject().put("p_alert_id", id).put("p_battery", d.batteryPct ?: JSONObject.NULL).put("p_online", d.hasData)
                         )
                     }
+                    roots.push() // racine du journal anti-effacement pendant l'alerte (1.17)
                 }
                 if (id != null) {
                     quietly("feedback") { api.rpc("alert_feedback", JSONObject().put("p_alert_id", id)) }?.let { body ->

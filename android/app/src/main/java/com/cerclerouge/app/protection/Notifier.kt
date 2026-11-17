@@ -35,6 +35,9 @@ class Notifier @Inject constructor(@ApplicationContext private val context: Cont
         )
     }
 
+    /** Heure de la dernière activité connue avant une interruption (1.17), pour « Protection interrompue à HH:MM ». */
+    @Volatile var interruptedAt: java.time.Instant? = null
+
     fun notice(kind: NoticeKind) {
         // areNotificationsEnabled couvre Android 10–12 (pas de permission) et 13+ (permission POST_NOTIFICATIONS).
         if (!nm.areNotificationsEnabled()) return
@@ -60,7 +63,14 @@ class Notifier @Inject constructor(@ApplicationContext private val context: Cont
             Notification.Builder(context, channel)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(context.getString(R.string.app_name))
-                .setContentText(context.getString(text))
+                .setContentText(
+                    interruptedAt?.takeIf { kind == NoticeKind.PROTECTION_INTERRUPTED && !discreet }?.let {
+                        context.getString(
+                            R.string.notif_interrupted_at,
+                            java.time.format.DateTimeFormatter.ofPattern("HH:mm").format(it.atZone(java.time.ZoneId.systemDefault()))
+                        )
+                    } ?: context.getString(text)
+                )
                 .setContentIntent(open)
                 .setAutoCancel(true)
                 .setVisibility(Notification.VISIBILITY_PRIVATE)

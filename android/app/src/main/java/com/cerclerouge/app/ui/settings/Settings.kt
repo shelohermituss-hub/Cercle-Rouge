@@ -104,7 +104,8 @@ class SettingsViewModel @Inject constructor(
     private val api: SupabaseApi,
     private val server: ServerSync,
     val data: DataControl,
-    val emergency: EmergencyNumberRepository
+    val emergency: EmergencyNumberRepository,
+    val protectionWatch: com.cerclerouge.app.server.ProtectionWatch
 ) : ViewModel() {
     private val _ui = MutableStateFlow(SettingsUi())
     val ui: StateFlow<SettingsUi> = _ui
@@ -120,6 +121,10 @@ class SettingsViewModel @Inject constructor(
             emergency.load()
         }
     }
+
+    fun setProtectionWatch(on: Boolean) = viewModelScope.launch { protectionWatch.setEnabled(on) }
+
+    fun setShutdownSms(on: Boolean) = viewModelScope.launch { protectionWatch.setShutdownSms(on) }
 
     fun chooseEmergencyCountry(iso: String?) = viewModelScope.launch {
         emergency.choose(iso)
@@ -352,6 +357,11 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             } else {
                 Text(stringResource(R.string.settings_bio_unavailable), style = PxType.caption, color = c.muted)
             }
+            // 1.17 : si l'application est tuée ou le téléphone éteint pendant la protection, les proches le savent.
+            val watchOn by vm.protectionWatch.enabled.collectAsState()
+            val shutdownOn by vm.protectionWatch.shutdownSms.collectAsState()
+            Toggle(R.string.settings_prot_watch, R.string.settings_prot_watch_ex, watchOn) { vm.setProtectionWatch(it) }
+            Toggle(R.string.settings_shutdown_sms, R.string.settings_shutdown_sms_ex, shutdownOn) { vm.setShutdownSms(it) }
             Text(stringResource(R.string.settings_wipe_ex), style = PxType.caption, color = c.muted)
             PxButton(stringResource(R.string.settings_wipe), {
                 confirm = Guarded.WIPE

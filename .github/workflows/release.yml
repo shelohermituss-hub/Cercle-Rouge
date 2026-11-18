@@ -6,6 +6,11 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Étiquette de la release (ex. v0.5.0) ; vide = test-<numéro>"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -46,7 +51,7 @@ jobs:
           CR_KEY_ALIAS: ${{ secrets.CR_KEY_ALIAS }}
           CR_KEY_PASSWORD: ${{ secrets.CR_KEY_PASSWORD }}
           CR_VERSION_CODE: ${{ github.run_number }}
-          CR_VERSION_NAME: ${{ github.ref_type == 'tag' && github.ref_name || format('0.0.{0}', github.run_number) }}
+          CR_VERSION_NAME: ${{ github.ref_type == 'tag' && github.ref_name || inputs.version || format('0.0.{0}', github.run_number) }}
         run: |
           if [ -n "${CR_KEYSTORE_PATH:-}" ]; then
             ./gradlew assembleRelease
@@ -60,6 +65,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="${{ github.ref_type == 'tag' && github.ref_name || format('test-{0}', github.run_number) }}"
-          gh release create "$tag" "$RUNNER_TEMP"/*.apk --repo "$GITHUB_REPOSITORY" --prerelease \
+          tag="${{ github.ref_type == 'tag' && github.ref_name || inputs.version || format('test-{0}', github.run_number) }}"
+          gh release create "$tag" "$RUNNER_TEMP"/*.apk --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
             --title "Cercle Rouge $tag" --notes "APK de test (design « Verre »). Installation : autoriser les sources inconnues. Ne remplace pas les secours."

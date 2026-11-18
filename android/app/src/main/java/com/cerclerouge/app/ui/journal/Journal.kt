@@ -45,7 +45,6 @@ import com.cerclerouge.app.ui.components.PxButton
 import com.cerclerouge.app.ui.components.PxPanel
 import com.cerclerouge.app.ui.components.PxVariant
 import com.cerclerouge.app.ui.components.RadarChart
-import com.cerclerouge.app.ui.components.TERM_BG
 import com.cerclerouge.app.ui.components.TERM_BLUE
 import com.cerclerouge.app.ui.components.TERM_CYAN
 import com.cerclerouge.app.ui.components.TERM_ORANGE
@@ -263,7 +262,7 @@ internal fun JournalContent(entries: List<ChainedEntry>, broken: Long?, onBack: 
         // Terminal (référence AgentPrism).
         itemsIndexed(rows, key = { _, r -> r.key }) { i, row ->
             val last = i == rows.lastIndex || rows[i + 1].level == 0
-            TraceLine(row, last, Modifier.background(TERM_BG).padding(horizontal = 12.dp))
+            TraceLine(row, last, Modifier.background(Cr.colors.raised).padding(horizontal = 12.dp))
         }
         item {
             Text(

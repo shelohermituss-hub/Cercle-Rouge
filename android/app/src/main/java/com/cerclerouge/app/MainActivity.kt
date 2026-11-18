@@ -38,7 +38,6 @@ import com.cerclerouge.app.evidence.EvidencePurge
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.sos.SosIntents
 import com.cerclerouge.app.trip.TripController
-import com.cerclerouge.app.ui.components.Orb
 import com.cerclerouge.app.ui.contacts.ContactsScreen
 import com.cerclerouge.app.ui.contacts.ContactsViewModel
 import com.cerclerouge.app.ui.home.HomeScreen
@@ -59,7 +58,6 @@ import com.cerclerouge.app.ui.vault.VaultScreen
 import com.cerclerouge.app.ui.vault.VaultViewModel
 import com.cerclerouge.privacy.Settings
 import com.cerclerouge.privacy.log.EventLog
-import com.valentinerutto.orbmotion.orbs.OrbState
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -123,7 +121,15 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                 CrashReport()
                 Box(Modifier.fillMaxSize().background(Cr.colors.surface)) {
                     when (screen) {
-                        Screen.LOADING -> Orb(OrbState.BREATHING, 96.dp, Cr.colors.lime, Modifier.align(Alignment.Center))
+                        Screen.LOADING -> androidx.compose.foundation.layout.Column(
+                            Modifier.align(Alignment.Center),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(24.dp)
+                        ) {
+                            // Démarrage « Verre » : symbole du logo animé et logo officiel.
+                            com.cerclerouge.app.ui.components.LogoMark(150.dp, animated = true)
+                            com.cerclerouge.app.ui.home.Wordmark(height = 44.dp)
+                        }
                         Screen.ONBOARDING -> OnboardingScreen(
                             onboarding,
                             onSos = { app.controller.send { Input.Sos(it) } },

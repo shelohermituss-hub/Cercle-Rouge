@@ -39,7 +39,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -58,7 +57,7 @@ import kotlin.math.sin
 
 /** Couleurs du terminal (référence AgentPrism). */
 val TERM_BG = Color(0xFF070B14)
-val TERM_CHIP = Color(0xFF1A2233)
+val TERM_CHIP = Color(0xFFE4E9EE)
 val TERM_VIOLET = Color(0xFF6366F1)
 val TERM_CYAN = Color(0xFF22C3EE)
 val TERM_TEAL = Color(0xFF14C8A8)
@@ -279,7 +278,10 @@ fun TraceLine(row: TraceRow, last: Boolean, modifier: Modifier = Modifier) {
                 drawLine(c.lineControl, Offset(x, size.height / 2), Offset(size.width, size.height / 2), stroke)
             }
         }
-        Box(Modifier.size(22.dp).clip(RectangleShape).background(row.color), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier.size(24.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(7.dp)).background(row.color),
+            contentAlignment = Alignment.Center
+        ) {
             Text(row.letter.toString(), style = PxType.label.copy(letterSpacing = PxType.label.letterSpacing * 0), color = Color.White)
         }
         Spacer(Modifier.width(8.dp))
@@ -294,7 +296,7 @@ fun TraceLine(row: TraceRow, last: Boolean, modifier: Modifier = Modifier) {
                         maxLines = 1,
                         modifier = Modifier.background(
                             row.color.copy(alpha = 0.16f),
-                            RectangleShape
+                            androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
                         ).padding(horizontal = 5.dp, vertical = 1.dp)
                     )
                 }
@@ -304,7 +306,11 @@ fun TraceLine(row: TraceRow, last: Boolean, modifier: Modifier = Modifier) {
                         style = PxType.caption,
                         color = c.muted,
                         maxLines = 1,
-                        modifier = Modifier.border(1.dp, TERM_CHIP, RectangleShape).padding(horizontal = 5.dp, vertical = 1.dp)
+                        modifier = Modifier.border(
+                            1.dp,
+                            TERM_CHIP,
+                            androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
+                        ).padding(horizontal = 5.dp, vertical = 1.dp)
                     )
                 }
             }
@@ -315,7 +321,7 @@ fun TraceLine(row: TraceRow, last: Boolean, modifier: Modifier = Modifier) {
                 Modifier
                     .width(64.dp)
                     .height(8.dp)
-                    .clip(RectangleShape)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
                     .background(TERM_CHIP)
                     .drawBehind {
                         // La barre fait au moins 4 dp et reste dans la piste, même pour un événement en fin de journée.
@@ -339,7 +345,7 @@ fun TraceLine(row: TraceRow, last: Boolean, modifier: Modifier = Modifier) {
             TraceStatus.ERROR -> c.danger
             TraceStatus.NONE -> TERM_CHIP
         }
-        Box(Modifier.size(8.dp).background(dot))
+        Box(Modifier.size(8.dp).clip(androidx.compose.foundation.shape.CircleShape).background(dot))
     }
 }
 

@@ -1,8 +1,8 @@
 # Design — décisions
 
-## v7 : système « Verre » (2026-11-18) — proposé, en validation
+## v7 : système « Verre » (2026-11-18) — retenu, implémenté dans l'app (v0.5.0)
 
-Clair, cartes en verre dépoli, rubans rose-rouge, bouton d'activation rond au centre de la barre du bas (animé avec le logo), trois visualiseurs (écoute, carte, veilleur IA), démarrage, onboarding et autorisations. Détail et jetons : [systeme-verre.md](systeme-verre.md). Pas encore implémenté dans l'app.
+Clair, cartes en verre dépoli, rubans rose-rouge, bouton d'activation rond au centre de la barre du bas (animé avec le logo), trois visualiseurs (écoute, carte, veilleur IA), démarrage, onboarding et autorisations. Détail et jetons : [systeme-verre.md](systeme-verre.md). Implémenté : thème, composants, accueil, alerte (Face ID), démarrage, tous les écrans.
 
 ## v6 : retour exact à « Pixel Lime » + carte en direct (2026-11-11) — retenue, implémentée dans l'app
 

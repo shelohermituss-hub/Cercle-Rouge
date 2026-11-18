@@ -69,7 +69,7 @@ class ScreenshotTest {
 
     private fun capture(
         name: String,
-        mode: com.cerclerouge.app.ui.theme.ThemeMode = com.cerclerouge.app.ui.theme.ThemeMode.DARK,
+        mode: com.cerclerouge.app.ui.theme.ThemeMode = com.cerclerouge.app.ui.theme.ThemeMode.LIGHT,
         fontScale: Float = 1f,
         content: @Composable () -> Unit
     ) {
@@ -115,7 +115,7 @@ class ScreenshotTest {
     @Test fun homeOff() = capture("home-off") { HomeConsole(EngineState(), {}, {}, 0, {}, {}, {}, nav, fakeMap) }
 
     /** 1.20 : thème clair, contraste élevé, police à 200 % (pas de texte coupé ni de contrôle masqué). */
-    @Test fun homeLight() = capture("home-light", com.cerclerouge.app.ui.theme.ThemeMode.LIGHT) { ArmedHome() }
+    @Test fun homeDark() = capture("home-dark", com.cerclerouge.app.ui.theme.ThemeMode.DARK) { ArmedHome() }
 
     @Test fun homeContrast() = capture("home-contrast", com.cerclerouge.app.ui.theme.ThemeMode.HIGH_CONTRAST) { ArmedHome() }
 

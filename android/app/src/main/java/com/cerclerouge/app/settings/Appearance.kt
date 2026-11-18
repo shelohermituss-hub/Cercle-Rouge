@@ -8,15 +8,15 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-/** Apparence choisie (1.20) : sombre par défaut, clair, système ou contraste élevé. Gardée dans la base chiffrée. */
+/** Apparence choisie (1.20) : clair « Verre » par défaut, sombre, système ou contraste élevé. Gardée dans la base chiffrée. */
 @Singleton
 class Appearance @Inject constructor(db: PrivacyDatabase) {
     private val settings = db.settings()
-    private val _mode = MutableStateFlow(ThemeMode.DARK)
+    private val _mode = MutableStateFlow(ThemeMode.LIGHT)
     val mode: StateFlow<ThemeMode> = _mode
 
     suspend fun load(): ThemeMode =
-        (settings.get(KEY)?.let { v -> ThemeMode.entries.firstOrNull { it.name == v } } ?: ThemeMode.DARK).also { _mode.value = it }
+        (settings.get(KEY)?.let { v -> ThemeMode.entries.firstOrNull { it.name == v } } ?: ThemeMode.LIGHT).also { _mode.value = it }
 
     suspend fun set(mode: ThemeMode) {
         settings.put(SettingEntity(KEY, mode.name))

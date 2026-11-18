@@ -262,7 +262,7 @@ fun VaultScreen(vm: VaultViewModel, onBack: () -> Unit) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         PxCheck(ui.audioEnabled)
                         Column {
-                            Text(stringResource(R.string.vault_audio_toggle).uppercase(), style = PxType.bodyBold)
+                            Text(stringResource(R.string.vault_audio_toggle), style = PxType.bodyBold)
                             Text(stringResource(R.string.vault_audio_toggle_ex), style = PxType.caption, color = c.muted)
                         }
                     }
@@ -311,7 +311,7 @@ fun VaultScreen(vm: VaultViewModel, onBack: () -> Unit) {
         Dialog(onDismissRequest = { confirmDelete = null }) {
             PxPanel(border = c.danger, fill = c.surface, padding = PaddingValues(16.dp)) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(stringResource(R.string.vault_delete).uppercase(), style = PxType.title)
+                    Text(stringResource(R.string.vault_delete), style = PxType.title)
                     Text(stringResource(R.string.vault_delete_confirm), style = PxType.body)
                     PxButton(stringResource(R.string.vault_delete), {
                         confirmDelete = null
@@ -333,7 +333,7 @@ private fun DetailsDialog(lines: List<String>, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(stringResource(R.string.vault_details).uppercase(), style = PxType.title)
+                Text(stringResource(R.string.vault_details), style = PxType.title)
                 Column(
                     Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -353,7 +353,7 @@ private fun EvidenceCard(item: EvidenceSummary, ui: VaultUi, vm: VaultViewModel,
     var keepMenu by remember { mutableStateOf(false) }
     PxPanel(Modifier.fillMaxWidth(), border = if (ui.playing == item.alertId) c.lime else c.line) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.vault_item_title, item.openedAt.short()).uppercase(), style = PxType.bodyBold)
+            Text(stringResource(R.string.vault_item_title, item.openedAt.short()), style = PxType.bodyBold)
             Text(
                 stringResource(R.string.vault_item_meta, item.seconds / 60, item.seconds % 60, item.bytes / 1024),
                 style = PxType.caption,
@@ -398,7 +398,7 @@ private fun EvidenceCard(item: EvidenceSummary, ui: VaultUi, vm: VaultViewModel,
         Dialog(onDismissRequest = { keepMenu = false }) {
             PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(stringResource(R.string.vault_keep).uppercase(), style = PxType.title)
+                    Text(stringResource(R.string.vault_keep), style = PxType.title)
                     Text(stringResource(R.string.vault_keep_ex), style = PxType.caption, color = c.muted)
                     listOf(30L to R.string.vault_keep_30, 90L to R.string.vault_keep_90).forEach { (d, label) ->
                         PxButton(stringResource(label), {
@@ -427,7 +427,7 @@ private fun ExportDialog(code: String, archive: ByteArray, vm: VaultViewModel) {
     Dialog(onDismissRequest = { vm.exportDone(false) }) {
         PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.vault_export).uppercase(), style = PxType.title)
+                Text(stringResource(R.string.vault_export), style = PxType.title)
                 Text(stringResource(R.string.vault_export_code), style = PxType.body)
                 Text(code, style = PxType.count, color = c.lime)
                 Text(stringResource(R.string.vault_export_ex), style = PxType.caption, color = c.muted)

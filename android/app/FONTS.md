@@ -1,6 +1,7 @@
-Polices embarquées (licence SIL Open Font License 1.1, Google Fonts) :
-- Silkscreen Bold : titres, chiffres, compte à rebours (pixel net : le C n'y ressemble pas à un O, le 5 pas à un S). Toujours en capitales.
-- Space Mono Regular/Bold : texte courant (15 sp), étiquettes et boutons (13–15 sp), terminal.
+Polices embarquées (licence SIL Open Font License 1.1) :
+- **Inter** Regular / Medium / SemiBold / Bold (© The Inter Project Authors, v4.1) : tout le texte de l'interface.
+  Les captures de référence du design « Verre » utilisent SF Pro (Apple), interdite sur Android ; Inter en est la jumelle libre.
+- **JetBrains Mono** Regular / Medium (© The JetBrains Mono Project Authors, v2.304) : journal du veilleur (style terminal).
 
-Pixelify Sans (utilisée jusqu'au 2026-11-11) est retirée : à petite taille, C/O et 5/S se confondaient.
-Tokens et tailles : `ui/theme/Theme.kt`.
+Silkscreen et Space Mono (design « Pixel Lime ») sont retirées depuis le design « Verre » (2026-11-18).
+Tokens et tailles : `ui/theme/Theme.kt` ; système complet : `docs/design/systeme-verre.md`.

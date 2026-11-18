@@ -370,7 +370,7 @@ private fun ManualDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit,
     Dialog(onDismissRequest = onDismiss) {
         PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.contacts_manual).uppercase(), style = PxType.title)
+                Text(stringResource(R.string.contacts_manual), style = PxType.title)
                 Field(name, { name = it.take(40) }, R.string.contacts_name, KeyboardType.Text)
                 Field(phone, { phone = it.take(20) }, R.string.contacts_phone, KeyboardType.Phone)
                 error?.let { Text(stringResource(it), style = PxType.label, color = c.danger) }
@@ -457,19 +457,19 @@ internal fun EditPanel(contact: TrustedContact, onDismiss: () -> Unit, onSave: (
     var channels by remember { mutableStateOf(contact.channels.filter { it != com.cerclerouge.contacts.Channel.PUSH }.toSet()) }
     PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
         Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.contacts_edit).uppercase(), style = PxType.title)
+            Text(stringResource(R.string.contacts_edit), style = PxType.title)
             Text(contact.phone.value, style = PxType.caption, color = c.muted)
             Field(name, { name = it.take(ContactBook.MAX_NAME) }, R.string.contacts_name, KeyboardType.Text)
             Field(email, { email = it.take(120) }, R.string.contacts_email, KeyboardType.Email)
             Field(relation, { relation = it.take(ContactBook.MAX_RELATION) }, R.string.contacts_relation, KeyboardType.Text)
-            Text(stringResource(R.string.contacts_role).uppercase(), style = PxType.label, color = c.lime)
+            Text(stringResource(R.string.contacts_role).uppercase(), style = PxType.label, color = c.muted)
             androidx.compose.foundation.layout.FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 ContactRole.entries.forEach { r -> Pick(stringResource(roleLabel(r)), role == r) { role = r } }
             }
-            Text(stringResource(R.string.contacts_group).uppercase(), style = PxType.label, color = c.lime)
+            Text(stringResource(R.string.contacts_group).uppercase(), style = PxType.label, color = c.muted)
             androidx.compose.foundation.layout.FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -478,7 +478,7 @@ internal fun EditPanel(contact: TrustedContact, onDismiss: () -> Unit, onSave: (
                     Pick(stringResource(groupLabel(g)), group == g) { group = g }
                 }
             }
-            Text(stringResource(R.string.contacts_channels).uppercase(), style = PxType.label, color = c.lime)
+            Text(stringResource(R.string.contacts_channels).uppercase(), style = PxType.label, color = c.muted)
             androidx.compose.foundation.layout.FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -533,7 +533,7 @@ private fun SearchDialog(vm: ContactsViewModel, onDismiss: () -> Unit, onPick: (
     Dialog(onDismissRequest = onDismiss) {
         PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(stringResource(R.string.contacts_search).uppercase(), style = PxType.title)
+                Text(stringResource(R.string.contacts_search), style = PxType.title)
                 if (!granted) {
                     Text(stringResource(R.string.contacts_search_why), style = PxType.body)
                     PxButton(stringResource(R.string.contacts_search_allow), { ask.launch(android.Manifest.permission.READ_CONTACTS) })

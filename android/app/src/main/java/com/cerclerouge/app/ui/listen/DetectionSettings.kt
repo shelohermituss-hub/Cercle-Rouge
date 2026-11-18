@@ -1,5 +1,6 @@
 package com.cerclerouge.app.ui.listen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
@@ -49,7 +51,7 @@ internal fun DetectionSettings(
     onDiscreet: (Boolean) -> Unit = {}
 ) {
     val c = Cr.colors
-    Text(stringResource(R.string.detect_title).uppercase(), style = PxType.label, color = c.lime)
+    Text(stringResource(R.string.detect_title).uppercase(), style = PxType.label, color = c.muted)
     Text(stringResource(R.string.detect_sensitivity), style = PxType.bodyBold)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Sensitivity.entries.forEach { s ->
@@ -78,7 +80,7 @@ internal fun DetectionSettings(
         val until = prefs.ignored[ctx]?.takeIf { it.isAfter(now) }
         PxPanel(Modifier.fillMaxWidth(), border = if (until != null) c.warn else c.line) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(stringResource(ctx.label()).uppercase(), style = PxType.bodyBold)
+                Text(stringResource(ctx.label()), style = PxType.bodyBold)
                 if (until != null) {
                     Text(
                         stringResource(R.string.detect_context_until, HHMM.format(until.atZone(ZoneId.systemDefault()))),
@@ -102,12 +104,18 @@ internal fun DetectionSettings(
 private fun Choice(text: String, on: Boolean, onClick: () -> Unit) {
     val c = Cr.colors
     Box(
-        Modifier.heightIn(min = 48.dp).border(2.dp, if (on) c.lime else c.lineControl)
+        Modifier.heightIn(
+            min = 48.dp
+        ).clip(
+            androidx.compose.foundation.shape.RoundedCornerShape(50)
+        ).background(
+            if (on) c.glow else c.raised
+        ).border(1.5.dp, if (on) c.lime else c.lineControl, androidx.compose.foundation.shape.RoundedCornerShape(50))
             .clickable(role = Role.RadioButton, onClick = onClick)
             .semantics { selected = on }
             .padding(horizontal = 14.dp),
         contentAlignment = Alignment.Center
-    ) { Text(text.uppercase(), style = PxType.button, color = if (on) c.lime else c.ink) }
+    ) { Text(text, style = PxType.button, color = if (on) c.lime else c.ink) }
 }
 
 private val HHMM: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")

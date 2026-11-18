@@ -466,7 +466,7 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
                         Guarded.SIGN_OUT -> R.string.settings_signout to R.string.settings_signout_confirm
                         else -> R.string.settings_delete to R.string.settings_delete_confirm
                     }
-                    Text(stringResource(title).uppercase(), style = PxType.title)
+                    Text(stringResource(title), style = PxType.title)
                     Text(stringResource(body), style = PxType.body)
                     PxButton(stringResource(R.string.settings_continue_pin), {
                         confirm = null
@@ -648,7 +648,7 @@ internal fun Toggle(title: Int, detail: Int, checked: Boolean, onChange: (Boolea
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             PxCheck(checked)
             Column {
-                Text(stringResource(title).uppercase(), style = PxType.bodyBold)
+                Text(stringResource(title), style = PxType.bodyBold)
                 Text(stringResource(detail), style = PxType.caption, color = c.muted)
             }
         }

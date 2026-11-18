@@ -159,7 +159,7 @@ fun WatchScreen(vm: WatchViewModel, onBack: () -> Unit) {
             ui.items.forEach { WatchCard(it) }
             if (ui.shared.isNotEmpty()) {
                 SecureScreen() // preuves d'un tiers à l'écran : pas de capture (S7.04)
-                Text(stringResource(R.string.shared_title).uppercase(), style = PxType.label, color = c.lime)
+                Text(stringResource(R.string.shared_title).uppercase(), style = PxType.label, color = c.muted)
                 Text(stringResource(R.string.shared_intro), style = PxType.caption, color = c.muted)
                 ui.message?.let { Text(stringResource(it), style = PxType.label, color = c.warn) }
                 ui.shared.forEach { SharedCard(it, ui, vm) }
@@ -173,7 +173,7 @@ private fun SharedCard(item: SharedItem, ui: WatchUi, vm: WatchViewModel) {
     val c = Cr.colors
     PxPanel(Modifier.fillMaxWidth(), border = if (ui.playing == item.alertId) c.lime else c.lineControl) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(stringResource(R.string.shared_item, item.ownerName).uppercase(), style = PxType.bodyBold)
+            Text(stringResource(R.string.shared_item, item.ownerName), style = PxType.bodyBold)
             Text(
                 stringResource(
                     if (item.complete) R.string.shared_meta else R.string.shared_meta_open,
@@ -218,7 +218,7 @@ private fun WatchCard(w: Watched) {
                         else -> R.string.watch_trip
                     },
                     w.name
-                ).uppercase(),
+                ),
                 style = PxType.title,
                 color = if (danger) c.danger else c.lime
             )

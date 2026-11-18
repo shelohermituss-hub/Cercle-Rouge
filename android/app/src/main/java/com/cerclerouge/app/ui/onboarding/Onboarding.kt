@@ -377,7 +377,7 @@ private fun Form(title: Int, back: Step?, vm: OnboardingViewModel, content: @Com
 
 @Composable
 private fun Intro(title: Int?, body: Int) {
-    title?.let { Text(stringResource(it).uppercase(), style = PxType.title) }
+    title?.let { Text(stringResource(it), style = PxType.title) }
     Text(stringResource(body), style = PxType.body, color = Cr.colors.muted)
 }
 
@@ -561,7 +561,7 @@ private fun RetentionStep(ui: OnboardingUi, vm: OnboardingViewModel) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 PxCheck(selected)
                 Column {
-                    Text(stringResource(title).uppercase(), style = PxType.bodyBold)
+                    Text(stringResource(title), style = PxType.bodyBold)
                     Text(stringResource(example), style = PxType.caption, color = c.muted)
                 }
             }

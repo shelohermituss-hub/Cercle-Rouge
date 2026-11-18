@@ -1,6 +1,7 @@
 package com.cerclerouge.app.ui.trip
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -34,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
@@ -376,7 +378,7 @@ private fun Planner(vm: TripViewModel) {
         Favorites(vm, s.favorites)
         DestinationPanel(s, onSave = { naming = true })
         if (s.destination != null) RouteStatus(s, onAsk = { routeConsent = true })
-        Text(stringResource(R.string.trip_mode).uppercase(), style = PxType.label, color = c.lime)
+        Text(stringResource(R.string.trip_mode).uppercase(), style = PxType.label, color = c.muted)
         ModePicker(s.mode, vm::mode)
         s.thresholds?.let { ThresholdPicker(s.mode, it, vm::adjust) }
         ArrivalPicker(s.minutes, vm::shift)
@@ -499,7 +501,15 @@ private fun SearchBox(vm: TripViewModel, s: PlannerUi, onConsent: () -> Unit) {
         }
         results.forEach { place ->
             Row(
-                Modifier.fillMaxWidth().heightIn(min = 48.dp).border(1.dp, c.line).clickable(role = Role.Button) { vm.choose(place) }
+                Modifier.fillMaxWidth().heightIn(
+                    min = 48.dp
+                ).clip(
+                    androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
+                ).background(
+                    c.raised
+                ).border(1.dp, c.line, androidx.compose.foundation.shape.RoundedCornerShape(14.dp)).clickable(role = Role.Button) {
+                    vm.choose(place)
+                }
                     .padding(horizontal = 10.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -514,14 +524,19 @@ private fun SearchBox(vm: TripViewModel, s: PlannerUi, onConsent: () -> Unit) {
 @Composable
 private fun Favorites(vm: TripViewModel, favorites: List<Place>) {
     val c = Cr.colors
-    Text(stringResource(R.string.trip_favorites).uppercase(), style = PxType.label, color = c.lime)
+    Text(stringResource(R.string.trip_favorites).uppercase(), style = PxType.label, color = c.muted)
     if (favorites.isEmpty()) {
         Text(stringResource(R.string.trip_favorites_empty), style = PxType.caption, color = c.muted)
         return
     }
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         favorites.forEach { f ->
-            Row(Modifier.border(2.dp, c.lineControl), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.clip(
+                    androidx.compose.foundation.shape.RoundedCornerShape(50)
+                ).background(c.raised).border(1.5.dp, c.lineControl, androidx.compose.foundation.shape.RoundedCornerShape(50)),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(
                     Modifier.heightIn(min = 48.dp).clickable(role = Role.Button) { vm.choose(f) }.padding(horizontal = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -567,12 +582,18 @@ private fun ModePicker(selected: TransportMode, onPick: (TransportMode) -> Unit)
         TransportMode.entries.forEach { m ->
             val on = m == selected
             Box(
-                Modifier.heightIn(min = 48.dp).border(2.dp, if (on) c.lime else c.lineControl)
+                Modifier.heightIn(
+                    min = 48.dp
+                ).clip(
+                    androidx.compose.foundation.shape.RoundedCornerShape(50)
+                ).background(
+                    if (on) c.glow else c.raised
+                ).border(1.5.dp, if (on) c.lime else c.lineControl, androidx.compose.foundation.shape.RoundedCornerShape(50))
                     .clickable(role = Role.RadioButton) { onPick(m) }
                     .semantics { this.selected = on }
                     .padding(horizontal = 14.dp),
                 contentAlignment = Alignment.Center
-            ) { Text(stringResource(m.label).uppercase(), style = PxType.button, color = if (on) c.lime else c.ink) }
+            ) { Text(stringResource(m.label), style = PxType.button, color = if (on) c.lime else c.ink) }
         }
     }
 }
@@ -581,7 +602,7 @@ private fun ModePicker(selected: TransportMode, onPick: (TransportMode) -> Unit)
 @Composable
 private fun ThresholdPicker(mode: TransportMode, t: ModeThresholds, onAdjust: (Int, Int) -> Unit) {
     val c = Cr.colors
-    Text(stringResource(R.string.trip_thresholds).uppercase(), style = PxType.label, color = c.lime)
+    Text(stringResource(R.string.trip_thresholds).uppercase(), style = PxType.label, color = c.muted)
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         StepButton("−", stringResource(R.string.trip_less)) { onAdjust(0, -OFF_ROUTE_STEP) }
         Text(
@@ -610,17 +631,23 @@ private const val STOP_STEP = 5
 @Composable
 private fun RecipientPicker(contacts: List<Pair<String, String>>, chosen: Set<String>, onToggle: (String) -> Unit) {
     val c = Cr.colors
-    Text(stringResource(R.string.trip_recipients).uppercase(), style = PxType.label, color = c.lime)
+    Text(stringResource(R.string.trip_recipients).uppercase(), style = PxType.label, color = c.muted)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         contacts.forEach { (id, name) ->
             val on = id in chosen
             Box(
-                Modifier.heightIn(min = 48.dp).border(2.dp, if (on) c.lime else c.lineControl)
+                Modifier.heightIn(
+                    min = 48.dp
+                ).clip(
+                    androidx.compose.foundation.shape.RoundedCornerShape(50)
+                ).background(
+                    if (on) c.glow else c.raised
+                ).border(1.5.dp, if (on) c.lime else c.lineControl, androidx.compose.foundation.shape.RoundedCornerShape(50))
                     .clickable(role = Role.Checkbox) { onToggle(id) }
                     .semantics { this.selected = on }
                     .padding(horizontal = 14.dp),
                 contentAlignment = Alignment.Center
-            ) { Text(name.uppercase(), style = PxType.button, color = if (on) c.lime else c.ink) }
+            ) { Text(name, style = PxType.button, color = if (on) c.lime else c.ink) }
         }
     }
     Text(
@@ -634,7 +661,7 @@ private fun RecipientPicker(contacts: List<Pair<String, String>>, chosen: Set<St
 private fun ArrivalPicker(minutes: Int, onShift: (Int) -> Unit) {
     val c = Cr.colors
     val at = remember(minutes) { Instant.now(Clock.systemDefaultZone()).plusSeconds(minutes * 60L).hhmm() }
-    Text(stringResource(R.string.trip_arrival).uppercase(), style = PxType.label, color = c.lime)
+    Text(stringResource(R.string.trip_arrival).uppercase(), style = PxType.label, color = c.muted)
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         StepButton("−5", stringResource(R.string.trip_less)) { onShift(-5) }
         Text(
@@ -650,7 +677,17 @@ private fun ArrivalPicker(minutes: Int, onShift: (Int) -> Unit) {
 private fun StepButton(text: String, description: String, onClick: () -> Unit) {
     val c = Cr.colors
     Box(
-        Modifier.size(48.dp).border(2.dp, c.lineControl).clickable(role = Role.Button, onClickLabel = description, onClick = onClick)
+        Modifier.size(
+            48.dp
+        ).clip(
+            androidx.compose.foundation.shape.RoundedCornerShape(50)
+        ).background(
+            c.raised
+        ).border(
+            1.5.dp,
+            c.lineControl,
+            androidx.compose.foundation.shape.RoundedCornerShape(50)
+        ).clickable(role = Role.Button, onClickLabel = description, onClick = onClick)
             .semantics { this.contentDescription = description },
         contentAlignment = Alignment.Center
     ) { Text(text, style = PxType.button) }
@@ -740,7 +777,7 @@ private fun ActiveTrip(vm: TripViewModel, t: TripUi) {
         Dialog(onDismissRequest = { stopChoice = false }) {
             PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(stringResource(R.string.trip_stop).uppercase(), style = PxType.title)
+                    Text(stringResource(R.string.trip_stop), style = PxType.title)
                     listOf(10, 20, 30, 60).forEach { m ->
                         PxButton(stringResource(R.string.trip_stop_minutes, m), {
                             vm.stop(m)
@@ -795,7 +832,7 @@ private fun NameDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.trip_favorite_add).uppercase(), style = PxType.title)
+                Text(stringResource(R.string.trip_favorite_add), style = PxType.title)
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it.take(PlacesRepository.MAX_NAME) },
@@ -837,7 +874,7 @@ private fun ConsentDialog(
     Dialog(onDismissRequest = onDismiss) {
         PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(title).uppercase(), style = PxType.title)
+                Text(stringResource(title), style = PxType.title)
                 Text(stringResource(text), style = PxType.body)
                 Spacer(Modifier.size(4.dp))
                 PxButton(stringResource(ok), onAccept)

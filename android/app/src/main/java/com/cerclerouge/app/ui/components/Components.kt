@@ -3,9 +3,15 @@ package com.cerclerouge.app.ui.components
 import android.provider.Settings
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -31,7 +37,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,14 +49,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -64,14 +79,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.cerclerouge.app.R
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
 import com.valentinerutto.orbmotion.orbs.AnimatedThinkingOrb
 import com.valentinerutto.orbmotion.orbs.OrbState
+import kotlin.math.cos
 import kotlin.math.hypot
+import kotlin.math.sin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -88,7 +104,7 @@ fun reduceMotion(): Boolean {
     }
 }
 
-/** Horloge à pas fixes (le design n'anime que par paliers, comme `steps()` en CSS). Retourne 0 si animations réduites. */
+/** Horloge à pas fixes. Retourne 0 si animations réduites. */
 @Composable
 fun stepTick(periodMs: Long, enabled: Boolean = true): Int {
     val still = reduceMotion() || !enabled
@@ -102,11 +118,20 @@ fun stepTick(periodMs: Long, enabled: Boolean = true): Int {
     return if (still) 0 else tick
 }
 
+/** Valeur 0 → 1 qui boucle (animation continue), figée à `still` si animations réduites. */
+@Composable
+fun loopProgress(periodMs: Int, enabled: Boolean = true, still: Float = 0f): Float {
+    if (reduceMotion() || !enabled) return still
+    val t = rememberInfiniteTransition(label = "loop")
+    val v by t.animateFloat(0f, 1f, infiniteRepeatable(tween(periodMs, easing = LinearEasing), RepeatMode.Restart), label = "p")
+    return v
+}
+
 // ---------------------------------------------------------------------------
-// Formes
+// Formes (anciennes formes « pixel » gardées pour compatibilité)
 // ---------------------------------------------------------------------------
 
-/** Coins crénelés en pixels réels, à partir d'une taille en dp. */
+/** Coins crénelés (design précédent) ; plus utilisé par les composants « Verre ». */
 fun notch(px: Float): Shape = GenericShape { size, _ ->
     val s = px.coerceAtMost(minOf(size.width, size.height) / 2)
     moveTo(0f, s)
@@ -124,7 +149,7 @@ fun notch(px: Float): Shape = GenericShape { size, _ ->
     close()
 }
 
-/** Cercle en escalier sur une grille de `cells` cases (disques `--c11`, `--c17`, `--c25` du design). */
+/** Cercle en escalier (design précédent). */
 fun pixelCircle(cells: Int): Shape = GenericShape { size, _ ->
     val cell = size.width / cells
     val r = cells / 2f
@@ -134,48 +159,35 @@ fun pixelCircle(cells: Int): Shape = GenericShape { size, _ ->
     }
 }
 
-@Composable
-private fun notchShape(): Shape {
-    val px = with(androidx.compose.ui.platform.LocalDensity.current) { 4.dp.toPx() }
-    return remember(px) { notch(px) }
-}
-
-/** Fond quadrillé de 24 dp (fond des écrans « pl »). */
-fun Modifier.pixelGrid(color: Color): Modifier = drawBehind {
-    val step = 24.dp.toPx()
-    var x = 0f
-    while (x < size.width) {
-        drawLine(color, Offset(x, 0f), Offset(x, size.height), 1f)
-        x += step
-    }
-    var y = 0f
-    while (y < size.height) {
-        drawLine(color, Offset(0f, y), Offset(size.width, y), 1f)
-        y += step
-    }
-}
+/** Le fond quadrillé du design précédent est retiré : le fond « Verre » est uni. */
+@Suppress("UnusedParameter")
+fun Modifier.pixelGrid(color: Color): Modifier = this
 
 // ---------------------------------------------------------------------------
-// Panneaux et boutons
+// Cartes et boutons
 // ---------------------------------------------------------------------------
 
-/** Panneau crénelé : bordure de 2 dp (`border`) et intérieur (`fill`). */
+/**
+ * Carte « Verre » : blanche, rayon 22, liseré à peine visible. Une `border` autre que le liseré par défaut
+ * (état actif, alerte) devient un contour de 1,5 dp de cette couleur.
+ */
 @Composable
 fun PxPanel(
     modifier: Modifier = Modifier,
     border: Color = Cr.colors.line,
     fill: Color = Cr.colors.raised,
-    padding: PaddingValues = PaddingValues(12.dp),
+    padding: PaddingValues = PaddingValues(14.dp),
+    radius: Dp = 22.dp,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val shape = notchShape()
+    val c = Cr.colors
+    val shape = RoundedCornerShape(radius)
+    val stroke = if (border == c.line) BorderStroke(1.dp, c.line) else BorderStroke(1.5.dp, border)
     Box(
         modifier
             .clip(shape)
-            .background(border)
-            .padding(2.dp)
-            .clip(shape)
             .background(fill)
+            .border(stroke, shape)
             .padding(padding),
         content = content
     )
@@ -183,7 +195,10 @@ fun PxPanel(
 
 enum class PxVariant { LIME, DANGER, DARK, DARK_DANGER, OUTLINE }
 
-/** Bouton du design : 56 dp (72 dp pour les actions critiques), décalé de 2 dp à l'appui. */
+/**
+ * Bouton pilule (référence « Verre ») : 52 dp (60 dp pour les actions critiques).
+ * LIME = principal (encre), DANGER = rouge, DARK = gris, DARK_DANGER = contour rouge, OUTLINE = contour encre.
+ */
 @Composable
 fun PxButton(
     text: String,
@@ -195,50 +210,69 @@ fun PxButton(
     enabled: Boolean = true
 ) {
     val c = Cr.colors
-    val (border, fill, ink) = when (variant) {
-        PxVariant.LIME -> Triple(c.lime, c.lime, c.onLime)
-        PxVariant.DANGER -> Triple(c.danger, c.danger, c.onLime)
-        PxVariant.DARK -> Triple(c.lineControl, c.surface, c.ink)
-        PxVariant.DARK_DANGER -> Triple(c.danger, c.surface, c.danger)
-        PxVariant.OUTLINE -> Triple(c.lineControl, c.raised, c.ink)
-    }
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    PxPanel(
-        modifier
-            .fillMaxWidth()
-            .height(if (tall) 72.dp else 56.dp)
-            .offset { if (pressed) IntOffset(2.dp.roundToPx(), 2.dp.roundToPx()) else IntOffset.Zero }
-            .clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick),
-        border = if (enabled) border else c.line,
-        fill = if (enabled) fill else c.raised,
-        padding = PaddingValues(horizontal = 12.dp)
+    val shape = RoundedCornerShape(50)
+    val ink = when (variant) {
+        PxVariant.LIME -> c.raised
+        PxVariant.DANGER -> Color.White
+        PxVariant.DARK, PxVariant.OUTLINE -> c.ink
+        PxVariant.DARK_DANGER -> c.danger
+    }
+    val base = modifier
+        .fillMaxWidth()
+        .heightIn(min = if (tall) 60.dp else 52.dp)
+        .scale(if (pressed && enabled) 0.97f else 1f)
+        .clip(shape)
+    val filled = when (variant) {
+        PxVariant.LIME -> base.background(c.ink)
+        PxVariant.DANGER -> base.background(Brush.verticalGradient(listOf(Color(0xFFF0333E), Color(0xFFC8141D))))
+        PxVariant.DARK -> base.background(c.forestDeep)
+        PxVariant.DARK_DANGER -> base.border(2.dp, c.danger, shape)
+        PxVariant.OUTLINE -> base.border(2.dp, c.ink, shape)
+    }
+    Row(
+        filled
+            .clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 8.dp)
+            .then(if (enabled) Modifier else Modifier.background(c.surface.copy(alpha = 0.5f))),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            icon?.let {
-                PixelIconView(it, 24.dp, if (enabled) ink else c.muted)
-                Spacer(Modifier.width(10.dp))
-            }
-            Text(text.uppercase(), style = PxType.button, color = if (enabled) ink else c.muted, textAlign = TextAlign.Center)
+        icon?.let {
+            PixelIconView(it, 20.dp, if (enabled) ink else c.muted)
+            Spacer(Modifier.width(8.dp))
         }
+        Text(text, style = PxType.button, color = if (enabled) ink else c.muted, textAlign = TextAlign.Center)
     }
 }
 
+/** Dégradé rouge du SOS. */
+val SosGradient = Brush.verticalGradient(listOf(Color(0xFFF0333E), Color(0xFFC8141D)))
+
 /**
- * Barre SOS de l'accueil : appui long de 1,5 s (la barre se remplit), puis vibration et compte à rebours (R-HOME-01).
+ * Bouton SOS : appui long de 1,5 s (le bouton se remplit), puis vibration et compte à rebours (R-HOME-01).
  * Un appui court ouvre l'écran SOS. TalkBack : l'action « activer » déclenche directement.
+ * `shape` permet de le fondre dans le bas d'une carte (coins du bas seulement).
  */
 @Composable
-fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifier) {
-    val c = Cr.colors
+fun SosBar(
+    onTrigger: () -> Unit,
+    onTap: () -> Unit,
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(50),
+    minHeight: Dp = 60.dp
+) {
     val progress = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     val a11y = stringResource(R.string.sos_a11y)
-    PxPanel(
+    Box(
         modifier
             .fillMaxWidth()
-            .heightIn(min = 72.dp)
+            .heightIn(min = minHeight)
+            .clip(shape)
+            .background(SosGradient)
             .semantics {
                 role = Role.Button
                 contentDescription = a11y
@@ -266,67 +300,54 @@ fun SosBar(onTrigger: () -> Unit, onTap: () -> Unit, modifier: Modifier = Modifi
                     }
                 }
             },
-        border = LogoRed,
-        fill = LogoRed,
-        padding = PaddingValues(0.dp)
+        contentAlignment = Alignment.Center
     ) {
-        // Rouge du logo (#ED1B24), texte blanc. Remplissage par paliers de 1/12, comme les 12 carrés de l'écran SOS.
-        val steps = (progress.value * 12).toInt() / 12f
-        Box(Modifier.matchParentSize()) { Box(Modifier.fillMaxHeight().fillMaxWidth(steps).background(Color.Black.copy(alpha = 0.28f))) }
-        // Hauteur : 72 dp, ou plus si la police d'Android est grande (texte jamais coupé).
+        // Remplissage pendant l'appui (plus sombre), de gauche à droite.
+        Box(Modifier.matchParentSize()) {
+            Box(Modifier.fillMaxHeight().fillMaxWidth(progress.value).background(Color.Black.copy(alpha = 0.22f)))
+        }
         Row(
-            Modifier.fillMaxWidth().heightIn(min = 72.dp).padding(vertical = 6.dp),
+            Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            PixelIconView(PixelIcon.ALERT, 28.dp, Color.White)
-            Spacer(Modifier.width(14.dp))
-            Text(stringResource(R.string.sos), style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.28f), color = Color.White)
-            Spacer(Modifier.width(14.dp))
-            Text(stringResource(R.string.sos_hint_two_lines), style = PxType.label, color = Color.White)
+            Text(
+                stringResource(R.string.sos),
+                style = PxType.title.copy(letterSpacing = PxType.label.letterSpacing * 3),
+                color = Color.White
+            )
+            Spacer(Modifier.width(10.dp))
+            Text(stringResource(R.string.sos_hint_hold), style = PxType.caption, color = Color(0xFFFFE1E3))
         }
     }
 }
 
 // ---------------------------------------------------------------------------
-// Disque, orbite, indicateurs
+// Disque, indicateurs
 // ---------------------------------------------------------------------------
 
-/** Disque en pixels (ON/OFF de l'accueil, SOS) avec halo qui pulse par paliers quand `glow`. */
+/** Disque plein (SOS) avec halo qui pulse quand `glow`. */
 @Composable
 fun PixelDisc(
     size: Dp,
-    cells: Int,
+    @Suppress("UnusedParameter") cells: Int,
     fill: Color,
     modifier: Modifier = Modifier,
     glow: Color? = null,
-    orbit: Boolean = false,
+    @Suppress("UnusedParameter") orbit: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val c = Cr.colors
-    val pulse = stepTick(500, enabled = glow != null) % 6
-    val shape = remember(cells) { pixelCircle(cells) }
+    val pulse = loopProgress(1800, enabled = glow != null)
     Box(modifier.size(size + 32.dp), contentAlignment = Alignment.Center) {
         if (glow != null) {
-            val strength = 0.35f + 0.1f * (if (pulse < 3) pulse else 6 - pulse)
             Canvas(Modifier.size(size + 32.dp)) {
-                drawCircle(
-                    Brush.radialGradient(listOf(glow.copy(alpha = strength), Color.Transparent), radius = this.size.minDimension / 2)
-                )
-            }
-        }
-        if (orbit) {
-            val turn = stepTick(1000) % 8
-            Box(Modifier.size(size + 32.dp).rotate(turn * 45f)) {
-                val dot = Modifier.size(6.dp).background(c.lime)
-                Box(dot.align(Alignment.TopCenter))
-                Box(dot.align(Alignment.CenterEnd))
-                Box(dot.align(Alignment.BottomCenter))
-                Box(dot.align(Alignment.CenterStart))
+                val r = this.size.minDimension / 2
+                drawCircle(Brush.radialGradient(listOf(glow.copy(alpha = 0.35f), Color.Transparent), radius = r))
+                drawCircle(glow.copy(alpha = 0.5f * (1f - pulse)), radius = r * (0.78f + 0.22f * pulse), style = Stroke(3.dp.toPx()))
             }
         }
         Column(
-            Modifier.size(size).clip(shape).background(fill),
+            Modifier.size(size).shadow(16.dp, CircleShape, spotColor = fill).clip(CircleShape).background(fill),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
             content = content
@@ -334,46 +355,52 @@ fun PixelDisc(
     }
 }
 
-/** Voyant carré de 8 dp, qui clignote (1 s) quand `blink`. */
+/** Voyant rond de 8 dp, qui clignote (1 s) quand `blink`. */
 @Composable
 fun Led(color: Color, blink: Boolean, modifier: Modifier = Modifier, size: Dp = 8.dp) {
     val on = stepTick(500, enabled = blink) % 2 == 0
-    Box(modifier.size(size).background(if (on) color else Color.Transparent))
+    Box(modifier.size(size).clip(CircleShape).background(if (on) color else Color.Transparent))
 }
 
 // ---------------------------------------------------------------------------
-// Icônes en pixels (grilles 8 × 8 des maquettes)
+// Icônes au trait (24 × 24, trait 1,9) — l'énumération garde les noms du design précédent
 // ---------------------------------------------------------------------------
 
-enum class PixelIcon(val rows: String) {
-    SHIELD("########/#......#/#......#/#......#/.#....#./.#....#./..#..#../...##..."),
-    POWER("...##.../.#.##.#./#..##..#/#......#/#......#/.#....#./..####../........"),
-    MIC("..####../..#..#../..#..#../#.#..#.#/#..##..#/.#....#./..####../...##..."),
-    USERS("..####../..#..#../..####../...##.../.######./##....##/#......#/#......#"),
-    ARROW_RIGHT("......../...#..../....#.../#######./....#.../...#..../......../........"),
-    ALERT("...##.../..#..#../..#..#../.#.##.#./.#.##.#./#......#/#..##..#/########"),
-    HOME("...##.../..#..#../.#....#./##....##/.#....#./.#.##.#./.#.##.#./.######."),
-    PIN("..####../.#....#./.#.##.#./.#.##.#./.#....#./..#..#../...##.../........"),
-    GEAR("...##.../#.####.#/.##..##./###..###/###..###/.##..##./#.####.#/...##..."),
-    ARROW_LEFT("....#.../...#..../..#...../.#######/..#...../...#..../....#.../........"),
-    CHECK("......../.......#/......##/#....##./##..##../.####.../..##..../........"),
-    PHONE(".######./.#....#./.#....#./.#....#./.#....#./.#....#./.######./...##..."),
-    CROSS("#......#/.#....#./..#..#../...##.../...##.../..#..#../.#....#./#......#"),
-    LOCK("..####../.#....#./.#....#./########/##....##/##.##.##/##....##/########"),
-    CLOCK("..####../.#....#./#..#...#/#..#...#/#..###.#/#......#/.#....#./..####.."),
-    UP("...##.../..####../.######./#..##..#/...##.../...##.../...##.../........"),
-    DOWN("...##.../...##.../...##.../#..##..#/.######./..####../...##.../........"),
-    STAR("...##.../...##.../#######./.#####../..####.../.##..##./.#....#./........")
+enum class PixelIcon(val path: String) {
+    SHIELD("M12 3l8 3v6c0 4.5-3.4 8.4-8 9-4.6-.6-8-4.5-8-9V6z M8.5 12l2.5 2.5 4.5-5"),
+    POWER("M12 3v8 M6.3 7.2a8 8 0 1 0 11.4 0"),
+    MIC("M9 5a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0z M19 10v1a7 7 0 0 1-14 0v-1 M12 18v4"),
+    USERS("M9 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z M2.5 20a6.5 6.5 0 0 1 13 0 M16 4.5a3.5 3.5 0 0 1 0 7 M18.5 20a6.5 6.5 0 0 0-3-5.5"),
+    ARROW_RIGHT("M5 12h14 M13 6l6 6-6 6"),
+    ALERT("M12 3.5l9.2 16.5H2.8z M12 10v4.2 M12 17.4v.1"),
+    HOME("M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"),
+    PIN("M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"),
+    GEAR(
+        "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M12 2.5v2.5 M12 19v2.5 M4.6 4.6l1.8 1.8 M17.6 17.6l1.8 1.8 M2.5 12H5 M19 12h2.5 " +
+            "M4.6 19.4l1.8-1.8 M17.6 6.4l1.8-1.8"
+    ),
+    ARROW_LEFT("M15 18l-6-6 6-6"),
+    CHECK("M5 12.5l4.5 4.5L19 7.5"),
+    PHONE(
+        "M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7" +
+            "c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"
+    ),
+    CROSS("M6 6l12 12 M18 6L6 18"),
+    LOCK("M6 10h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z M8 10V7a4 4 0 0 1 8 0v3"),
+    CLOCK("M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2"),
+    UP("M12 19V5 M6 11l6-6 6 6"),
+    DOWN("M12 5v14 M6 13l6 6 6-6"),
+    STAR("M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z")
 }
 
-/** Icône décorative en pixels : le libellé voisin porte le sens (TalkBack). */
+/** Icône au trait (décorative : le libellé voisin porte le sens pour TalkBack). */
 @Composable
-fun PixelIconView(icon: PixelIcon, size: Dp, color: Color, modifier: Modifier = Modifier) {
-    val rows = remember(icon) { icon.rows.split('/') }
+fun PixelIconView(icon: PixelIcon, size: Dp, color: Color, modifier: Modifier = Modifier, strokeWidth: Float = 1.9f) {
+    val path = remember(icon) { PathParser().parsePathString(icon.path).toPath() }
     Canvas(modifier.size(size)) {
-        val cell = this.size.width / 8
-        rows.forEachIndexed { y, row ->
-            row.forEachIndexed { x, ch -> if (ch == '#') drawRect(color, Offset(x * cell, y * cell), Size(cell, cell)) }
+        val k = this.size.minDimension / 24f
+        scale(k, k, pivot = Offset.Zero) {
+            drawPath(path, color, style = Stroke(strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round))
         }
     }
 }
@@ -382,44 +409,45 @@ fun PixelIconView(icon: PixelIcon, size: Dp, color: Color, modifier: Modifier = 
 // Lignes, en-têtes, navigation
 // ---------------------------------------------------------------------------
 
-/** Ligne de panneau : icône, étiquette grise, valeur en gras, indicateur à droite (lignes de l'accueil). */
+/** Ligne de carte : icône, libellé gris, valeur, indicateur à droite. */
 @Composable
 fun StatusRow(icon: PixelIcon, label: String, value: String, active: Boolean = false, trailing: @Composable RowScope.() -> Unit = {}) {
     val c = Cr.colors
     PxPanel(
         Modifier.fillMaxWidth(),
         border = if (active) c.lime else c.line,
-        padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+        padding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            PixelIconView(icon, 24.dp, c.lime)
+            PixelIconView(icon, 24.dp, if (active) c.lime else c.ink)
             Column(Modifier.weight(1f)) {
-                Text(label.uppercase(), style = PxType.label, color = c.muted)
-                Text(value.uppercase(), style = PxType.bodyBold)
+                Text(label, style = PxType.caption, color = c.muted)
+                Text(value, style = PxType.bodyBold)
             }
             trailing()
         }
     }
 }
 
-/** En-tête d'écran : retour (48 dp) et titre en pixels. */
+/** En-tête d'écran : retour (48 dp, chevron) et titre. */
 @Composable
 fun TopBar(title: String, onBack: (() -> Unit)?) {
     val back = stringResource(R.string.back)
-    Row(Modifier.fillMaxWidth().height(56.dp).padding(start = 4.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 60.dp).padding(start = 6.dp, end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
         if (onBack != null) {
             Box(
                 Modifier
                     .size(48.dp)
+                    .clip(CircleShape)
                     .clickable(role = Role.Button, onClick = onBack)
                     .semantics { contentDescription = back },
                 contentAlignment = Alignment.Center
-            ) { PixelIconView(PixelIcon.ARROW_LEFT, 24.dp, Cr.colors.ink) }
+            ) { PixelIconView(PixelIcon.ARROW_LEFT, 26.dp, Cr.colors.ink, strokeWidth = 2.2f) }
         } else {
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(10.dp))
         }
-        Spacer(Modifier.width(8.dp))
-        Text(title.uppercase(), style = PxType.title, modifier = Modifier.semantics { heading() })
+        Spacer(Modifier.width(4.dp))
+        Text(title, style = PxType.display, modifier = Modifier.semantics { heading() })
     }
 }
 
@@ -437,53 +465,71 @@ fun cappedScale(style: androidx.compose.ui.text.TextStyle, max: Float = 1.3f): a
 
 data class NavItem(val label: String, val icon: PixelIcon, val onClick: () -> Unit)
 
-/** Barre de navigation : 4 onglets, l'onglet courant en lime avec un trait au-dessus. */
+/**
+ * Barre du bas « Verre » : blanche, icônes au trait, onglet courant en encre et gras.
+ * `center` : bouton rond du milieu (activation de la protection), qui dépasse au-dessus de la barre.
+ */
 @Composable
-fun PxNavBar(items: List<NavItem>, selected: Int) {
+fun PxNavBar(items: List<NavItem>, selected: Int, center: (@Composable () -> Unit)? = null) {
     val c = Cr.colors
-    PxPanel(Modifier.fillMaxWidth().heightIn(min = 68.dp), fill = c.surface, padding = PaddingValues(0.dp)) {
-        Row(Modifier.fillMaxWidth()) {
+    val half = items.size / 2
+    Box(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .shadow(18.dp, RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp), ambientColor = Color(0x331F2A33))
+                .background(c.raised)
+                .heightIn(min = 72.dp)
+                .padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             items.forEachIndexed { i, item ->
+                if (center != null && i == half) Spacer(Modifier.weight(1f))
                 val active = i == selected
-                Box(
+                Column(
                     Modifier
                         .weight(1f)
-                        .heightIn(min = 68.dp)
-                        .padding(vertical = 6.dp)
+                        .heightIn(min = 64.dp)
+                        .clip(RoundedCornerShape(16.dp))
                         .clickable(role = Role.Tab, onClick = item.onClick)
-                        .semantics { if (active) stateDescription = "sélectionné" },
-                    contentAlignment = Alignment.Center
+                        .semantics { if (active) stateDescription = "sélectionné" }
+                        .padding(vertical = 6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically)
                 ) {
-                    if (active) Box(Modifier.align(Alignment.TopCenter).fillMaxWidth(0.6f).height(4.dp).background(c.lime))
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        PixelIconView(item.icon, 20.dp, if (active) c.lime else c.muted)
-                        Text(
-                            item.label.uppercase(),
-                            style = cappedScale(PxType.label),
-                            color = if (active) c.lime else c.muted,
-                            maxLines = 1
-                        )
-                    }
+                    PixelIconView(item.icon, 25.dp, if (active) c.ink else c.lineControl, strokeWidth = if (active) 2.4f else 1.7f)
+                    Text(
+                        item.label,
+                        style = cappedScale(
+                            if (active) PxType.label.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) else PxType.label
+                        ),
+                        color = if (active) c.ink else c.muted,
+                        maxLines = 1
+                    )
                 }
             }
         }
+        if (center != null) Box(Modifier.align(Alignment.TopCenter).offset(y = (-30).dp)) { center() }
     }
 }
 
-/** Case à cocher carrée de 28 dp (zone tactile : toute la ligne). */
+/** Case à cocher arrondie de 26 dp (zone tactile : toute la ligne). */
 @Composable
 fun PxCheck(checked: Boolean) {
     val c = Cr.colors
     Box(
         Modifier
-            .size(28.dp)
-            .background(if (checked) c.lime else c.surface)
-            .drawBehind { if (!checked) drawRect(c.lineControl, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx())) },
+            .size(26.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (checked) c.lime else c.raised)
+            .border(if (checked) 0.dp else 2.dp, c.lineControl, RoundedCornerShape(8.dp)),
         contentAlignment = Alignment.Center
-    ) { if (checked) PixelIconView(PixelIcon.CHECK, 20.dp, c.onLime) }
+    ) { if (checked) PixelIconView(PixelIcon.CHECK, 18.dp, c.onLime, strokeWidth = 2.8f) }
 }
 
-/** Écran d'affiche lime de l'onboarding : progression, titre géant, escalier en bas, bouton sombre. */
+/**
+ * Écran d'onboarding « Verre » : grande illustration dans une carte, titre, texte, points d'étape et bouton sombre.
+ */
 @Composable
 fun Poster(
     step: Int,
@@ -497,83 +543,89 @@ fun Poster(
     extra: @Composable ColumnScope.() -> Unit = {}
 ) {
     val c = Cr.colors
-    Box(Modifier.fillMaxSize().background(c.lime)) {
-        // Escalier décoratif (blocs forêt / forêt profonde).
-        listOf(0, 60, 120, 180, 240, 300).forEachIndexed { i, left ->
+    Column(Modifier.fillMaxSize().background(c.surface)) {
+        Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Spacer(Modifier.weight(1f))
+            if (onSkip != null) {
+                Box(
+                    Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(24.dp)).clickable(role = Role.Button, onClick = onSkip)
+                        .padding(horizontal = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        stringResource(R.string.action_skip),
+                        style = PxType.button.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium),
+                        color = c.muted
+                    )
+                }
+            }
+        }
+        Column(
+            Modifier.weight(1f).fillMaxWidth().padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             Box(
                 Modifier
-                    .align(Alignment.BottomEnd)
-                    .fillMaxWidth(1f - left / 360f)
-                    .height((24 * (i + 1)).dp)
-                    .background(if (i % 2 == 0) c.forest else c.forestShade)
+                    .size(220.dp)
+                    .shadow(24.dp, RoundedCornerShape(44.dp), ambientColor = Color(0x331F2A33), spotColor = Color(0x331F2A33))
+                    .clip(RoundedCornerShape(44.dp))
+                    .background(Brush.verticalGradient(listOf(c.raised, c.surface.copy(alpha = 0.6f)))),
+                contentAlignment = Alignment.Center
+            ) { PosterArt(icon) }
+            Spacer(Modifier.height(32.dp))
+            Text(
+                title,
+                style = PxType.poster,
+                color = c.ink,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.semantics { heading() }
             )
+            Spacer(Modifier.height(12.dp))
+            Text(body, style = PxType.body.copy(fontSize = PxType.body.fontSize * 1.1f), color = c.muted, textAlign = TextAlign.Center)
+            extra()
         }
-        Column(Modifier.fillMaxSize()) {
-            Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.weight(1f).semantics {
-                        stateDescription =
-                            "$step / $total"
-                    }
-                ) {
-                    repeat(total) { i ->
-                        Box(
-                            Modifier
-                                .size(24.dp, 12.dp)
-                                .background(if (i < step) c.onLime else Color.Transparent)
-                                .drawBehind { drawRect(c.onLime, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx())) }
-                        )
-                    }
-                }
-                if (onSkip != null) {
-                    Box(
-                        Modifier.heightIn(min = 48.dp).clickable(role = Role.Button, onClick = onSkip).padding(horizontal = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(stringResource(R.string.action_skip).uppercase(), style = PxType.label, color = c.onLime)
-                    }
-                }
-            }
-            Column(Modifier.padding(horizontal = 24.dp, vertical = 12.dp)) {
-                PxPanel(Modifier.width(96.dp), fill = c.surface) {
-                    // L'icône « bouclier » de la 1re affiche est remplacée par le logo de l'application.
-                    if (icon == PixelIcon.SHIELD) {
-                        LogoMark(48.dp, Modifier.align(Alignment.Center))
-                    } else {
-                        PixelIconView(icon, 48.dp, c.lime, Modifier.align(Alignment.Center))
-                    }
-                }
-                Spacer(Modifier.height(24.dp))
-                Text(title.uppercase(), style = PxType.poster, color = c.onLime, modifier = Modifier.semantics { heading() })
-                Spacer(Modifier.height(16.dp))
-                Text(body, style = PxType.bodyBold, color = c.onLime)
-                extra()
-            }
-            Spacer(Modifier.weight(1f))
-            PxButton(action, onAction, Modifier.padding(24.dp), variant = PxVariant.DARK, icon = PixelIcon.ARROW_RIGHT)
+        Row(
+            Modifier.fillMaxWidth().padding(vertical = 18.dp).semantics { stateDescription = "$step / $total" },
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
+        ) {
+            repeat(total) { i -> Box(Modifier.size(9.dp).clip(CircleShape).background(if (i == step - 1) c.ink else c.lineControl)) }
         }
+        PxButton(action, onAction, Modifier.padding(start = 18.dp, end = 18.dp, bottom = 24.dp), tall = true)
     }
 }
 
-/** Pavé PIN en touches crénelées de 64 dp. Le code n'est jamais affiché en clair. */
+/** Illustration d'une affiche : bouclier 3D pour le bouclier, icône en verre sinon. */
+@Composable
+private fun PosterArt(icon: PixelIcon) {
+    when (icon) {
+        PixelIcon.SHIELD -> Shield3D(on = true, height = 150.dp)
+        else -> GlassIcon(glassFor(icon), 132.dp)
+    }
+}
+
+/** Pavé PIN : touches rondes blanches de 72 dp. Le code n'est jamais affiché en clair. */
 @Composable
 fun PinPad(value: String, onChange: (String) -> Unit, maxLength: Int = 8) {
     val c = Cr.colors
     val delete = stringResource(R.string.pin_delete)
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.height(16.dp)) {
-            repeat(maxOf(4, value.length)) { i -> Box(Modifier.size(14.dp).background(if (i < value.length) c.lime else c.line)) }
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.height(16.dp)) {
+            repeat(maxOf(4, value.length)) { i ->
+                Box(Modifier.size(13.dp).clip(CircleShape).background(if (i < value.length) c.lime else c.line))
+            }
         }
         listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf("", "0", "⌫")).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 row.forEach { key ->
                     if (key.isEmpty()) {
-                        Spacer(Modifier.size(72.dp, 56.dp))
+                        Spacer(Modifier.size(68.dp))
                     } else {
-                        PxPanel(
+                        Box(
                             Modifier
-                                .size(72.dp, 56.dp)
+                                .size(68.dp)
+                                .clip(CircleShape)
+                                .background(if (key == "⌫") Color.Transparent else c.forestDeep)
                                 .clickable(role = Role.Button) {
                                     if (key == "⌫") {
                                         onChange(value.dropLast(1))
@@ -582,13 +634,12 @@ fun PinPad(value: String, onChange: (String) -> Unit, maxLength: Int = 8) {
                                     }
                                 }
                                 .semantics { if (key == "⌫") contentDescription = delete },
-                            border = c.lineControl,
-                            padding = PaddingValues(0.dp)
+                            contentAlignment = Alignment.Center
                         ) {
                             if (key == "⌫") {
-                                PixelIconView(PixelIcon.ARROW_LEFT, 20.dp, c.ink, Modifier.align(Alignment.Center))
+                                PixelIconView(PixelIcon.ARROW_LEFT, 24.dp, c.ink, strokeWidth = 2.2f)
                             } else {
-                                Text(key, style = PxType.title, modifier = Modifier.align(Alignment.Center))
+                                Text(key, style = PxType.display)
                             }
                         }
                     }
@@ -600,7 +651,7 @@ fun PinPad(value: String, onChange: (String) -> Unit, maxLength: Int = 8) {
 
 /**
  * Orbe à points (bibliothèque OrbMotion) : activité en cours (envoi, attente, démarrage).
- * Décorative pour TalkBack ; figée si « réduire les animations ». La bibliothèque dessine en pixels.
+ * Décorative pour TalkBack ; figée si « réduire les animations ».
  */
 @Composable
 fun Orb(state: OrbState, size: Dp, color: Color, modifier: Modifier = Modifier, speed: Float = 1f) {
@@ -614,14 +665,39 @@ fun Orb(state: OrbState, size: Dp, color: Color, modifier: Modifier = Modifier, 
     )
 }
 
-/** Rouge du logo Cercle Rouge. */
-val LogoRed = Color(0xFFED1B24)
+/** Rouges du logo Cercle Rouge. */
+val LogoRed = Color(0xFFE31B23)
+val LogoDeep = Color(0xFFA3161C)
 
-/** Logo de l'application : anneau rouge (trait ≈ 10 % du diamètre). Décoratif : le nom voisin porte le sens. */
+/**
+ * Symbole du logo, dessiné : grand C rouge foncé, petit C rouge vif, point central ; chaque C finit par un petit point détaché.
+ * `animated` : les deux C tournent en sens contraires et le point bat (bouton d'activation). Décoratif pour TalkBack.
+ */
 @Composable
-fun LogoMark(size: Dp, modifier: Modifier = Modifier, color: Color = LogoRed) {
-    Canvas(modifier.size(size)) {
-        val w = this.size.minDimension * 0.1f
-        drawCircle(color, radius = this.size.minDimension / 2 - w / 2, style = androidx.compose.ui.graphics.drawscope.Stroke(w))
+fun LogoMark(
+    size: Dp,
+    modifier: Modifier = Modifier,
+    color: Color = LogoRed,
+    deep: Color = if (color == LogoRed) LogoDeep else color,
+    animated: Boolean = false
+) {
+    val spinA = loopProgress(6000, animated) * 360f
+    val spinB = -loopProgress(4000, animated) * 360f
+    val beat = loopProgress(2400, animated)
+    Canvas(modifier.size(size).clearAndSetSemantics {}) {
+        val s = this.size.minDimension
+        val o = Offset(this.size.width / 2, this.size.height / 2)
+        val w = s * 0.075f
+        fun ring(r: Float, start: Float, sweep: Float, dotAt: Float, col: Color, turn: Float) = rotate(turn, o) {
+            drawArc(col, start, sweep, false, Offset(o.x - r, o.y - r), Size(r * 2, r * 2), style = Stroke(w, cap = StrokeCap.Round))
+            listOf(dotAt, -dotAt).forEach { a ->
+                val rad = Math.toRadians(a.toDouble())
+                drawCircle(col, w * 0.5f, Offset(o.x + r * cos(rad).toFloat(), o.y + r * sin(rad).toFloat()))
+            }
+        }
+        ring(s * 0.40f, 40f, 280f, 27f, deep, spinA)
+        ring(s * 0.245f, 46f, 268f, 27f, color, spinB)
+        if (animated && beat < 0.25f) drawCircle(color.copy(alpha = 0.35f * (1f - beat / 0.25f)), s * (0.08f + 0.12f * beat / 0.25f), o)
+        drawCircle(color, s * 0.08f, o)
     }
 }

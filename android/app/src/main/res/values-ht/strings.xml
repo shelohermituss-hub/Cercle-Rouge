@@ -73,7 +73,6 @@
     <string name="journal_intact">Jounal la entak</string>
     <string name="journal_broken">Jounal la chanje apati antre %1$d</string>
     <string name="back">Retounen</string>
-    <string name="sos_hint_two_lines">PEZE LONTAN\n1,5 S</string>
     <string name="action_skip">Sote</string>
     <string name="poster1_title">Ou pa poukont ou.</string>
     <string name="poster1_body">Cercle Rouge avèti moun pa w yo lè w an danje.</string>
@@ -81,14 +80,7 @@
     <string name="poster2_body">Anyen pa voye. Li chèche sèlman yon mo detrès.</string>
     <string name="poster3_title">5 moun ou fè konfyans.</string>
     <string name="poster3_body">Se ou ki chwazi kiyès ki resevwa SMS la ak pozisyon w.</string>
-    <string name="home_on">ON</string>
-    <string name="home_off">OFF</string>
-    <string name="home_protected">[ > PWOTEJE &lt; ]</string>
-    <string name="home_standby">[ - AN VÈY - ]</string>
-    <string name="home_listen_on">Sou telefòn ou · anyen pa voye</string>
-    <string name="home_row_position">Pozisyon</string>
     <string name="home_row_contacts">Kontak</string>
-    <string name="home_row_trip">Wout</string>
     <string name="home_disc_a11y_on">Pwoteksyon aktif. Touche pou dezaktive.</string>
     <string name="home_disc_a11y_off">Pwoteksyon dezaktive. Touche pou aktive.</string>
     <string name="nav_home">Akèy</string>
@@ -97,7 +89,7 @@
     <string name="sos_hold_title">Kenbe l peze</string>
     <string name="sos_hold_body">1,5 segonn pou kòmanse dekont lan.</string>
     <string name="sos_hold_note">Anyen pa voye toutotan w poko fini.</string>
-    <string name="countdown_label">[ Alèt nan ]</string>
+    <string name="countdown_label">Alèt nan</string>
     <string name="countdown_seconds">Segonn</string>
     <string name="countdown_body">SMS ak lyen pozisyon ap voye bay kontak konfyans ou yo.</string>
     <plurals name="countdown_a11y">
@@ -121,13 +113,6 @@
     <string name="profile_screen_title">Pwofil ou</string>
     <string name="guardian_screen_title">Granmoun referans ou</string>
     <string name="notif_screen_title">Notifikasyon</string>
-    <string name="sat_position_off">Prive</string>
-    <string name="sat_contacts">%1$d / 5</string>
-    <string name="sat_trip_none">Okenn</string>
-    <string name="home_map_caption">Pozisyon kache</string>
-    <string name="home_tap_activate">Touche pou aktive</string>
-    <string name="home_map_caption_on">Pozisyon ou rete sou telefòn ou</string>
-    <string name="sat_position_on">Isit sèlman</string>
     <string name="journal_today">Jodi a</string>
     <string name="journal_week">7 dènye jou</string>
     <string name="journal_kpi_on">Aktivasyon</string>
@@ -221,7 +206,6 @@
     <string name="trip_watch_no_recipients">Pa gen moun ki aksepte envitasyon w lan ankò : siveyans sèvè a pa aktive.</string>
     <string name="trip_watch_failed">Siveyans sèvè a pa disponib (%1$s). Trajè a ap kontinye sou telefòn nan.</string>
     <string name="trip_privacy">Okenn pwen pa kenbe : se dènye pozisyon yo sèlman ki rete nan memwa, epi yo efase lè ou rive.</string>
-    <string name="sat_trip_active">An kou</string>
     <string name="action_retry">Eseye ankò</string>
     <string name="listen_title">Koute IA</string>
     <string name="listen_status_running">Koute aktif : se sèlman fraz sekrè ou la l ap chèche</string>
@@ -249,7 +233,6 @@
     <string name="listen_deleted">Fraz la efase.</string>
     <string name="listen_confidence">Resanblans : %1$d %%</string>
     <string name="listen_keywords_title">Mo kle pou detrès</string>
-    <string name="nav_vault">Prèv</string>
     <string name="retention_recording_notice">Pandan yon alèt (nivo 2 oswa SOS), mikwo a anrejistre. Li ka pran vwa lòt moun. Anrejistreman an rete kode sou telefòn ou ; nou pa ka garanti valè l devan yon jij. Ou ka fèmen l nan « Prèv ».</string>
     <string name="vault_title">Prèv</string>
     <string name="vault_locked">Kòfrefò a fèmen. Antre PIN ou pou wè anrejistreman yo.</string>
@@ -330,7 +313,6 @@
     <string name="battery_oppo">Oppo, Realme, Vivo, OnePlus : Paramèt → Batri → Cercle Rouge : pèmèt aktivite an aryè plan ak demaraj otomatik.</string>
     <string name="battery_generic">Pou pwoteksyon an kenbe lè ekran an etenn : Paramèt → Aplikasyon → Cercle Rouge → Batri : « San restriksyon ».</string>
     <string name="home_row_settings">Paramèt</string>
-    <string name="sat_settings">Louvri</string>
     <string name="settings_section_phone">Nimewo mwen</string>
     <string name="settings_phone_ex">Verifye nimewo ou ak yon kòd SMS. Li sèvi pou konfime dakò yon granmoun referan epi pou jwenn ou si ou chanje telefòn. Pèsonn pa janm wè l.</string>
     <string name="settings_phone_label">Nimewo ou (+509…)</string>
@@ -369,8 +351,6 @@
     <string name="guardian_req_refused">Refi a anrejistre.</string>
     <string name="guardian_req_must_be_adult">Fòk ou majè (18 an oswa plis) pou w aksepte.</string>
     <string name="guardian_req_limit">Ou deja granmoun referan 6 jèn, se maksimòm nan.</string>
-    <string name="viz_live_title">Koute an dirèk</string>
-    <string name="viz_ai_title">Refleksyon IA</string>
     <string name="viz_stage_idle">Anveyè</string>
     <string name="viz_stage_listening">M ap koute…</string>
     <string name="viz_stage_voice">Vwa detekte</string>
@@ -380,7 +360,6 @@
     <string name="viz_paused_low">Koute an pòz (batri oswa chalè)</string>
     <string name="viz_paused_busy">Yon lòt aplikasyon ap itilize mikwo a</string>
     <string name="viz_mic_error">Mikwo pa disponib</string>
-    <string name="viz_levels_only">Nivo sèlman : okenn son pa kenbe.</string>
     <string name="viz_ev_voice">Vwa detekte</string>
     <string name="viz_ev_compare">Distans %1$s/%2$s</string>
     <string name="viz_ev_hit">Fraz rekonèt</string>
@@ -395,7 +374,6 @@
     <string name="trip_route_consent_title">Trase wout la</string>
     <string name="trip_route_consent_text">Pou trase wout la sou ri yo, kote w pati ak kote w ale nan trajè sa a (de kowòdone, san non ni idantifyan) ap voye bay yon sèvis routaj OpenStreetMap, ki wè adrès IP ou tou. Cercle Rouge pa kenbe anyen. San aksepte sa a, y ap trase yon liy dwat.</string>
     <string name="trip_route_consent_ok">M aksepte</string>
-    <string name="viz_risk">Risk %1$d %% · siyal %2$d</string>
     <string name="detect_title">Paramèt deteksyon an</string>
     <string name="detect_sensitivity">Sansiblite</string>
     <string name="detect_sensitivity_ex">Wo : li reyaji pi vit, men gen plis fo alèt. Ba : se sèlman siyal ki klè anpil. Fraz sekrè a ak SOS la pa chanje.</string>
@@ -482,9 +460,7 @@
     <string name="status_net_none">San rezo</string>
     <string name="status_battery">Batri %1$d %%</string>
     <string name="status_battery_unknown">Batri ?</string>
-    <string name="status_contacts">Pwòch : %1$s</string>
     <string name="status_contacts_none">pa gen pwòch ki pare</string>
-    <string name="status_contacts_more">%1$s +%2$d</string>
     <string name="status_last">Dènye trajè : %1$s · Dènye alèt : %2$s</string>
     <string name="status_never">jamè</string>
     <string name="history_open">Istwa alèt ak trajè</string>
@@ -593,4 +569,37 @@
     <string name="perm_location">Pozisyon : pou bay pwòch ou yo li sèlman pandan yon alèt oswa yon trajè swiv.</string>
     <string name="perm_partial">Ou ka refize youn oswa lòt : pwoteksyon an mache an pati, epi SOS la toujou disponib.</string>
     <string name="settings_support_code">Kòd sipò : %1$s (bay sipò a si l mande l ; li pa montre non ou ni nimewo ou)</string>
+    <string name="sos_hint_hold">kenbe 1,5 s</string>
+    <string name="home_live">An dirèk</string>
+    <string name="home_paused">an poz</string>
+    <string name="home_listen_title">Koute</string>
+    <string name="home_listen_live">● an dirèk</string>
+    <string name="home_nothing_recorded">Anyen pa anrejistre</string>
+    <string name="home_map_title">Kat</string>
+    <string name="home_map_last">Dènye pozisyon</string>
+    <string name="home_map_live">Pozisyon an dirèk</string>
+    <string name="home_watcher">Gadyen an</string>
+    <string name="home_watcher_on">IA sou telefòn · aktif</string>
+    <string name="home_watcher_off">IA sou telefòn · an poz</string>
+    <string name="home_watcher_level">nivo %1$d</string>
+    <string name="home_watcher_idle">an poz</string>
+    <string name="home_watcher_sleep">Gadyen an leve ak pwoteksyon an.</string>
+    <string name="home_stat_level">Risk</string>
+    <string name="home_stat_calm">Kalm</string>
+    <string name="home_stat_state">Eta</string>
+    <string name="home_stat_alert">Alèt</string>
+    <string name="home_stat_watch">Atansyon</string>
+    <string name="home_stat_sound">Son</string>
+    <string name="home_stat_motion">Siyal</string>
+    <string name="home_protected_title">Ou pwoteje</string>
+    <string name="home_off_title">Pwoteksyon fèmen</string>
+    <string name="home_off_hint">Touche bouton nan mitan an pou limen l</string>
+    <string name="home_ready_contacts">Moun pare : %1$d</string>
+    <string name="home_vault">Kòf prèv</string>
+    <string name="home_toggle_on">Pwoteksyon aktif</string>
+    <string name="home_toggle_off">Pwoteksyon fèmen</string>
+    <plurals name="home_sensors">
+        <item quantity="one">%1$d detektè</item>
+        <item quantity="other">%1$d detektè</item>
+    </plurals>
 </resources>

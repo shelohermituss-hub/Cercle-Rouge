@@ -12,7 +12,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -32,6 +34,8 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,19 +49,24 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
@@ -87,7 +96,7 @@ import com.cerclerouge.app.security.SecuritySettings
 import com.cerclerouge.app.server.ServerSync
 import com.cerclerouge.app.ui.components.FacePhase
 import com.cerclerouge.app.ui.components.FaceUnlock
-import com.cerclerouge.app.ui.components.Led
+import com.cerclerouge.app.ui.components.GlassIcon
 import com.cerclerouge.app.ui.components.LogoMark
 import com.cerclerouge.app.ui.components.NavItem
 import com.cerclerouge.app.ui.components.Orb
@@ -95,16 +104,16 @@ import com.cerclerouge.app.ui.components.PinPad
 import com.cerclerouge.app.ui.components.PixelDisc
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PixelIconView
+import com.cerclerouge.app.ui.components.ProtectionButton
 import com.cerclerouge.app.ui.components.PxButton
 import com.cerclerouge.app.ui.components.PxNavBar
 import com.cerclerouge.app.ui.components.PxPanel
 import com.cerclerouge.app.ui.components.PxVariant
+import com.cerclerouge.app.ui.components.Shield3D
 import com.cerclerouge.app.ui.components.SosBar
-import com.cerclerouge.app.ui.components.TERM_BG
-import com.cerclerouge.app.ui.components.TERM_CYAN
 import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.components.TraceLine
-import com.cerclerouge.app.ui.components.pixelGrid
+import com.cerclerouge.app.ui.components.cappedScale
 import com.cerclerouge.app.ui.journal.traceRows
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
@@ -279,7 +288,7 @@ fun HomeScreen(
             onArmConsumed()
         }
     }
-    Box(Modifier.fillMaxSize().background(c.surface).pixelGrid(c.grid).safeDrawingPadding()) {
+    Box(Modifier.fillMaxSize().background(c.surface).safeDrawingPadding()) {
         when {
             state.protection.isAlert && listenPrefs.discreet -> DiscreetScreen(emergencyCountry.primary, onSafe = {
                 guarded(Guarded.IM_SAFE)
@@ -308,9 +317,9 @@ fun HomeScreen(
                 onSosTap = { sos = SosStep.HOLD },
                 nav = listOf(
                     NavItem(stringResource(R.string.nav_home), PixelIcon.HOME) {},
-                    NavItem(stringResource(R.string.nav_vault), PixelIcon.LOCK, onVault),
                     NavItem(stringResource(R.string.nav_trip), PixelIcon.ARROW_RIGHT, onTrip),
-                    NavItem(stringResource(R.string.nav_log), PixelIcon.CLOCK, onJournal)
+                    NavItem(stringResource(R.string.home_row_contacts), PixelIcon.USERS, onContacts),
+                    NavItem(stringResource(R.string.home_row_settings), PixelIcon.GEAR, onSettings)
                 ),
                 map = { armed, showMe, modifier -> LiveMap(armed, showMe, modifier, coveredBottom = 28.dp) },
                 activity = activity,
@@ -321,16 +330,18 @@ fun HomeScreen(
                     .map { it.name.substringBefore(' ') },
                 lastAlert = lastAlert,
                 lastTrip = lastTrip,
-                onHistory = onHistory
+                onHistory = onHistory,
+                onVault = onVault,
+                onJournal = onJournal
             )
         }
     }
 
     if (rationale) {
         Dialog(onDismissRequest = { rationale = false }) {
-            PxPanel(fill = Cr.colors.surface, padding = PaddingValues(16.dp)) {
+            PxPanel(fill = Cr.colors.raised, radius = 32.dp, padding = PaddingValues(20.dp)) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(stringResource(R.string.perm_title).uppercase(), style = PxType.title)
+                    Text(stringResource(R.string.perm_title), style = PxType.title)
                     Text(stringResource(R.string.perm_mic), style = PxType.body)
                     Text(stringResource(R.string.perm_location), style = PxType.body)
                     Text(stringResource(R.string.perm_partial), style = PxType.caption, color = Cr.colors.muted)
@@ -390,151 +401,106 @@ internal fun HomeConsole(
     contactNames: List<String> = emptyList(),
     lastAlert: com.cerclerouge.privacy.db.HistoryEntity? = null,
     lastTrip: com.cerclerouge.privacy.db.HistoryEntity? = null,
-    onHistory: () -> Unit = {}
+    onHistory: () -> Unit = {},
+    onVault: () -> Unit = onSoon,
+    onJournal: () -> Unit = onSoon
 ) {
     val c = Cr.colors
     val armed = state.protection.isArmed
     // P4 : la position n'est lue que protection active et autorisation accordée.
     val showMe = armed && state.locationGranted
-    val listening = armed && state.micGranted
-    val trip = state.protection == com.cerclerouge.domain.ProtectionState.TRIP_ACTIVE
-    val discA11y = stringResource(if (armed) R.string.home_disc_a11y_on else R.string.home_disc_a11y_off)
-    // Coupée : tout est en noir et blanc. Active : la couleur revient (carte, disque, satellites).
-    val accent = if (armed) c.lime else c.muted
-    Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            LogoMark(26.dp)
-            Spacer(Modifier.width(10.dp))
-            // Logo : taille fixe (le texte courant, lui, suit la police d'Android jusqu'à 200 %).
-            val fontScale = androidx.compose.ui.platform.LocalDensity.current.fontScale
+    val toggleA11y = stringResource(if (armed) R.string.home_disc_a11y_on else R.string.home_disc_a11y_off)
+    val toggleState = stringResource(if (armed) R.string.home_toggle_on else R.string.home_toggle_off)
+    val large = androidx.compose.ui.platform.LocalDensity.current.fontScale >= LARGE_FONT
+    val vaultLabel = stringResource(R.string.home_vault)
+    Box(Modifier.fillMaxSize().background(c.surface)) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 128.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // En-tête : logo officiel, et le coffre de preuves à droite.
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Wordmark(Modifier.weight(1f, fill = false))
+                Spacer(Modifier.weight(1f))
+                Box(
+                    Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(c.raised)
+                        .clickable(role = Role.Button, onClick = onVault)
+                        .semantics { contentDescription = vaultLabel },
+                    contentAlignment = Alignment.Center
+                ) { GlassIcon(R.drawable.glass_lock, 30.dp) }
+            }
+            HeroCard(armed, contactsReady, device, contactNames, lastAlert, lastTrip, onHistory, onSosTrigger, onSosTap)
+            Row(Modifier.fillMaxWidth().padding(top = 2.dp, start = 4.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.home_live).uppercase(), style = PxType.label, color = c.muted, modifier = Modifier.weight(1f))
+                Text(
+                    if (armed) {
+                        listOf(state.micGranted, state.locationGranted, true).count {
+                            it
+                        }.let { n -> pluralStringResource(R.plurals.home_sensors, n, n) }
+                    } else {
+                        stringResource(R.string.home_paused)
+                    },
+                    style = PxType.caption,
+                    color = c.ink
+                )
+            }
+            val cardHeight = 156.dp
+            val listen = @Composable { m: Modifier -> ListenCard(activity, audioStatus, armed, onListen, m) }
+            val mapCard = @Composable { m: Modifier -> MapCard(armed, showMe, map, onTrip, m) }
+            if (large) {
+                listen(Modifier.fillMaxWidth().height(cardHeight * 1.4f))
+                mapCard(Modifier.fillMaxWidth().height(cardHeight * 1.4f))
+            } else {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    listen(Modifier.weight(1f).height(cardHeight))
+                    mapCard(Modifier.weight(1f).height(cardHeight))
+                }
+            }
+            WatcherCard(activity, audioStatus, armed, decision, onJournal)
+        }
+        if (!armed) {
             Text(
-                stringResource(R.string.app_name).uppercase(),
-                style = PxType.brand.copy(fontSize = PxType.brand.fontSize / fontScale, lineHeight = PxType.brand.lineHeight / fontScale),
-                color = accent,
-                maxLines = 1,
-                modifier = Modifier.weight(1f)
+                stringResource(R.string.home_off_hint),
+                style = PxType.caption.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium),
+                color = c.raised,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 128.dp, start = 48.dp, end = 48.dp)
+                    .background(c.ink, RoundedCornerShape(14.dp))
+                    .padding(horizontal = 14.dp, vertical = 9.dp)
             )
-            PxPanel(Modifier.width(56.dp), padding = PaddingValues(8.dp)) {
-                Text(
-                    LocalConfiguration.current.locales[0].language.uppercase(),
-                    style = PxType.label,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
         }
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            // Carte en haut, pleine largeur ; le losange et ses fonctions viennent par-dessus son bas (référence « connect »).
-            map(armed, showMe, Modifier.matchParentSize())
-            // Fondus en haut et en bas : légendes, losange et textes restent lisibles par-dessus la carte.
-            Box(
-                Modifier.matchParentSize().background(
-                    Brush.verticalGradient(
-                        0f to c.surface.copy(alpha = 0.85f),
-                        0.12f to Color.Transparent,
-                        0.4f to Color.Transparent,
-                        1f to c.surface.copy(alpha = 0.92f)
-                    )
-                )
-            )
-            // Légendes en haut à gauche (la colonne de boutons occupe la droite).
-            Column(Modifier.padding(start = 12.dp, end = 76.dp)) {
-                Text(
-                    stringResource(if (showMe) R.string.home_map_caption_on else R.string.home_map_caption).uppercase(),
-                    style = com.cerclerouge.app.ui.components.cappedScale(PxType.caption),
-                    color = if (showMe) c.lime else c.muted
-                )
-                Text(
-                    MapStyle.ATTRIBUTION,
-                    style = com.cerclerouge.app.ui.components.cappedScale(PxType.caption.copy(fontSize = PxType.caption.fontSize * 0.85f)),
-                    color = c.muted
-                )
-            }
-            // Les boutons, empilés dans le coin supérieur droit : ON/OFF d'abord, puis une couleur par fonction.
-            Column(
-                Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                horizontalAlignment = Alignment.End
-            ) {
-                PowerButton(armed, discA11y, onToggle)
-                Satellite(
-                    PixelIcon.PIN,
-                    stringResource(R.string.home_row_position),
-                    stringResource(if (showMe) R.string.sat_position_on else R.string.sat_position_off),
-                    armed,
-                    onSoon,
-                    tint = TERM_CYAN,
-                    active = showMe
-                )
-                Satellite(
-                    PixelIcon.USERS,
-                    stringResource(R.string.home_row_contacts),
-                    stringResource(R.string.sat_contacts, contactsReady),
-                    armed,
-                    onContacts,
-                    tint = THOUGHT_VIOLET
-                )
-                Satellite(
-                    PixelIcon.ARROW_RIGHT,
-                    stringResource(R.string.home_row_trip),
-                    stringResource(if (trip) R.string.sat_trip_active else R.string.sat_trip_none),
-                    armed,
-                    onTrip,
-                    tint = c.warn,
-                    active = trip
-                )
-                Satellite(
-                    PixelIcon.GEAR,
-                    stringResource(R.string.home_row_settings),
-                    stringResource(R.string.sat_settings),
-                    armed,
-                    onSettings,
-                    tint = c.ink
-                )
-            }
-            // État de la protection, en bas de la carte.
-            Column(
-                Modifier.align(Alignment.BottomCenter).padding(start = 12.dp, end = 76.dp, bottom = 6.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    stringResource(if (armed) R.string.home_protected else R.string.home_standby),
-                    style = com.cerclerouge.app.ui.components.cappedScale(PxType.label),
-                    color = accent
-                )
-                Text(
-                    stringResource(if (listening) R.string.home_listen_on else R.string.home_tap_activate).uppercase(),
-                    style = com.cerclerouge.app.ui.components.cappedScale(PxType.caption),
-                    color = c.muted,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 2.dp, start = 24.dp, end = 24.dp)
-                )
-            }
-        }
-        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatusStrip(device, contactNames, lastAlert, lastTrip, onHistory)
-            // Grande police (≥ 150 %) : les visualiseurs cèdent la place, la carte, le SOS et la navigation restent visibles.
-            if (androidx.compose.ui.platform.LocalDensity.current.fontScale < LARGE_FONT) {
-                ListenPanels(activity, audioStatus, armed, onOpen = onListen, decision = decision)
-            }
-            SosBar(onTrigger = onSosTrigger, onTap = onSosTap)
-            PxNavBar(nav, selected = 0)
+        Box(Modifier.align(Alignment.BottomCenter)) {
+            PxNavBar(nav, selected = 0, center = { ProtectionButton(armed, toggleA11y, toggleState, onToggle) })
         }
     }
 }
 
 /**
- * Bandeau d'état de l'accueil (PDF 16.2) : GPS, réseau, batterie, proches prêts, dernier trajet, dernière alerte.
- * Les points à régler (GPS coupé, pas de réseau, batterie faible, aucun proche) sont en orange ; toucher ouvre l'historique.
+ * Carte du haut de l'accueil (référence « Verre ») : état, proches prêts, état de l'appareil (GPS, réseau, batterie,
+ * PDF 16.2), bouclier 3D à droite, et le SOS fondu dans le bas de la carte. Toucher le texte ouvre l'historique.
  */
 @Composable
-internal fun StatusStrip(
+private fun HeroCard(
+    armed: Boolean,
+    contactsReady: Int,
     device: com.cerclerouge.sensor.DeviceStatus,
     contactNames: List<String>,
     lastAlert: com.cerclerouge.privacy.db.HistoryEntity?,
     lastTrip: com.cerclerouge.privacy.db.HistoryEntity?,
-    onHistory: () -> Unit
+    onHistory: () -> Unit,
+    onSosTrigger: () -> Unit,
+    onSosTap: () -> Unit
 ) {
     val c = Cr.colors
+    val shape = RoundedCornerShape(34.dp)
     val net = when {
         device.network == com.cerclerouge.sensor.NetworkKind.NONE -> stringResource(R.string.status_net_none)
         !device.validated -> stringResource(R.string.status_net_limited)
@@ -542,102 +508,135 @@ internal fun StatusStrip(
         else -> stringResource(R.string.status_net_cell)
     }
     val battery = device.batteryPct?.let { stringResource(R.string.status_battery, it) } ?: stringResource(R.string.status_battery_unknown)
-    val names = when {
-        contactNames.isEmpty() -> stringResource(R.string.status_contacts_none)
-        contactNames.size <= 2 -> contactNames.joinToString(", ")
-        else -> stringResource(R.string.status_contacts_more, contactNames.take(2).joinToString(", "), contactNames.size - 2)
-    }
+    val gps = stringResource(if (device.gpsEnabled) R.string.status_gps_on else R.string.status_gps_off)
+    val deviceIssue = !device.gpsEnabled || device.network == com.cerclerouge.sensor.NetworkKind.NONE || device.lowBattery
     val never = stringResource(R.string.status_never)
     val tripAt = lastTrip?.let { com.cerclerouge.app.ui.history.formatWhen(it.startedAtMillis) } ?: never
     val alertAt = lastAlert?.let { com.cerclerouge.app.ui.history.formatWhen(it.startedAtMillis) } ?: never
-    PxPanel(
-        Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onHistory),
-        fill = c.surface,
-        padding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .shadow(22.dp, shape, ambientColor = Color(0x331F2A33), spotColor = Color(0x401F2A33))
+            .clip(shape)
+            .background(Brush.verticalGradient(listOf(c.raised, lerp(c.raised, c.surface, 0.45f))))
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Box(
+            Modifier.fillMaxWidth().clickable(
+                role = Role.Button,
+                onClick = onHistory
+            ).padding(start = 20.dp, end = 16.dp, top = 18.dp, bottom = 14.dp)
+        ) {
+            Shield3D(on = armed, height = 104.dp, modifier = Modifier.align(Alignment.TopEnd))
+            Column(Modifier.padding(end = 104.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    stringResource(if (device.gpsEnabled) R.string.status_gps_on else R.string.status_gps_off),
-                    style = PxType.caption,
-                    color = if (device.gpsEnabled) c.lime else c.warn
+                    stringResource(if (armed) R.string.home_protected_title else R.string.home_off_title),
+                    style = PxType.title,
+                    modifier = Modifier.semantics { heading() }
                 )
-                Text("·", style = PxType.caption, color = c.muted)
-                Text(net, style = PxType.caption, color = if (device.network == com.cerclerouge.sensor.NetworkKind.NONE) c.warn else c.lime)
-                Text("·", style = PxType.caption, color = c.muted)
-                Text(battery, style = PxType.caption, color = if (device.lowBattery) c.warn else c.lime)
+                Bullet(
+                    if (contactNames.isEmpty()) {
+                        stringResource(R.string.status_contacts_none).replaceFirstChar { it.titlecase() }
+                    } else {
+                        stringResource(R.string.home_ready_contacts, contactsReady)
+                    },
+                    if (contactNames.isEmpty()) c.warn else c.ink
+                )
+                Bullet("$gps · $net · $battery", if (deviceIssue) c.warn else c.ink)
+                Text(
+                    stringResource(R.string.status_last, tripAt, alertAt),
+                    style = PxType.caption,
+                    color = c.muted,
+                    modifier = Modifier.padding(start = 12.dp)
+                )
             }
+        }
+        SosBar(
+            onTrigger = onSosTrigger,
+            onTap = onSosTap,
+            shape = RoundedCornerShape(bottomStart = 34.dp, bottomEnd = 34.dp),
+            minHeight = 56.dp
+        )
+    }
+}
+
+/** Logo officiel (image du porteur) ; en thème sombre, « Cercle » passe en clair pour rester lisible. */
+@Composable
+internal fun Wordmark(modifier: Modifier = Modifier, height: androidx.compose.ui.unit.Dp = 34.dp) {
+    val c = Cr.colors
+    if (c.raised.luminance() > 0.5f) {
+        Image(
+            painterResource(R.drawable.cr_wordmark),
+            contentDescription = stringResource(R.string.app_name),
+            modifier = modifier.height(height)
+        )
+    } else {
+        Row(modifier.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
+            com.cerclerouge.app.ui.components.LogoMark(height)
+            Spacer(Modifier.width(height * 0.3f))
+            Text("Cercle ", style = PxType.title.copy(fontSize = PxType.title.fontSize * (height.value / 30f)), color = c.ink)
             Text(
-                stringResource(R.string.status_contacts, names),
-                style = PxType.caption,
-                color = if (contactNames.isEmpty()) c.warn else c.muted
+                "Rouge",
+                style = PxType.title.copy(
+                    fontSize = PxType.title.fontSize * (height.value / 30f),
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                ),
+                color = com.cerclerouge.app.ui.components.LogoRed
             )
-            Text(stringResource(R.string.status_last, tripAt, alertAt), style = PxType.caption, color = c.muted)
+        }
+    }
+}
+
+@Composable
+private fun Bullet(text: String, color: Color) {
+    Row(verticalAlignment = Alignment.Top) {
+        Text("·", style = PxType.body, color = Cr.colors.muted, modifier = Modifier.width(12.dp))
+        Text(text, style = PxType.body, color = color)
+    }
+}
+
+/** Visualiseur « Carte » : la carte en direct dans une carte arrondie, avec l'attribution des données. */
+@Composable
+private fun MapCard(
+    armed: Boolean,
+    showMe: Boolean,
+    map: @Composable (armed: Boolean, showMe: Boolean, modifier: Modifier) -> Unit,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val c = Cr.colors
+    val shape = RoundedCornerShape(22.dp)
+    Box(modifier.clip(shape).background(c.raised).border(1.dp, c.line, shape)) {
+        map(armed, showMe, Modifier.matchParentSize())
+        Text(
+            MapStyle.ATTRIBUTION,
+            style = cappedScale(PxType.caption.copy(fontSize = PxType.caption.fontSize * 0.75f)),
+            color = c.muted,
+            maxLines = 1,
+            modifier = Modifier.align(Alignment.TopStart).padding(8.dp).background(c.raised.copy(alpha = 0.85f), RoundedCornerShape(8.dp))
+                .padding(horizontal = 6.dp, vertical = 2.dp)
+        )
+        Column(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(8.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(c.raised.copy(alpha = 0.94f))
+                .clickable(role = Role.Button, onClick = onOpen)
+                .padding(horizontal = 10.dp, vertical = 6.dp)
+        ) {
+            Text(stringResource(R.string.home_map_title), style = PxType.caption, color = c.muted)
+            Text(
+                stringResource(if (showMe) R.string.home_map_live else R.string.home_map_last),
+                style = PxType.bodyBold,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
         }
     }
 }
 
 private const val LARGE_FONT = 1.5f
-
-/** ON/OFF de la protection : le bouton principal, en haut à droite (rempli quand la protection est active). */
-@Composable
-private fun PowerButton(armed: Boolean, description: String, onToggle: () -> Unit) {
-    val c = Cr.colors
-    PxPanel(
-        Modifier.size(56.dp).semantics {
-            role = Role.Switch
-            contentDescription = description
-            onClick {
-                onToggle()
-                true
-            }
-        }.clickable(onClick = onToggle),
-        border = if (armed) c.lime else c.ink,
-        fill = if (armed) c.lime else c.surface,
-        padding = PaddingValues(0.dp)
-    ) {
-        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-            PixelIconView(PixelIcon.POWER, 22.dp, if (armed) c.onLime else c.ink)
-            Text(
-                stringResource(if (armed) R.string.home_on else R.string.home_off),
-                style = PxType.label,
-                color = if (armed) c.onLime else c.ink
-            )
-        }
-    }
-}
-
-/**
- * Bouton carré de la colonne de droite (52 dp) : icône seule, voyant d'état dans le coin.
- * TalkBack lit l'étiquette et la valeur. Gris quand la protection est coupée.
- */
-@Composable
-private fun Satellite(
-    icon: PixelIcon,
-    label: String,
-    value: String,
-    armed: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    tint: Color = Cr.colors.lime,
-    active: Boolean = false
-) {
-    val c = Cr.colors
-    val color = if (armed) tint else c.muted
-    PxPanel(
-        modifier
-            .size(52.dp)
-            .semantics(mergeDescendants = true) { contentDescription = "$label : $value" }
-            .clickable(role = Role.Button, onClick = onClick),
-        border = if (armed) tint else c.lineControl,
-        fill = c.surface,
-        padding = PaddingValues(0.dp)
-    ) {
-        PixelIconView(icon, 24.dp, color, Modifier.align(Alignment.Center))
-        Led(if (active) tint else c.line, blink = active, modifier = Modifier.align(Alignment.TopEnd).padding(5.dp), size = 6.dp)
-    }
-}
 
 /** Maquette « SOS · appui long » : 12 carrés s'allument autour du disque pendant 1,5 s. */
 @Composable
@@ -658,7 +657,7 @@ internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit) {
                     Box(
                         Modifier
                             .offset((130 * Math.cos(angle)).dp, (130 * Math.sin(angle)).dp)
-                            .size(12.dp)
+                            .size(12.dp).clip(CircleShape)
                             .background(c.danger.copy(alpha = if (i < lit) 1f else 0.2f))
                     )
                 }
@@ -693,16 +692,19 @@ internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit) {
                             }
                         }
                 ) {
-                    PixelIconView(PixelIcon.ALERT, 40.dp, c.onLime)
+                    PixelIconView(PixelIcon.ALERT, 40.dp, Color.White, strokeWidth = 2.2f)
                     Text(
                         stringResource(R.string.sos),
-                        style = PxType.display.copy(fontSize = PxType.display.fontSize * 1.7f),
-                        color = c.onLime
+                        style = PxType.display.copy(
+                            fontSize = PxType.display.fontSize * 1.7f,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        ),
+                        color = Color.White
                     )
                 }
             }
             Spacer(Modifier.height(20.dp))
-            Text(stringResource(R.string.sos_hold_title).uppercase(), style = PxType.display)
+            Text(stringResource(R.string.sos_hold_title), style = PxType.display)
             Spacer(Modifier.height(6.dp))
             Text(stringResource(R.string.sos_hold_body), style = PxType.body, color = c.muted, textAlign = TextAlign.Center)
         }
@@ -746,7 +748,7 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit) {
                     }
                 )
             }
-            Text(stringResource(R.string.countdown_seconds).uppercase(), style = PxType.display, modifier = Modifier.padding(top = 12.dp))
+            Text(stringResource(R.string.countdown_seconds), style = PxType.display, modifier = Modifier.padding(top = 12.dp))
             Text(
                 stringResource(R.string.countdown_body),
                 style = PxType.body,
@@ -770,13 +772,21 @@ private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, number: Strin
     LaunchedEffect(state) { lines = vm.log.latest(6) }
     val time = remember { DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault()) }
     Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        PxPanel(Modifier.fillMaxWidth(), border = c.danger) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Orb(OrbState.SEARCHING, 48.dp, c.danger)
-                Column {
-                    Text(stringResource(R.string.urgent_sent).uppercase(), style = PxType.display, color = c.danger)
-                    state.alert?.let { Text(time.format(it.openedAt), style = PxType.caption, color = c.muted) }
-                }
+        PxPanel(Modifier.fillMaxWidth(), radius = 34.dp, padding = PaddingValues(18.dp)) {
+            Column(
+                Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                FaceIdLoop(76.dp)
+                Text(
+                    stringResource(R.string.urgent_sent),
+                    style = PxType.display,
+                    color = c.danger,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.semantics { heading() }
+                )
+                state.alert?.let { Text(time.format(it.openedAt), style = PxType.caption, color = c.muted) }
             }
         }
         Text(stringResource(R.string.urgent_contacts).uppercase(), style = PxType.label, color = c.muted)
@@ -814,7 +824,10 @@ private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, number: Strin
         }
         Text(stringResource(R.string.nav_log).uppercase(), style = PxType.label, color = c.muted)
         // Terminal du journal (référence AgentPrism).
-        Column(Modifier.weight(1f).fillMaxWidth().background(TERM_BG).padding(horizontal = 8.dp).verticalScroll(rememberScrollState())) {
+        Column(
+            Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.raised).padding(horizontal = 10.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
             val rows = traceRows(lines, resources)
             rows.forEachIndexed { i, row -> TraceLine(row, last = i == rows.lastIndex) }
         }
@@ -823,6 +836,29 @@ private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, number: Strin
         // PDF 20 : l'app aide à alerter, elle ne remplace pas les secours.
         Text(stringResource(R.string.disclaimer_short), style = PxType.caption, color = Cr.colors.muted)
     }
+}
+
+/**
+ * Animation « Face ID » de l'alerte en cours (fichier « Biometric Smart Animations » du porteur) :
+ * visage → cercle qui tourne → coche, en boucle. Figée sur la coche si « réduire les animations ».
+ */
+@Composable
+private fun FaceIdLoop(size: androidx.compose.ui.unit.Dp) {
+    val still = com.cerclerouge.app.ui.components.reduceMotion()
+    var phase by remember { mutableStateOf(if (still) FacePhase.SUCCESS else FacePhase.IDLE) }
+    LaunchedEffect(still) {
+        if (!still) {
+            while (true) {
+                phase = FacePhase.IDLE
+                delay(1200)
+                phase = FacePhase.SCANNING
+                delay(1700)
+                phase = FacePhase.SUCCESS
+                delay(1800)
+            }
+        }
+    }
+    FaceUnlock(phase, size)
 }
 
 /**
@@ -844,10 +880,10 @@ internal fun PinDialog(
     var pin by remember { mutableStateOf("") }
     var phase by remember { mutableStateOf(FacePhase.IDLE) }
     Dialog(onDismissRequest = onDismiss) {
-        PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
+        PxPanel(fill = c.raised, radius = 32.dp, padding = PaddingValues(20.dp)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 FaceUnlock(phase, 64.dp)
-                Text(stringResource(R.string.pin_enter).uppercase(), style = PxType.title)
+                Text(stringResource(R.string.pin_enter), style = PxType.title)
                 if (phase == FacePhase.ERROR) {
                     Text(
                         stringResource(R.string.pin_wrong),
@@ -913,7 +949,7 @@ internal fun DiscreetScreen(number: String, onSafe: () -> Unit, onCall: () -> Un
     val c = Cr.colors
     Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         PxPanel(Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.service_text_armed).uppercase(), style = PxType.display, color = c.muted)
+            Text(stringResource(R.string.service_text_armed), style = PxType.display, color = c.muted)
         }
         Spacer(Modifier.weight(1f))
         PxButton(stringResource(R.string.discreet_finish), onSafe, variant = PxVariant.OUTLINE)

@@ -300,7 +300,7 @@ fun ListenScreen(vm: ListenViewModel, onBack: () -> Unit) {
             }
             Text(stringResource(R.string.listen_privacy), style = PxType.caption, color = c.muted)
 
-            Text(stringResource(R.string.listen_phrase_title).uppercase(), style = PxType.label, color = c.lime)
+            Text(stringResource(R.string.listen_phrase_title).uppercase(), style = PxType.label, color = c.muted)
             Text(stringResource(R.string.listen_phrase_intro), style = PxType.body)
             if (!granted) {
                 PxButton(stringResource(R.string.listen_allow_mic), {
@@ -355,7 +355,7 @@ fun ListenScreen(vm: ListenViewModel, onBack: () -> Unit) {
         Dialog(onDismissRequest = { confirmDelete = false }) {
             PxPanel(border = c.danger, fill = c.surface, padding = PaddingValues(16.dp)) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(stringResource(R.string.listen_delete).uppercase(), style = PxType.title)
+                    Text(stringResource(R.string.listen_delete), style = PxType.title)
                     Text(stringResource(R.string.listen_delete_confirm), style = PxType.body)
                     PxButton(stringResource(R.string.listen_delete), {
                         confirmDelete = false
@@ -373,7 +373,7 @@ fun ListenScreen(vm: ListenViewModel, onBack: () -> Unit) {
 private fun Keywords(vm: ListenViewModel, ui: ListenUi, granted: Boolean, busy: Boolean) {
     val c = Cr.colors
     var custom by remember { mutableStateOf("") }
-    Text(stringResource(R.string.listen_keywords_title).uppercase(), style = PxType.label, color = c.lime)
+    Text(stringResource(R.string.listen_keywords_title).uppercase(), style = PxType.label, color = c.muted)
     Text(stringResource(R.string.kw_intro), style = PxType.body, color = c.muted)
     ui.keywords.forEach { label ->
         PxPanel(Modifier.fillMaxWidth(), border = c.lime) {

@@ -72,7 +72,6 @@
     <string name="journal_intact">Log intact</string>
     <string name="journal_broken">Log altered from entry %1$d</string>
     <string name="back">Back</string>
-    <string name="sos_hint_two_lines">HOLD\n1.5 S</string>
     <string name="action_skip">Skip</string>
     <string name="poster1_title">You are not alone.</string>
     <string name="poster1_body">Cercle Rouge alerts your people when you are in danger.</string>
@@ -80,14 +79,7 @@
     <string name="poster2_body">Nothing is sent. It only listens for a distress word.</string>
     <string name="poster3_title">5 trusted people.</string>
     <string name="poster3_body">You choose who gets the SMS and your location.</string>
-    <string name="home_on">ON</string>
-    <string name="home_off">OFF</string>
-    <string name="home_protected">[ > PROTECTED &lt; ]</string>
-    <string name="home_standby">[ - STANDBY - ]</string>
-    <string name="home_listen_on">On your phone · nothing is sent</string>
-    <string name="home_row_position">Location</string>
     <string name="home_row_contacts">Contacts</string>
-    <string name="home_row_trip">Trip</string>
     <string name="home_disc_a11y_on">Protection on. Tap to turn off.</string>
     <string name="home_disc_a11y_off">Protection off. Tap to turn on.</string>
     <string name="nav_home">Home</string>
@@ -96,7 +88,7 @@
     <string name="sos_hold_title">Keep holding</string>
     <string name="sos_hold_body">1.5 seconds to start the countdown.</string>
     <string name="sos_hold_note">Nothing is sent until you finish.</string>
-    <string name="countdown_label">[ Alert in ]</string>
+    <string name="countdown_label">Alert in</string>
     <string name="countdown_seconds">Seconds</string>
     <string name="countdown_body">SMS and location link sent to your trusted contacts.</string>
     <plurals name="countdown_a11y">
@@ -120,13 +112,6 @@
     <string name="profile_screen_title">Your profile</string>
     <string name="guardian_screen_title">Your trusted adult</string>
     <string name="notif_screen_title">Notifications</string>
-    <string name="sat_position_off">Private</string>
-    <string name="sat_contacts">%1$d / 5</string>
-    <string name="sat_trip_none">None</string>
-    <string name="home_map_caption">Location hidden</string>
-    <string name="home_tap_activate">Tap to activate</string>
-    <string name="home_map_caption_on">Your location stays on your phone</string>
-    <string name="sat_position_on">Here only</string>
     <string name="journal_today">Today</string>
     <string name="journal_week">Last 7 days</string>
     <string name="journal_kpi_on">Activations</string>
@@ -220,7 +205,6 @@
     <string name="trip_watch_no_recipients">No contact has accepted your invitation yet: server monitoring is not active.</string>
     <string name="trip_watch_failed">Server monitoring unavailable (%1$s). The trip continues on the phone.</string>
     <string name="trip_privacy">No points are kept: only the latest positions stay in memory, erased on arrival.</string>
-    <string name="sat_trip_active">Active</string>
     <string name="action_retry">Try again</string>
     <string name="listen_title">AI listening</string>
     <string name="listen_status_running">Listening: only your secret phrase is looked for</string>
@@ -248,7 +232,6 @@
     <string name="listen_deleted">Phrase deleted.</string>
     <string name="listen_confidence">Similarity: %1$d %%</string>
     <string name="listen_keywords_title">Distress keywords</string>
-    <string name="nav_vault">Evidence</string>
     <string name="retention_recording_notice">During an alert (level 2 or SOS), the microphone records. It may capture other people\'s voices. The recording stays encrypted on your phone; its value in court is not guaranteed. You can turn it off in \"Evidence\".</string>
     <string name="vault_title">Evidence</string>
     <string name="vault_locked">Vault locked. Enter your PIN to see the recordings.</string>
@@ -329,7 +312,6 @@
     <string name="battery_oppo">Oppo, Realme, Vivo, OnePlus: Settings → Battery → Cercle Rouge: allow background activity and auto-start.</string>
     <string name="battery_generic">For protection to keep working with the screen off: Settings → Apps → Cercle Rouge → Battery: \"Unrestricted\".</string>
     <string name="home_row_settings">Settings</string>
-    <string name="sat_settings">Open</string>
     <string name="settings_section_phone">My number</string>
     <string name="settings_phone_ex">Verify your number with an SMS code. It is used to confirm a trusted adult\'s consent and to find your account if you change phones. It is never shown to anyone.</string>
     <string name="settings_phone_label">Your number (+509…)</string>
@@ -368,8 +350,6 @@
     <string name="guardian_req_refused">Refusal recorded.</string>
     <string name="guardian_req_must_be_adult">You must be an adult (18 or over) to accept.</string>
     <string name="guardian_req_limit">You are already the trusted adult of 6 young people, the maximum.</string>
-    <string name="viz_live_title">Live listening</string>
-    <string name="viz_ai_title">AI thinking</string>
     <string name="viz_stage_idle">Standby</string>
     <string name="viz_stage_listening">Listening…</string>
     <string name="viz_stage_voice">Voice detected</string>
@@ -379,7 +359,6 @@
     <string name="viz_paused_low">Listening paused (battery or heat)</string>
     <string name="viz_paused_busy">Mic used by another app</string>
     <string name="viz_mic_error">Mic unavailable</string>
-    <string name="viz_levels_only">Levels only: no sound is kept.</string>
     <string name="viz_ev_voice">Voice detected</string>
     <string name="viz_ev_compare">Gap %1$s/%2$s</string>
     <string name="viz_ev_hit">Phrase recognised</string>
@@ -394,7 +373,6 @@
     <string name="trip_route_consent_title">Trace the route</string>
     <string name="trip_route_consent_text">To trace the route along streets, the start and end of this trip (two coordinates, no name or identifier) are sent to an OpenStreetMap routing service, which also sees your IP address. Cercle Rouge keeps nothing. Without this consent, a straight line is drawn.</string>
     <string name="trip_route_consent_ok">I agree</string>
-    <string name="viz_risk">Risk %1$d%% · signals %2$d</string>
     <string name="detect_title">Detection settings</string>
     <string name="detect_sensitivity">Sensitivity</string>
     <string name="detect_sensitivity_ex">High: reacts faster, with more false alarms. Low: only very clear signals. The secret phrase and SOS do not change.</string>
@@ -481,9 +459,7 @@
     <string name="status_net_none">No network</string>
     <string name="status_battery">Battery %1$d%%</string>
     <string name="status_battery_unknown">Battery ?</string>
-    <string name="status_contacts">Contacts: %1$s</string>
     <string name="status_contacts_none">no contact ready</string>
-    <string name="status_contacts_more">%1$s +%2$d</string>
     <string name="status_last">Last trip: %1$s · Last alert: %2$s</string>
     <string name="status_never">never</string>
     <string name="history_open">Alert and trip history</string>
@@ -592,4 +568,37 @@
     <string name="perm_location">Location: to share it with your contacts only during an alert or a watched trip.</string>
     <string name="perm_partial">You can refuse either one: protection then works partly, and SOS is always available.</string>
     <string name="settings_support_code">Support code: %1$s (give it to support if asked; it reveals neither your name nor your number)</string>
+    <string name="sos_hint_hold">hold 1.5 s</string>
+    <string name="home_live">Live</string>
+    <string name="home_paused">paused</string>
+    <string name="home_listen_title">Listening</string>
+    <string name="home_listen_live">● live</string>
+    <string name="home_nothing_recorded">Nothing is recorded</string>
+    <string name="home_map_title">Map</string>
+    <string name="home_map_last">Last position</string>
+    <string name="home_map_live">Live position</string>
+    <string name="home_watcher">The watcher</string>
+    <string name="home_watcher_on">On-device AI · active</string>
+    <string name="home_watcher_off">On-device AI · standby</string>
+    <string name="home_watcher_level">level %1$d</string>
+    <string name="home_watcher_idle">standby</string>
+    <string name="home_watcher_sleep">The watcher wakes up with protection.</string>
+    <string name="home_stat_level">Risk</string>
+    <string name="home_stat_calm">Calm</string>
+    <string name="home_stat_state">State</string>
+    <string name="home_stat_alert">Alert</string>
+    <string name="home_stat_watch">Watch</string>
+    <string name="home_stat_sound">Sound</string>
+    <string name="home_stat_motion">Signals</string>
+    <string name="home_protected_title">You are protected</string>
+    <string name="home_off_title">Protection off</string>
+    <string name="home_off_hint">Tap the middle button to turn it on</string>
+    <string name="home_ready_contacts">Contacts ready: %1$d</string>
+    <string name="home_vault">Evidence vault</string>
+    <string name="home_toggle_on">Protection on</string>
+    <string name="home_toggle_off">Protection off</string>
+    <plurals name="home_sensors">
+        <item quantity="one">%1$d sensor</item>
+        <item quantity="other">%1$d sensors</item>
+    </plurals>
 </resources>

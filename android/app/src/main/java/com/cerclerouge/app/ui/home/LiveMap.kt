@@ -152,11 +152,11 @@ fun LiveMap(
             } else {
                 if (location.isLocationComponentActivated) location.isLocationComponentEnabled = false
             }
-            // Route à suivre : liseré sombre puis trait ambre (couleur du trajet), sous le repère de destination.
+            // Route à suivre : liseré blanc puis trait bleu (design « Verre »), sous le repère de destination.
             style.addSource(GeoJsonSource(ROUTE_SOURCE))
             style.addLayer(
                 LineLayer(ROUTE_CASING, ROUTE_SOURCE).withProperties(
-                    PropertyFactory.lineColor(c.void.toArgb()),
+                    PropertyFactory.lineColor(android.graphics.Color.WHITE),
                     PropertyFactory.lineWidth(9f),
                     PropertyFactory.lineCap("round"),
                     PropertyFactory.lineJoin("round")
@@ -164,20 +164,20 @@ fun LiveMap(
             )
             style.addLayer(
                 LineLayer(ROUTE_LAYER, ROUTE_SOURCE).withProperties(
-                    PropertyFactory.lineColor(c.warn.toArgb()),
+                    PropertyFactory.lineColor(c.lime.toArgb()),
                     PropertyFactory.lineWidth(5f),
                     PropertyFactory.lineCap("round"),
                     PropertyFactory.lineJoin("round")
                 )
             )
-            // Repère de destination (écran Trajet) : un point lime cerclé de noir, mis à jour sans recharger le style.
+            // Repère de destination (écran Trajet) : un point encre cerclé de blanc, mis à jour sans recharger le style.
             style.addSource(GeoJsonSource(DEST_SOURCE))
             style.addLayer(
                 CircleLayer(DEST_LAYER, DEST_SOURCE).withProperties(
                     PropertyFactory.circleRadius(9f),
-                    PropertyFactory.circleColor(c.warn.toArgb()),
+                    PropertyFactory.circleColor(c.ink.toArgb()),
                     PropertyFactory.circleStrokeWidth(3f),
-                    PropertyFactory.circleStrokeColor(c.void.toArgb())
+                    PropertyFactory.circleStrokeColor(android.graphics.Color.WHITE)
                 )
             )
             destStyle.value = style

@@ -1,31 +1,27 @@
 package com.cerclerouge.app.ui.home
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.cerclerouge.app.R
@@ -34,51 +30,162 @@ import com.cerclerouge.app.audio.ListenActivity
 import com.cerclerouge.app.audio.ListenEvent
 import com.cerclerouge.app.audio.ListenEventKind
 import com.cerclerouge.app.audio.ListenStage
-import com.cerclerouge.app.ui.components.GradientOrb
-import com.cerclerouge.app.ui.components.Led
+import com.cerclerouge.app.ui.components.GlassIcon
+import com.cerclerouge.app.ui.components.PixelIcon
+import com.cerclerouge.app.ui.components.PixelIconView
 import com.cerclerouge.app.ui.components.PxPanel
-import com.cerclerouge.app.ui.components.TERM_CYAN
+import com.cerclerouge.app.ui.components.VoiceOrb
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
 import java.util.Locale
 
-/** Violet clair du visualiseur de l'IA (lisible sur fond sombre, distinct du lime de la carte). */
-internal val THOUGHT_VIOLET = Color(0xFFB794F6)
+/** Violet de la « pensée » du veilleur (journal), pour le thème clair. */
+internal val THOUGHT_VIOLET = Color(0xFF6D28D9)
 
 /**
- * Deux visualiseurs sous la carte (S5, accueil) : l'écoute en direct (niveau réel du micro) et la « réflexion » de l'IA
- * (étapes réelles de l'analyse : voix détectée, comparaison à la phrase secrète, résultat). Ce ne sont que des niveaux et
- * des étapes : aucun son n'est gardé ni envoyé (R-AE-01). Toucher l'un ou l'autre ouvre les réglages de l'écoute.
+ * Visualiseur « Écoute » de l'accueil : orbe vocale (vivante quand le micro écoute), état de l'écoute.
+ * Ce ne sont que des niveaux : aucun son n'est gardé ni envoyé (R-AE-01). Toucher ouvre les réglages de l'écoute.
  */
 @Composable
-internal fun ListenPanels(
-    activity: ListenActivity,
-    status: AudioStatus,
-    armed: Boolean,
-    onOpen: () -> Unit,
-    modifier: Modifier = Modifier,
-    decision: com.cerclerouge.alert.Decision? = null
-) {
+internal fun ListenCard(activity: ListenActivity, status: AudioStatus, armed: Boolean, onOpen: () -> Unit, modifier: Modifier = Modifier) {
+    val c = Cr.colors
     val stage = stageText(activity, status, armed)
+    val live = armed && status != AudioStatus.ERROR && status != AudioStatus.STOPPED
+    val level = activity.levels.lastOrNull() ?: 0f
     val open = stringResource(R.string.viz_open_a11y, stage)
-    Row(modifier.fillMaxWidth().height(PANEL_HEIGHT), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        LivePanel(
-            activity,
-            armed,
-            stage,
-            Modifier.weight(1f).fillMaxHeight().clickable(role = Role.Button, onClickLabel = open, onClick = onOpen)
-        )
-        ThoughtPanel(
-            activity,
-            armed,
-            stage,
-            decision,
-            Modifier.weight(1f).fillMaxHeight().clickable(role = Role.Button, onClickLabel = open, onClick = onOpen)
-        )
+    PxPanel(
+        modifier.clickable(role = Role.Button, onClickLabel = open, onClick = onOpen),
+        padding = PaddingValues(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 12.dp)
+    ) {
+        Column(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = stage }, horizontalAlignment = Alignment.Start) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.home_listen_title),
+                    style = PxType.bodyBold.copy(fontSize = PxType.body.fontSize * 1.1f),
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    stringResource(if (live) R.string.home_listen_live else R.string.home_paused),
+                    style = PxType.caption.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
+                    color = if (live) c.calmText else c.muted,
+                    maxLines = 1
+                )
+            }
+            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                VoiceOrb(active = live, size = 76.dp, modifier = Modifier.scale(1f + level * 0.15f))
+            }
+            Text(
+                if (live) stringResource(R.string.home_nothing_recorded) else stage,
+                style = PxType.caption,
+                color = c.muted,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
-private val PANEL_HEIGHT = 172.dp
+/**
+ * Visualiseur « Le veilleur » : chiffres réels du cerveau (niveau du micro, risque fusionné, signaux indépendants, état)
+ * et sa dernière « pensée » (étapes réelles de l'analyse), en police terminal. Toucher ouvre le journal.
+ */
+@Composable
+internal fun WatcherCard(
+    activity: ListenActivity,
+    status: AudioStatus,
+    armed: Boolean,
+    decision: com.cerclerouge.alert.Decision?,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val c = Cr.colors
+    val stage = stageText(activity, status, armed)
+    val engaged = decision?.engaged ?: com.cerclerouge.alert.RecommendedAction.NONE
+    val (stateText, stateColor) = when {
+        !armed -> stringResource(R.string.home_watcher_idle) to c.muted
+        engaged >= com.cerclerouge.alert.RecommendedAction.ALERT_CONTACTS -> stringResource(R.string.home_stat_alert) to c.danger
+        engaged >= com.cerclerouge.alert.RecommendedAction.VERIFY -> stringResource(R.string.home_stat_watch) to c.warn
+        else -> stringResource(R.string.home_stat_calm) to c.forest
+    }
+    val level = ((activity.levels.lastOrNull() ?: 0f) * 100).toInt()
+    val lines = events(activity.events, armed)
+    PxPanel(
+        modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onOpen),
+        padding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)
+    ) {
+        Column(Modifier.fillMaxWidth()) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                GlassIcon(R.drawable.glass_terminal, 38.dp)
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.home_watcher), style = PxType.bodyBold.copy(fontSize = PxType.body.fontSize * 1.1f))
+                    Text(
+                        stringResource(if (armed) R.string.home_watcher_on else R.string.home_watcher_off),
+                        style = PxType.caption,
+                        color = c.muted
+                    )
+                }
+                Text(
+                    if (armed) stringResource(R.string.home_watcher_level, engaged.ordinal) else stringResource(R.string.home_watcher_idle),
+                    style = PxType.caption.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
+                    color = if (armed) c.lime else c.muted,
+                    modifier = Modifier.background(
+                        if (armed) c.glow else c.forestDeep,
+                        RoundedCornerShape(50)
+                    ).padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+                PixelIconView(PixelIcon.ARROW_LEFT, 18.dp, c.lineControl, Modifier.scale(-1f, 1f))
+            }
+            Box(Modifier.fillMaxWidth().padding(vertical = 10.dp).height(1.dp).background(c.line))
+            if (armed) {
+                Row(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = "$stage · $stateText" }) {
+                    Stat(R.drawable.glass_volume, "$level %", stringResource(R.string.home_stat_sound), c.ink, Modifier.weight(1f))
+                    Stat(
+                        R.drawable.glass_chart,
+                        decision?.let { "${(it.risk * 100).toInt()} %" } ?: "—",
+                        stringResource(R.string.home_stat_level),
+                        c.ink,
+                        Modifier.weight(1f)
+                    )
+                    Stat(
+                        R.drawable.glass_heart,
+                        "${decision?.signals ?: 0}",
+                        stringResource(R.string.home_stat_motion),
+                        c.ink,
+                        Modifier.weight(1f)
+                    )
+                    Stat(
+                        if (stateColor == c.forest) R.drawable.glass_check else R.drawable.glass_warning,
+                        stateText,
+                        stringResource(R.string.home_stat_state),
+                        stateColor,
+                        Modifier.weight(1f)
+                    )
+                }
+                val last = lines.lastOrNull() ?: stage
+                val blink = com.cerclerouge.app.ui.components.stepTick(530) % 2 == 0
+                Text(
+                    "◆ $last" + if (blink) " ▍" else "  ",
+                    style = PxType.code,
+                    color = c.thought,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 10.dp)
+                )
+            } else {
+                Text(stringResource(R.string.home_watcher_sleep), style = PxType.body, color = c.muted)
+            }
+        }
+    }
+}
+
+@Composable
+private fun Stat(icon: Int, value: String, label: String, color: Color, modifier: Modifier = Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp)) {
+        GlassIcon(icon, 30.dp)
+        Text(value, style = PxType.bodyBold, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(label, style = PxType.caption, color = Cr.colors.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
 
 @Composable
 private fun stageText(activity: ListenActivity, status: AudioStatus, armed: Boolean): String = when {
@@ -94,111 +201,6 @@ private fun stageText(activity: ListenActivity, status: AudioStatus, armed: Bool
             stringResource(
                 if (activity.events.lastOrNull()?.kind == ListenEventKind.HIT) R.string.viz_stage_hit else R.string.viz_stage_miss
             )
-    }
-}
-
-@Composable
-private fun PanelTitle(text: String, tint: Color, on: Boolean) {
-    val c = Cr.colors
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        Led(if (on) tint else c.line, blink = on, size = 6.dp)
-        Text(text.uppercase(), style = PxType.label, color = if (on) tint else c.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
-    }
-}
-
-/** Écoute en temps réel : 40 barres, une par 100 ms, la plus récente à droite. */
-@Composable
-private fun LivePanel(activity: ListenActivity, armed: Boolean, stage: String, modifier: Modifier = Modifier) {
-    val c = Cr.colors
-    val live = armed && activity.levels.isNotEmpty()
-    val tint = if (live) TERM_CYAN else c.muted
-    PxPanel(
-        modifier,
-        border = if (live) TERM_CYAN else c.lineControl,
-        fill = c.surface,
-        padding = PaddingValues(10.dp)
-    ) {
-        Column(
-            Modifier.fillMaxWidth().clearAndSetSemantics {
-                contentDescription = stage
-            },
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            PanelTitle(stringResource(R.string.viz_live_title), tint, live)
-            Canvas(Modifier.fillMaxWidth().weight(1f)) {
-                val n = LEVELS
-                val slot = size.width / n
-                val barW = slot * 0.62f
-                val levels = activity.levels
-                for (i in 0 until n) {
-                    val idx = levels.size - n + i
-                    val v = if (live && idx >= 0) levels[idx] else 0f
-                    val h = maxOf(2.dp.toPx(), v * size.height)
-                    val color = if (v > 0.02f) tint.copy(alpha = 0.45f + 0.55f * v) else c.line
-                    drawRect(color, Offset(i * slot, (size.height - h) / 2f), Size(barW, h))
-                }
-            }
-            Text(stage, style = PxType.bodyBold, color = if (live) c.ink else c.muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text(stringResource(R.string.viz_levels_only), style = PxType.caption, color = c.muted, maxLines = 2)
-        }
-    }
-}
-
-private const val LEVELS = 28
-
-/** « Réflexion » de l'IA : orbe qui respire avec la voix, et le fil des dernières étapes de l'analyse (style terminal). */
-@Composable
-private fun ThoughtPanel(
-    activity: ListenActivity,
-    armed: Boolean,
-    stage: String,
-    decision: com.cerclerouge.alert.Decision?,
-    modifier: Modifier = Modifier
-) {
-    val c = Cr.colors
-    val on = armed && activity.stage != ListenStage.IDLE
-    val level = activity.levels.lastOrNull() ?: 0f
-    PxPanel(
-        modifier,
-        border = if (on) THOUGHT_VIOLET else c.lineControl,
-        fill = c.surface,
-        padding = PaddingValues(10.dp)
-    ) {
-        Column(
-            Modifier.fillMaxWidth().clearAndSetSemantics {
-                contentDescription = stage
-            },
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            PanelTitle(stringResource(R.string.viz_ai_title), if (on) THOUGHT_VIOLET else c.muted, on)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                GradientOrb(active = on, size = 48.dp, modifier = Modifier.scale(1f + level * 0.18f))
-                Spacer(Modifier.width(8.dp))
-                Text(stage, style = PxType.caption, color = if (on) c.ink else c.muted, maxLines = 3, overflow = TextOverflow.Ellipsis)
-            }
-            // Score réel du cerveau (RiskDecider) : risque fusionné et nombre de signaux indépendants.
-            if (on && decision != null) {
-                Text(
-                    stringResource(R.string.viz_risk, (decision.risk * 100).toInt(), decision.signals),
-                    style = PxType.caption,
-                    color = if (decision.engaged >= com.cerclerouge.alert.RecommendedAction.VERIFY) c.warn else c.muted,
-                    maxLines = 1
-                )
-            }
-            val lines = events(activity.events, armed)
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                lines.forEachIndexed { i, line ->
-                    val newest = i == lines.lastIndex
-                    Text(
-                        "> $line",
-                        style = PxType.caption,
-                        color = if (newest && on) THOUGHT_VIOLET else c.muted,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-        }
     }
 }
 

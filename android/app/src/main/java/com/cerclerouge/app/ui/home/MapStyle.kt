@@ -2,7 +2,7 @@ package com.cerclerouge.app.ui.home
 
 /**
  * Style MapLibre de la carte d'accueil, sur les tuiles vectorielles OpenFreeMap (données OpenStreetMap, sans clé ni pistage).
- * Veille : noir et blanc. Protection active : routes en lime. Décision Q14 / ADR-0018.
+ * Design « Verre » : carte claire, grands axes en bleu doux quand la protection est active. Décision Q14 / ADR-0018.
  */
 object MapStyle {
     const val TILES = "https://tiles.openfreemap.org/planet"
@@ -22,32 +22,34 @@ object MapStyle {
         val halo: String
     )
 
+    /** Veille : carte claire et grise (design « Verre »). */
     private val MONO = Palette(
-        background = "#121416",
-        water = "#0A0B0C",
-        urban = "#16181B",
-        park = "#15181A",
-        building = "#1E2125",
-        minor = "#2A2E33",
-        major = "#3A3F45",
-        motorway = "#4A5057",
-        border = "#4A5057",
-        label = "#7A8188",
-        halo = "#121416"
+        background = "#EEF0F3",
+        water = "#D6E6F2",
+        urban = "#E9ECEF",
+        park = "#E3EDE3",
+        building = "#E1E5E9",
+        minor = "#FFFFFF",
+        major = "#FFFFFF",
+        motorway = "#D0D6DC",
+        border = "#AEB8C2",
+        label = "#7A8796",
+        halo = "#EEF0F3"
     )
 
+    /** Protection active : même carte claire, grands axes en bleu doux. */
     private val LIME = Palette(
-        background = "#121416",
-        water = "#0A0B0C",
-        urban = "#161A15",
-        park = "#14200F",
-        building = "#1E2420",
-        minor = "#2F4A12",
-        major = "#6E9E08",
-        motorway = "#A0E705",
-        border = "#6E9E08",
-        label = "#C9D9B0",
-        halo = "#121416"
+        background = "#EEF0F3",
+        water = "#CFE2F3",
+        urban = "#E9ECEF",
+        park = "#DDEBDD",
+        building = "#E1E5E9",
+        minor = "#FFFFFF",
+        major = "#FFFFFF",
+        motorway = "#B9D5FB",
+        border = "#AEB8C2",
+        label = "#5D6E7E",
+        halo = "#EEF0F3"
     )
 
     /** JSON du style ; `armed` choisit la palette (couleurs quand la protection est active). */
@@ -56,7 +58,7 @@ object MapStyle {
         fun road(id: String, classes: String, color: String, w10: Double, w16: Double) = """
             {"id":"$id","type":"line","source":"omt","source-layer":"transportation",
              "filter":["match",["get","class"],[$classes],true,false],
-             "layout":{"line-cap":"square","line-join":"miter"},
+             "layout":{"line-cap":"round","line-join":"round"},
              "paint":{"line-color":"$color","line-width":["interpolate",["linear"],["zoom"],10,$w10,16,$w16]}}
         """.trimIndent()
 
@@ -64,7 +66,7 @@ object MapStyle {
             {"id":"$id","type":"symbol","source":"omt","source-layer":"place","minzoom":$minZoom,
              "filter":["match",["get","class"],[$classes],true,false],
              "layout":{"text-field":["coalesce",["get","name:fr"],["get","name"]],"text-font":["Noto Sans Bold"],
-                       "text-size":$size,"text-transform":"uppercase","text-letter-spacing":0.12},
+                       "text-size":$size,"text-letter-spacing":0.02},
              "paint":{"text-color":"${p.label}","text-halo-color":"${p.halo}","text-halo-width":1.5}}
         """.trimIndent()
         return """

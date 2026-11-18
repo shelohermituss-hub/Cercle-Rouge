@@ -1,6 +1,6 @@
 # Système de design « Verre »
 
-Statut : **proposé, en cours de validation** (2026-11-18). Remplace le style « Pixel Lime / tableau de bord » une fois validé.
+Statut : **retenu et implémenté** (v0.5.0, 2026-11-18). Remplace le style « Pixel Lime / tableau de bord » une fois validé.
 Maquettes : canevas « Cercle Rouge — Nouveau design », page **Design Verre** (planche du système et 13 écrans).
 
 Inspiration : captures d'une app de détection de traceurs fournies par le porteur du projet. On reprend le **langage visuel**

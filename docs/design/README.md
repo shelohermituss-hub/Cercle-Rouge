@@ -1,5 +1,9 @@
 # Design — décisions
 
+## v7 : système « Verre » (2026-11-18) — proposé, en validation
+
+Clair, cartes en verre dépoli, rubans rose-rouge, bouton d'activation rond au centre de la barre du bas (animé avec le logo), trois visualiseurs (écoute, carte, veilleur IA), démarrage, onboarding et autorisations. Détail et jetons : [systeme-verre.md](systeme-verre.md). Pas encore implémenté dans l'app.
+
 ## v6 : retour exact à « Pixel Lime » + carte en direct (2026-11-11) — retenue, implémentée dans l'app
 
 Demande du porteur du projet : **revenir exactement** à l'accueil Pixel Lime avec la carte en direct en style **plan** (commit `f32f70f`), **vert lime `#A0E705`**, et **déplacer les quatre boutons** (Écoute IA, Position, Contacts, Trajet) **dans le coin supérieur droit, empilés verticalement**, au lieu de les placer autour du losange.

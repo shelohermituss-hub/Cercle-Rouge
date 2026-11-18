@@ -24,12 +24,13 @@ jobs:
           distribution: temurin
           java-version: "21"
       - uses: gradle/actions/setup-gradle@v4
-      # Configuration publique (URL et clé publishable : faites pour être embarquées), depuis les variables du dépôt.
+      # Configuration publique (URL et clé publishable : faites pour être embarquées dans chaque APK, la RLS protège
+      # les données). Variables du dépôt si elles existent, sinon le projet de production.
       - name: Configuration Supabase
         run: |
           {
-            echo "supabase.url=${{ vars.SUPABASE_URL }}"
-            echo "supabase.publishableKey=${{ vars.SUPABASE_PUBLISHABLE_KEY }}"
+            echo "supabase.url=${{ vars.SUPABASE_URL || 'https://lvxdpmjyeelrxfbrtvay.supabase.co' }}"
+            echo "supabase.publishableKey=${{ vars.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_U60ce00EJD7_h1qW9iXz2A_-wMq-EUm' }}"
           } > local.properties
       - name: Clé de signature
         env:
@@ -61,4 +62,4 @@ jobs:
         run: |
           tag="${{ github.ref_type == 'tag' && github.ref_name || format('test-{0}', github.run_number) }}"
           gh release create "$tag" "$RUNNER_TEMP"/*.apk --repo "$GITHUB_REPOSITORY" --prerelease \
-            --title "Cercle Rouge $tag" --notes "APK de test. Installation : autoriser les sources inconnues. Ne remplace pas les secours."
+            --title "Cercle Rouge $tag" --notes "APK de test (design « Verre »). Installation : autoriser les sources inconnues. Ne remplace pas les secours."

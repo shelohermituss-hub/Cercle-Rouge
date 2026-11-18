@@ -247,6 +247,8 @@ Légende : 🤖 développement · 👤 action du porteur · 📱 test sur télé
 
 # PHASE 2 — IA avancée et canaux (≈ 12 à 16 semaines)
 
+> ⚠ **2026-11-18** : les étapes 2.1, 2.3, 2.4 et 2.5 sont reprises et étendues dans **`docs/plan/cerveau-ia.md`** (cerveau IA local avec petit modèle de langage, dans une cage de sécurité ; étapes IA.0 à IA.12). C'est ce plan qui fait foi pour l'IA.
+
 ### 2.1 Classification audio YAMNet (LiteRT) (PDF 5.3, 8.4 ; S5.07 ; R-AE-02)
 - 🤖 Dépendance LiteRT ; modèle `yamnet.tflite` (≈ 4 Mo) embarqué dans `audio-engine/src/main/assets` avec **hachage vérifié au chargement** et carte du modèle ; 👤/🤖 source du fichier (Kaggle Models / TF Hub) à autoriser dans le réseau ou fourni par le porteur.
 - 🤖 Fenêtres 0,975 s, pas 0,5 s, porte d'énergie + VAD avant inférence ; correspondance vers nos classes `scream`, `crying`, `glass_break`, `impact`, `alarm`, `horn_brake`, `gunshot` et classes d'inhibition `music_crowd` (`docs/ia/modele-ia-locale.md`).

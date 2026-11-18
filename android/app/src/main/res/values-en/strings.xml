@@ -601,4 +601,27 @@
         <item quantity="one">%1$d sensor</item>
         <item quantity="other">%1$d sensors</item>
     </plurals>
+    <string name="talk_title">talk to the watcher</string>
+    <string name="talk_intro">Ask a question or say what is happening. Everything stays on your phone.</string>
+    <string name="talk_input">Type your question</string>
+    <string name="talk_send">Send</string>
+    <string name="talk_hold">Hold to talk</string>
+    <string name="talk_listening">Listening… release to send</string>
+    <string name="talk_voice_off">On-device speech recognition is not available here: type your question.</string>
+    <string name="talk_tts">Read answers aloud</string>
+    <string name="talk_card">Card: %1$s</string>
+    <string name="talk_card_unvalidated">Card: %1$s · advice to be reviewed by professionals</string>
+    <string name="talk_act_arm">Turn on protection</string>
+    <string name="talk_act_trip">Open Trip</string>
+    <string name="talk_act_contacts">Open Contacts</string>
+    <string name="talk_act_pin">Go home (PIN code)</string>
+    <string name="talk_open">Talk to the watcher</string>
+    <string name="settings_section_brain">AI brain</string>
+    <string name="settings_brain_tier">Phone: %1$s</string>
+    <string name="settings_brain_tier_basic">basic (rules and sounds only)</string>
+    <string name="settings_brain_tier_standard">standard</string>
+    <string name="settings_brain_tier_full">full</string>
+    <string name="settings_brain_ears">Sounds: YAMNet on the phone (screams, blows, gunshots, vehicles, parties).</string>
+    <string name="settings_brain_rules">Reasoning: local rules, always checked by the guard.</string>
+    <string name="settings_brain_llm_missing">Language model: not installed yet. The app is complete without it.</string>
 </resources>

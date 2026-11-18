@@ -181,7 +181,8 @@ fun HomeScreen(
     sosRequested: Boolean = false,
     onSosConsumed: () -> Unit = {},
     armRequested: Boolean = false,
-    onArmConsumed: () -> Unit = {}
+    onArmConsumed: () -> Unit = {},
+    onTalk: () -> Unit = {}
 ) {
     val c = Cr.colors
     val context = LocalContext.current
@@ -192,6 +193,7 @@ fun HomeScreen(
     val activity by vm.audio.activity.collectAsState()
     val audioStatus by vm.audio.status.collectAsState()
     val decision by vm.brain.decision.collectAsState()
+    val thought by vm.brain.thought.collectAsState()
     val device by vm.device.status.collectAsState()
     val listenPrefs by vm.listen.prefs.collectAsState()
     var lastAlert by remember { mutableStateOf<com.cerclerouge.privacy.db.HistoryEntity?>(null) }
@@ -325,6 +327,7 @@ fun HomeScreen(
                 activity = activity,
                 audioStatus = audioStatus,
                 decision = decision,
+                explanation = thought?.explanation,
                 device = device,
                 contactNames = book.contacts.filter { it.status == ContactStatus.ACCEPTED }.sortedBy { it.position }
                     .map { it.name.substringBefore(' ') },
@@ -332,7 +335,8 @@ fun HomeScreen(
                 lastTrip = lastTrip,
                 onHistory = onHistory,
                 onVault = onVault,
-                onJournal = onJournal
+                onJournal = onJournal,
+                onTalk = onTalk
             )
         }
     }
@@ -397,13 +401,15 @@ internal fun HomeConsole(
     activity: ListenActivity = ListenActivity(),
     audioStatus: AudioStatus = AudioStatus.STOPPED,
     decision: com.cerclerouge.alert.Decision? = null,
+    explanation: String? = null,
     device: com.cerclerouge.sensor.DeviceStatus = com.cerclerouge.sensor.DeviceStatus(),
     contactNames: List<String> = emptyList(),
     lastAlert: com.cerclerouge.privacy.db.HistoryEntity? = null,
     lastTrip: com.cerclerouge.privacy.db.HistoryEntity? = null,
     onHistory: () -> Unit = {},
     onVault: () -> Unit = onSoon,
-    onJournal: () -> Unit = onSoon
+    onJournal: () -> Unit = onSoon,
+    onTalk: (() -> Unit)? = null
 ) {
     val c = Cr.colors
     val armed = state.protection.isArmed
@@ -462,7 +468,7 @@ internal fun HomeConsole(
                     mapCard(Modifier.weight(1f).height(cardHeight))
                 }
             }
-            WatcherCard(activity, audioStatus, armed, decision, onJournal)
+            WatcherCard(activity, audioStatus, armed, decision, onJournal, explanation = explanation, onTalk = onTalk)
         }
         if (!armed) {
             Text(

@@ -42,6 +42,9 @@ Méthode : STRIDE par acteur, centrée sur les personnes. Les mesures renvoient 
 | T12 | Faux positifs répétés (épuisement des proches) | Anti-faux positifs ; période réfractaire ; statistiques de fausses alertes visibles par l'utilisateur | alert-engine |
 | T13 | Faux négatifs (danger non détecté) | Ne jamais promettre la détection ; le SOS est toujours disponible ; l'utilisateur est informé des limites | N1 |
 | T14 | Téléphone volé hors alerte | Données chiffrées au repos ; coffre protégé par la biométrie ou le PIN ; révocation de l'appareil depuis un autre appareil (❓) | R-EVD-02 |
+| T15 | Injection par la voix ou le son (agresseur qui parle à l'app, haut-parleur qui diffuse une consigne) | Liste fermée d'actions ; garde de sécurité qui refuse annulation, désarmement, effacement, appel des secours ; PIN ou biométrie pour toute action grave ; pas d'écoute de conversation (bouton maintenu) | ADR-0029, brain-guard |
+| T16 | Hallucination du modèle (conseil inventé, fausse alerte) | Réponses tirées de fiches validées, sinon « je ne sais pas » ; plancher déterministe ; le cerveau ne peut pas baisser un niveau ; plafonds de messages | ADR-0029 |
+| T17 | Modèle altéré sur le téléphone | Empreinte SHA-256 vérifiée au chargement (YAMNet et modèle de langage) ; repli sans modèle si l'empreinte diffère | ADR-0029 |
 
 ## Risques résiduels acceptés (à communiquer)
 

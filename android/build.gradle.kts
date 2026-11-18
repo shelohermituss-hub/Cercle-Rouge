@@ -17,7 +17,7 @@ subprojects {
  * Couverture de la logique (1.22) : JaCoCo sur les modules Kotlin purs (cerveau, moteurs, contacts, preuves…). Le seuil est
  * vérifié par `check` ; le rapport HTML est dans `<module>/build/reports/jacoco/`.
  */
-val logicModules = setOf("core-domain", "alert-engine", "contacts-engine", "location-engine", "evidence-engine", "audio-engine", "sensor-engine")
+val logicModules = setOf("core-domain", "alert-engine", "brain-engine", "contacts-engine", "location-engine", "evidence-engine", "audio-engine", "sensor-engine")
 configure(subprojects.filter { it.name in logicModules }) {
     apply(plugin = "jacoco")
     plugins.withId("org.jetbrains.kotlin.jvm") { configureCoverage() }

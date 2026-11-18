@@ -163,7 +163,9 @@ class ScreenshotTest {
                 ),
                 hasPhrase = true
             ),
-            audioStatus = AudioStatus.RUNNING
+            audioStatus = AudioStatus.RUNNING,
+            explanation = "Cris ou bruits de bagarre à proximité, sans geste sur ton téléphone : j'observe 30 s.",
+            onTalk = {}
         )
     }
 
@@ -192,6 +194,33 @@ class ScreenshotTest {
                 listOf(com.cerclerouge.contacts.Channel.SMS, com.cerclerouge.contacts.Channel.EMAIL),
                 com.cerclerouge.contacts.ContactStatus.ACCEPTED, 0, email = "marie@example.org", relation = "tante"
             ),
+            {},
+            {}
+        )
+    }
+
+    @Test fun talk() = capture("talk") {
+        val kb = com.cerclerouge.brain.Card("conduite-suivi", "Si quelqu'un te suit", "", validated = false)
+        com.cerclerouge.app.ui.brain.TalkContent(
+            listOf(
+                com.cerclerouge.app.ui.brain.TalkLine(true, "J'ai peur, quelqu'un me suit"),
+                com.cerclerouge.app.ui.brain.TalkLine(
+                    false,
+                    "Va vers un endroit éclairé et fréquenté. Lance un trajet suivi ou garde le doigt prêt sur le SOS.",
+                    com.cerclerouge.brain.TalkReply("", kb, com.cerclerouge.brain.TalkAction.OPEN_TRIP)
+                ),
+                com.cerclerouge.app.ui.brain.TalkLine(true, "Annule l'alerte"),
+                com.cerclerouge.app.ui.brain.TalkLine(
+                    false,
+                    "Je ne peux pas faire ça à ta place. Pour annuler ou couper la protection, il faut ton code PIN.",
+                    com.cerclerouge.brain.TalkReply("", null, com.cerclerouge.brain.TalkAction.ENTER_PIN)
+                )
+            ),
+            { _, _ -> },
+            {},
+            {},
+            {},
+            {},
             {},
             {}
         )

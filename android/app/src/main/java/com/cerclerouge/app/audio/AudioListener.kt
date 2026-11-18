@@ -16,10 +16,13 @@ import com.cerclerouge.audio.Listener
 import com.cerclerouge.audio.PhraseTemplate
 import com.cerclerouge.audio.RingBuffer
 import com.cerclerouge.audio.Vad
+import com.cerclerouge.brain.SoundFamilies
 import com.cerclerouge.evidence.RecordingPolicy
 import com.cerclerouge.privacy.db.PrivacyDatabase
 import com.cerclerouge.privacy.db.SettingEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -106,6 +109,14 @@ class PhraseRepository @Inject constructor(db: PrivacyDatabase) {
 class AudioListener @Inject constructor(@param:ApplicationContext private val context: Context) {
     private val _signals = MutableSharedFlow<AudioSignal>(extraBufferCapacity = 4)
     val signals: SharedFlow<AudioSignal> = _signals
+    private val _sounds = MutableSharedFlow<SoundFamilies.Heard>(extraBufferCapacity = 8)
+
+    /** Familles de sons reconnues par YAMNet (IA.2) pendant l'écoute ; jamais le son lui-même. */
+    val sounds: SharedFlow<SoundFamilies.Heard> = _sounds
+    private val ears = Executors.newSingleThreadExecutor { Thread(it, "cr-ears").apply { priority = Thread.MIN_PRIORITY } }
+    private val earsBusy = AtomicBoolean(false)
+    private var yamnet: Yamnet? = null
+    private var yamnetTried = false
     private val _status = MutableStateFlow(AudioStatus.STOPPED)
     val status: StateFlow<AudioStatus> = _status
     private val _activity = MutableStateFlow(ListenActivity())
@@ -241,6 +252,11 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
         var wasVoice = false
         var seenComparisons = 0
         var resultUntil = 0L
+        val window = ShortArray(Yamnet.WINDOW)
+        var windowPos = 0
+        var filled = 0
+        var sinceEars = 0
+        var earsPeakDb = -120.0
         try {
             while (running) {
                 val n = r.read(block, 0, block.size)
@@ -248,7 +264,23 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
                 preBuffer.write(block)
                 tap?.invoke(block)
                 listener.push(block)?.let { _signals.tryEmit(it) }
-                peakDb = maxOf(peakDb, Features.dbfs(block))
+                val db = Features.dbfs(block)
+                peakDb = maxOf(peakDb, db)
+                if (listening) {
+                    for (v in block) {
+                        window[windowPos] = v
+                        windowPos = (windowPos + 1) % window.size
+                    }
+                    filled = minOf(window.size, filled + block.size)
+                    sinceEars += block.size
+                    earsPeakDb = maxOf(earsPeakDb, db)
+                    if (filled == window.size && sinceEars >= EARS_STEP) {
+                        // Seulement s'il y a du son (batterie) et si la passe précédente est finie (sinon, on saute).
+                        if (earsPeakDb > EARS_MIN_DB) hear(window, windowPos)
+                        sinceEars = 0
+                        earsPeakDb = -120.0
+                    }
+                }
                 if (++blocks < LEVEL_BLOCKS) continue
                 blocks = 0
                 val now = System.currentTimeMillis()
@@ -278,8 +310,29 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
             }
         } finally {
             block.fill(0)
+            window.fill(0)
             listener.stop()
             _activity.value = ListenActivity()
+        }
+    }
+
+    /** Copie la fenêtre (dans l'ordre) en flottants et la passe à YAMNet sur le fil `cr-ears` ; copie effacée ensuite. */
+    private fun hear(window: ShortArray, start: Int) {
+        if (!earsBusy.compareAndSet(false, true)) return
+        val f = FloatArray(window.size) { window[(start + it) % window.size] / 32_768f }
+        ears.execute {
+            try {
+                if (!yamnetTried) {
+                    yamnetTried = true
+                    yamnet = Yamnet.load(context)
+                }
+                yamnet?.classify(f)?.forEach { _sounds.tryEmit(it) }
+            } catch (_: RuntimeException) {
+                // Une erreur du modèle ne doit jamais arrêter l'écoute de la phrase secrète.
+            } finally {
+                f.fill(0f)
+                earsBusy.set(false)
+            }
         }
     }
 
@@ -374,5 +427,7 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
         private const val LEVEL_CEIL_DB = -10.0
         private const val EVENT_HISTORY = 3
         private const val RESULT_MS = 2_500L
+        private const val EARS_STEP = 8_000 // une passe YAMNet toutes les 0,5 s
+        private const val EARS_MIN_DB = -50.0
     }
 }

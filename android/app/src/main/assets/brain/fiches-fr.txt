@@ -1,0 +1,119 @@
+id: urgence-numeros
+titre: Numéros d'urgence en Haïti
+mots: numéro, urgence, police, pompiers, ambulance, appeler, secours, 114, 115, 116
+valide: non
+Police : 114. Pompiers : 115. Ambulance : 116. Ces numéros sont à confirmer auprès de la PNH et de la Protection civile. L'application ne les appelle jamais toute seule : elle ouvre le composeur, et c'est toi qui appuies.
+---
+id: sos
+titre: Le bouton SOS
+mots: sos, bouton, alerte, urgence, appuyer, maintenir, déclencher
+valide: oui
+Maintiens le bouton SOS rouge de l'accueil pour prévenir tout de suite tes proches acceptés, avec ta position. Une tape courte ne déclenche rien : il faut maintenir. Le SOS marche même si le veilleur est en panne.
+---
+id: phrase-secrete
+titre: La phrase secrète
+mots: phrase, secrète, mot, code, voix, silencieux, discret
+valide: oui
+La phrase secrète déclenche une alerte silencieuse quand la protection est active. Elle est reconnue dans le téléphone, sans internet, et aucun son n'est envoyé. Tu l'enregistres dans Écoute.
+---
+id: activer
+titre: Activer la protection
+mots: activer, protection, allumer, démarrer, bouton, central
+valide: oui
+Appuie sur le bouton rond au centre de la barre du bas. Quand la protection est active, le logo s'anime et une notification reste visible tant que le micro écoute.
+---
+id: desactiver
+titre: Désactiver la protection ou annuler une alerte
+mots: désactiver, annuler, arrêter, couper, alerte, pin, code
+valide: oui
+Pour couper la protection ou annuler une alerte, il faut ton code PIN. Le veilleur ne peut jamais le faire à ta place, même si tu le lui demandes à voix haute : c'est pour qu'un agresseur ne puisse pas le faire non plus.
+---
+id: proches
+titre: Les proches
+mots: proches, contacts, famille, ami, prévenir, accepté, invitation
+valide: oui
+Tu peux choisir jusqu'à 5 proches. Chacun reçoit une invitation et doit l'accepter. En alerte, 3 proches acceptés au plus sont prévenus par SMS avec un lien de suivi temporaire.
+---
+id: trajet
+titre: Le trajet suivi
+mots: trajet, suivi, destination, route, arriver, retard, chemin
+valide: oui
+Dans Trajet, choisis ta destination et l'heure d'arrivée prévue. Si tu t'écartes beaucoup, t'arrêtes longtemps ou arrives en retard, l'application te demande si tout va bien avant de prévenir tes proches.
+---
+id: verification
+titre: La question « Tout va bien ? »
+mots: vérification, question, va bien, répondre, réponse, délai
+valide: oui
+Quand quelque chose semble anormal, l'application te demande d'abord si tout va bien. Si tu ne réponds pas à temps, elle prévient tes proches. Répondre « Je vais bien » demande ton code.
+---
+id: ecoute
+titre: Ce que fait l'écoute
+mots: écoute, micro, enregistre, son, audio, privé, entend
+valide: oui
+Le micro écoute seulement quand la protection est active, et la notification le montre toujours. Les sons sont analysés dans le téléphone puis effacés. Rien n'est envoyé, sauf les preuves chiffrées d'une alerte.
+---
+id: sons
+titre: Les sons reconnus
+mots: cri, crier, coup, feu, bruit, bagarre, verre, klaxon, sons
+valide: oui
+Le veilleur reconnaît des familles de sons : cris et pleurs, coups et casse, coups de feu et explosions, freinage et klaxons, musique et foule. Un son seul ne déclenche jamais d'alerte : il faut plusieurs indices, ou ton absence de réponse.
+---
+id: fete
+titre: Fête, concert, rara ou match
+mots: fête, concert, rara, match, musique, foule, carnaval, église
+valide: oui
+Pendant une fête, un concert ou un match, indique-le dans Écoute (contextes à ignorer) : les cris et la musique comptent alors moins, pour éviter les fausses alertes.
+---
+id: preuves
+titre: Les preuves
+mots: preuve, enregistrement, coffre, chiffré, supprimer, garder, durée
+valide: oui
+En alerte, le son est enregistré et chiffré dans le téléphone, dans le Coffre. Tu choisis combien de temps le garder (24 h par défaut, 30 jours au plus). Il faut ton code pour l'ouvrir.
+---
+id: position
+titre: Le partage de la position
+mots: position, localisation, gps, carte, partager, où suis
+valide: oui
+Ta position n'est partagée que pendant un trajet suivi ou une alerte, par un lien qui expire au bout de 2 à 6 heures.
+---
+id: hors-reseau
+titre: Sans internet
+mots: internet, réseau, données, hors ligne, sms, signal
+valide: oui
+Sans internet, l'alerte part par SMS. Les messages attendent dans le téléphone et repartent dès que le réseau revient.
+---
+id: batterie
+titre: La batterie
+mots: batterie, charge, consommation, économie, chaud
+valide: oui
+Sous 10 % de batterie ou si le téléphone chauffe, l'écoute se met en pause pour garder de l'énergie au SOS et aux SMS.
+---
+id: conduite-suivi
+titre: Si quelqu'un te suit
+mots: suit, suivi, suivre, peur, quelqu'un, derrière, inquiet, filature
+valide: non
+Va vers un endroit éclairé et fréquenté (commerce, église, station). Ne rentre pas directement chez toi. Lance un trajet suivi ou garde le doigt prêt sur le SOS. En danger immédiat, appelle le 114.
+---
+id: conduite-agression
+titre: En cas d'agression ou de vol
+mots: agression, vol, voleur, arme, attaque, agresseur, braquage
+valide: non
+Ta vie compte plus que ton téléphone : ne résiste pas à une personne armée. Si tu peux, maintiens le SOS ou dis ta phrase secrète. Ensuite, mets-toi à l'abri et appelle le 114.
+---
+id: conduite-enlevement
+titre: Risque d'enlèvement
+mots: enlèvement, kidnapping, enlever, voiture, kidnap, rançon
+valide: non
+Évite les trajets isolés aux mêmes heures. Partage ton trajet avec un proche. Si quelqu'un tente de te faire monter dans un véhicule, crie, attire l'attention et déclenche le SOS si tu peux.
+---
+id: conduite-tirs
+titre: Si tu entends des tirs
+mots: tirs, tir, balle, fusillade, coup de feu, armes
+valide: non
+Allonge-toi au sol ou mets-toi derrière un mur épais, loin des fenêtres. Ne sors pas pour regarder. Préviens tes proches quand tu es à l'abri.
+---
+id: limites
+titre: Ce que le veilleur ne fait pas
+mots: limite, prédire, garantie, appeler police, sûr, fiable
+valide: oui
+Le veilleur ne prédit pas le danger et ne remplace ni la police ni tes proches. Il n'appelle jamais les secours, n'annule jamais une alerte et n'efface rien. Il peut se tromper : en cas de doute, il te pose la question.

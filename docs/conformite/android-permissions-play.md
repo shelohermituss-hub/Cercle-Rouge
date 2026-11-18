@@ -6,7 +6,7 @@
 
 | Permission | Type | Usage | Justification Play |
 |---|---|---|---|
-| `RECORD_AUDIO` | Dangereuse (runtime) | Écoute IA (phrase secrète, Sprint 5), preuves audio ; demandée à l'activation de la protection ou sur l'écran Écoute IA | Déclaration de la fonction principale, vidéo de démonstration si demandée |
+| `RECORD_AUDIO` | Dangereuse (runtime) | Écoute IA (phrase secrète, Sprint 5 ; familles de sons YAMNet dans le téléphone, ADR-0029), preuves audio, dictée « Parler au veilleur » (bouton maintenu, reconnaissance sur l’appareil seulement, aucune nouvelle permission) ; demandée à l'activation de la protection ou sur l'écran Écoute IA | Déclaration de la fonction principale, vidéo de démonstration si demandée |
 | `FOREGROUND_SERVICE` | Normale | `ProtectionService` | — |
 | `FOREGROUND_SERVICE_SPECIAL_USE` | Normale (API 34+) | Type provisoire du `ProtectionService` au Sprint 2 (aucun micro ni position encore) ; remplacé par `microphone` et `location` aux Sprints 4 et 5 | Déclaration du type « usage spécial » et de sa justification (propriété `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`) dans la Play Console, à retirer ensuite |
 | `FOREGROUND_SERVICE_MICROPHONE` | Normale (API 34+) | Type de service `microphone` : **déclaré au Sprint 5**, demandé seulement si `RECORD_AUDIO` est accordée et l'application visible ; écoute de la phrase secrète pendant la protection (ADR-0020) | Déclaration du type `microphone` dans la Play Console, avec vidéo de l'activation visible et de la notification |

@@ -88,6 +88,8 @@ dependencies {
     implementation(project(":sensor-engine"))
     implementation(project(":audio-engine"))
     implementation(project(":evidence-engine"))
+    implementation(project(":brain-engine"))
+    implementation(libs.litert)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

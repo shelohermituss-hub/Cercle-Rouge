@@ -12,7 +12,7 @@
 |---|---|---|
 | Langue | **Français d'abord** ; le créole viendra ensuite, avec des services (traduction, voix, relecture) fournis par le porteur | Étapes IA.1 à IA.12 en français ; tout le créole est regroupé dans la **phase IA.HT** (§ 5), lancée à la réception de ces services |
 | Téléphones de 2 à 3 Go | **Version réduite** du cerveau | Deux niveaux : complet (≥ 4 Go) et réduit (2–3 Go), § 3 |
-| Téléchargement | **300 Mo au plus** pour les ressources du cerveau | Seuls des modèles compacts sont candidats (≈ 300 millions de paramètres au plus, quantifiés) ; la conversation reste courte et appuyée sur une base de connaissances (§ 3) |
+| Téléchargement | **350 Mo au plus** pour les ressources du cerveau (relevé de 300 à 350 Mo le 2026-11-18 : le fichier Gemma 3 270M q8 fait 304 Mo) | Seuls des modèles compacts sont candidats (≈ 300 millions de paramètres au plus, quantifiés) ; la conversation reste courte et appuyée sur une base de connaissances (§ 3) |
 
 ## 0. Le principe : un patron qui dirige, dans une cage de sécurité
 
@@ -235,6 +235,23 @@ Scénarios simulés (événements horodatés), avec la bonne réponse attendue :
 et à prévenir tes proches plus vite. Il **peut se tromper** et ne remplace pas les secours. Le bouton SOS marche toujours. »
 Jamais : « détecte les enlèvements », « vous protège automatiquement ».
 
+## 7 bis. Avancement (sprint 1, 2026-11-18, APK v0.6.0)
+
+| Étape | État | Où |
+|---|---|---|
+| IA.0 ADR-0029 + menaces T15–T17 | ✅ fait | `docs/decisions/ADR-0029-*.md`, `docs/securite/modele-de-menace.md` |
+| IA.2 YAMNet dans le téléphone | ✅ code fait ; 📱 latence et batterie à mesurer sur 2 téléphones | `android/app/.../audio/Yamnet.kt` (LiteRT 2.3.2, SHA-256 vérifié), `brain-engine/SoundFamilies.kt` (521 classes → 5 familles, seuils de départ), passe toutes les 0,5 s seulement s'il y a du son (> −50 dBFS) |
+| IA.4 Journal de situation | ✅ fait | `brain-engine/Situation.kt` (5 min, rendu texte ≤ 1 600 caractères, sans nom ni numéro) |
+| IA.5 Cerveau sans modèle | ✅ fait | `RuleReasoner` + `BrainOrchestrator` branché dans `RiskBrain` : ne peut que **monter** (vérification ou alerte), jamais descendre ; une panne laisse le plancher seul (testé) ; explication affichée dans la carte « Veilleur » |
+| IA.5 Modèle de langage (Gemma 3 270M, 304 Mo) | ⏸ attend la licence | Invite système et lecture des appels de fonction prêtes et testées (`FunctionCalls.kt`). Téléchargement refusé (403) tant que la licence Gemma n'est pas acceptée sur le compte Hugging Face du porteur. Rien d'autre n'est intégré : pas de code non testable embarqué |
+| IA.6 Garde | ✅ fait | `brain-engine/Guard.kt` : liste fermée, plafonds, 1 000 attaques générées → 0 action interdite |
+| IA.7 Base de connaissances v0 | ✅ fait | 20 fiches françaises (`assets/brain/fiches-fr.txt`), recherche BM25 locale ; les 4 fiches « conduite à tenir » sont marquées **à valider** et l'app l'affiche |
+| IA.8 Parler au veilleur | ✅ fait | Écran « Parler au veilleur » (bouton dans la carte Veilleur) : texte, ou voix en **maintenant** le bouton (reconnaissance dans le téléphone seulement, Android 12+ ; sinon clavier) ; réponses lues en français (TTS, désactivable) ; commandes graves → code PIN ; rien n'est gardé à la fermeture, seule la catégorie est journalisée |
+| Réglages › Cerveau IA | ✅ fait | Niveau du téléphone (mémoire vive), sons, raisonnement, état du modèle de langage |
+| Banc de situations | ✅ fait | `BrainTest.kt` (8 scénarios + calme) |
+
+Reste : IA.1 (banc de choix du modèle), IA.3 (mots-clés entraînés, données), IA.9 à IA.11, phase IA.HT, et les mesures 📱 sur téléphones réels.
+
 ## 8. Ordre et durée
 
 IA.0 → IA.1 → IA.2 et IA.4 en parallèle → IA.6 → IA.5 → IA.7 → IA.3 (dès les données) → IA.8 → IA.9 → IA.10 → IA.11.
@@ -243,6 +260,6 @@ Développement en français ≈ 13 à 15 semaines, **plus** les délais de colle
 
 ## 9. Décisions encore ouvertes
 
-1. Mot d'éveil : « Cercle Rouge » (proposé) ou un autre.
+1. ~~Mot d'éveil~~ : décidé (2026-11-18) — **bouton maintenu seulement**, pas d'écoute d'un mot d'éveil.
 2. Partenaires pour la collecte de voix françaises (IA.3) et la validation des fiches de conduite à tenir (IA.7).
-3. Ordre de priorité : d'abord les oreilles (YAMNet + mots-clés) et la décision (recommandé), ou d'abord la conversation.
+3. ~~Ordre de priorité~~ : décidé (2026-11-18) — fondations et oreilles d'abord.

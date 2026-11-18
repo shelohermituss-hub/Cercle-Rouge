@@ -391,6 +391,25 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
                 confirm = Guarded.WIPE
             }, variant = PxVariant.DARK_DANGER, enabled = !ui.busy)
 
+            Section(R.string.settings_section_brain)
+            val tier = remember { com.cerclerouge.app.ui.brain.deviceTier(context) }
+            Text(
+                stringResource(
+                    R.string.settings_brain_tier,
+                    stringResource(
+                        when (tier) {
+                            com.cerclerouge.app.ui.brain.DeviceTier.BASIC -> R.string.settings_brain_tier_basic
+                            com.cerclerouge.app.ui.brain.DeviceTier.STANDARD -> R.string.settings_brain_tier_standard
+                            com.cerclerouge.app.ui.brain.DeviceTier.FULL -> R.string.settings_brain_tier_full
+                        }
+                    )
+                ),
+                style = PxType.body
+            )
+            Text(stringResource(R.string.settings_brain_ears), style = PxType.body)
+            Text(stringResource(R.string.settings_brain_rules), style = PxType.body)
+            Text(stringResource(R.string.settings_brain_llm_missing), style = PxType.caption, color = c.muted)
+
             Section(R.string.settings_section_background)
             Text(stringResource(BatteryGuide.forDevice()), style = PxType.body)
             PxButton(stringResource(R.string.settings_battery_open), {

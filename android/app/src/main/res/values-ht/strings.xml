@@ -602,4 +602,27 @@
         <item quantity="one">%1$d detektè</item>
         <item quantity="other">%1$d detektè</item>
     </plurals>
+    <string name="talk_title">pale ak veyè a</string>
+    <string name="talk_intro">Poze yon kesyon oswa di sa k ap pase. Tout bagay rete nan telefòn ou.</string>
+    <string name="talk_input">Ekri kesyon ou</string>
+    <string name="talk_send">Voye</string>
+    <string name="talk_hold">Kenbe pou pale</string>
+    <string name="talk_listening">M ap koute… lage pou voye</string>
+    <string name="talk_voice_off">Rekonesans vwa nan telefòn nan pa disponib isit la: ekri kesyon ou.</string>
+    <string name="talk_tts">Li repons yo fò</string>
+    <string name="talk_card">Fich: %1$s</string>
+    <string name="talk_card_unvalidated">Fich: %1$s · konsèy pwofesyonèl dwe valide</string>
+    <string name="talk_act_arm">Aktive pwoteksyon an</string>
+    <string name="talk_act_trip">Louvri Wout</string>
+    <string name="talk_act_contacts">Louvri Pwòch</string>
+    <string name="talk_act_pin">Ale lakay (kòd PIN)</string>
+    <string name="talk_open">Pale ak veyè a</string>
+    <string name="settings_section_brain">Sèvo IA</string>
+    <string name="settings_brain_tier">Telefòn: %1$s</string>
+    <string name="settings_brain_tier_basic">debaz (règ ak son sèlman)</string>
+    <string name="settings_brain_tier_standard">nòmal</string>
+    <string name="settings_brain_tier_full">konplè</string>
+    <string name="settings_brain_ears">Son: YAMNet nan telefòn nan (rele, kou, tire, machin, fèt).</string>
+    <string name="settings_brain_rules">Rezonman: règ lokal, gad la toujou kontwole yo.</string>
+    <string name="settings_brain_llm_missing">Modèl langaj: poko enstale. Aplikasyon an konplè san li.</string>
 </resources>

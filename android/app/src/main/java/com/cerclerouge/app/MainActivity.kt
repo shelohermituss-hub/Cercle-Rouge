@@ -76,7 +76,7 @@ class AppViewModel @Inject constructor(
     val appearance: com.cerclerouge.app.settings.Appearance
 ) : ViewModel()
 
-private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN, VAULT, SETTINGS, WATCH, HISTORY }
+private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN, VAULT, SETTINGS, WATCH, HISTORY, TALK }
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() { // FragmentActivity : requis par BiometricPrompt (S7.02)
@@ -89,6 +89,7 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
     private val vault: VaultViewModel by viewModels()
     private val settingsVm: SettingsViewModel by viewModels()
     private val watch: com.cerclerouge.app.ui.watch.WatchViewModel by viewModels()
+    private val talk: com.cerclerouge.app.ui.brain.TalkViewModel by viewModels()
     private val sosRequested = androidx.compose.runtime.mutableStateOf(false)
     private val armRequested = androidx.compose.runtime.mutableStateOf(false)
 
@@ -147,8 +148,26 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                             sosRequested = sosRequested.value,
                             onSosConsumed = { sosRequested.value = false },
                             armRequested = armRequested.value,
-                            onArmConsumed = { armRequested.value = false }
+                            onArmConsumed = { armRequested.value = false },
+                            onTalk = { screen = Screen.TALK }
                         )
+                        Screen.TALK -> {
+                            BackHandler { screen = Screen.HOME }
+                            Box(Modifier.safeDrawingPadding()) {
+                                com.cerclerouge.app.ui.brain.TalkScreen(
+                                    talk,
+                                    onBack = { screen = Screen.HOME },
+                                    // Armer seulement : la page d'accueil n'arme que si la protection est coupée.
+                                    onArm = {
+                                        armRequested.value = true
+                                        screen = Screen.HOME
+                                    },
+                                    onTrip = { screen = Screen.TRIP },
+                                    onContacts = { screen = Screen.CONTACTS },
+                                    onHome = { screen = Screen.HOME }
+                                )
+                            }
+                        }
                         Screen.CONTACTS -> {
                             BackHandler { screen = Screen.HOME }
                             Box(Modifier.safeDrawingPadding()) {

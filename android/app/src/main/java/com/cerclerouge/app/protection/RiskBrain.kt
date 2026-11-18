@@ -11,7 +11,14 @@ import com.cerclerouge.alert.RiskDecider
 import com.cerclerouge.app.account.AccountRepository
 import com.cerclerouge.app.device.DeviceMonitor
 import com.cerclerouge.app.trip.TripController
+import com.cerclerouge.brain.GuardState
+import com.cerclerouge.brain.SituationContext
+import com.cerclerouge.brain.SituationEvent
+import com.cerclerouge.brain.SoundFamilies
+import com.cerclerouge.brain.SoundFamily
+import com.cerclerouge.contacts.ContactStatus
 import com.cerclerouge.domain.AgeBand
+import com.cerclerouge.domain.Confidence
 import com.cerclerouge.domain.ProtectionState
 import com.cerclerouge.domain.Reason
 import com.cerclerouge.domain.VulnerabilityProfile
@@ -54,8 +61,19 @@ class RiskBrain @Inject constructor(
     private val motion: com.cerclerouge.app.device.MotionSensors,
     private val audio: com.cerclerouge.app.audio.AudioListener,
     private val log: EventLog,
-    private val clock: Clock
+    private val clock: Clock,
+    private val contacts: com.cerclerouge.app.contacts.ContactsRepository
 ) {
+    private val brain = BrainOrchestrator()
+    private val _thought = MutableStateFlow<com.cerclerouge.brain.Thought?>(null)
+
+    /** Dernière réflexion du cerveau au-dessus du plancher (explication du visualiseur « Veilleur »), null sans rien. */
+    val thought: StateFlow<com.cerclerouge.brain.Thought?> = _thought
+    private var lastBrainJournal: Pair<String, Instant>? = null
+    private val lastSoundJournal = mutableMapOf<SoundFamily, Instant>()
+    private var lastHasData = true
+    private var wasAlert = false
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
     private var state = DeciderState()
@@ -80,6 +98,7 @@ class RiskBrain @Inject constructor(
         }
         scope.launch { motion.events.collect { onMotion(it) } }
         scope.launch { audio.signals.collect { onAudio(it) } }
+        scope.launch { audio.sounds.collect { onSound(it) } }
         scope.launch {
             while (isActive) {
                 delay(TICK_MS)
@@ -106,6 +125,13 @@ class RiskBrain @Inject constructor(
             com.cerclerouge.sensor.MotionKind.SNATCH -> Observation(Component.B, e.strength, Reason.VIOLENCE_SOUND, "sensor.snatch", now)
             com.cerclerouge.sensor.MotionKind.STILL -> Observation(Component.D, 0.5, Reason.CONTACT_LOST, "sensor.still", now)
         }
+        val kind = when (e.kind) {
+            com.cerclerouge.sensor.MotionKind.FALL -> com.cerclerouge.brain.MotionKind.FALL
+            com.cerclerouge.sensor.MotionKind.VIOLENT_MOTION -> com.cerclerouge.brain.MotionKind.VIOLENT
+            com.cerclerouge.sensor.MotionKind.SNATCH -> com.cerclerouge.brain.MotionKind.SNATCH
+            com.cerclerouge.sensor.MotionKind.STILL -> com.cerclerouge.brain.MotionKind.STILL
+        }
+        mutex.withLock { brain.add(SituationEvent.Motion(now, kind, e.strength)) }
         log.append("sensor", "${e.kind.name.lowercase()} strength=${"%.2f".format(java.util.Locale.ROOT, e.strength)}")
         observe(o)
     }
@@ -126,6 +152,9 @@ class RiskBrain @Inject constructor(
                 Observation(Component.D, 0.5, Reason.CONTACT_LOST, "audio.silence", now)
             else -> return
         }
+        if (sig.kind == com.cerclerouge.audio.AudioSignal.Kind.KEYWORD) {
+            mutex.withLock { brain.add(SituationEvent.Keyword(now, sig.confidence.coerceIn(0.0, 1.0))) }
+        }
         // R-AUD-04 : chaque détection est journalisée (score arrondi, version du modèle, aucun audio envoyé ; jamais le mot).
         log.append(
             "audio",
@@ -134,7 +163,45 @@ class RiskBrain @Inject constructor(
         observe(o)
     }
 
+    /**
+     * Son reconnu par YAMNet (IA.2) : détresse → A (cri), violence et arme → B ; véhicule et contexte ne nourrissent que la
+     * situation du cerveau. Journalisé au plus une fois par famille toutes les 10 s (R-AUD-04), jamais le son.
+     */
+    private suspend fun onSound(h: SoundFamilies.Heard) {
+        val now = clock.instant()
+        val p = h.p.toDouble().coerceIn(0.0, 1.0)
+        mutex.withLock { brain.add(SituationEvent.Sound(now, h.family, h.label, p)) }
+        val cls = SoundFamilies.audioClass(h.family, h.label)
+        val o = when (h.family) {
+            SoundFamily.DISTRESS -> Observation(Component.A, p, Reason.DISTRESS_SCREAM, "yamnet", now, audioClass = cls)
+            SoundFamily.VIOLENCE, SoundFamily.WEAPON -> Observation(Component.B, p, Reason.VIOLENCE_SOUND, "yamnet", now, audioClass = cls)
+            SoundFamily.VEHICLE, SoundFamily.CONTEXT -> null
+        }
+        val last = lastSoundJournal[h.family]
+        if (last == null || Duration.between(last, now) >= SOUND_JOURNAL_GAP) {
+            lastSoundJournal[h.family] = now
+            log.append(
+                "audio",
+                "sound family=${h.family.name.lowercase()} p=${"%.2f".format(
+                    java.util.Locale.ROOT,
+                    p
+                )} model=${com.cerclerouge.app.audio.Yamnet.VERSION}"
+            )
+        }
+        o?.let { observe(it) }
+    }
+
     private suspend fun onTripEvent(e: TripEvent) {
+        val tripKind = when (e.type) {
+            TripEventType.OFF_ROUTE, TripEventType.WRONG_DIRECTION, TripEventType.UNSAFE_ZONE_ENTERED ->
+                com.cerclerouge.brain.TripKind.OFF_ROUTE
+            TripEventType.RETURN_TO_ORIGIN -> com.cerclerouge.brain.TripKind.FAST_DEVIATION
+            TripEventType.PROLONGED_STOP -> com.cerclerouge.brain.TripKind.STOP
+            TripEventType.SIGNAL_LOST -> com.cerclerouge.brain.TripKind.SIGNAL_LOST
+            TripEventType.ARRIVAL_OVERDUE, TripEventType.TOO_LONG -> com.cerclerouge.brain.TripKind.OVERDUE
+            TripEventType.ARRIVED -> null
+        }
+        tripKind?.let { k -> mutex.withLock { brain.add(SituationEvent.Trip(clock.instant(), k)) } }
         val reason = e.reason ?: return
         val plan = trips.trip.value?.plan
         val value = when (e.type) {
@@ -159,8 +226,10 @@ class RiskBrain @Inject constructor(
             mutex.withLock {
                 state = DeciderState()
                 tripHold = null
+                brain.reset()
             }
             _decision.value = null
+            _thought.value = null
             return
         }
         val ctx = context()
@@ -175,6 +244,10 @@ class RiskBrain @Inject constructor(
                 }
             }
             val st = monitor.status.value
+            if (st.hasData != lastHasData) {
+                lastHasData = st.hasData
+                brain.add(SituationEvent.Network(now, st.hasData))
+            }
             if (!st.hasData && !st.airplaneMode) {
                 state = RiskDecider.observe(state, Observation(Component.D, 0.5, Reason.CONTACT_LOST, "network", now), ctx, now)
             }
@@ -187,7 +260,71 @@ class RiskBrain @Inject constructor(
         if (decision.action >= RecommendedAction.VERIFY) {
             controller.send { Input.Detection(it, decision.action, decision.reason ?: Reason.VIOLENCE_SOUND, decision.confidence) }
         }
+        reflect(decision, ctx, now)
     }
+
+    /**
+     * Le cerveau au-dessus du plancher (ADR-0029) : ne peut que demander plus (vérification, alerte), jamais moins. Toute
+     * erreur est absorbée ici : le plancher, le SOS et la phrase secrète ne dépendent pas de lui.
+     */
+    private suspend fun reflect(floor: Decision, ctx: DecisionContext, now: Instant) {
+        val engine = controller.state.value
+        val outcome = runCatching {
+            mutex.withLock {
+                val alert = engine.protection.isAlert
+                // Alerte réglée (l'utilisateur va bien, ou fin) : la situation qui l'a ouverte ne doit pas la relancer.
+                if (wasAlert && !alert) brain.reset()
+                wasAlert = alert
+                brain.think(now, situation(ctx, now), guardState())
+            }
+        }.getOrNull() ?: return
+        _thought.value = outcome.thought
+        val line = outcome.journal()
+        val last = lastBrainJournal
+        if (last == null || last.first != line || Duration.between(last.second, now) >= JOURNAL_GAP) {
+            lastBrainJournal = line to now
+            log.append("brain", line)
+        }
+        if (outcome.request > floor.action && !engine.protection.isAlert) {
+            val reason = brainReason(now)
+            controller.send { Input.Detection(it, outcome.request, reason, Confidence.MEDIUM) }
+        }
+    }
+
+    private fun brainReason(now: Instant): Reason {
+        val recent = brain.log.recent(now)
+        return when {
+            recent.any { it is SituationEvent.Keyword } -> Reason.DISTRESS_KEYWORD
+            recent.any { it is SituationEvent.Sound && it.family == SoundFamily.DISTRESS } -> Reason.DISTRESS_SCREAM
+            else -> Reason.VIOLENCE_SOUND
+        }
+    }
+
+    private fun situation(ctx: DecisionContext, now: Instant): SituationContext {
+        val engine = controller.state.value
+        return SituationContext(
+            hour = now.atZone(ZoneId.systemDefault()).hour,
+            profile = ctx.profile.name.lowercase(),
+            protection = engine.protection.name.lowercase(),
+            alertLevel = engine.alert?.level?.value ?: 0,
+            tripActive = trips.trip.value != null,
+            acceptedContacts = accepted(),
+            ignoredContexts = ctx.ignored.map { it.name.lowercase() }
+        )
+    }
+
+    private fun guardState(): GuardState {
+        val engine = controller.state.value
+        return GuardState(
+            armed = engine.protection.isArmed,
+            alertOpen = engine.protection.isAlert,
+            alertLevel = engine.alert?.level?.value ?: 0,
+            tripActive = trips.trip.value != null,
+            acceptedContacts = accepted()
+        )
+    }
+
+    private fun accepted() = contacts.book.value.contacts.count { it.status == ContactStatus.ACCEPTED }
 
     /** R-AL-06, R-AUD-04 : toute décision au-dessus du niveau 0 est journalisée (au plus une ligne identique par 30 s). */
     private suspend fun journal(d: Decision, now: Instant) {
@@ -225,5 +362,6 @@ class RiskBrain @Inject constructor(
         const val KEYWORD_SURE = 0.75
         val TRIP_HOLD: Duration = Duration.ofMinutes(5)
         val JOURNAL_GAP: Duration = Duration.ofSeconds(30)
+        val SOUND_JOURNAL_GAP: Duration = Duration.ofSeconds(10)
     }
 }

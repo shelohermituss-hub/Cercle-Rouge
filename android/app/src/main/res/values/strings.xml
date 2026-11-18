@@ -602,4 +602,27 @@
         <item quantity="one">%1$d capteur</item>
         <item quantity="other">%1$d capteurs</item>
     </plurals>
+    <string name="talk_title">parler au veilleur</string>
+    <string name="talk_intro">Pose une question ou dis ce qui se passe. Tout reste dans ton téléphone.</string>
+    <string name="talk_input">Écris ta question</string>
+    <string name="talk_send">Envoyer</string>
+    <string name="talk_hold">Maintiens pour parler</string>
+    <string name="talk_listening">Je t\'écoute… relâche pour envoyer</string>
+    <string name="talk_voice_off">La reconnaissance vocale dans le téléphone n\'est pas disponible ici : écris ta question.</string>
+    <string name="talk_tts">Lire les réponses à voix haute</string>
+    <string name="talk_card">Fiche : %1$s</string>
+    <string name="talk_card_unvalidated">Fiche : %1$s · conseil à valider par des professionnels</string>
+    <string name="talk_act_arm">Activer la protection</string>
+    <string name="talk_act_trip">Ouvrir Trajet</string>
+    <string name="talk_act_contacts">Ouvrir Proches</string>
+    <string name="talk_act_pin">Aller à l\'accueil (code PIN)</string>
+    <string name="talk_open">Parler au veilleur</string>
+    <string name="settings_section_brain">Cerveau IA</string>
+    <string name="settings_brain_tier">Téléphone : %1$s</string>
+    <string name="settings_brain_tier_basic">basique (règles et sons seulement)</string>
+    <string name="settings_brain_tier_standard">standard</string>
+    <string name="settings_brain_tier_full">complet</string>
+    <string name="settings_brain_ears">Sons : YAMNet dans le téléphone (cris, coups, tirs, véhicules, fête).</string>
+    <string name="settings_brain_rules">Raisonnement : règles locales, toujours sous le contrôle de la garde.</string>
+    <string name="settings_brain_llm_missing">Modèle de langage : pas encore installé. L\'app reste complète sans lui.</string>
 </resources>

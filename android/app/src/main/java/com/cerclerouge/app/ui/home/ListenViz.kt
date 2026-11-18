@@ -96,7 +96,9 @@ internal fun WatcherCard(
     armed: Boolean,
     decision: com.cerclerouge.alert.Decision?,
     onOpen: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    explanation: String? = null,
+    onTalk: (() -> Unit)? = null
 ) {
     val c = Cr.colors
     val stage = stageText(activity, status, armed)
@@ -161,6 +163,17 @@ internal fun WatcherCard(
                         Modifier.weight(1f)
                     )
                 }
+                // Ce que le cerveau a compris (règles locales, ADR-0029), en une phrase.
+                if (explanation != null) {
+                    Text(
+                        explanation,
+                        style = PxType.body,
+                        color = c.ink,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 10.dp)
+                    )
+                }
                 val last = lines.lastOrNull() ?: stage
                 val blink = com.cerclerouge.app.ui.components.stepTick(530) % 2 == 0
                 Text(
@@ -173,6 +186,15 @@ internal fun WatcherCard(
                 )
             } else {
                 Text(stringResource(R.string.home_watcher_sleep), style = PxType.body, color = c.muted)
+            }
+            if (onTalk != null) {
+                com.cerclerouge.app.ui.components.PxButton(
+                    stringResource(R.string.talk_open),
+                    onTalk,
+                    Modifier.padding(top = 12.dp),
+                    variant = com.cerclerouge.app.ui.components.PxVariant.OUTLINE,
+                    icon = PixelIcon.MIC
+                )
             }
         }
     }

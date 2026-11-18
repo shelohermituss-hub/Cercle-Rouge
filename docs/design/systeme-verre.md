@@ -7,6 +7,24 @@ Inspiration : captures d'une app de détection de traceurs fournies par le porte
 (fond très clair, cartes en verre dépoli, rubans rose-rouge, pilules, onglets segmentés, bouton rond central), pas le contenu,
 les images ni la marque de cette app. L'identité reste celle de Cercle Rouge : logo aux anneaux rouges, textes en français.
 
+## Révision 2 (2026-11-18, demandes du porteur)
+
+- **Fond gris uni** `#EDEDF0`, sans rubans ni lueurs. Cartes **identiques à la référence** : carte héros rayon 34
+  (dégradé `#FFFFFF`→`#F4F6F8`, ombre longue douce), cartes de contenu rayon 22 blanches, liseré à peine visible, sans ombre.
+- **Police** : la référence utilise SF Pro (Apple, interdite sur Android) ; on prend **Inter**, sa jumelle libre, avec les
+  graisses légères de la référence (titres de carte 600, lignes 500, valeurs 600).
+- **Logo officiel** (fichier du porteur) en haut de l'accueil, au démarrage et dans l'onboarding ; le symbole est redessiné
+  (arcs + petits points aux extrémités) pour l'animation du bouton central.
+- **SOS dans la carte héros** de l'accueil (pilule rouge « SOS · maintenir 1,5 s »), plus de barre SOS en bas.
+- **Rouge non dominant** : accent principal bleu `#2F86F6` (boutons secondaires, carte, graphique, bulles, interrupteurs),
+  lime `#84CC16` pour « calme », violet `#6D28D9` pour la pensée du veilleur. Rouge : logo, SOS, alerte.
+- **Icônes en verre du porteur** (planches « icons » et « get complete set ») dans les cartes, listes et chiffres ;
+  barre du bas au trait comme la référence.
+- **Orbe d'écoute** : animation « AI Voice Assistant » fournie par le porteur (4 images clés) : fondu entre les images,
+  respiration, rotation lente ; grisée et immobile quand la protection est coupée. En Compose : les 4 images en
+  vectoriel/bitmap avec `Crossfade` + `graphicsLayer` (ou export Lottie depuis Figma, comme l'indique le fichier fourni).
+- Nouvel écran **Réglages** (liste de la référence).
+
 ## Principes
 
 1. Clair et aéré : fond gris-bleu très clair, cartes blanches ou en verre, beaucoup d'espace.

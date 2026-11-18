@@ -25,6 +25,14 @@ les images ni la marque de cette app. L'identité reste celle de Cercle Rouge : 
   vectoriel/bitmap avec `Crossfade` + `graphicsLayer` (ou export Lottie depuis Figma, comme l'indique le fichier fourni).
 - Nouvel écran **Réglages** (liste de la référence).
 
+## Révision 3 (2026-11-18)
+
+- Carte du haut de l'accueil **centrée** : bouclier 3D violet du porteur (flotte doucement ; grisé si coupée), titre, une ligne,
+  **SOS sur toute la largeur** en bas de la carte. Plus d'anneaux qui tournent dans la carte.
+- **Bouton central blanc et rouge** (couleurs du logo), sans noir : symbole animé et halo rouge quand actif, symbole rose pâle immobile quand coupé.
+- Orbe d'écoute **sans halo bleu**.
+- Alerte en cours : animation **Face ID** (fichier « Biometric Smart Animations ») : visage → cercle → scan bleu → coche.
+
 ## Principes
 
 1. Clair et aéré : fond gris-bleu très clair, cartes blanches ou en verre, beaucoup d'espace.

@@ -129,7 +129,7 @@ fun ProtectionButton(armed: Boolean, description: String, state: String, onToggl
                     drawCircle(LogoRed.copy(alpha = 0.5f * (1f - halo)), r * (1f + 0.3f * halo), style = Stroke(3.dp.toPx()))
                 }
             }
-            .shadow(14.dp, CircleShape, ambientColor = Color(0x59E31B23), spotColor = Color(0x59E31B23))
+            .shadow(14.dp, CircleShape, ambientColor = Color(0x59E01E1E), spotColor = Color(0x59E01E1E))
             .clip(CircleShape)
             .background(Color.White)
             .border(1.dp, Color(0xFFF0F2F5), CircleShape)

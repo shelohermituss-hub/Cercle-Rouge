@@ -50,7 +50,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -62,7 +61,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -89,11 +87,13 @@ import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
 import com.valentinerutto.orbmotion.orbs.AnimatedThinkingOrb
 import com.valentinerutto.orbmotion.orbs.OrbState
-import kotlin.math.cos
 import kotlin.math.hypot
-import kotlin.math.sin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+/** Rouges officiels de la charte (« Charte graphique & identité visuelle ») : Signal vif au cœur, Grenat à l'extérieur. */
+val LogoRed = Color(0xFFE01E1E)
+val LogoDeep = Color(0xFFA01515)
 
 // ---------------------------------------------------------------------------
 // Mouvement
@@ -230,7 +230,7 @@ fun PxButton(
         .clip(shape)
     val filled = when (variant) {
         PxVariant.LIME -> base.background(c.ink)
-        PxVariant.DANGER -> base.background(Brush.verticalGradient(listOf(Color(0xFFF0333E), Color(0xFFC8141D))))
+        PxVariant.DANGER -> base.background(Brush.verticalGradient(listOf(LogoRed, LogoDeep)))
         PxVariant.DARK -> base.background(c.forestDeep)
         PxVariant.DARK_DANGER -> base.border(2.dp, c.danger, shape)
         PxVariant.OUTLINE -> base.border(2.dp, c.ink, shape)
@@ -252,7 +252,7 @@ fun PxButton(
 }
 
 /** Dégradé rouge du SOS. */
-val SosGradient = Brush.verticalGradient(listOf(Color(0xFFF0333E), Color(0xFFC8141D)))
+val SosGradient = Brush.verticalGradient(listOf(LogoRed, LogoDeep))
 
 /**
  * Bouton SOS : appui long de 1,5 s (le bouton se remplit), puis vibration et compte à rebours (R-HOME-01).
@@ -698,13 +698,16 @@ fun Orb(state: OrbState, size: Dp, color: Color, modifier: Modifier = Modifier, 
     )
 }
 
-/** Rouges du logo Cercle Rouge. */
-val LogoRed = Color(0xFFE31B23)
-val LogoDeep = Color(0xFFA3161C)
+/** Courbe des animations du logo (charte, `cercle-rouge-motion-reveal.svg`). */
+private val BrandEase = androidx.compose.animation.core.CubicBezierEasing(0.16f, 1f, 0.3f, 1f)
+
+private fun phase(t: Float, from: Float, to: Float) = BrandEase.transform(((t - from) / (to - from)).coerceIn(0f, 1f))
 
 /**
- * Symbole du logo, dessiné : grand C rouge foncé, petit C rouge vif, point central ; chaque C finit par un petit point détaché.
- * `animated` : les deux C tournent en sens contraires et le point bat (bouton d'activation). Décoratif pour TalkBack.
+ * Emblème officiel, construit sur la grille 100 × 100 de la charte : arc protecteur extérieur (r 39, trait 8,5, Grenat),
+ * arc de veille (r 25,5, trait 7,5, Signal), noyau (r 10,5, Signal). Les deux arcs restent **ouverts vers la droite**
+ * (partage sélectif) : on ne les fait jamais tourner. `reveal` (0 → 1) rejoue l'apparition de la charte : le noyau, puis
+ * l'arc de veille, puis l'arc protecteur. `animated` : le noyau bat (bouton d'activation). Décoratif pour TalkBack.
  */
 @Composable
 fun LogoMark(
@@ -712,25 +715,33 @@ fun LogoMark(
     modifier: Modifier = Modifier,
     color: Color = LogoRed,
     deep: Color = if (color == LogoRed) LogoDeep else color,
-    animated: Boolean = false
+    animated: Boolean = false,
+    reveal: Float = 1f
 ) {
-    val spinA = loopProgress(6000, animated) * 360f
-    val spinB = -loopProgress(4000, animated) * 360f
     val beat = loopProgress(2400, animated)
     Canvas(modifier.size(size).clearAndSetSemantics {}) {
-        val s = this.size.minDimension
-        val o = Offset(this.size.width / 2, this.size.height / 2)
-        val w = s * 0.075f
-        fun ring(r: Float, start: Float, sweep: Float, dotAt: Float, col: Color, turn: Float) = rotate(turn, o) {
-            drawArc(col, start, sweep, false, Offset(o.x - r, o.y - r), Size(r * 2, r * 2), style = Stroke(w, cap = StrokeCap.Round))
-            listOf(dotAt, -dotAt).forEach { a ->
-                val rad = Math.toRadians(a.toDouble())
-                drawCircle(col, w * 0.5f, Offset(o.x + r * cos(rad).toFloat(), o.y + r * sin(rad).toFloat()))
-            }
+        val k = this.size.minDimension / 100f
+        val c = Offset(this.size.width / 2, this.size.height / 2)
+        fun arc(r: Float, w: Float, start: Float, sweep: Float, col: Color, t: Float) {
+            if (t <= 0f) return
+            drawArc(
+                col,
+                start,
+                sweep * t,
+                false,
+                Offset(c.x - r * k, c.y - r * k),
+                Size(2 * r * k, 2 * r * k),
+                style = Stroke(w * k, cap = StrokeCap.Round)
+            )
         }
-        ring(s * 0.40f, 40f, 280f, 27f, deep, spinA)
-        ring(s * 0.245f, 46f, 268f, 27f, color, spinB)
-        if (animated && beat < 0.25f) drawCircle(color.copy(alpha = 0.35f * (1f - beat / 0.25f)), s * (0.08f + 0.12f * beat / 0.25f), o)
-        drawCircle(color, s * 0.08f, o)
+        // Tracé depuis l'extrémité haute, dans le sens inverse des aiguilles d'une montre (comme le SVG de la charte).
+        arc(39f, 8.5f, -40.4f, -279.2f, deep, phase(reveal, 0.31f, 0.82f))
+        arc(25.5f, 7.5f, -46.1f, -267.8f, color, phase(reveal, 0.165f, 0.65f))
+        val dot = phase(reveal, 0f, 0.26f)
+        if (animated && beat < 0.25f) drawCircle(color.copy(alpha = 0.35f * (1f - beat / 0.25f)), (10.5f + 9f * beat / 0.25f) * k, c)
+        if (dot > 0f) drawCircle(color, 10.5f * k * dot, c)
     }
 }
+
+/** Avancée des mots du logo pendant l'apparition (« Cercle » puis « Rouge »), 0 → 1. */
+fun wordReveal(reveal: Float, second: Boolean) = if (second) phase(reveal, 0.66f, 0.96f) else phase(reveal, 0.56f, 0.89f)

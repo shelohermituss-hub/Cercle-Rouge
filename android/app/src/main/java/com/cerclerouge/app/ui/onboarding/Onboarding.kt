@@ -493,7 +493,7 @@ internal fun Posters(page: Int, onSos: () -> Unit, onNext: () -> Unit, onSkip: (
 @Composable
 private fun MockHome(onSos: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, top = 26.dp)) {
-        com.cerclerouge.app.ui.home.Wordmark(height = 28.dp)
+        com.cerclerouge.app.ui.home.Wordmark(height = 26.dp)
         Box(Modifier.padding(top = 14.dp).fillMaxWidth().height(150.dp).heroCard(28.dp)) {
             Column(Modifier.padding(14.dp).width(140.dp)) {
                 Text(stringResource(R.string.v_protected_f), style = V.text(16.sp, FontWeight.SemiBold), color = Cr.colors.ink)

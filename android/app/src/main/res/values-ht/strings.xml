@@ -767,7 +767,7 @@
     <string name="brain_model_verifying">N ap verifye anprent lan…</string>
     <string name="brain_model_ready">Enstale epi verifye (304 Mo).</string>
     <string name="brain_model_failed_hash">Fichye a refize : se pa bon modèl la oswa li domaje.</string>
-    <string name="brain_model_failed_network">Telechajman an kanpe. L ap repran sou Wi-Fi.</string>
+    <string name="brain_model_failed_network">Telechajman an kanpe (rezo). L ap repran pou kont li kote l te rive a.</string>
     <string name="brain_model_use">Sèvi ak modèl la</string>
     <string name="brain_model_use_sub">Lè l etenn, veyè a kenbe règ li yo.</string>
     <string name="brain_model_delete">Efase modèl la</string>
@@ -775,4 +775,6 @@
     <string name="brain_model_download">Telechaje sou Wi-Fi (304 Mo)</string>
     <string name="brain_model_import">Enpòte yon fichye</string>
     <string name="brain_model_note">Telefòn ki gen 4 Go memwa oswa plis. Yo verifye fichye a anvan chak itilizasyon. Kondisyon itilizasyon Gemma : ai.google.dev/gemma/terms</string>
+    <string name="brain_model_waiting_wifi">N ap tann Wi-Fi : telechajman an (304 Mo) ap kòmanse pou kont li depi ou sou Wi-Fi.</string>
+    <string name="brain_model_mobile">Telechaje ak done mobil (304 Mo)</string>
 </resources>

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -24,7 +25,6 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -176,18 +176,20 @@ fun MapPin(x: Dp, y: Dp, size: Dp = 22.dp) {
     )
 }
 
-/** Démarrage (maquette VerreSplash) : fond blanc, logo animé de 200, logo officiel 240 × 45, barre de chargement et mention. */
+/**
+ * Démarrage : fond blanc, apparition officielle du logo (charte, `cercle-rouge-motion-reveal.svg`) : le noyau, l'arc de
+ * veille, l'arc protecteur, puis « Cercle » et « Rouge ». Joué une fois (1,5 s) ; logo complet d'emblée si les animations
+ * sont réduites. Barre de chargement et mention de la maquette VerreSplash.
+ */
 @Composable
 fun Splash() {
+    val still = reduceMotion()
+    val reveal = remember { androidx.compose.animation.core.Animatable(if (still) 1f else 0f) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        reveal.animateTo(1f, androidx.compose.animation.core.tween(1530, easing = androidx.compose.animation.core.LinearEasing))
+    }
     Box(Modifier.fillMaxSize().background(Color.White)) {
-        androidx.compose.foundation.layout.Column(
-            Modifier.align(androidx.compose.ui.Alignment.Center),
-            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(22.dp)
-        ) {
-            LogoGlossy(200.dp)
-            com.cerclerouge.app.ui.home.Wordmark(height = 45.dp)
-        }
+        com.cerclerouge.app.ui.home.Wordmark(Modifier.align(androidx.compose.ui.Alignment.Center), height = 56.dp, reveal = reveal.value)
         val p = loopProgress(1600)
         androidx.compose.foundation.layout.Column(
             Modifier.align(androidx.compose.ui.Alignment.BottomCenter).padding(bottom = 60.dp),
@@ -203,76 +205,5 @@ fun Splash() {
                 color = Color(0xFF66788A)
             )
         }
-    }
-}
-
-/**
- * Logo en relief du démarrage (maquette VerreSplash, 200 × 200) : deux anneaux en dégradé rouge qui tournent en sens
- * contraire (26 s et 17 s), reflets blancs, quatre points, cœur rouge brillant qui bat, ombre portée.
- */
-@Composable
-fun LogoGlossy(size: Dp, animated: Boolean = true) {
-    val outerTurn = loopProgress(26_000, animated) * 360f
-    val innerTurn = -loopProgress(17_000, animated) * 360f
-    val beat = loopProgress(2600, animated)
-    Canvas(Modifier.size(size)) {
-        val k = this.size.minDimension / 200f
-        fun o(x: Float, y: Float) = Offset(x * k, y * k)
-        // Ombre au sol.
-        drawOval(
-            Brush.radialGradient(listOf(Color(0x381F2A33), Color(0x001F2A33)), o(104f, 182f), 64f * k),
-            topLeft = o(40f, 172f),
-            size = androidx.compose.ui.geometry.Size(128f * k, 20f * k)
-        )
-        val c = o(100f, 100f)
-        val outer = Brush.linearGradient(listOf(Color(0xFFF04A52), Color(0xFF8E0E14)), o(28f, 28f), o(172f, 172f))
-        val inner = Brush.linearGradient(listOf(Color(0xFFFF7A80), Color(0xFFD3141C)), o(55f, 55f), o(145f, 145f))
-        fun ring(
-            r: Float,
-            w: Float,
-            start: Float,
-            sweep: Float,
-            brush: Brush,
-            dots: List<Pair<Float, Float>>,
-            dotR: Float,
-            shine: Float,
-            turn: Float
-        ) {
-            rotate(turn, c) {
-                drawArc(
-                    brush,
-                    start,
-                    sweep,
-                    false,
-                    o(100f - r, 100f - r),
-                    androidx.compose.ui.geometry.Size(2 * r * k, 2 * r * k),
-                    style = Stroke(
-                        w * k,
-                        cap = androidx.compose.ui.graphics.StrokeCap.Round
-                    )
-                )
-                dots.forEach { (x, y) -> drawCircle(brush, dotR * k, o(x, y)) }
-                val rr = r - 2f
-                drawArc(
-                    Color.White.copy(alpha = shine),
-                    222f,
-                    74f,
-                    false,
-                    o(100f - rr, 100f - rr),
-                    androidx.compose.ui.geometry.Size(
-                        2 * rr * k,
-                        2 * rr * k
-                    ),
-                    style = Stroke(4f * k, cap = androidx.compose.ui.graphics.StrokeCap.Round)
-                )
-            }
-        }
-        ring(72f, 18f, 40f, 280f, outer, listOf(164.2f to 132.7f, 164.2f to 67.3f), 8f, 0.55f, outerTurn)
-        ring(45f, 17f, 46f, 268f, inner, listOf(140.4f to 119.7f, 140.4f to 80.3f), 7.5f, 0.6f, innerTurn)
-        // Cœur : halo qui bat, sphère en dégradé et reflet.
-        val b = (beat * 5f).coerceAtMost(1f)
-        drawCircle(Color(0xFFE31B23).copy(alpha = 0.35f * (1f - b)), 19f * k * (1f + 0.6f * b), c)
-        drawCircle(Brush.radialGradient(listOf(Color(0xFFFF8A90), Color(0xFFC5121A)), o(90f, 90f), 22f * k), 16f * k, c)
-        drawCircle(Color.White.copy(alpha = 0.7f), 5f * k, o(95f, 94f))
     }
 }

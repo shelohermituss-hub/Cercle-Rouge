@@ -1,12 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Anneau du logo, signe neutre : aucun mot ni symbole « alerte » sur l'écran verrouillé (R-SEC-06). Silhouette blanche teintée par le système. -->
+<!-- Notification : emblème seul, signe neutre (aucun mot ni symbole « alerte » sur l'écran verrouillé, R-SEC-06). Géométrie officielle de la charte (grille 100 × 100) : arc protecteur r 39 / trait 8,5, arc de veille r 25,5 / trait 7,5, noyau r 10,5, ouverture à droite. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <path
-        android:pathData="M12,3.5a8.5,8.5 0 1,0 0.001,0z"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="3" />
+    <group
+        android:scaleX="0.22"
+        android:scaleY="0.22"
+        android:translateX="1"
+        android:translateY="1">
+        <path
+            android:pathData="M79.7,24.7A39,39 0,1 0,79.7 75.3"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeLineCap="round"
+            android:strokeWidth="8.5" />
+        <path
+            android:pathData="M67.5,31.8A25.5,25.5 0,1 0,67.5 68.2"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeLineCap="round"
+            android:strokeWidth="7.5" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M39.5,50a10.5,10.5 0,1 0,21 0a10.5,10.5 0,1 0,-21 0z" />
+    </group>
 </vector>

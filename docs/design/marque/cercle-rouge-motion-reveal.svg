@@ -1,0 +1,23 @@
+<svg width="640" height="220" viewBox="0 0 360 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+      .cr-dot { transform-origin: 50px 50px; animation: crDot 1.80s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+      .cr-inner { stroke-dasharray: 120; stroke-dashoffset: 120; animation: crDrawInner 1.80s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+      .cr-outer { stroke-dasharray: 190; stroke-dashoffset: 190; animation: crDrawOuter 1.80s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+      .cr-word-1 { animation: crWord1 1.80s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+      .cr-word-2 { animation: crWord2 1.80s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+      @keyframes crDot { 0% { transform: scale(0); opacity: 0; } 22%, 85% { transform: scale(1); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+      @keyframes crDrawInner { 0%, 14% { stroke-dashoffset: 120; opacity: 0; } 20% { opacity: 1; } 55%, 85% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+      @keyframes crDrawOuter { 0%, 26% { stroke-dashoffset: 190; opacity: 0; } 32% { opacity: 1; } 70%, 85% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+      @keyframes crWord1 { 0%, 48% { transform: translateX(-14px); opacity: 0; } 76%, 85% { transform: translateX(0); opacity: 1; } 100% { opacity: 0; } }
+      @keyframes crWord2 { 0%, 56% { transform: translateX(-12px); opacity: 0; } 82%, 88% { transform: translateX(0); opacity: 1; } 100% { opacity: 0; } }
+    </style>
+  <rect width="360" height="110" rx="14" fill="#FFFFFF"/>
+  <g transform="translate(26, 5)">
+    
+    <path class="cr-outer" d="M 79.7 24.7 A 39 39 0 1 0 79.7 75.3" stroke="#A01515" stroke-width="8.5" stroke-linecap="round"/>
+    <path class="cr-inner" d="M 67.5 31.8 A 25.5 25.5 0 1 0 67.5 68.2" stroke="#E01E1E" stroke-width="7.5" stroke-linecap="round"/>
+    <circle class="cr-dot" cx="50" cy="50" r="10.5" fill="#E01E1E"/>
+  </g>
+  <text class="cr-word-1" x="136" y="66" fill="#000000" font-family="'Inter', sans-serif" font-size="34" font-weight="500" letter-spacing="-0.8">Cercle</text>
+  <text class="cr-word-2" x="242" y="66" fill="#E01E1E" font-family="'Inter', sans-serif" font-size="34" font-weight="700" letter-spacing="-0.8">Rouge</text>
+</svg>

@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -44,13 +43,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
@@ -59,6 +59,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
@@ -580,28 +581,32 @@ private fun HeroCard(
     }
 }
 
-/** Logo officiel (image du porteur) ; en thème sombre, « Cercle » passe en clair pour rester lisible. */
+/**
+ * Logo officiel horizontal (charte) : emblème, puis « Cercle » en Inter Medium noir (blanc en thème sombre) et « Rouge » en
+ * Inter Bold Signal #E01E1E. Proportions mesurées sur le logotype officiel (PNG de la charte) : capitale à 59 % de
+ * l'emblème, soit un corps de 70 % de sa hauteur, espace de 12 %.
+ * `reveal` rejoue l'apparition (démarrage) ; 1 = logo complet.
+ */
 @Composable
-internal fun Wordmark(modifier: Modifier = Modifier, height: androidx.compose.ui.unit.Dp = 34.dp) {
+internal fun Wordmark(modifier: Modifier = Modifier, height: androidx.compose.ui.unit.Dp = 34.dp, reveal: Float = 1f) {
     val c = Cr.colors
-    if (c.raised.luminance() > 0.5f) {
-        Image(
-            painterResource(R.drawable.cr_wordmark),
-            contentDescription = stringResource(R.string.app_name),
-            modifier = modifier.height(height)
-        )
-    } else {
-        Row(modifier.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically) {
-            com.cerclerouge.app.ui.components.LogoMark(height)
-            Spacer(Modifier.width(height * 0.3f))
-            Text("Cercle ", style = PxType.title.copy(fontSize = PxType.title.fontSize * (height.value / 30f)), color = c.ink)
+    val ink = if (c.raised.luminance() > 0.5f) Color.Black else Color.White
+    val size = (height.value * 0.70f).sp
+    val name = stringResource(R.string.app_name)
+    Row(modifier.semantics { contentDescription = name }, verticalAlignment = Alignment.CenterVertically) {
+        com.cerclerouge.app.ui.components.LogoMark(height, reveal = reveal)
+        Spacer(Modifier.width(height * 0.12f))
+        listOf(false, true).forEach { second ->
+            val w = com.cerclerouge.app.ui.components.wordReveal(reveal, second)
             Text(
-                "Rouge",
-                style = PxType.title.copy(
-                    fontSize = PxType.title.fontSize * (height.value / 30f),
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                ),
-                color = com.cerclerouge.app.ui.components.LogoRed
+                if (second) "Rouge" else "Cercle ",
+                style = V.text(size, if (second) FontWeight.Bold else FontWeight.Medium).copy(letterSpacing = (-0.0235f).em),
+                color = if (second) com.cerclerouge.app.ui.components.LogoRed else ink,
+                maxLines = 1,
+                modifier = Modifier.clearAndSetSemantics {}.graphicsLayer {
+                    alpha = w
+                    translationX = (1f - w) * -12.dp.toPx()
+                }
             )
         }
     }

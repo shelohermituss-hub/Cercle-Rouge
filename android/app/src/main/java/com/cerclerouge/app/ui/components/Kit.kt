@@ -258,13 +258,13 @@ fun RedButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, 
     Color(
         0xFFD91F2A
     ),
-    Color.White, true, height, 16.sp, null, brush = Brush.verticalGradient(listOf(Color(0xFFF0333E), Color(0xFFC8141D)))
+    Color.White, true, height, 16.sp, null, brush = Brush.verticalGradient(listOf(Color(0xFFE01E1E), Color(0xFFA01515)))
 )
 
 /** Bouton contour rouge (action destructrice : tout effacer). */
 @Composable
 fun DangerOutlineButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) =
-    PillButton(text, onClick, modifier, Color.Transparent, Color(0xFFA3161C), true, 54.dp, 16.sp, null, border = Color(0xFFC8141D))
+    PillButton(text, onClick, modifier, Color.Transparent, Color(0xFFA01515), true, 54.dp, 16.sp, null, border = Color(0xFFA01515))
 
 /** Bouton contour encre (2 dp), 44 de haut : action proposée dans une carte. */
 @Composable

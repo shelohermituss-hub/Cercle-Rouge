@@ -132,7 +132,7 @@ internal fun SosHoldScreen(
                     val w = 10.dp.toPx()
                     drawCircle(Color(0xFFF3D3D5), size.minDimension / 2 - w / 2, style = Stroke(w))
                     drawArc(
-                        Color(0xFFE31B23),
+                        Color(0xFFE01E1E),
                         -90f,
                         360f * progress.value,
                         false,
@@ -143,9 +143,9 @@ internal fun SosHoldScreen(
                 }
                 Column(
                     Modifier.size(216.dp)
-                        .shadow(24.dp, CircleShape, ambientColor = Color(0x8CC8141D), spotColor = Color(0x8CC8141D))
+                        .shadow(24.dp, CircleShape, ambientColor = Color(0x8CA01515), spotColor = Color(0x8CA01515))
                         .clip(CircleShape)
-                        .background(Brush.verticalGradient(listOf(Color(0xFFF0333E), Color(0xFFC8141D))))
+                        .background(Brush.verticalGradient(listOf(Color(0xFFE01E1E), Color(0xFFA01515))))
                         .semantics {
                             role = Role.Button
                             contentDescription = a11y
@@ -243,7 +243,7 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit, names: Li
                     drawCircle(Color.White, r)
                     drawCircle(Color(0xFFF3D3D5), r, style = Stroke(w))
                     drawArc(
-                        Color(0xFFE31B23),
+                        Color(0xFFE01E1E),
                         -90f,
                         360f * frac,
                         false,
@@ -360,7 +360,7 @@ internal fun VerificationContent(
                     Box(
                         Modifier.fillMaxWidth(
                             (left.toFloat() / totalSeconds.coerceAtLeast(1)).coerceIn(0f, 1f)
-                        ).height(8.dp).clip(RoundedCornerShape(4.dp)).background(Color(0xFFE31B23))
+                        ).height(8.dp).clip(RoundedCornerShape(4.dp)).background(Color(0xFFE01E1E))
                     )
                 }
                 Text(

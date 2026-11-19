@@ -767,7 +767,7 @@
     <string name="brain_model_verifying">Vérification de l\'empreinte…</string>
     <string name="brain_model_ready">Installé et vérifié (304 Mo).</string>
     <string name="brain_model_failed_hash">Fichier refusé : ce n\'est pas le bon modèle ou il est abîmé.</string>
-    <string name="brain_model_failed_network">Téléchargement interrompu. Il reprendra en Wi-Fi.</string>
+    <string name="brain_model_failed_network">Téléchargement interrompu (réseau). Il reprendra tout seul là où il s\'est arrêté.</string>
     <string name="brain_model_use">Utiliser le modèle</string>
     <string name="brain_model_use_sub">Coupé, le veilleur garde ses règles.</string>
     <string name="brain_model_delete">Supprimer le modèle</string>
@@ -775,4 +775,6 @@
     <string name="brain_model_download">Télécharger en Wi-Fi (304 Mo)</string>
     <string name="brain_model_import">Importer un fichier</string>
     <string name="brain_model_note">Téléphones de 4 Go de mémoire ou plus. Le fichier est vérifié avant chaque usage. Conditions d\'utilisation de Gemma : ai.google.dev/gemma/terms</string>
+    <string name="brain_model_waiting_wifi">En attente du Wi-Fi : le téléchargement (304 Mo) démarrera tout seul dès que tu seras en Wi-Fi.</string>
+    <string name="brain_model_mobile">Télécharger avec les données mobiles (304 Mo)</string>
 </resources>

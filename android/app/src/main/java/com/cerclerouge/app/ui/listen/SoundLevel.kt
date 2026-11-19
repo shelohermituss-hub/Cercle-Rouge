@@ -341,7 +341,7 @@ internal fun LevelChart(samples: List<Sample>, now: Long, threshold: Float?, mod
         threshold?.let { th ->
             val y = bottom - (bottom - top) * th
             drawLine(
-                Color(0xFFE31B23),
+                Color(0xFFE01E1E),
                 Offset(left, y),
                 Offset(size.width, y),
                 1.4.dp.toPx(),

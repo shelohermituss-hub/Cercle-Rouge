@@ -766,7 +766,7 @@
     <string name="brain_model_verifying">Checking the fingerprint…</string>
     <string name="brain_model_ready">Installed and verified (304 MB).</string>
     <string name="brain_model_failed_hash">File refused: wrong model or damaged.</string>
-    <string name="brain_model_failed_network">Download interrupted. It will resume on Wi-Fi.</string>
+    <string name="brain_model_failed_network">Download interrupted (network). It will resume on its own where it stopped.</string>
     <string name="brain_model_use">Use the model</string>
     <string name="brain_model_use_sub">When off, the watcher keeps its rules.</string>
     <string name="brain_model_delete">Delete the model</string>
@@ -774,4 +774,6 @@
     <string name="brain_model_download">Download on Wi-Fi (304 MB)</string>
     <string name="brain_model_import">Import a file</string>
     <string name="brain_model_note">Phones with 4 GB of memory or more. The file is checked before each use. Gemma terms of use: ai.google.dev/gemma/terms</string>
+    <string name="brain_model_waiting_wifi">Waiting for Wi-Fi: the download (304 MB) will start on its own as soon as you are on Wi-Fi.</string>
+    <string name="brain_model_mobile">Download with mobile data (304 MB)</string>
 </resources>

@@ -41,7 +41,7 @@ class VerreScreensTest {
     private fun capture(name: String, content: @Composable () -> Unit) {
         rule.mainClock.autoAdvance = false
         rule.setContent { CercleRougeTheme { Box(Modifier.fillMaxSize().background(Cr.colors.surface)) { content() } } }
-        rule.mainClock.advanceTimeBy(700)
+        rule.mainClock.advanceTimeBy(1700) // après l'apparition du logo (1,5 s)
         val dir = File("build/verre").apply { mkdirs() }
         File(dir, "$name.png").outputStream().use {
             rule.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)

@@ -237,7 +237,7 @@ internal fun JournalContent(entries: List<ChainedEntry>, broken: Long?, onBack: 
                     list.forEach { e ->
                         val label = humanize(e)
                         val (mark, color) = when (label) {
-                            R.string.log_alert_sos -> "!" to Color(0xFFC8141D)
+                            R.string.log_alert_sos -> "!" to Color(0xFFA01515)
                             R.string.log_dispatch -> "→" to Marks.next
                             R.string.log_check, R.string.log_alert_closed, R.string.log_protection_on, R.string.log_protection_off ->
                                 "✓" to

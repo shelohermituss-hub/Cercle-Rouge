@@ -742,4 +742,24 @@
     <string name="v_chart_a11y">Grafik 10 dènye minit yo, maksimòm %1$d sou 100</string>
     <string name="v_attention">nivo atansyon</string>
     <string name="v_now_short">kounye a</string>
+    <string name="v_watcher_sleeping">An veye · pwoteksyon an koupe</string>
+    <string name="v_watcher_alert">Alèt an kou · moun ou yo avèti</string>
+    <string name="v_watcher_watch">M ap verifye · m ap poze ou kesyon an</string>
+    <string name="v_watcher_calm">Tout bagay kal · anyen pa anrejistre</string>
+    <string name="v_what_i_hear">Sa m tande</string>
+    <string name="v_live">an dirèk</string>
+    <string name="v_voice_far_sub">Moun k ap pale, pa gen rele</string>
+    <string name="v_music_sub">Radyo oswa opalè toupre</string>
+    <string name="v_your_walk">Mach ou</string>
+    <string name="v_walk_sub">Vitès pozisyon an mezire</string>
+    <string name="v_scream">Rele, apèl pou èd</string>
+    <string name="v_heard">Tande</string>
+    <string name="v_not_heard">Pa tande</string>
+    <string name="v_what_i_think">Sa m panse</string>
+    <string name="v_think_risk">risk %1$d %% · %2$d siyal</string>
+    <string name="v_think_level">rete ap veye · nivo %1$d</string>
+    <string name="v_think_off">pwoteksyon koupe · m ap dòmi</string>
+    <string name="v_more_journal">Jounal veyè a</string>
+    <string name="v_stays_on_phone">tout rete sou telefòn ou</string>
+    <string name="v_splash_ready">chifreman lokal · pare</string>
 </resources>

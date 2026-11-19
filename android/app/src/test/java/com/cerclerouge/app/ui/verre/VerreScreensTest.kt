@@ -120,4 +120,53 @@ class VerreScreensTest {
     @Test fun homeOff() = capture("VerreAccueilCoupe") {
         com.cerclerouge.app.ui.home.HomeConsole(com.cerclerouge.alert.EngineState(), {}, 3, {}, {}, {}, sketch, lastOut = "hier, 22 h 10")
     }
+
+    @Test fun splash() = capture("VerreSplash") { com.cerclerouge.app.ui.components.Splash() }
+
+    @Test fun watcher() = capture("VerreVeilleur") {
+        com.cerclerouge.app.ui.brain.WatcherContent(
+            armed = true,
+            decision = null,
+            thought = "trajet habituel, heure habituelle",
+            stats = com.cerclerouge.app.ui.home.WatcherStats(0.62f, 0.48f, 4f),
+            lines = listOf(
+                com.cerclerouge.app.ui.brain.TalkLine(true, "Est-ce que je peux rentrer à pied ?"),
+                com.cerclerouge.app.ui.brain.TalkLine(false, "Je ne peux pas prédire un danger. Jean et Nadège suivent ton trajet ; si tu t'arrêtes plus de 10 min, je les préviens.")
+            ),
+            onBack = {},
+            onTalk = {},
+            onJournal = {}
+        )
+    }
+
+    @Test fun talk() = capture("VerreParler") {
+        val card = com.cerclerouge.brain.Card("conduite-suivi", "Si quelqu'un te suit", "", validated = false)
+        com.cerclerouge.app.ui.brain.TalkContent(
+            listOf(
+                com.cerclerouge.app.ui.brain.TalkLine(true, "J'ai peur, quelqu'un me suit"),
+                com.cerclerouge.app.ui.brain.TalkLine(false, "Va vers un endroit éclairé et fréquenté. Je lance un trajet suivi et je garde Jean prêt.", com.cerclerouge.brain.TalkReply("", card, com.cerclerouge.brain.TalkAction.OPEN_TRIP)),
+                com.cerclerouge.app.ui.brain.TalkLine(true, "Annule l'alerte"),
+                com.cerclerouge.app.ui.brain.TalkLine(false, "Je ne peux pas le faire à ta place : il faut ton code.")
+            ),
+            { _, _ -> }, {}, {}, {}, {}, {}, {}
+        )
+    }
+
+    @Test fun level() = capture("VerreEcoute") {
+        val now = 1_000_000_000L
+        val vals = listOf(42, 40, 36, 38, 95, 12, 62, 30, 48, 22, 40, 18, 80, 25, 55, 30)
+        val peaks = vals.mapIndexed { i, v -> (now - 600_000L + i * 40_000L) to v / 100f }
+        com.cerclerouge.app.ui.listen.SoundLevelContent(
+            com.cerclerouge.app.audio.SoundHistory(peaks, List(31) { now - it * 1000L }, listOf(now - 480_000L)),
+            emptyList(),
+            emptyList(),
+            now,
+            alerts = 0,
+            recording = false,
+            muted = false,
+            onBack = {},
+            onMute = {},
+            onTalk = {}
+        )
+    }
 }

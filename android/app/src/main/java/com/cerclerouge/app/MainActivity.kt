@@ -1,5 +1,8 @@
 package com.cerclerouge.app
 
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.BackHandler
@@ -76,11 +79,11 @@ class AppViewModel @Inject constructor(
     val appearance: com.cerclerouge.app.settings.Appearance
 ) : ViewModel()
 
-private enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN, VAULT, SETTINGS, WATCH, HISTORY, TALK }
+internal enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN, VAULT, SETTINGS, WATCH, HISTORY, TALK, WATCHER, LEVEL }
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() { // FragmentActivity : requis par BiometricPrompt (S7.02)
-    private val app: AppViewModel by viewModels()
+    internal val app: AppViewModel by viewModels()
     private val onboarding: OnboardingViewModel by viewModels()
     private val home: HomeViewModel by viewModels()
     private val contacts: ContactsViewModel by viewModels()
@@ -90,8 +93,14 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
     private val settingsVm: SettingsViewModel by viewModels()
     private val watch: com.cerclerouge.app.ui.watch.WatchViewModel by viewModels()
     private val talk: com.cerclerouge.app.ui.brain.TalkViewModel by viewModels()
+    private val level: com.cerclerouge.app.ui.listen.SoundLevelViewModel by viewModels()
+    private val disarmRequested = androidx.compose.runtime.mutableStateOf(false)
     private val sosRequested = androidx.compose.runtime.mutableStateOf(false)
     private val armRequested = androidx.compose.runtime.mutableStateOf(false)
+
+    internal fun armRequestedState() = armRequested
+
+    internal fun disarmRequestedState() = disarmRequested
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -122,15 +131,7 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                 CrashReport()
                 Box(Modifier.fillMaxSize().background(Cr.colors.surface)) {
                     when (screen) {
-                        Screen.LOADING -> androidx.compose.foundation.layout.Column(
-                            Modifier.align(Alignment.Center),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(24.dp)
-                        ) {
-                            // Démarrage « Verre » : symbole du logo animé et logo officiel.
-                            com.cerclerouge.app.ui.components.LogoMark(150.dp, animated = true)
-                            com.cerclerouge.app.ui.home.Wordmark(height = 44.dp)
-                        }
+                        Screen.LOADING -> com.cerclerouge.app.ui.components.Splash()
                         Screen.ONBOARDING -> OnboardingScreen(
                             onboarding,
                             listen,
@@ -150,8 +151,29 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                             onSosConsumed = { sosRequested.value = false },
                             armRequested = armRequested.value,
                             onArmConsumed = { armRequested.value = false },
-                            onTalk = { screen = Screen.TALK }
+                            disarmRequested = disarmRequested.value,
+                            onDisarmConsumed = { disarmRequested.value = false },
+                            onTalk = { screen = Screen.WATCHER },
+                            onLevel = { screen = Screen.LEVEL }
                         )
+                        Screen.WATCHER -> {
+                            BackHandler { screen = Screen.HOME }
+                            Box(Modifier.safeDrawingPadding()) {
+                                com.cerclerouge.app.ui.brain.WatcherScreen(
+                                    home,
+                                    talk,
+                                    onBack = { screen = Screen.HOME },
+                                    onTalk = { screen = Screen.TALK },
+                                    onJournal = { screen = Screen.JOURNAL }
+                                )
+                            }
+                        }
+                        Screen.LEVEL -> {
+                            BackHandler { screen = Screen.HOME }
+                            Box(Modifier.safeDrawingPadding()) {
+                                com.cerclerouge.app.ui.listen.SoundLevelScreen(level, onBack = { screen = Screen.HOME }, onTalk = { screen = Screen.TALK })
+                            }
+                        }
                         Screen.TALK -> {
                             BackHandler { screen = Screen.HOME }
                             Box(Modifier.safeDrawingPadding()) {
@@ -171,9 +193,7 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                         }
                         Screen.CONTACTS -> {
                             BackHandler { screen = Screen.HOME }
-                            Box(Modifier.safeDrawingPadding()) {
-                                ContactsScreen(contacts, onWatch = { screen = Screen.WATCH }) { screen = Screen.HOME }
-                            }
+                            TabFrame(com.cerclerouge.app.ui.components.Tab.CONTACTS, { screen = it }) { ContactsScreen(contacts, onWatch = { screen = Screen.WATCH }) { screen = Screen.HOME } }
                         }
                         Screen.WATCH -> {
                             BackHandler { screen = Screen.CONTACTS }
@@ -183,7 +203,7 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                         }
                         Screen.TRIP -> {
                             BackHandler { screen = Screen.HOME }
-                            Box(Modifier.safeDrawingPadding()) { TripScreen(trip) { screen = Screen.HOME } }
+                            TabFrame(com.cerclerouge.app.ui.components.Tab.TRIP, { screen = it }) { TripScreen(trip) { screen = Screen.HOME } }
                         }
                         Screen.LISTEN -> {
                             BackHandler { screen = Screen.HOME }
@@ -195,9 +215,7 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                         }
                         Screen.SETTINGS -> {
                             BackHandler { screen = Screen.HOME }
-                            Box(Modifier.safeDrawingPadding()) {
-                                SettingsScreen(settingsVm, onBack = { screen = Screen.HOME }, onListen = { screen = Screen.LISTEN })
-                            }
+                            TabFrame(com.cerclerouge.app.ui.components.Tab.SETTINGS, { screen = it }) { SettingsScreen(settingsVm, onBack = { screen = Screen.HOME }, onListen = { screen = Screen.LISTEN }) }
                         }
                         Screen.JOURNAL -> {
                             BackHandler { screen = Screen.HOME }
@@ -215,6 +233,36 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                 }
             }
         }
+    }
+}
+
+/**
+ * Onglet (Trajet, Proches, Réglages) : contenu et barre du bas des maquettes. Le bouton central renvoie à l'accueil, qui arme
+ * (protection coupée) ou demande le code pour couper.
+ */
+@Composable
+private fun MainActivity.TabFrame(tab: com.cerclerouge.app.ui.components.Tab, go: (Screen) -> Unit, content: @Composable () -> Unit) {
+    val state by app.controller.state.collectAsState()
+    androidx.compose.foundation.layout.Column(Modifier.fillMaxSize()) {
+        Box(Modifier.weight(1f).windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing.only(androidx.compose.foundation.layout.WindowInsetsSides.Top + androidx.compose.foundation.layout.WindowInsetsSides.Horizontal))) { content() }
+        com.cerclerouge.app.ui.components.MainNav(
+            tab,
+            { t ->
+                go(
+                    when (t) {
+                        com.cerclerouge.app.ui.components.Tab.HOME -> Screen.HOME
+                        com.cerclerouge.app.ui.components.Tab.TRIP -> Screen.TRIP
+                        com.cerclerouge.app.ui.components.Tab.CONTACTS -> Screen.CONTACTS
+                        com.cerclerouge.app.ui.components.Tab.SETTINGS -> Screen.SETTINGS
+                    }
+                )
+            },
+            armed = state.protection.isArmed,
+            onToggle = {
+                if (state.protection.isArmed) disarmRequestedState().value = true else armRequestedState().value = true
+                go(Screen.HOME)
+            }
+        )
     }
 }
 

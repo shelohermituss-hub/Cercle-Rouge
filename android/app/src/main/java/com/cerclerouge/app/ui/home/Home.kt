@@ -191,7 +191,10 @@ fun HomeScreen(
     onSosConsumed: () -> Unit = {},
     armRequested: Boolean = false,
     onArmConsumed: () -> Unit = {},
-    onTalk: () -> Unit = {}
+    disarmRequested: Boolean = false,
+    onDisarmConsumed: () -> Unit = {},
+    onTalk: () -> Unit = {},
+    onLevel: () -> Unit = {}
 ) {
     val c = Cr.colors
     val context = LocalContext.current
@@ -307,6 +310,13 @@ fun HomeScreen(
             onArmConsumed()
         }
     }
+    // Couper depuis un autre onglet : le code est demandé ici, comme pour le bouton de l'accueil.
+    LaunchedEffect(disarmRequested) {
+        if (disarmRequested) {
+            if (state.protection.isArmed) guarded(Guarded.DISARM)
+            onDisarmConsumed()
+        }
+    }
     Box(Modifier.fillMaxSize().background(c.surface).safeDrawingPadding()) {
         when {
             state.protection.isAlert && listenPrefs.discreet -> DiscreetScreen(emergencyCountry.primary, onSafe = {
@@ -352,7 +362,7 @@ fun HomeScreen(
                     )
                 },
                 stats = WatcherStats(ambience?.first, ambience?.second, speed?.let { it * 3.6f }),
-                onListen = onListen,
+                onListen = onLevel,
                 onWatcher = onTalk,
                 onProfile = onSettings,
                 onHistory = onHistory

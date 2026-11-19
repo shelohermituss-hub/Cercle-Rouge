@@ -1,5 +1,8 @@
 package com.cerclerouge.app.ui.brain
 
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.unit.sp
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
@@ -236,37 +239,37 @@ internal fun TalkContent(
     }
 
     Column(Modifier.fillMaxSize().background(c.surface).imePadding()) {
-        TopBar(stringResource(R.string.talk_title), onBack)
+        val ttsLabel = stringResource(R.string.talk_tts)
+        com.cerclerouge.app.ui.components.BackHeader(stringResource(R.string.talk_open), onBack) {
+            // Lecture à voix haute des réponses (haut-parleur barré quand elle est coupée).
+            Box(
+                Modifier.size(48.dp).clip(CircleShape).toggleable(speak, role = Role.Switch) {
+                    speak = it
+                    if (!it) tts.value?.stop()
+                }.semantics { contentDescription = ttsLabel },
+                contentAlignment = Alignment.Center
+            ) { com.cerclerouge.app.ui.components.GlassIcon(R.drawable.glass_volume, 28.dp, Modifier.alpha(if (speak) 1f else 0.35f)) }
+        }
         LazyColumn(
             Modifier.weight(1f).fillMaxWidth().padding(horizontal = 16.dp),
             state = list,
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item {
-                Column(Modifier.fillMaxWidth().padding(top = 28.dp, bottom = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    VoiceOrb(listening, 104.dp)
+                Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    VoiceOrb(true, 96.dp)
                     Text(
-                        stringResource(R.string.talk_intro),
-                        style = PxType.body,
-                        color = c.muted,
-                        modifier = Modifier.padding(top = 12.dp)
+                        "◆ " + stringResource(if (listening) R.string.talk_listening else R.string.v_stays_on_phone),
+                        style = com.cerclerouge.app.ui.components.V.mono,
+                        color = c.thought,
+                        modifier = Modifier.padding(top = 8.dp)
                     )
                 }
             }
             items(lines) { line -> Bubble(line, onArm, onTrip, onContacts, onHome) }
         }
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(stringResource(R.string.talk_tts), style = PxType.caption, color = c.muted, modifier = Modifier.weight(1f))
-            Switch(checked = speak, onCheckedChange = {
-                speak = it
-                if (!it) tts.value?.stop()
-            })
-        }
-        Row(
-            Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 26.dp, top = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -274,7 +277,13 @@ internal fun TalkContent(
                 value = input,
                 onValueChange = { input = it.take(300) },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text(stringResource(R.string.talk_input)) },
+                placeholder = { Text(stringResource(R.string.talk_input), style = com.cerclerouge.app.ui.components.V.text(16.sp)) },
+                shape = RoundedCornerShape(28.dp),
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = Cr.colors.raised,
+                    focusedContainerColor = Cr.colors.raised,
+                    unfocusedBorderColor = Color(0xFFD3DDE6)
+                ),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(onSend = {
@@ -284,7 +293,7 @@ internal fun TalkContent(
             )
             val sendLabel = stringResource(R.string.talk_send)
             if (input.isNotBlank() || recognizer == null) {
-                RoundAction(PixelIcon.ARROW_RIGHT, sendLabel, c.ink) {
+                RoundAction(PixelIcon.ARROW_RIGHT, sendLabel, c.lime) {
                     send(input)
                     input = ""
                 }
@@ -344,41 +353,23 @@ private fun RoundAction(icon: PixelIcon, label: String, color: Color, onClick: (
 
 @Composable
 private fun Bubble(line: TalkLine, onArm: () -> Unit, onTrip: () -> Unit, onContacts: () -> Unit, onHome: () -> Unit) {
-    val c = Cr.colors
-    Box(Modifier.fillMaxWidth(), contentAlignment = if (line.mine) Alignment.CenterEnd else Alignment.CenterStart) {
-        if (line.mine) {
+    val reply = line.reply
+    Bubble(line) {
+        reply?.card?.let { card ->
             Text(
-                line.text,
-                style = PxType.body,
-                color = Color.White,
-                modifier = Modifier
-                    .widthIn(max = 300.dp)
-                    .clip(RoundedCornerShape(20.dp, 20.dp, 6.dp, 20.dp))
-                    .background(c.lime)
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                stringResource(if (card.validated) R.string.talk_card else R.string.talk_card_unvalidated, card.title),
+                style = com.cerclerouge.app.ui.components.V.text(12.sp),
+                color = if (card.validated) Cr.colors.muted else Color(0xFF8A5300)
             )
-        } else {
-            PxPanel(Modifier.widthIn(max = 320.dp).semantics { liveRegion = LiveRegionMode.Polite }, radius = 20.dp) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(line.text, style = PxType.body, color = c.ink)
-                    line.reply?.card?.let { card ->
-                        Text(
-                            stringResource(if (card.validated) R.string.talk_card else R.string.talk_card_unvalidated, card.title),
-                            style = PxType.caption,
-                            color = if (card.validated) c.muted else c.warn
-                        )
-                    }
-                    line.reply?.action?.let { a ->
-                        val (label, go) = when (a) {
-                            TalkAction.ARM -> R.string.talk_act_arm to onArm
-                            TalkAction.OPEN_TRIP -> R.string.talk_act_trip to onTrip
-                            TalkAction.OPEN_CONTACTS -> R.string.talk_act_contacts to onContacts
-                            TalkAction.ENTER_PIN -> R.string.talk_act_pin to onHome
-                        }
-                        PxButton(stringResource(label), go, variant = PxVariant.OUTLINE)
-                    }
-                }
+        }
+        reply?.action?.let { a ->
+            val (label, go) = when (a) {
+                TalkAction.ARM -> R.string.talk_act_arm to onArm
+                TalkAction.OPEN_TRIP -> R.string.talk_act_trip to onTrip
+                TalkAction.OPEN_CONTACTS -> R.string.talk_act_contacts to onContacts
+                TalkAction.ENTER_PIN -> R.string.talk_act_pin to onHome
             }
+            com.cerclerouge.app.ui.components.OutlineButton(stringResource(label), go)
         }
     }
 }

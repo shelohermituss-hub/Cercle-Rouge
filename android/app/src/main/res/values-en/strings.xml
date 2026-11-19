@@ -741,4 +741,24 @@
     <string name="v_chart_a11y">Chart of the last 10 minutes, maximum %1$d out of 100</string>
     <string name="v_attention">attention threshold</string>
     <string name="v_now_short">now</string>
+    <string name="v_watcher_sleeping">Standby · protection is off</string>
+    <string name="v_watcher_alert">Alert in progress · your people are notified</string>
+    <string name="v_watcher_watch">Checking · I\'m asking you</string>
+    <string name="v_watcher_calm">All is calm · nothing is recorded</string>
+    <string name="v_what_i_hear">What I hear</string>
+    <string name="v_live">live</string>
+    <string name="v_voice_far_sub">People talking, no screaming</string>
+    <string name="v_music_sub">Radio or nearby speaker</string>
+    <string name="v_your_walk">Your walk</string>
+    <string name="v_walk_sub">Speed from your location</string>
+    <string name="v_scream">Scream, call for help</string>
+    <string name="v_heard">Heard</string>
+    <string name="v_not_heard">Not heard</string>
+    <string name="v_what_i_think">What I think</string>
+    <string name="v_think_risk">risk %1$d %% · %2$d signal(s)</string>
+    <string name="v_think_level">keep watching · level %1$d</string>
+    <string name="v_think_off">protection off · sleeping</string>
+    <string name="v_more_journal">Watcher\'s journal</string>
+    <string name="v_stays_on_phone">everything stays on your phone</string>
+    <string name="v_splash_ready">local encryption · ready</string>
 </resources>

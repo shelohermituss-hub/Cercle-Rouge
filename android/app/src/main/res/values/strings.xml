@@ -742,4 +742,24 @@
     <string name="v_chart_a11y">Graphique des 10 dernières minutes, maximum %1$d sur 100</string>
     <string name="v_attention">seuil d\'attention</string>
     <string name="v_now_short">maint.</string>
+    <string name="v_watcher_sleeping">En veille · la protection est coupée</string>
+    <string name="v_watcher_alert">Alerte en cours · tes proches sont prévenus</string>
+    <string name="v_watcher_watch">Je vérifie · je te pose la question</string>
+    <string name="v_watcher_calm">Tout est calme · rien n\'est enregistré</string>
+    <string name="v_what_i_hear">Ce que j\'entends</string>
+    <string name="v_live">en direct</string>
+    <string name="v_voice_far_sub">Personnes qui parlent, pas de cri</string>
+    <string name="v_music_sub">Radio ou haut-parleur proche</string>
+    <string name="v_your_walk">Ta marche</string>
+    <string name="v_walk_sub">Vitesse mesurée par la position</string>
+    <string name="v_scream">Cri, appel à l\'aide</string>
+    <string name="v_heard">Entendu</string>
+    <string name="v_not_heard">Non entendu</string>
+    <string name="v_what_i_think">Ce que je pense</string>
+    <string name="v_think_risk">risque %1$d %% · %2$d signal(aux)</string>
+    <string name="v_think_level">rester en veille · niveau %1$d</string>
+    <string name="v_think_off">protection coupée · je dors</string>
+    <string name="v_more_journal">Journal du veilleur</string>
+    <string name="v_stays_on_phone">tout reste sur ton téléphone</string>
+    <string name="v_splash_ready">chiffrement local · prêt</string>
 </resources>

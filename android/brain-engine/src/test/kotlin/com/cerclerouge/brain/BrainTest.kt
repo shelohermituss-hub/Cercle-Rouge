@@ -318,7 +318,9 @@ class SoundFamiliesTest {
         val f = java.io.File("../app/src/main/assets/yamnet_labels.txt")
         if (!f.exists()) return
         val all = f.readLines().toSet()
-        (SoundFamilies.LABELS.values.flatten() + SoundFamilies.VOICE + SoundFamilies.MUSIC).forEach { assertTrue(it in all, "classe absente de YAMNet : $it") }
+        (SoundFamilies.LABELS.values.flatten() + SoundFamilies.VOICE + SoundFamilies.MUSIC).forEach {
+            assertTrue(it in all, "classe absente de YAMNet : $it")
+        }
     }
 }
 

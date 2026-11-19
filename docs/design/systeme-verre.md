@@ -33,6 +33,26 @@ les images ni la marque de cette app. L'identité reste celle de Cercle Rouge : 
 - Orbe d'écoute **sans halo bleu**, avec une petite ombre portée pour la détacher du fond.
 - Alerte en cours : animation **Face ID** (fichier « Biometric Smart Animations ») : visage → cercle → scan bleu → coche.
 
+## Révision 4 (2026-11-19) : l'application reproduit exactement les maquettes
+
+Demande du porteur : l'APK v0.6.0 ne ressemblait pas aux maquettes. Méthode retenue :
+
+1. **Maquettes manquantes dessinées d'abord dans l'outil** (16 écrans ajoutés au canevas et validés par le porteur) :
+   configuration 1 à 5, proches, ajouter un proche, SOS (maintenir, compte à rebours, envoyé), vérification, code,
+   parler au veilleur, journal, coffre, historique.
+2. **Boîte à outils fidèle** `ui/components/Kit.kt` : chaque composant reprend un bloc des maquettes (tailles en px → dp,
+   texte en sp) : en-têtes 34/28 px, libellés de section 14 px capitales `#66788A`, cartes rayon 22, carte héros rayon 34,
+   boutons encre 62 px / blancs 54 px, pastilles, lignes de terminal JetBrains Mono, champs 58 px rayon 18, pavé
+   numérique, bandeau bleu, ajout en pointillés, barre du bas **Accueil · Trajet · [protection] · Proches · Réglages**.
+   Illustrations (`Illustrations.kt`) : plan clair dessiné, maquette de téléphone de l'onboarding, logo en relief du démarrage.
+3. **Comparaison côte à côte** de chaque écran : maquette rendue par Playwright (390 × 844) et écran Compose rendu par
+   Robolectric à la même taille (`VerreScreensTest`, `build/verre`).
+
+Écarts assumés (fonctions de sécurité ou textes réels) : le SOS de l'illustration de l'onboarding est un vrai SOS (R-ONB-06) ;
+l'étape 1 garde les deux attestations (adulte, détenteur du téléphone, R-ONB-08) ; l'étape 5 demande la durée de conservation
+sans présélection (ADR-0017) ; les textes sont inclusifs (« protégé·e ») ; les valeurs affichées sont réelles (voix et
+musique de YAMNet, vitesse de marche, écart au trajet, batterie) et « — » quand elles sont inconnues.
+
 ## Principes
 
 1. Clair et aéré : fond gris-bleu très clair, cartes blanches ou en verre, beaucoup d'espace.

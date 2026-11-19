@@ -1,12 +1,12 @@
 package com.cerclerouge.app.ui.vault
 
-import androidx.compose.foundation.background
 import android.media.MediaDataSource
 import android.media.MediaPlayer
 import android.view.WindowManager
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,12 +26,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -46,10 +43,8 @@ import com.cerclerouge.app.evidence.EvidenceSummary
 import com.cerclerouge.app.security.SecuritySettings
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PxButton
-import com.cerclerouge.app.ui.components.PxCheck
 import com.cerclerouge.app.ui.components.PxPanel
 import com.cerclerouge.app.ui.components.PxVariant
-import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.home.PinDialog
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
@@ -279,14 +274,24 @@ fun VaultScreen(vm: VaultViewModel, onBack: () -> Unit) {
                     )
                 }
                 if (ui.items.isEmpty()) {
-                    Text(stringResource(R.string.vault_empty), style = com.cerclerouge.app.ui.components.V.body, color = c.muted, modifier = Modifier.padding(horizontal = 20.dp))
+                    Text(
+                        stringResource(R.string.vault_empty),
+                        style = com.cerclerouge.app.ui.components.V.body,
+                        color = c.muted,
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
                 }
                 Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     ui.items.forEach { item ->
                         EvidenceCard(item, ui, vm, onDelete = { confirmDelete = item.alertId })
                     }
                 }
-                Text(stringResource(R.string.vault_legal), style = com.cerclerouge.app.ui.components.V.small, color = c.muted, modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 12.dp))
+                Text(
+                    stringResource(R.string.vault_legal),
+                    style = com.cerclerouge.app.ui.components.V.small,
+                    color = c.muted,
+                    modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 12.dp)
+                )
             }
         }
     }

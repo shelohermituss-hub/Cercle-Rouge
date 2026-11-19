@@ -53,7 +53,11 @@ data class ListenActivity(
  * Les 10 dernières minutes de l'écoute (écran « Niveau sonore ») : un pic de niveau toutes les 10 s (0 à 1), le nombre de voix
  * entendues et de bruits forts, avec l'heure du dernier. Que des nombres, en mémoire seulement : aucun son (R-AE-01).
  */
-data class SoundHistory(val peaks: List<Pair<Long, Float>> = emptyList(), val voices: List<Long> = emptyList(), val loud: List<Long> = emptyList())
+data class SoundHistory(
+    val peaks: List<Pair<Long, Float>> = emptyList(),
+    val voices: List<Long> = emptyList(),
+    val loud: List<Long> = emptyList()
+)
 
 enum class AudioStatus { STOPPED, RUNNING, PAUSED_MIC_BUSY, PAUSED_LOW_POWER, ERROR }
 

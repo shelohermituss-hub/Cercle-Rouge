@@ -94,7 +94,13 @@ class SoundLevelViewModel @Inject constructor(
             motion.events.collect { e -> _motion.value = keep(_motion.value + (e.atMillis to e.strength.toFloat().coerceIn(0f, 1f))) }
         }
         viewModelScope.launch {
-            location.speed.collect { v -> if (v != null) _speed.value = keep(_speed.value + (System.currentTimeMillis() to (v * 3.6f / MAX_KMH).coerceIn(0f, 1f))) }
+            location.speed.collect { v ->
+                if (v !=
+                    null
+                ) {
+                    _speed.value = keep(_speed.value + (System.currentTimeMillis() to (v * 3.6f / MAX_KMH).coerceIn(0f, 1f)))
+                }
+            }
         }
     }
 
@@ -166,18 +172,59 @@ internal fun SoundLevelContent(
             SectionLabel(stringResource(R.string.v_last_10))
             VCard(padding = PaddingValues(vertical = 12.dp)) {
                 Row(Modifier.fillMaxWidth()) {
-                    Tile(R.drawable.glass_volume, history.voices.size.toString(), stringResource(R.string.v_stat_voice), c.ink, Modifier.weight(1f))
-                    Tile(R.drawable.glass_warning, history.loud.size.toString(), stringResource(R.string.v_peak), if (history.loud.isEmpty()) c.ink else Color(0xFFB45309), Modifier.weight(1f))
-                    Tile(R.drawable.glass_bell, alerts.toString(), stringResource(R.string.v_alert_count), if (alerts == 0) c.forest else c.danger, Modifier.weight(1f))
-                    Tile(R.drawable.glass_lock, stringResource(if (recording) R.string.v_rec_on else R.string.v_rec_none), stringResource(R.string.v_recorded), c.ink, Modifier.weight(1f))
+                    Tile(
+                        R.drawable.glass_volume,
+                        history.voices.size.toString(),
+                        stringResource(R.string.v_stat_voice),
+                        c.ink,
+                        Modifier.weight(1f)
+                    )
+                    Tile(
+                        R.drawable.glass_warning,
+                        history.loud.size.toString(),
+                        stringResource(R.string.v_peak),
+                        if (history.loud.isEmpty()) c.ink else Color(0xFFB45309),
+                        Modifier.weight(1f)
+                    )
+                    Tile(
+                        R.drawable.glass_bell,
+                        alerts.toString(),
+                        stringResource(R.string.v_alert_count),
+                        if (alerts ==
+                            0
+                        ) {
+                            c.forest
+                        } else {
+                            c.danger
+                        },
+                        Modifier.weight(1f)
+                    )
+                    Tile(
+                        R.drawable.glass_lock,
+                        stringResource(if (recording) R.string.v_rec_on else R.string.v_rec_none),
+                        stringResource(R.string.v_recorded),
+                        c.ink,
+                        Modifier.weight(1f)
+                    )
                 }
             }
         }
-        Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 22.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Box(
-                Modifier.fillMaxWidth().heightIn(min = 54.dp).clip(RoundedCornerShape(27.dp)).background(Color(0xFFE4E8EE)).clickable(role = Role.Button, onClick = onMute),
+                Modifier.fillMaxWidth().heightIn(
+                    min = 54.dp
+                ).clip(RoundedCornerShape(27.dp)).background(Color(0xFFE4E8EE)).clickable(role = Role.Button, onClick = onMute),
                 contentAlignment = Alignment.Center
-            ) { Text(stringResource(if (muted) R.string.v_unmute else R.string.v_mute_15), style = V.text(16.sp, FontWeight.SemiBold), color = c.ink) }
+            ) {
+                Text(
+                    stringResource(if (muted) R.string.v_unmute else R.string.v_mute_15),
+                    style = V.text(16.sp, FontWeight.SemiBold),
+                    color = c.ink
+                )
+            }
             Row(
                 Modifier.fillMaxWidth().heightIn(min = 54.dp)
                     .shadow(10.dp, RoundedCornerShape(27.dp), ambientColor = Color(0x662F86F6), spotColor = Color(0x662F86F6))
@@ -197,15 +244,33 @@ internal fun SoundLevelContent(
 /** Sélecteur à 3 segments (maquette : fond #D8DEE5, segment choisi blanc). */
 @Composable
 private fun Segmented(tab: LevelTab, onTab: (LevelTab) -> Unit) {
-    val labels = listOf(LevelTab.SOUND to R.string.v_tab_sound, LevelTab.MOTION to R.string.v_tab_motion, LevelTab.POSITION to R.string.v_tab_position)
-    Row(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFFD8DEE5)).padding(4.dp)) {
+    val labels = listOf(
+        LevelTab.SOUND to R.string.v_tab_sound,
+        LevelTab.MOTION to R.string.v_tab_motion,
+        LevelTab.POSITION to R.string.v_tab_position
+    )
+    Row(
+        Modifier.padding(
+            start = 16.dp,
+            end = 16.dp,
+            top = 14.dp
+        ).fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFFD8DEE5)).padding(4.dp)
+    ) {
         labels.forEach { (t, label) ->
             val on = t == tab
             Box(
-                Modifier.weight(1f).heightIn(min = 40.dp).clip(RoundedCornerShape(11.dp)).background(if (on) Color.White else Color.Transparent)
+                Modifier.weight(
+                    1f
+                ).heightIn(min = 40.dp).clip(RoundedCornerShape(11.dp)).background(if (on) Color.White else Color.Transparent)
                     .clickable(role = Role.Tab) { onTab(t) }.semantics { selected = on },
                 contentAlignment = Alignment.Center
-            ) { Text(stringResource(label).uppercase(), style = V.text(13.sp, FontWeight.Medium, spacing = 0.02f), color = if (on) Cr.colors.ink else Cr.colors.muted) }
+            ) {
+                Text(
+                    stringResource(label).uppercase(),
+                    style = V.text(13.sp, FontWeight.Medium, spacing = 0.02f),
+                    color = if (on) Cr.colors.ink else Cr.colors.muted
+                )
+            }
         }
     }
 }
@@ -220,7 +285,9 @@ private fun Info(tab: LevelTab, history: SoundHistory, motion: List<Sample>, now
                 append(stringResource(R.string.v_loud_ago, ((now - at) / 60_000).coerceAtLeast(0)))
             }
         } ?: buildAnnotatedString { append(stringResource(R.string.v_no_loud)) }
-        LevelTab.MOTION -> buildAnnotatedString { append(stringResource(if (motion.isEmpty()) R.string.v_no_motion else R.string.v_motion_seen, motion.size)) }
+        LevelTab.MOTION -> buildAnnotatedString {
+            append(stringResource(if (motion.isEmpty()) R.string.v_no_motion else R.string.v_motion_seen, motion.size))
+        }
         LevelTab.POSITION -> buildAnnotatedString { append(stringResource(R.string.v_position_info)) }
     }
     VCard(Modifier.padding(top = 14.dp), padding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
@@ -273,12 +340,23 @@ internal fun LevelChart(samples: List<Sample>, now: Long, threshold: Float?, mod
         }
         threshold?.let { th ->
             val y = bottom - (bottom - top) * th
-            drawLine(Color(0xFFE31B23), Offset(left, y), Offset(size.width, y), 1.4.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f)))
+            drawLine(
+                Color(0xFFE31B23),
+                Offset(left, y),
+                Offset(size.width, y),
+                1.4.dp.toPx(),
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
+            )
             val red = android.graphics.Paint(paint).apply { color = android.graphics.Color.rgb(0xC8, 0x14, 0x1D) }
             drawContext.canvas.nativeCanvas.drawText(attention, size.width - red.measureText(attention), y - 5.dp.toPx(), red)
         }
         val from = now - 10 * 60_000L
-        val pts = samples.sortedBy { it.first }.map { (t, v) -> Offset(left + w * ((t - from) / 600_000f).coerceIn(0f, 1f), bottom - (bottom - top) * v.coerceIn(0f, 1f)) }
+        val pts = samples.sortedBy { it.first }.map { (t, v) ->
+            Offset(
+                left + w * ((t - from) / 600_000f).coerceIn(0f, 1f),
+                bottom - (bottom - top) * v.coerceIn(0f, 1f)
+            )
+        }
         if (pts.size >= 2) {
             val line = Path().apply {
                 moveTo(pts[0].x, pts[0].y)
@@ -300,7 +378,10 @@ internal fun LevelChart(samples: List<Sample>, now: Long, threshold: Float?, mod
         } else if (pts.size == 1) {
             drawCircle(Color(0xFF2F86F6), 4.dp.toPx(), pts[0])
         } else {
-            val t = paint.apply { color = android.graphics.Color.rgb((muted.red * 255).toInt(), (muted.green * 255).toInt(), (muted.blue * 255).toInt()) }
+            val t = paint.apply {
+                color =
+                    android.graphics.Color.rgb((muted.red * 255).toInt(), (muted.green * 255).toInt(), (muted.blue * 255).toInt())
+            }
             val msg = "—"
             drawContext.canvas.nativeCanvas.drawText(msg, left + w / 2 - t.measureText(msg) / 2, (top + bottom) / 2, t)
         }

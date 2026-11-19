@@ -56,7 +56,13 @@ import java.util.Locale
  * réelles ; aucun son n'est gardé.
  */
 @Composable
-fun WatcherScreen(home: com.cerclerouge.app.ui.home.HomeViewModel, talk: TalkViewModel, onBack: () -> Unit, onTalk: () -> Unit, onJournal: () -> Unit) {
+fun WatcherScreen(
+    home: com.cerclerouge.app.ui.home.HomeViewModel,
+    talk: TalkViewModel,
+    onBack: () -> Unit,
+    onTalk: () -> Unit,
+    onJournal: () -> Unit
+) {
     val decision by home.brain.decision.collectAsState()
     val thought by home.brain.thought.collectAsState()
     val ambience by home.audio.ambience.collectAsState()
@@ -91,7 +97,11 @@ internal fun WatcherContent(
     val engaged = decision?.engaged ?: RecommendedAction.NONE
     val (bannerText, bannerBg, bannerFg) = when {
         !armed -> Triple(stringResource(R.string.v_watcher_sleeping), Color(0xFFECEFF3), c.muted)
-        engaged >= RecommendedAction.ALERT_CONTACTS -> Triple(stringResource(R.string.v_watcher_alert), Color(0xFFFDE3E4), Color(0xFF9E0F15))
+        engaged >= RecommendedAction.ALERT_CONTACTS -> Triple(
+            stringResource(R.string.v_watcher_alert),
+            Color(0xFFFDE3E4),
+            Color(0xFF9E0F15)
+        )
         engaged >= RecommendedAction.VERIFY -> Triple(stringResource(R.string.v_watcher_watch), Color(0xFFFFF0C7), Color(0xFF5C3D00))
         else -> Triple(stringResource(R.string.v_watcher_calm), c.calmTint, c.calmText)
     }
@@ -101,18 +111,37 @@ internal fun WatcherContent(
         BackHeader(stringResource(R.string.home_watcher), onBack)
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             Row(
-                Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(bannerBg).padding(horizontal = 16.dp, vertical = 14.dp),
+                Modifier.padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 12.dp
+                ).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(bannerBg).padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 GlassIcon(R.drawable.glass_check, 26.dp)
                 Text(bannerText, style = V.text(15.sp, FontWeight.SemiBold), color = bannerFg)
             }
-            SectionLabel(stringResource(R.string.v_what_i_hear), if (armed) stringResource(R.string.v_live) else stringResource(R.string.home_paused))
+            SectionLabel(
+                stringResource(R.string.v_what_i_hear),
+                if (armed) stringResource(R.string.v_live) else stringResource(R.string.home_paused)
+            )
             VCard(padding = PaddingValues(horizontal = 16.dp, vertical = 2.dp)) {
-                Heard(R.drawable.glass_volume, stringResource(R.string.v_voice_far), stringResource(R.string.v_voice_far_sub), pct(stats.voice), c.ink)
+                Heard(
+                    R.drawable.glass_volume,
+                    stringResource(R.string.v_voice_far),
+                    stringResource(R.string.v_voice_far_sub),
+                    pct(stats.voice),
+                    c.ink
+                )
                 Divider()
-                Heard(R.drawable.glass_chart, stringResource(R.string.v_stat_music), stringResource(R.string.v_music_sub), pct(stats.music), c.ink)
+                Heard(
+                    R.drawable.glass_chart,
+                    stringResource(R.string.v_stat_music),
+                    stringResource(R.string.v_music_sub),
+                    pct(stats.music),
+                    c.ink
+                )
                 Divider()
                 Heard(
                     R.drawable.glass_heart,
@@ -152,10 +181,21 @@ internal fun WatcherContent(
                 }
             }
         }
-        Row(Modifier.fillMaxWidth().background(c.raised.copy(alpha = 0.6f)).padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 22.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            Modifier.fillMaxWidth().background(
+                c.raised.copy(alpha = 0.6f)
+            ).padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 22.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             val more = stringResource(R.string.v_more_journal)
             Box(
-                Modifier.size(56.dp).clip(CircleShape).background(Color(0xFFE4E8EE)).clickable(role = Role.Button, onClick = onJournal).semantics { contentDescription = more },
+                Modifier.size(
+                    56.dp
+                ).clip(CircleShape).background(Color(0xFFE4E8EE)).clickable(role = Role.Button, onClick = onJournal).semantics {
+                    contentDescription =
+                        more
+                },
                 contentAlignment = Alignment.Center
             ) { Text("•••", style = V.text(16.sp, FontWeight.Bold), color = c.ink) }
             InkButton(stringResource(R.string.talk_open), onTalk, Modifier.weight(1f), height = 56.dp, icon = PixelIcon.MIC)
@@ -165,7 +205,11 @@ internal fun WatcherContent(
 
 @Composable
 private fun Heard(icon: Int, title: String, sub: String, value: String, valueColor: Color) {
-    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
         GlassIcon(icon, 32.dp)
         Column(Modifier.weight(1f)) {
             Text(title, style = V.text(17.sp, FontWeight.Medium), color = Cr.colors.ink)
@@ -184,11 +228,19 @@ internal fun Bubble(line: TalkLine, content: (@Composable () -> Unit)? = null) {
                 line.text,
                 style = V.text(15.sp, line = 21.sp),
                 color = Color.White,
-                modifier = Modifier.padding(start = 60.dp).clip(RoundedCornerShape(20.dp, 20.dp, 6.dp, 20.dp)).background(Color(0xFF2F86F6)).padding(horizontal = 14.dp, vertical = 10.dp)
+                modifier = Modifier.padding(
+                    start = 60.dp
+                ).clip(
+                    RoundedCornerShape(20.dp, 20.dp, 6.dp, 20.dp)
+                ).background(Color(0xFF2F86F6)).padding(horizontal = 14.dp, vertical = 10.dp)
             )
         } else {
             Column(
-                Modifier.padding(end = 30.dp).clip(RoundedCornerShape(20.dp, 20.dp, 20.dp, 6.dp)).background(Cr.colors.raised).padding(horizontal = 14.dp, vertical = 12.dp),
+                Modifier.padding(
+                    end = 30.dp
+                ).clip(
+                    RoundedCornerShape(20.dp, 20.dp, 20.dp, 6.dp)
+                ).background(Cr.colors.raised).padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(line.text, style = V.text(15.sp, line = 21.sp), color = Cr.colors.ink)

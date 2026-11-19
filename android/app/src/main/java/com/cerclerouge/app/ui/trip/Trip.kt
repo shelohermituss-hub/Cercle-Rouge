@@ -1,12 +1,5 @@
 package com.cerclerouge.app.ui.trip
 
-import com.cerclerouge.app.ui.components.V
-import com.cerclerouge.app.ui.components.GlassIcon
-import com.cerclerouge.app.ui.components.heroCard
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.Color
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,6 +20,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -43,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
@@ -53,8 +48,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -74,12 +71,14 @@ import com.cerclerouge.app.trip.TripController
 import com.cerclerouge.app.trip.TripDraft
 import com.cerclerouge.app.trip.TripPrefs
 import com.cerclerouge.app.trip.TripUi
+import com.cerclerouge.app.ui.components.GlassIcon
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PixelIconView
 import com.cerclerouge.app.ui.components.PxButton
 import com.cerclerouge.app.ui.components.PxPanel
 import com.cerclerouge.app.ui.components.PxVariant
-import com.cerclerouge.app.ui.components.TopBar
+import com.cerclerouge.app.ui.components.V
+import com.cerclerouge.app.ui.components.heroCard
 import com.cerclerouge.app.ui.home.LiveMap
 import com.cerclerouge.app.ui.home.PinDialog
 import com.cerclerouge.app.ui.home.message
@@ -344,7 +343,7 @@ fun TripScreen(vm: TripViewModel, onBack: () -> Unit) {
         ActiveTrip(vm, active)
     } else {
         Column(Modifier.fillMaxSize().background(Cr.colors.surface)) {
-            com.cerclerouge.app.ui.components.TabHeader(stringResource(R.string.trip_title), stringResource(R.string.trip_intro))
+            com.cerclerouge.app.ui.components.TabHeader(stringResource(R.string.trip_title), subtitle = stringResource(R.string.trip_intro))
             Planner(vm)
         }
     }
@@ -813,7 +812,13 @@ internal fun TripActive(card: TripCard, map: @Composable (Modifier) -> Unit, onM
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.v_trip_running), style = V.text(17.sp, FontWeight.Medium), color = c.ink)
                     Text(
-                        if (card.followers.isEmpty()) stringResource(R.string.v_followed_none) else stringResource(R.string.v_followed_by, card.followers.joinToString(", ")),
+                        if (card.followers.isEmpty()) {
+                            stringResource(
+                                R.string.v_followed_none
+                            )
+                        } else {
+                            stringResource(R.string.v_followed_by, card.followers.joinToString(", "))
+                        },
                         style = V.small,
                         color = c.muted,
                         maxLines = 1
@@ -831,20 +836,63 @@ internal fun TripActive(card: TripCard, map: @Composable (Modifier) -> Unit, onM
             Box(Modifier.padding(top = 12.dp).fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(Color(0xFFD6DEE6))) {
                 Box(Modifier.fillMaxWidth(card.progress).height(6.dp).clip(RoundedCornerShape(3.dp)).background(Color(0xFF2F86F6)))
             }
-            card.stopUntil?.let { Text(stringResource(R.string.trip_stop_until, it), style = V.small, color = c.warn, modifier = Modifier.padding(top = 8.dp)) }
+            card.stopUntil?.let {
+                Text(stringResource(R.string.trip_stop_until, it), style = V.small, color = c.warn, modifier = Modifier.padding(top = 8.dp))
+            }
             Row(Modifier.fillMaxWidth().padding(top = 14.dp)) {
-                TripStat(R.drawable.glass_pin, card.deviationM?.let { "$it m" } ?: "—", stringResource(R.string.v_deviation), Modifier.weight(1f))
-                TripStat(R.drawable.glass_clock, card.marginMin?.let { if (it >= 0) "+$it min" else "$it min" } ?: "—", stringResource(R.string.v_margin), Modifier.weight(1f))
-                TripStat(R.drawable.glass_proches, card.followers.size.toString(), stringResource(R.string.v_following), Modifier.weight(1f))
-                TripStat(R.drawable.glass_battery, card.battery?.let { "$it %" } ?: "—", stringResource(R.string.v_battery), Modifier.weight(1f))
+                TripStat(
+                    R.drawable.glass_pin,
+                    card.deviationM?.let {
+                        "$it m"
+                    } ?: "—",
+                    stringResource(R.string.v_deviation),
+                    Modifier.weight(1f)
+                )
+                TripStat(
+                    R.drawable.glass_clock,
+                    card.marginMin?.let {
+                        if (it >=
+                            0
+                        ) {
+                            "+$it min"
+                        } else {
+                            "$it min"
+                        }
+                    } ?: "—",
+                    stringResource(R.string.v_margin),
+                    Modifier.weight(1f)
+                )
+                TripStat(
+                    R.drawable.glass_proches,
+                    card.followers.size.toString(),
+                    stringResource(R.string.v_following),
+                    Modifier.weight(1f)
+                )
+                TripStat(
+                    R.drawable.glass_battery,
+                    card.battery?.let {
+                        "$it %"
+                    } ?: "—",
+                    stringResource(R.string.v_battery),
+                    Modifier.weight(1f)
+                )
             }
             card.watch?.let { Text(it, style = V.small, color = c.muted, modifier = Modifier.padding(top = 8.dp)) }
             Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Box(
-                    Modifier.weight(1f).heightIn(min = 50.dp).clip(RoundedCornerShape(25.dp)).background(Color(0xFFE4E8EE)).clickable(role = Role.Button, onClick = onMore),
+                    Modifier.weight(
+                        1f
+                    ).heightIn(
+                        min = 50.dp
+                    ).clip(RoundedCornerShape(25.dp)).background(Color(0xFFE4E8EE)).clickable(role = Role.Button, onClick = onMore),
                     contentAlignment = Alignment.Center
                 ) { Text(stringResource(R.string.v_plus_15), style = V.text(16.sp, FontWeight.SemiBold), color = c.ink) }
-                com.cerclerouge.app.ui.components.OutlineButton(stringResource(R.string.trip_arrived), onArrived, Modifier.weight(1f), height = 50.dp)
+                com.cerclerouge.app.ui.components.OutlineButton(
+                    stringResource(R.string.trip_arrived),
+                    onArrived,
+                    Modifier.weight(1f),
+                    height = 50.dp
+                )
             }
         }
     }

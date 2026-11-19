@@ -1,32 +1,10 @@
 package com.cerclerouge.app.ui.contacts
 
-import com.cerclerouge.app.ui.components.TabHeader
-import com.cerclerouge.app.ui.components.BackHeader
-import com.cerclerouge.app.ui.components.SectionLabel
-import com.cerclerouge.app.ui.components.VCard
-import com.cerclerouge.app.ui.components.Avatar
-import com.cerclerouge.app.ui.components.Tone
-import com.cerclerouge.app.ui.components.DashedAdd
-import com.cerclerouge.app.ui.components.MonoBox
-import com.cerclerouge.app.ui.components.MonoLine
-import com.cerclerouge.app.ui.components.Marks
-import com.cerclerouge.app.ui.components.TextLink
-import com.cerclerouge.app.ui.components.VField
-import com.cerclerouge.app.ui.components.PillChoice
-import com.cerclerouge.app.ui.components.BottomActions
-import com.cerclerouge.app.ui.components.InkButton
-import com.cerclerouge.app.ui.components.GlassIcon
-import com.cerclerouge.app.ui.components.V
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
@@ -51,6 +30,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -60,8 +41,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -71,12 +54,28 @@ import com.cerclerouge.app.contacts.AddOutcome
 import com.cerclerouge.app.contacts.ContactsRepository
 import com.cerclerouge.app.contacts.PickPhone
 import com.cerclerouge.app.server.ServerSync
+import com.cerclerouge.app.ui.components.Avatar
+import com.cerclerouge.app.ui.components.BackHeader
+import com.cerclerouge.app.ui.components.BottomActions
+import com.cerclerouge.app.ui.components.DashedAdd
+import com.cerclerouge.app.ui.components.GlassIcon
+import com.cerclerouge.app.ui.components.InkButton
+import com.cerclerouge.app.ui.components.Marks
+import com.cerclerouge.app.ui.components.MonoBox
+import com.cerclerouge.app.ui.components.MonoLine
+import com.cerclerouge.app.ui.components.PillChoice
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PixelIconView
 import com.cerclerouge.app.ui.components.PxButton
 import com.cerclerouge.app.ui.components.PxPanel
 import com.cerclerouge.app.ui.components.PxVariant
-import com.cerclerouge.app.ui.components.TopBar
+import com.cerclerouge.app.ui.components.SectionLabel
+import com.cerclerouge.app.ui.components.TabHeader
+import com.cerclerouge.app.ui.components.TextLink
+import com.cerclerouge.app.ui.components.Tone
+import com.cerclerouge.app.ui.components.V
+import com.cerclerouge.app.ui.components.VCard
+import com.cerclerouge.app.ui.components.VField
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
 import com.cerclerouge.contacts.BookError
@@ -297,15 +296,23 @@ internal fun ContactsContent(
     val ready = contacts.count { it.status == ContactStatus.ACCEPTED }
     val pending = contacts.count { it.status == ContactStatus.PENDING }
     Column(Modifier.fillMaxSize().background(c.surface).verticalScroll(rememberScrollState()).padding(bottom = 40.dp)) {
-        TabHeader(stringResource(R.string.v_contacts_title), stringResource(R.string.v_contacts_sub))
+        TabHeader(stringResource(R.string.v_contacts_title), subtitle = stringResource(R.string.v_contacts_sub))
         Row(
-            Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.raised).padding(horizontal = 18.dp, vertical = 14.dp),
+            Modifier.padding(
+                start = 16.dp,
+                end = 16.dp,
+                top = 16.dp
+            ).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.raised).padding(horizontal = 18.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             GlassIcon(R.drawable.glass_proches, 40.dp)
             Column {
-                Text(stringResource(R.string.v_contacts_count, contacts.size, ContactBook.MAX), style = V.text(17.sp, FontWeight.SemiBold), color = c.ink)
+                Text(
+                    stringResource(R.string.v_contacts_count, contacts.size, ContactBook.MAX),
+                    style = V.text(17.sp, FontWeight.SemiBold),
+                    color = c.ink
+                )
                 Text(stringResource(R.string.v_contacts_summary, ready, pending), style = V.text(14.sp), color = c.muted)
             }
         }
@@ -318,25 +325,59 @@ internal fun ContactsContent(
             )
         }
         if (contacts.isNotEmpty()) {
-            SectionLabel(stringResource(R.string.v_alert_order), stringResource(if (edit) R.string.v_done else R.string.v_edit)) { edit = !edit }
+            SectionLabel(stringResource(R.string.v_alert_order), stringResource(if (edit) R.string.v_done else R.string.v_edit)) {
+                edit =
+                    !edit
+            }
             VCard {
                 contacts.forEachIndexed { i, ct ->
                     if (i > 0) com.cerclerouge.app.ui.components.Divider(Modifier.padding(horizontal = 14.dp))
-                    PersonRow(ct, i, edit, sending == ct.id, contacts.size, onOpen, onMove, onPrimary, onLanguage, onInvite, onRemove, onSimulate)
+                    PersonRow(
+                        ct, i, edit, sending == ct.id, contacts.size,
+                        onOpen, onMove, onPrimary, onLanguage, onInvite, onRemove, onSimulate
+                    )
                 }
             }
         } else {
-            Text(stringResource(R.string.contacts_empty), style = V.body, color = c.muted, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 18.dp))
+            Text(
+                stringResource(R.string.contacts_empty),
+                style = V.body,
+                color = c.muted,
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 18.dp)
+            )
         }
         Box(Modifier.padding(top = 12.dp)) {
-            DashedAdd(stringResource(R.string.v_add_contact_places, ContactBook.MAX - contacts.size), onAdd, enabled = contacts.size < ContactBook.MAX)
+            DashedAdd(
+                androidx.compose.ui.res.pluralStringResource(
+                    R.plurals.v_add_contact_places,
+                    ContactBook.MAX - contacts.size,
+                    ContactBook.MAX - contacts.size
+                ),
+                onAdd,
+                enabled =
+                contacts.size < ContactBook.MAX
+            )
         }
         MonoBox(
             buildList {
                 val alerted = contacts.filter { it.status == ContactStatus.ACCEPTED }.take(3).map { it.name.substringBefore(' ') }
-                add(MonoLine("›", Marks.next, if (alerted.isEmpty()) stringResource(R.string.v_ct_rule_none) else stringResource(R.string.v_ct_rule_alert, alerted.joinToString(", "))))
+                add(
+                    MonoLine(
+                        "›",
+                        Marks.next,
+                        if (alerted.isEmpty()) {
+                            stringResource(
+                                R.string.v_ct_rule_none
+                            )
+                        } else {
+                            stringResource(R.string.v_ct_rule_alert, alerted.joinToString(", "))
+                        }
+                    )
+                )
                 add(MonoLine("›", Marks.next, stringResource(R.string.v_ct_rule_sms)))
-                contacts.filter { it.status == ContactStatus.PENDING }.forEach { add(MonoLine("›", Marks.wait, stringResource(R.string.v_ct_rule_pending, it.name.substringBefore(' ')))) }
+                contacts.filter {
+                    it.status == ContactStatus.PENDING
+                }.forEach { add(MonoLine("›", Marks.wait, stringResource(R.string.v_ct_rule_pending, it.name.substringBefore(' ')))) }
             },
             Modifier.padding(top = 12.dp)
         )
@@ -387,22 +428,46 @@ private fun PersonRow(
             }
             when {
                 ct.isGuardian -> com.cerclerouge.app.ui.components.Chip(stringResource(R.string.v_referent), Tone.Ink)
-                ct.status == ContactStatus.ACCEPTED -> com.cerclerouge.app.ui.components.Chip(stringResource(R.string.contacts_status_accepted), Tone.Calm)
-                ct.status == ContactStatus.PENDING -> com.cerclerouge.app.ui.components.Chip(stringResource(R.string.contacts_status_pending), Tone.Wait)
+                ct.status == ContactStatus.ACCEPTED -> com.cerclerouge.app.ui.components.Chip(
+                    stringResource(R.string.contacts_status_accepted),
+                    Tone.Calm
+                )
+                ct.status == ContactStatus.PENDING -> com.cerclerouge.app.ui.components.Chip(
+                    stringResource(R.string.contacts_status_pending),
+                    Tone.Wait
+                )
                 else -> com.cerclerouge.app.ui.components.Chip(stringResource(R.string.contacts_status_declined), Tone.Mute)
             }
-            Text("${index + 1}", style = V.text(13.sp, FontWeight.SemiBold), color = Color(0xFF66788A), modifier = Modifier.width(18.dp).semantics { contentDescription = order })
+            Text(
+                "${index + 1}",
+                style = V.text(13.sp, FontWeight.SemiBold),
+                color = Color(0xFF66788A),
+                modifier = Modifier.width(18.dp).semantics {
+                    contentDescription =
+                        order
+                }
+            )
         }
         if (edit) {
-            Row(Modifier.fillMaxWidth().padding(start = 72.dp, end = 10.dp, bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.fillMaxWidth().padding(start = 72.dp, end = 10.dp, bottom = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 IconButton(PixelIcon.UP, stringResource(R.string.contacts_move_up), enabled = index > 0) { onMove(ct.id, -1) }
                 IconButton(PixelIcon.DOWN, stringResource(R.string.contacts_move_down), enabled = index < count - 1) { onMove(ct.id, 1) }
-                IconButton(PixelIcon.STAR, stringResource(R.string.contacts_primary), selected = ct.role == ContactRole.PRIMARY) { onPrimary(ct.id) }
+                IconButton(PixelIcon.STAR, stringResource(R.string.contacts_primary), selected = ct.role == ContactRole.PRIMARY) {
+                    onPrimary(ct.id)
+                }
                 Chip(ct.language.name) { onLanguage(ct) }
                 if (ct.status != ContactStatus.ACCEPTED && ct.status != ContactStatus.WITHDRAWN) {
                     Chip(stringResource(if (sending) R.string.contacts_inviting else R.string.contacts_invite)) { onInvite(ct) }
                 }
-                if (BuildConfig.DEBUG && ct.status != ContactStatus.ACCEPTED) Chip(stringResource(R.string.contacts_simulate)) { onSimulate(ct.id) }
+                if (BuildConfig.DEBUG &&
+                    ct.status != ContactStatus.ACCEPTED
+                ) {
+                    Chip(stringResource(R.string.contacts_simulate)) { onSimulate(ct.id) }
+                }
                 Spacer(Modifier.weight(1f))
                 IconButton(PixelIcon.CROSS, stringResource(R.string.contacts_remove)) { onRemove(ct.id) }
             }
@@ -470,7 +535,10 @@ internal fun AddContactContent(
     val c = Cr.colors
     Column(Modifier.fillMaxSize().background(c.surface)) {
         BackHeader(stringResource(R.string.v_add_title), onBack, stringResource(R.string.v_add_sub))
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 22.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 22.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
             VField(stringResource(R.string.v_first_name), name, onName)
             VField(
                 stringResource(R.string.v_number),
@@ -485,10 +553,19 @@ internal fun AddContactContent(
             }
             TextLink(stringResource(R.string.contacts_search), onSearch, color = c.lime)
             Column {
-                Text(stringResource(R.string.v_msg_language), style = V.text(14.sp, FontWeight.SemiBold), color = c.ink, modifier = Modifier.padding(start = 20.dp, bottom = 8.dp))
+                Text(
+                    stringResource(R.string.v_msg_language),
+                    style = V.text(14.sp, FontWeight.SemiBold),
+                    color = c.ink,
+                    modifier = Modifier.padding(start = 20.dp, bottom = 8.dp)
+                )
                 PillChoice(listOf(Language.FR to "Français", Language.HT to "Kreyòl", Language.EN to "English"), lang, onLang)
             }
-            Column(Modifier.padding(horizontal = 16.dp).fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(c.raised).padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Column(
+                Modifier.padding(
+                    horizontal = 16.dp
+                ).fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(c.raised).padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
                 Text(stringResource(R.string.v_sms_preview), style = V.text(14.sp, FontWeight.SemiBold), color = c.ink)
                 Text(stringResource(R.string.v_sms_preview_body), style = V.text(14.sp, line = 20.sp), color = Color(0xFF2C3A47))
             }

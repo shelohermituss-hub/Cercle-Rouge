@@ -1,8 +1,5 @@
 package com.cerclerouge.app.ui.brain
 
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.unit.sp
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
@@ -24,10 +21,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -45,20 +42,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cerclerouge.app.R
@@ -67,10 +64,6 @@ import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.trip.TripController
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PixelIconView
-import com.cerclerouge.app.ui.components.PxButton
-import com.cerclerouge.app.ui.components.PxPanel
-import com.cerclerouge.app.ui.components.PxVariant
-import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.components.VoiceOrb
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType

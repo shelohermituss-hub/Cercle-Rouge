@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -185,7 +184,8 @@ class OnboardingViewModel @Inject constructor(
     private val clock: Clock,
     private val api: com.cerclerouge.app.server.SupabaseApi,
     private val restore: com.cerclerouge.app.account.AccountRestore
-) : ViewModel(), OnbActions {
+) : ViewModel(),
+    OnbActions {
     /** Connexion sur un nouveau téléphone (1.19) : numéro en attente de code, message, travail en cours. */
     private val _login = MutableStateFlow(LoginUi())
     override val login: StateFlow<LoginUi> = _login
@@ -377,7 +377,12 @@ private fun Step.setupIndex(): Int = when (this) {
 }
 
 @Composable
-fun OnboardingScreen(vm: OnboardingViewModel, listen: com.cerclerouge.app.ui.listen.ListenViewModel, onSos: () -> Unit, onDone: () -> Unit) {
+fun OnboardingScreen(
+    vm: OnboardingViewModel,
+    listen: com.cerclerouge.app.ui.listen.ListenViewModel,
+    onSos: () -> Unit,
+    onDone: () -> Unit
+) {
     val ui by vm.ui.collectAsState()
     val back = ui.step.previous(ui)
     when {
@@ -390,7 +395,9 @@ fun OnboardingScreen(vm: OnboardingViewModel, listen: com.cerclerouge.app.ui.lis
                 if (ui.page < 3) vm.edit { copy(page = page + 1) } else vm.goTo(Step.PERMISSIONS)
             }, onSkip = { vm.goTo(Step.PERMISSIONS) })
             Step.PERMISSIONS -> PermissionsScreen(vm) { vm.goTo(Step.PROFILE) }
-            Step.LOGIN -> SetupPage(null, stringResource(R.string.login_title), stringResource(R.string.login_body), { vm.goTo(Step.PROFILE) }) {
+            Step.LOGIN -> SetupPage(null, stringResource(R.string.login_title), stringResource(R.string.login_body), {
+                vm.goTo(Step.PROFILE)
+            }) {
                 LoginStep(vm) { vm.goTo(Step.PIN) }
             }
             Step.PROFILE -> ProfileStep(ui, vm)
@@ -415,7 +422,9 @@ internal fun Posters(page: Int, onSos: () -> Unit, onNext: () -> Unit, onSkip: (
                 stringResource(R.string.v_skip),
                 style = V.text(16.sp, FontWeight.Medium),
                 color = Cr.colors.muted,
-                modifier = Modifier.heightIn(min = 44.dp).clickable(role = Role.Button, onClick = onSkip).padding(horizontal = 6.dp, vertical = 11.dp)
+                modifier = Modifier.heightIn(
+                    min = 44.dp
+                ).clickable(role = Role.Button, onClick = onSkip).padding(horizontal = 6.dp, vertical = 11.dp)
             )
         }
         Box(Modifier.fillMaxWidth().height(460.dp), contentAlignment = Alignment.Center) {
@@ -440,13 +449,43 @@ internal fun Posters(page: Int, onSos: () -> Unit, onNext: () -> Unit, onSkip: (
                 }
             }
         }
-        Column(Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 30.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(titles[page]), style = V.poster, color = Cr.colors.ink, textAlign = TextAlign.Center, modifier = Modifier.semantics { heading() })
-            Text(stringResource(bodies[page]), style = V.lead, color = Cr.colors.muted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 10.dp))
+        Column(
+            Modifier.fillMaxWidth().padding(start = 22.dp, end = 22.dp, top = 30.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                stringResource(titles[page]),
+                style = V.poster,
+                color = Cr.colors.ink,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.semantics {
+                    heading()
+                }
+            )
+            Text(
+                stringResource(bodies[page]),
+                style = V.lead,
+                color = Cr.colors.muted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 10.dp)
+            )
         }
         Spacer(Modifier.weight(1f))
         PageDots(page, 4, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 18.dp))
-        BottomActions(Modifier.padding(top = 0.dp)) { InkButton(stringResource(if (page < 3) R.string.action_continue else R.string.v_start), onNext) }
+        BottomActions(Modifier.padding(top = 0.dp)) {
+            InkButton(
+                stringResource(
+                    if (page <
+                        3
+                    ) {
+                        R.string.action_continue
+                    } else {
+                        R.string.v_start
+                    }
+                ),
+                onNext
+            )
+        }
     }
 }
 
@@ -458,19 +497,49 @@ private fun MockHome(onSos: () -> Unit) {
         Box(Modifier.padding(top = 14.dp).fillMaxWidth().height(150.dp).heroCard(28.dp)) {
             Column(Modifier.padding(14.dp).width(140.dp)) {
                 Text(stringResource(R.string.v_protected_f), style = V.text(16.sp, FontWeight.SemiBold), color = Cr.colors.ink)
-                Text(stringResource(R.string.v_onb1_mock_since), style = V.text(12.sp, line = 17.sp), color = Cr.colors.muted, modifier = Modifier.padding(top = 4.dp))
+                Text(
+                    stringResource(R.string.v_onb1_mock_since),
+                    style = V.text(12.sp, line = 17.sp),
+                    color = Cr.colors.muted,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
             }
             Shield3D(true, 76.dp, Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 16.dp))
-            SosBar(onTrigger = onSos, onTap = {}, modifier = Modifier.align(Alignment.BottomCenter), shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp), minHeight = 40.dp, hint = false, labelSize = 15.sp)
+            SosBar(
+                onTrigger = onSos,
+                onTap = {
+                },
+                modifier = Modifier.align(
+                    Alignment.BottomCenter
+                ),
+                shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp),
+                minHeight = 40.dp,
+                hint = false,
+                labelSize = 15.sp
+            )
         }
         Row(Modifier.padding(top = 12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(Modifier.weight(1f).height(110.dp).clip(RoundedCornerShape(20.dp)).background(Color.White), contentAlignment = Alignment.Center) { VoiceOrb(true, 78.dp) }
-            SketchMap(Modifier.weight(1f).height(110.dp).clip(RoundedCornerShape(20.dp)), route = DEFAULT_ROUTE.dropLast(1), designW = 129f, designH = 110f, roadWidth = 5f, routeWidth = 1.4f, me = null)
+            Box(
+                Modifier.weight(1f).height(110.dp).clip(RoundedCornerShape(20.dp)).background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                VoiceOrb(true, 78.dp)
+            }
+            SketchMap(
+                Modifier.weight(1f).height(110.dp).clip(RoundedCornerShape(20.dp)),
+                route = DEFAULT_ROUTE.dropLast(1),
+                designW = 129f,
+                designH = 110f,
+                roadWidth = 5f,
+                routeWidth = 1.4f,
+                me = null
+            )
         }
     }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
         Box(Modifier.fillMaxWidth().clearAndSetSemantics { }) {
-            com.cerclerouge.app.ui.components.MainNav(com.cerclerouge.app.ui.components.Tab.HOME, {}, armed = true, onToggle = {}, insets = false)
+            com.cerclerouge.app.ui.components.MainNav(com.cerclerouge.app.ui.components.Tab.HOME, {
+            }, armed = true, onToggle = {}, insets = false)
         }
     }
 }
@@ -481,16 +550,32 @@ private fun MockListen() {
         Text(stringResource(R.string.v_listen), style = V.text(22.sp, FontWeight.SemiBold), color = Cr.colors.ink)
         Box(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 18.dp), contentAlignment = Alignment.Center) { VoiceOrb(true, 170.dp) }
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color.White).padding(horizontal = 14.dp)) {
-            MockStatRow(R.drawable.glass_volume, stringResource(R.string.v_voice_far), stringResource(R.string.v_no_scream), "62 %", Cr.colors.ink)
+            MockStatRow(
+                R.drawable.glass_volume,
+                stringResource(R.string.v_voice_far),
+                stringResource(R.string.v_no_scream),
+                "62 %",
+                Cr.colors.ink
+            )
             Divider()
-            MockStatRow(R.drawable.glass_lock, stringResource(R.string.v_recorded), stringResource(R.string.v_nothing), "0 s", Cr.colors.forest)
+            MockStatRow(
+                R.drawable.glass_lock,
+                stringResource(R.string.v_recorded),
+                stringResource(R.string.v_nothing),
+                "0 s",
+                Cr.colors.forest
+            )
         }
     }
 }
 
 @Composable
 private fun MockStatRow(icon: Int, title: String, sub: String, value: String, valueColor: Color) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
         GlassIcon(icon, 34.dp)
         Column(Modifier.weight(1f)) {
             Text(title, style = V.text(17.sp, FontWeight.Medium), color = Cr.colors.ink)
@@ -506,7 +591,13 @@ private fun MockTrip() {
         SketchMap(Modifier.matchParentSize(), route = ONB_ROUTE, designW = 300f, designH = 460f, roadWidth = 8f, routeWidth = 2.2f)
         GlassIcon(R.drawable.glass_home, 34.dp, Modifier.padding(start = 181.dp, top = 338.dp))
         Row(
-            Modifier.align(Alignment.BottomCenter).padding(start = 12.dp, end = 12.dp, bottom = 16.dp).fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color.White).padding(horizontal = 14.dp, vertical = 12.dp),
+            Modifier.align(
+                Alignment.BottomCenter
+            ).padding(
+                start = 12.dp,
+                end = 12.dp,
+                bottom = 16.dp
+            ).fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Color.White).padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -527,7 +618,11 @@ private fun MockWatcher() {
             Text(stringResource(R.string.home_watcher), style = V.text(22.sp, FontWeight.SemiBold), color = Cr.colors.ink)
         }
         Row(
-            Modifier.padding(top = 12.dp).fillMaxWidth().heightIn(min = 50.dp).clip(RoundedCornerShape(16.dp)).background(Cr.colors.calmTint).padding(horizontal = 16.dp, vertical = 10.dp),
+            Modifier.padding(
+                top = 12.dp
+            ).fillMaxWidth().heightIn(
+                min = 50.dp
+            ).clip(RoundedCornerShape(16.dp)).background(Cr.colors.calmTint).padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -548,13 +643,19 @@ private fun MockWatcher() {
             stringResource(R.string.v_mock_q),
             style = V.text(14.sp, line = 19.sp),
             color = Color.White,
-            modifier = Modifier.padding(top = 12.dp, start = 40.dp).clip(RoundedCornerShape(18.dp, 18.dp, 6.dp, 18.dp)).background(Color(0xFF2F86F6)).padding(10.dp, 10.dp)
+            modifier = Modifier.padding(
+                top = 12.dp,
+                start = 40.dp
+            ).clip(RoundedCornerShape(18.dp, 18.dp, 6.dp, 18.dp)).background(Color(0xFF2F86F6)).padding(10.dp, 10.dp)
         )
         Text(
             stringResource(R.string.v_mock_a),
             style = V.text(14.sp, line = 19.sp),
             color = Cr.colors.ink,
-            modifier = Modifier.padding(top = 8.dp, end = 30.dp).clip(RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp)).background(Color.White).padding(10.dp, 10.dp)
+            modifier = Modifier.padding(
+                top = 8.dp,
+                end = 30.dp
+            ).clip(RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp)).background(Color.White).padding(10.dp, 10.dp)
         )
     }
 }
@@ -571,7 +672,12 @@ internal fun PermissionsScreen(vm: OnbActions, onNext: () -> Unit) {
     val notif = if (android.os.Build.VERSION.SDK_INT >= 33) listOf(Manifest.permission.POST_NOTIFICATIONS) else emptyList()
     val items = listOf(
         Perm(R.drawable.glass_volume, R.string.v_perm_mic, R.string.v_perm_mic_body, listOf(Manifest.permission.RECORD_AUDIO)),
-        Perm(R.drawable.glass_pin, R.string.v_perm_loc, R.string.v_perm_loc_body, listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)),
+        Perm(
+            R.drawable.glass_pin,
+            R.string.v_perm_loc,
+            R.string.v_perm_loc_body,
+            listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+        ),
         Perm(R.drawable.glass_bell, R.string.v_perm_notif, R.string.v_perm_notif_body, notif),
         Perm(R.drawable.glass_chat, R.string.v_perm_sms, R.string.v_perm_sms_body, listOf(Manifest.permission.SEND_SMS))
     )
@@ -582,20 +688,44 @@ internal fun PermissionsScreen(vm: OnbActions, onNext: () -> Unit) {
         tick++
     }
     val pm = context.getSystemService(android.os.PowerManager::class.java)
-    @Suppress("UNUSED_EXPRESSION") tick
+    @Suppress("UNUSED_EXPRESSION")
+    tick
     val batteryOk = pm?.isIgnoringBatteryOptimizations(context.packageName) == true
-    val missingCore = !granted(Manifest.permission.RECORD_AUDIO) || !(granted(Manifest.permission.ACCESS_FINE_LOCATION) || granted(Manifest.permission.ACCESS_COARSE_LOCATION))
+    val missingCore =
+        !granted(Manifest.permission.RECORD_AUDIO) ||
+            !(granted(Manifest.permission.ACCESS_FINE_LOCATION) || granted(Manifest.permission.ACCESS_COARSE_LOCATION))
     val allOn = items.all { it.perms.all(::granted) } && batteryOk
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 96.dp)) {
-            Text(stringResource(R.string.v_perm_title), style = V.text(29.sp, FontWeight.Bold, 35.sp, -0.021f), color = Cr.colors.ink, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().semantics { heading() })
-            Text(stringResource(R.string.v_perm_body), style = V.lead, color = Cr.colors.muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp, vertical = 10.dp))
+            Text(
+                stringResource(R.string.v_perm_title),
+                style = V.text(29.sp, FontWeight.Bold, 35.sp, -0.021f),
+                color = Cr.colors.ink,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().semantics {
+                    heading()
+                }
+            )
+            Text(
+                stringResource(R.string.v_perm_body),
+                style = V.lead,
+                color = Cr.colors.muted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp, vertical = 10.dp)
+            )
             Column(Modifier.padding(top = 8.dp, start = 20.dp, end = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items.forEach { item ->
                     val on = item.perms.isEmpty() || item.perms.any(::granted)
-                    PermRow(item.icon, stringResource(item.title), stringResource(item.body), on) { if (!on) launcher.launch(item.perms.toTypedArray()) }
+                    PermRow(item.icon, stringResource(item.title), stringResource(item.body), on) {
+                        if (!on) launcher.launch(item.perms.toTypedArray())
+                    }
                 }
-                PermRow(R.drawable.glass_battery, stringResource(R.string.v_perm_battery), stringResource(R.string.v_perm_battery_body), batteryOk) {
+                PermRow(
+                    R.drawable.glass_battery,
+                    stringResource(R.string.v_perm_battery),
+                    stringResource(R.string.v_perm_battery_body),
+                    batteryOk
+                ) {
                     if (!batteryOk) {
                         runCatching {
                             context.startActivity(Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
@@ -632,7 +762,9 @@ private fun PermRow(icon: Int, title: String, body: String, on: Boolean, onTurnO
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Box(Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFECEEF1)), contentAlignment = Alignment.Center) { GlassIcon(icon, 30.dp) }
+        Box(Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFECEEF1)), contentAlignment = Alignment.Center) {
+            GlassIcon(icon, 30.dp)
+        }
         Column(Modifier.weight(1f)) {
             Text(title, style = V.text(17.sp, FontWeight.SemiBold), color = Cr.colors.ink)
             Text(body, style = V.small.copy(lineHeight = 19.sp), color = Cr.colors.muted)
@@ -666,7 +798,18 @@ private fun SetupPage(
     val backLabel = stringResource(R.string.back)
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(48.dp).clip(CircleShape).then(if (onBack != null) Modifier.clickable(role = Role.Button, onClick = onBack).semantics { contentDescription = backLabel } else Modifier), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier.size(48.dp).clip(CircleShape).then(
+                    if (onBack !=
+                        null
+                    ) {
+                        Modifier.clickable(role = Role.Button, onClick = onBack).semantics { contentDescription = backLabel }
+                    } else {
+                        Modifier
+                    }
+                ),
+                contentAlignment = Alignment.Center
+            ) {
                 if (onBack != null) PixelIconView(PixelIcon.ARROW_LEFT, 24.dp, Cr.colors.ink, strokeWidth = 2.2f)
             }
             Text(
@@ -699,13 +842,23 @@ internal fun ProfileStep(ui: OnboardingUi, vm: OnbActions) {
         stringResource(R.string.v_setup1_body),
         { vm.goTo(Step.PERMISSIONS) },
         actions = {
-            InkButton(stringResource(R.string.action_continue), { vm.saveProfile() }, enabled = ui.name.isNotBlank() && band != null && band != AgeBand.UNDER_12 && ui.holderAttested)
+            InkButton(
+                stringResource(R.string.action_continue),
+                { vm.saveProfile() },
+                enabled =
+                ui.name.isNotBlank() && band != null && band != AgeBand.UNDER_12 && ui.holderAttested
+            )
             TextLink(stringResource(R.string.login_have_account), { vm.goTo(Step.LOGIN) })
         }
     ) {
         VField(stringResource(R.string.v_first_name), ui.name, { v -> vm.edit { copy(name = v.take(40)) } })
         Column {
-            Text(stringResource(R.string.v_birth_date), style = V.text(14.sp, FontWeight.SemiBold), color = Cr.colors.ink, modifier = Modifier.padding(start = 20.dp, bottom = 6.dp))
+            Text(
+                stringResource(R.string.v_birth_date),
+                style = V.text(14.sp, FontWeight.SemiBold),
+                color = Cr.colors.ink,
+                modifier = Modifier.padding(start = 20.dp, bottom = 6.dp)
+            )
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 VField(
                     null,
@@ -726,7 +879,12 @@ internal fun ProfileStep(ui: OnboardingUi, vm: OnbActions) {
                     keyboard = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
             }
-            Text(stringResource(R.string.v_birth_hint), style = V.small, color = Cr.colors.muted, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 6.dp))
+            Text(
+                stringResource(R.string.v_birth_hint),
+                style = V.small,
+                color = Cr.colors.muted,
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 6.dp)
+            )
         }
         when (band) {
             AgeBand.UNDER_12 -> InfoNote(
@@ -787,9 +945,18 @@ internal fun GuardianStep(ui: OnboardingUi, vm: OnbActions, onSos: () -> Unit) {
                 keyboard = KeyboardOptions(keyboardType = KeyboardType.Phone)
             )
             Column {
-                Text(stringResource(R.string.v_link), style = V.text(14.sp, FontWeight.SemiBold), color = Cr.colors.ink, modifier = Modifier.padding(start = 20.dp, bottom = 8.dp))
+                Text(
+                    stringResource(R.string.v_link),
+                    style = V.text(14.sp, FontWeight.SemiBold),
+                    color = Cr.colors.ink,
+                    modifier = Modifier.padding(start = 20.dp, bottom = 8.dp)
+                )
                 PillChoice(
-                    listOf("parent" to stringResource(R.string.relation_parent), "tuteur" to stringResource(R.string.relation_tutor), "autre" to stringResource(R.string.relation_other)),
+                    listOf(
+                        "parent" to stringResource(R.string.relation_parent),
+                        "tuteur" to stringResource(R.string.relation_tutor),
+                        "autre" to stringResource(R.string.relation_other)
+                    ),
                     ui.relationship,
                     { vm.edit { copy(relationship = it) } }
                 )
@@ -801,7 +968,15 @@ internal fun GuardianStep(ui: OnboardingUi, vm: OnbActions, onSos: () -> Unit) {
                     Column(Modifier.weight(1f)) {
                         Text(ui.guardianPhone, style = V.rowStrong, color = Cr.colors.ink)
                         Text(
-                            stringResource(if (ui.guardian == GuardianStatus.CONFIRMED) R.string.v_guardian_confirmed else R.string.v_guardian_waiting),
+                            stringResource(
+                                if (ui.guardian ==
+                                    GuardianStatus.CONFIRMED
+                                ) {
+                                    R.string.v_guardian_confirmed
+                                } else {
+                                    R.string.v_guardian_waiting
+                                }
+                            ),
                             style = V.mono,
                             color = if (ui.guardian == GuardianStatus.CONFIRMED) Marks.done else Marks.wait
                         )
@@ -830,7 +1005,7 @@ internal fun PinStep(ui: OnboardingUi, vm: OnbActions) {
                 stringResource(R.string.v_setup3_body),
                 { vm.goTo(if (ui.band?.needsGuardian == true) Step.GUARDIAN else Step.PROFILE) }
             ) {
-                PinDots(ui.pin.length, 4, Modifier.align(Alignment.CenterHorizontally).padding(top = 6.dp))
+                PinDots(ui.pin.length, Modifier.align(Alignment.CenterHorizontally).padding(top = 6.dp))
                 Text(
                     ui.pinError?.let { stringResource(it) } ?: stringResource(R.string.v_pin_hint),
                     style = V.text(14.sp),
@@ -856,7 +1031,13 @@ private fun PhraseStep(vm: com.cerclerouge.app.ui.listen.ListenViewModel, onBack
 }
 
 @Composable
-internal fun PhraseContent(ui: com.cerclerouge.app.ui.listen.ListenUi, granted: Boolean, onRecord: () -> Unit, onBack: () -> Unit, onNext: () -> Unit) {
+internal fun PhraseContent(
+    ui: com.cerclerouge.app.ui.listen.ListenUi,
+    granted: Boolean,
+    onRecord: () -> Unit,
+    onBack: () -> Unit,
+    onNext: () -> Unit
+) {
     val recording = ui.step is com.cerclerouge.app.ui.listen.Step.Recording
     val done = ui.enrolled && ui.keywordTarget == null && ui.samples == 0
     SetupPage(
@@ -885,19 +1066,47 @@ internal fun PhraseContent(ui: com.cerclerouge.app.ui.listen.ListenUi, granted: 
         ) {
             VoiceOrb(true, 130.dp)
             Text(
-                if (done) stringResource(R.string.v_phrase_done) else stringResource(R.string.v_phrase_rep, (ui.samples + 1).coerceAtMost(3)),
+                if (done) {
+                    stringResource(
+                        R.string.v_phrase_done
+                    )
+                } else {
+                    stringResource(R.string.v_phrase_rep, (ui.samples + 1).coerceAtMost(3))
+                },
                 style = V.text(17.sp, FontWeight.SemiBold),
                 color = Cr.colors.ink
             )
             Text(stringResource(R.string.v_phrase_mono), style = V.mono, color = Marks.seen)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                repeat(3) { i -> Box(Modifier.width(36.dp).height(6.dp).clip(RoundedCornerShape(3.dp)).background(if (done || i < ui.samples) Cr.colors.lime else Color(0xFFC9D2DB))) }
+                repeat(3) { i ->
+                    Box(
+                        Modifier.width(36.dp).height(6.dp).clip(RoundedCornerShape(3.dp)).background(
+                            if (done ||
+                                i < ui.samples
+                            ) {
+                                Cr.colors.lime
+                            } else {
+                                Color(0xFFC9D2DB)
+                            }
+                        )
+                    )
+                }
             }
             (ui.step as? com.cerclerouge.app.ui.listen.Step.Message)?.let { m ->
-                Text(stringResource(m.text), style = V.small, color = if (m.ok) Cr.colors.forest else Cr.colors.danger, textAlign = TextAlign.Center)
+                Text(
+                    stringResource(m.text),
+                    style = V.small,
+                    color = if (m.ok) Cr.colors.forest else Cr.colors.danger,
+                    textAlign = TextAlign.Center
+                )
             }
         }
-        Text(stringResource(R.string.v_phrase_tip), style = V.text(14.sp, line = 20.sp), color = Cr.colors.muted, modifier = Modifier.padding(horizontal = 22.dp))
+        Text(
+            stringResource(R.string.v_phrase_tip),
+            style = V.text(14.sp, line = 20.sp),
+            color = Cr.colors.muted,
+            modifier = Modifier.padding(horizontal = 22.dp)
+        )
     }
 }
 
@@ -911,7 +1120,10 @@ internal fun FinishStep(ui: OnboardingUi, vm: OnbActions, onDone: () -> Unit) {
     SetupPage(
         5,
         stringResource(R.string.v_setup5_title),
-        stringResource(if (book.contacts.isEmpty()) R.string.v_setup5_body_none else R.string.v_setup5_body, (5 - book.contacts.size).coerceAtLeast(0)),
+        stringResource(
+            if (book.contacts.isEmpty()) R.string.v_setup5_body_none else R.string.v_setup5_body,
+            (5 - book.contacts.size).coerceAtLeast(0)
+        ),
         { vm.goTo(Step.PHRASE) },
         actions = {
             InkButton(stringResource(R.string.v_finish), {
@@ -925,7 +1137,11 @@ internal fun FinishStep(ui: OnboardingUi, vm: OnbActions, onDone: () -> Unit) {
             VCard {
                 book.contacts.sortedBy { it.position }.forEachIndexed { i, ct ->
                     if (i > 0) Divider(Modifier.padding(horizontal = 14.dp))
-                    Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         Avatar(ct.name, i)
                         Column(Modifier.weight(1f)) {
                             Text(ct.name, style = V.rowStrong, color = Cr.colors.ink)
@@ -945,7 +1161,16 @@ internal fun FinishStep(ui: OnboardingUi, vm: OnbActions, onDone: () -> Unit) {
                 error = ui.contactError?.let { stringResource(it) },
                 keyboard = KeyboardOptions(keyboardType = KeyboardType.Phone)
             )
-            DashedAdd(stringResource(R.string.v_add_contact_places, 5 - book.contacts.size), { vm.addFirstContact() }, enabled = ui.contactName.isNotBlank() && ui.contactPhone.count(Char::isDigit) >= 8)
+            DashedAdd(
+                androidx.compose.ui.res.pluralStringResource(
+                    R.plurals.v_add_contact_places,
+                    5 - book.contacts.size,
+                    5 - book.contacts.size
+                ),
+                { vm.addFirstContact() },
+                enabled =
+                ui.contactName.isNotBlank() && ui.contactPhone.count(Char::isDigit) >= 8
+            )
         }
         Column {
             SectionLabel(stringResource(R.string.v_agreements))
@@ -968,12 +1193,27 @@ internal fun FinishStep(ui: OnboardingUi, vm: OnbActions, onDone: () -> Unit) {
                 ui.retention,
                 { vm.chooseRetention(it) }
             )
-            Text(stringResource(R.string.retention_recording_notice), style = V.small, color = Cr.colors.muted, modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 10.dp))
+            Text(
+                stringResource(R.string.retention_recording_notice),
+                style = V.small,
+                color = Cr.colors.muted,
+                modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 10.dp)
+            )
             if (ui.retention == Retention.MANUAL) {
-                Text(stringResource(R.string.retention_manual_warning), style = V.small, color = Cr.colors.warn, modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 6.dp))
+                Text(
+                    stringResource(R.string.retention_manual_warning),
+                    style = V.small,
+                    color = Cr.colors.warn,
+                    modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 6.dp)
+                )
             }
         }
-        Text(stringResource(R.string.v_change_later), style = V.small, color = Cr.colors.muted, modifier = Modifier.padding(horizontal = 22.dp))
+        Text(
+            stringResource(R.string.v_change_later),
+            style = V.small,
+            color = Cr.colors.muted,
+            modifier = Modifier.padding(horizontal = 22.dp)
+        )
     }
 }
 
@@ -989,8 +1229,18 @@ private fun ColumnScope.LoginStep(vm: OnbActions, onRestored: () -> Unit) {
     s.message?.let { InfoNote(stringResource(it), R.drawable.glass_warning, warn = true) }
     val pending = s.pending
     if (pending == null) {
-        VField(stringResource(R.string.settings_phone_label), number, { number = it.filter { ch -> ch.isDigit() || ch == '+' || ch == ' ' }.take(20) }, keyboard = KeyboardOptions(keyboardType = KeyboardType.Phone))
-        Box(Modifier.padding(horizontal = 18.dp)) { InkButton(stringResource(R.string.settings_phone_send), { vm.requestLogin(number) }, enabled = !s.busy && number.length >= 8) }
+        VField(stringResource(R.string.settings_phone_label), number, {
+            number =
+                it.filter { ch -> ch.isDigit() || ch == '+' || ch == ' ' }.take(20)
+        }, keyboard = KeyboardOptions(keyboardType = KeyboardType.Phone))
+        Box(Modifier.padding(horizontal = 18.dp)) {
+            InkButton(
+                stringResource(R.string.settings_phone_send),
+                { vm.requestLogin(number) },
+                enabled =
+                !s.busy && number.length >= 8
+            )
+        }
     } else {
         VField(
             stringResource(R.string.settings_phone_code_label),
@@ -1000,7 +1250,12 @@ private fun ColumnScope.LoginStep(vm: OnbActions, onRestored: () -> Unit) {
             keyboard = KeyboardOptions(keyboardType = KeyboardType.NumberPassword)
         )
         Column(Modifier.padding(horizontal = 18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            InkButton(stringResource(R.string.settings_phone_verify), { vm.verifyLogin(code, onRestored) }, enabled = !s.busy && code.length >= 6)
+            InkButton(
+                stringResource(R.string.settings_phone_verify),
+                { vm.verifyLogin(code, onRestored) },
+                enabled =
+                !s.busy && code.length >= 6
+            )
             TextLink(stringResource(R.string.action_cancel), { vm.cancelLogin() })
         }
     }

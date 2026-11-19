@@ -1,7 +1,5 @@
 package com.cerclerouge.app.ui.settings
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Build
@@ -10,7 +8,9 @@ import android.provider.Settings as AndroidSettings
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -65,7 +65,6 @@ import com.cerclerouge.app.ui.components.PxButton
 import com.cerclerouge.app.ui.components.PxCheck
 import com.cerclerouge.app.ui.components.PxPanel
 import com.cerclerouge.app.ui.components.PxVariant
-import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.home.PinDialog
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
@@ -345,7 +344,11 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             },
             onNotifications = {
                 runCatching {
-                    context.startActivity(Intent(AndroidSettings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(AndroidSettings.EXTRA_APP_PACKAGE, context.packageName))
+                    context.startActivity(
+                        Intent(
+                            AndroidSettings.ACTION_APP_NOTIFICATION_SETTINGS
+                        ).putExtra(AndroidSettings.EXTRA_APP_PACKAGE, context.packageName)
+                    )
                 }.onFailure { openAppSettings() }
             },
             onBrain = { page = SettingsPage.BRAIN },
@@ -354,7 +357,7 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             onPermissions = { page = SettingsPage.PERMISSIONS },
             onHelp = { page = SettingsPage.HELP }
         )
-            SettingsPage.TRIP -> SubPage(stringResource(R.string.v_set_trip), { page = SettingsPage.MAIN }) {
+        SettingsPage.TRIP -> SubPage(stringResource(R.string.v_set_trip), { page = SettingsPage.MAIN }) {
             ui.message?.let {
                 Text(
                     stringResource(it),
@@ -372,9 +375,8 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
 
             Section(R.string.settings_section_emergency)
             EmergencySection(vm)
-
-            }
-            SettingsPage.PRIVACY -> SubPage(stringResource(R.string.v_set_privacy), { page = SettingsPage.MAIN }) {
+        }
+        SettingsPage.PRIVACY -> SubPage(stringResource(R.string.v_set_privacy), { page = SettingsPage.MAIN }) {
             ui.message?.let {
                 Text(
                     stringResource(it),
@@ -412,7 +414,7 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
                 }
             }
             Toggle(R.string.vault_audio_toggle, R.string.vault_audio_toggle_ex, ui.recording) { vm.setRecording(it) }
-            
+
             Section(R.string.settings_section_data)
             PxButton(stringResource(R.string.settings_export), {
                 saveExport.launch("cercle-rouge-mes-donnees.json")
@@ -425,8 +427,8 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
                 confirm = Guarded.SIGN_OUT
             }, variant = PxVariant.OUTLINE, enabled = !ui.busy)
             PxButton(stringResource(R.string.settings_delete), { confirm = Guarded.DELETE }, variant = PxVariant.DANGER, enabled = !ui.busy)
-            }
-            SettingsPage.PERMISSIONS -> SubPage(stringResource(R.string.v_set_permissions), { page = SettingsPage.MAIN }) {
+        }
+        SettingsPage.PERMISSIONS -> SubPage(stringResource(R.string.v_set_permissions), { page = SettingsPage.MAIN }) {
             ui.message?.let {
                 Text(
                     stringResource(it),
@@ -474,9 +476,8 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
 
             Section(R.string.guardian_req_section)
             GuardianRequests(ui, vm, onAccept = { guardianAccept = it })
-
-            }
-            SettingsPage.BRAIN -> SubPage(stringResource(R.string.settings_section_brain), { page = SettingsPage.MAIN }) {
+        }
+        SettingsPage.BRAIN -> SubPage(stringResource(R.string.settings_section_brain), { page = SettingsPage.MAIN }) {
             ui.message?.let {
                 Text(
                     stringResource(it),
@@ -507,9 +508,8 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             Text(stringResource(R.string.settings_brain_ears), style = PxType.body)
             Text(stringResource(R.string.settings_brain_rules), style = PxType.body)
             Text(stringResource(R.string.settings_brain_llm_missing), style = PxType.caption, color = c.muted)
-
-            }
-            SettingsPage.APPEARANCE -> SubPage(stringResource(R.string.settings_section_appearance), { page = SettingsPage.MAIN }) {
+        }
+        SettingsPage.APPEARANCE -> SubPage(stringResource(R.string.settings_section_appearance), { page = SettingsPage.MAIN }) {
             ui.message?.let {
                 Text(
                     stringResource(it),
@@ -555,9 +555,14 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             } else {
                 Text(stringResource(R.string.settings_language_old), style = PxType.caption, color = c.muted)
             }
-
-            }
-            SettingsPage.HELP -> SubPage(stringResource(R.string.v_set_help), { page = SettingsPage.MAIN }) {
+        }
+        SettingsPage.HELP -> SubPage(stringResource(R.string.v_set_help), { page = SettingsPage.MAIN }) {
+            // Urgence SOS d'Android (5 pressions sur le bouton marche/arrêt) : complément du SOS de l'app, en un geste.
+            Text(stringResource(R.string.sos_guide), style = PxType.body)
+            PxButton(stringResource(R.string.sos_guide_open), {
+                runCatching { context.startActivity(Intent("android.intent.action.SAFETY_CENTER")) }
+                    .recoverCatching { context.startActivity(Intent(AndroidSettings.ACTION_SETTINGS)) }
+            }, variant = PxVariant.OUTLINE)
             ui.message?.let {
                 Text(
                     stringResource(it),
@@ -577,7 +582,7 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             val supportCode by vm.supportCode.collectAsState()
             supportCode?.let { Text(stringResource(R.string.settings_support_code, it), style = PxType.caption, color = c.muted) }
             Text(stringResource(R.string.settings_version, BuildConfig.VERSION_NAME), style = PxType.caption, color = c.muted)
-            }
+        }
     }
 
     confirm?.let { what ->
@@ -878,7 +883,12 @@ internal fun SettingsMain(
     Column(Modifier.fillMaxSize().background(Cr.colors.surface).verticalScroll(rememberScrollState()).padding(bottom = 40.dp)) {
         com.cerclerouge.app.ui.components.TabHeader(stringResource(R.string.settings_title))
         Box(Modifier.padding(top = 16.dp)) {
-            com.cerclerouge.app.ui.components.BlueBanner(stringResource(R.string.v_my_protection), stringResource(R.string.v_my_protection_sub), R.drawable.glass_shield, onProtection)
+            com.cerclerouge.app.ui.components.BlueBanner(
+                stringResource(R.string.v_my_protection),
+                stringResource(R.string.v_my_protection_sub),
+                R.drawable.glass_shield,
+                onProtection
+            )
         }
         com.cerclerouge.app.ui.components.SectionLabel(stringResource(R.string.v_protection))
         com.cerclerouge.app.ui.components.RowGroup {
@@ -889,10 +899,18 @@ internal fun SettingsMain(
         }
         com.cerclerouge.app.ui.components.SectionLabel(stringResource(R.string.v_general))
         com.cerclerouge.app.ui.components.RowGroup {
-            com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_planet, stringResource(R.string.v_set_language, languageName), onLanguage)
+            com.cerclerouge.app.ui.components.ListRow(
+                R.drawable.glass_planet,
+                stringResource(R.string.v_set_language, languageName),
+                onLanguage
+            )
             com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_bell, stringResource(R.string.v_set_notifications), onNotifications)
             com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_terminal, stringResource(R.string.settings_section_brain), onBrain)
-            com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_reglages, stringResource(R.string.settings_section_appearance), onAppearance)
+            com.cerclerouge.app.ui.components.ListRow(
+                R.drawable.glass_reglages,
+                stringResource(R.string.settings_section_appearance),
+                onAppearance
+            )
             com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_shield, stringResource(R.string.v_set_privacy), onPrivacy)
             com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_check, stringResource(R.string.v_set_permissions), onPermissions)
             com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_chat, stringResource(R.string.v_set_help), onHelp)

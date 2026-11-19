@@ -1,18 +1,9 @@
 package com.cerclerouge.app.ui.journal
 
-import com.cerclerouge.app.ui.components.BackHeader
-import com.cerclerouge.app.ui.components.SectionLabel
-import com.cerclerouge.app.ui.components.VCard
-import com.cerclerouge.app.ui.components.Marks
-import com.cerclerouge.app.ui.components.TextLink
-import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.width
-import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,8 +11,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,39 +20,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.core.app.NotificationManagerCompat
+import androidx.compose.ui.unit.sp
 import com.cerclerouge.app.R
-import com.cerclerouge.app.ui.components.BarChart
+import com.cerclerouge.app.ui.components.BackHeader
 import com.cerclerouge.app.ui.components.CountUp
-import com.cerclerouge.app.ui.components.PixelIcon
-import com.cerclerouge.app.ui.components.PixelIconView
-import com.cerclerouge.app.ui.components.PxButton
+import com.cerclerouge.app.ui.components.Marks
 import com.cerclerouge.app.ui.components.PxPanel
-import com.cerclerouge.app.ui.components.PxVariant
-import com.cerclerouge.app.ui.components.RadarChart
+import com.cerclerouge.app.ui.components.SectionLabel
 import com.cerclerouge.app.ui.components.TERM_BLUE
 import com.cerclerouge.app.ui.components.TERM_CYAN
 import com.cerclerouge.app.ui.components.TERM_ORANGE
 import com.cerclerouge.app.ui.components.TERM_RED
 import com.cerclerouge.app.ui.components.TERM_TEAL
 import com.cerclerouge.app.ui.components.TERM_VIOLET
-import com.cerclerouge.app.ui.components.TopBar
-import com.cerclerouge.app.ui.components.TraceLine
+import com.cerclerouge.app.ui.components.TextLink
 import com.cerclerouge.app.ui.components.TraceRow
 import com.cerclerouge.app.ui.components.TraceStatus
+import com.cerclerouge.app.ui.components.VCard
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
 import com.cerclerouge.privacy.log.ChainedEntry
@@ -70,7 +51,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
 import java.util.Locale
 
 /** Traduit une entrée technique du journal (« OFF → EMERGENCY_MODE : Sos ») en libellé lisible. */
@@ -233,7 +213,14 @@ internal fun JournalContent(entries: List<ChainedEntry>, broken: Long?, onBack: 
             )
         }
         if (byDay.isEmpty()) {
-            item { Text(stringResource(R.string.v_journal_empty), style = com.cerclerouge.app.ui.components.V.body, color = c.muted, modifier = Modifier.padding(20.dp)) }
+            item {
+                Text(
+                    stringResource(R.string.v_journal_empty),
+                    style = com.cerclerouge.app.ui.components.V.body,
+                    color = c.muted,
+                    modifier = Modifier.padding(20.dp)
+                )
+            }
         }
         byDay.forEach { (day, list) ->
             item(key = "d$day") {
@@ -252,11 +239,18 @@ internal fun JournalContent(entries: List<ChainedEntry>, broken: Long?, onBack: 
                         val (mark, color) = when (label) {
                             R.string.log_alert_sos -> "!" to Color(0xFFC8141D)
                             R.string.log_dispatch -> "→" to Marks.next
-                            R.string.log_check, R.string.log_alert_closed, R.string.log_protection_on, R.string.log_protection_off -> "✓" to Marks.done
+                            R.string.log_check, R.string.log_alert_closed, R.string.log_protection_on, R.string.log_protection_off ->
+                                "✓" to
+                                    Marks.done
                             else -> if (e.type == "risk" || e.type == "brain") "◆" to Marks.thought else "▸" to Marks.seen
                         }
                         Row(Modifier.fillMaxWidth().padding(vertical = 11.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text(hhmm.format(Instant.ofEpochMilli(e.utcMillis).atZone(zone)), style = com.cerclerouge.app.ui.components.V.mono, color = Color(0xFF66788A), modifier = Modifier.width(46.dp).padding(top = 2.dp))
+                            Text(
+                                hhmm.format(Instant.ofEpochMilli(e.utcMillis).atZone(zone)),
+                                style = com.cerclerouge.app.ui.components.V.mono,
+                                color = Color(0xFF66788A),
+                                modifier = Modifier.width(46.dp).padding(top = 2.dp)
+                            )
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(
                                     androidx.compose.ui.text.buildAnnotatedString {
@@ -269,7 +263,16 @@ internal fun JournalContent(entries: List<ChainedEntry>, broken: Long?, onBack: 
                                     style = com.cerclerouge.app.ui.components.V.text(15.sp),
                                     color = c.ink
                                 )
-                                if (label == R.string.log_other) Text(e.payload.take(80), style = com.cerclerouge.app.ui.components.V.small, color = c.muted, maxLines = 2)
+                                if (label ==
+                                    R.string.log_other
+                                ) {
+                                    Text(
+                                        e.payload.take(80),
+                                        style = com.cerclerouge.app.ui.components.V.small,
+                                        color = c.muted,
+                                        maxLines = 2
+                                    )
+                                }
                             }
                         }
                     }

@@ -10,7 +10,13 @@ import com.cerclerouge.contacts.TrustedContact
 
 /** Données d'exemple des maquettes (Jean, Nadège, Paul). */
 object Fixtures {
-    fun contact(name: String, position: Int, status: ContactStatus = ContactStatus.PENDING, guardian: Boolean = false, hasApp: Boolean = false) = TrustedContact(
+    fun contact(
+        name: String,
+        position: Int,
+        status: ContactStatus = ContactStatus.PENDING,
+        guardian: Boolean = false,
+        hasApp: Boolean = false
+    ) = TrustedContact(
         id = "c$position",
         name = name,
         phone = E164("+5093712345$position"),

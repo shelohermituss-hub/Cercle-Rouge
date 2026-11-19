@@ -1,17 +1,12 @@
 package com.cerclerouge.app.ui.history
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -23,17 +18,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.cerclerouge.app.R
 import com.cerclerouge.app.history.HistoryRepository
-import com.cerclerouge.app.ui.components.PxButton
-import com.cerclerouge.app.ui.components.PxPanel
-import com.cerclerouge.app.ui.components.PxVariant
-import com.cerclerouge.app.ui.components.TopBar
 import com.cerclerouge.app.ui.theme.Cr
-import com.cerclerouge.app.ui.theme.PxType
 import com.cerclerouge.privacy.db.HistoryEntity
 import java.time.Duration
 import java.time.Instant
@@ -48,8 +42,11 @@ fun formatWhen(millis: Long): String = WHEN.format(Instant.ofEpochMilli(millis).
 /** Heure seule, « 21 h 04 » en français (format court de la langue sinon). */
 fun formatTime(millis: Long): String {
     val t = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
-    return if (java.util.Locale.getDefault().language == "fr") "%d h %02d".format(t.hour, t.minute)
-    else java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT).format(t)
+    return if (java.util.Locale.getDefault().language == "fr") {
+        "%d h %02d".format(t.hour, t.minute)
+    } else {
+        java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT).format(t)
+    }
 }
 
 /** Libellé du motif d'une alerte (Reason) ou du mode d'un trajet ; texte brut si inconnu (anciennes données). */
@@ -115,7 +112,12 @@ internal fun HistoryContent(entries: List<HistoryEntity>, onBack: () -> Unit, on
         com.cerclerouge.app.ui.components.BackHeader(stringResource(R.string.history_title), onBack, stringResource(R.string.v_history_sub))
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
             if (entries.isEmpty()) {
-                Text(stringResource(R.string.history_empty), style = com.cerclerouge.app.ui.components.V.body, color = c.muted, modifier = Modifier.padding(20.dp))
+                Text(
+                    stringResource(R.string.history_empty),
+                    style = com.cerclerouge.app.ui.components.V.body,
+                    color = c.muted,
+                    modifier = Modifier.padding(20.dp)
+                )
             }
             listOf(R.string.v_this_week to recent, R.string.v_earlier to older).forEach { (title, list) ->
                 if (list.isNotEmpty()) {
@@ -126,7 +128,12 @@ internal fun HistoryContent(entries: List<HistoryEntity>, onBack: () -> Unit, on
             if (entries.isNotEmpty()) {
                 Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 18.dp)) {
                     if (confirm) {
-                        com.cerclerouge.app.ui.components.RedButton(stringResource(R.string.history_clear_confirm), { onClear().also { confirm = false } })
+                        com.cerclerouge.app.ui.components.RedButton(stringResource(R.string.history_clear_confirm), {
+                            onClear().also {
+                                confirm =
+                                    false
+                            }
+                        })
                     } else {
                         com.cerclerouge.app.ui.components.DangerOutlineButton(stringResource(R.string.history_clear), { confirm = true })
                     }

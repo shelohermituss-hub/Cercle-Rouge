@@ -1,22 +1,22 @@
 package com.cerclerouge.app.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -24,12 +24,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.cerclerouge.app.ui.components.V
 import com.cerclerouge.app.R
 import com.cerclerouge.app.audio.AudioStatus
 import com.cerclerouge.app.audio.ListenActivity
@@ -39,10 +37,9 @@ import com.cerclerouge.app.audio.ListenStage
 import com.cerclerouge.app.ui.components.GlassIcon
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PixelIconView
-import com.cerclerouge.app.ui.components.PxPanel
+import com.cerclerouge.app.ui.components.V
 import com.cerclerouge.app.ui.components.VoiceOrb
 import com.cerclerouge.app.ui.theme.Cr
-import com.cerclerouge.app.ui.theme.PxType
 import java.util.Locale
 
 /** Violet de la « pensée » du veilleur (journal), pour le thème clair. */
@@ -70,7 +67,12 @@ internal fun ListenCard(activity: ListenActivity, status: AudioStatus, armed: Bo
             .clearAndSetSemantics { contentDescription = stage }
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.home_listen_title), style = V.text(17.sp, FontWeight.Medium), color = c.ink, modifier = Modifier.weight(1f))
+            Text(
+                stringResource(R.string.home_listen_title),
+                style = V.text(17.sp, FontWeight.Medium),
+                color = c.ink,
+                modifier = Modifier.weight(1f)
+            )
             Text(
                 stringResource(if (live) R.string.v_live_dot else R.string.home_paused),
                 style = V.text(12.sp, FontWeight.SemiBold),
@@ -122,15 +124,28 @@ internal fun WatcherCard(
             .clickable(role = Role.Button, onClick = onOpen)
             .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
-        Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            Modifier.fillMaxWidth().padding(bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             GlassIcon(R.drawable.glass_terminal, 38.dp)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text(stringResource(R.string.home_watcher), style = V.text(17.sp, FontWeight.Medium), color = c.ink)
                 if (armed) {
                     val blink = com.cerclerouge.app.ui.components.stepTick(500) % 2 == 0
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("◆ $thought", style = V.mono, color = c.thought, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                        Box(Modifier.padding(start = 3.dp).width(6.dp).height(12.dp).background(if (blink) c.thought else Color.Transparent))
+                        Text(
+                            "◆ $thought",
+                            style = V.mono,
+                            color = c.thought,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        Box(
+                            Modifier.padding(start = 3.dp).width(6.dp).height(12.dp).background(if (blink) c.thought else Color.Transparent)
+                        )
                     }
                 } else {
                     Text(stringResource(R.string.home_watcher_off), style = V.small, color = c.muted)
@@ -148,7 +163,12 @@ internal fun WatcherCard(
         if (armed) {
             val locale = LocalConfiguration.current.locales[0] ?: Locale.ROOT
             fun pct(v: Float?) = v?.let { "${(it * 100).toInt()} %" } ?: "—"
-            Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 2.dp).clearAndSetSemantics { contentDescription = "$stage · $stateText" }) {
+            Row(
+                Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 2.dp).clearAndSetSemantics {
+                    contentDescription =
+                        "$stage · $stateText"
+                }
+            ) {
                 Stat(R.drawable.glass_volume, pct(stats.voice), stringResource(R.string.v_stat_voice), c.ink, Modifier.weight(1f))
                 Stat(R.drawable.glass_chart, pct(stats.music), stringResource(R.string.v_stat_music), c.ink, Modifier.weight(1f))
                 Stat(
@@ -158,10 +178,28 @@ internal fun WatcherCard(
                     c.ink,
                     Modifier.weight(1f)
                 )
-                Stat(if (stateColor == c.forest) R.drawable.glass_check else R.drawable.glass_warning, stateText, stringResource(R.string.home_stat_state), stateColor, Modifier.weight(1f))
+                Stat(
+                    if (stateColor ==
+                        c.forest
+                    ) {
+                        R.drawable.glass_check
+                    } else {
+                        R.drawable.glass_warning
+                    },
+                    stateText,
+                    stringResource(R.string.home_stat_state),
+                    stateColor,
+                    Modifier.weight(1f)
+                )
             }
         } else {
-            Text(stringResource(R.string.v_watcher_sleep), style = V.body, color = Color(0xFF566B80).takeIf { c.surface == Color(0xFFEDEDF0) } ?: c.muted, modifier = Modifier.padding(top = 12.dp))
+            Text(
+                stringResource(R.string.v_watcher_sleep),
+                style = V.body,
+                color =
+                Color(0xFF566B80).takeIf { c.surface == Color(0xFFEDEDF0) } ?: c.muted,
+                modifier = Modifier.padding(top = 12.dp)
+            )
         }
     }
 }
@@ -170,7 +208,14 @@ internal fun WatcherCard(
 private fun Stat(icon: Int, value: String, label: String, color: Color, modifier: Modifier = Modifier) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         GlassIcon(icon, 30.dp)
-        Text(value, style = V.text(15.sp, FontWeight.SemiBold), color = color, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+        Text(
+            value,
+            style = V.text(15.sp, FontWeight.SemiBold),
+            color = color,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 2.dp)
+        )
         Text(label, style = V.small, color = Cr.colors.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

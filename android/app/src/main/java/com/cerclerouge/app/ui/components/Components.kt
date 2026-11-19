@@ -32,8 +32,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
@@ -78,9 +78,9 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cerclerouge.app.R
@@ -398,13 +398,16 @@ enum class PixelIcon(val path: String) {
     STAR("M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"),
     PLUS("M12 5v14 M5 12h14"),
     BACKSPACE("M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z M17 9l-6 6 M11 9l6 6"),
-    ROUTE("M6 21.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M18 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"),
+    ROUTE(
+        "M6 21.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M18 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"
+    ),
     COG(
-        "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21" +
-            "a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3" +
-            "a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3" +
-            "a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21" +
-            "a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"
+        "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1" +
+            "a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3" +
+            "l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1" +
+            "a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9" +
+            "a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1" +
+            "a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"
     ),
     SEND("M22 2L11 13 M22 2l-7 20-4-9-9-4z"),
     FINGER("M7 11V8a5 5 0 0 1 10 0v3 M12 14v3 M5 11h14v9H5z")
@@ -477,7 +480,10 @@ fun cappedScale(style: androidx.compose.ui.text.TextStyle, max: Float = 1.3f): a
     val scale = androidx.compose.ui.platform.LocalDensity.current.fontScale
     if (scale <= max) return style
     val k = max / scale
-    return style.copy(fontSize = style.fontSize * k, lineHeight = style.lineHeight * k)
+    return style.copy(
+        fontSize = if (style.fontSize.isSpecified) style.fontSize * k else style.fontSize,
+        lineHeight = if (style.lineHeight.isSpecified) style.lineHeight * k else style.lineHeight
+    )
 }
 
 data class NavItem(val label: String, val icon: PixelIcon, val onClick: () -> Unit)
@@ -515,7 +521,17 @@ fun PxNavBar(items: List<NavItem>, selected: Int, center: (@Composable () -> Uni
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
                 ) {
-                    PixelIconView(item.icon, 26.dp, if (active) c.ink else Color(0xFF93A5B6).takeIf { c.surface == Color(0xFFEDEDF0) } ?: c.lineControl, strokeWidth = if (active) 2.4f else 1.6f)
+                    PixelIconView(
+                        item.icon,
+                        26.dp,
+                        if (active) {
+                            c.ink
+                        } else {
+                            Color(0xFF93A5B6).takeIf { c.surface == Color(0xFFEDEDF0) }
+                                ?: c.lineControl
+                        },
+                        strokeWidth = if (active) 2.4f else 1.6f
+                    )
                     Text(
                         item.label,
                         style = cappedScale(V.text(13.sp, if (active) FontWeight.Bold else FontWeight.Normal)),

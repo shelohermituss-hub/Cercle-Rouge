@@ -1,14 +1,13 @@
 package com.cerclerouge.app.ui.components
 
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +24,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -56,7 +56,17 @@ fun SketchMap(
             drawPath(
                 Path().apply {
                     moveTo(0f, designH * 0.86f * sy)
-                    cubicTo(p(designW * 0.2f, designH * 0.84f).x, p(0f, designH * 0.84f).y, p(designW * 0.3f, designH).x, size.height, p(designW * 0.34f, designH + 5).x, size.height + 5f)
+                    cubicTo(
+                        p(designW * 0.2f, designH * 0.84f).x,
+                        p(0f, designH * 0.84f).y,
+                        p(designW * 0.3f, designH).x,
+                        size.height,
+                        p(
+                            designW * 0.34f,
+                            designH + 5
+                        ).x,
+                        size.height + 5f
+                    )
                     lineTo(0f, size.height + 5f)
                     close()
                 },
@@ -79,7 +89,17 @@ fun SketchMap(
                 drawPath(
                     Path().apply {
                         moveTo(p(-10f, designH * 0.30f).x, p(-10f, designH * 0.30f).y)
-                        cubicTo(p(designW * 0.3f, designH * 0.27f).x, p(0f, designH * 0.27f).y, p(designW * 0.6f, designH * 0.2f).x, p(0f, designH * 0.2f).y, p(designW + 10, designH * 0.12f).x, p(0f, designH * 0.12f).y)
+                        cubicTo(
+                            p(designW * 0.3f, designH * 0.27f).x,
+                            p(0f, designH * 0.27f).y,
+                            p(designW * 0.6f, designH * 0.2f).x,
+                            p(
+                                0f,
+                                designH * 0.2f
+                            ).y,
+                            p(designW + 10, designH * 0.12f).x,
+                            p(0f, designH * 0.12f).y
+                        )
                     },
                     color,
                     style = Stroke(w * sx)
@@ -186,7 +206,6 @@ fun Splash() {
     }
 }
 
-
 /**
  * Logo en relief du démarrage (maquette VerreSplash, 200 × 200) : deux anneaux en dégradé rouge qui tournent en sens
  * contraire (26 s et 17 s), reflets blancs, quatre points, cœur rouge brillant qui bat, ombre portée.
@@ -208,12 +227,44 @@ fun LogoGlossy(size: Dp, animated: Boolean = true) {
         val c = o(100f, 100f)
         val outer = Brush.linearGradient(listOf(Color(0xFFF04A52), Color(0xFF8E0E14)), o(28f, 28f), o(172f, 172f))
         val inner = Brush.linearGradient(listOf(Color(0xFFFF7A80), Color(0xFFD3141C)), o(55f, 55f), o(145f, 145f))
-        fun ring(r: Float, w: Float, start: Float, sweep: Float, brush: Brush, dots: List<Pair<Float, Float>>, dotR: Float, shine: Float, turn: Float) {
+        fun ring(
+            r: Float,
+            w: Float,
+            start: Float,
+            sweep: Float,
+            brush: Brush,
+            dots: List<Pair<Float, Float>>,
+            dotR: Float,
+            shine: Float,
+            turn: Float
+        ) {
             rotate(turn, c) {
-                drawArc(brush, start, sweep, false, o(100f - r, 100f - r), androidx.compose.ui.geometry.Size(2 * r * k, 2 * r * k), style = Stroke(w * k, cap = androidx.compose.ui.graphics.StrokeCap.Round))
+                drawArc(
+                    brush,
+                    start,
+                    sweep,
+                    false,
+                    o(100f - r, 100f - r),
+                    androidx.compose.ui.geometry.Size(2 * r * k, 2 * r * k),
+                    style = Stroke(
+                        w * k,
+                        cap = androidx.compose.ui.graphics.StrokeCap.Round
+                    )
+                )
                 dots.forEach { (x, y) -> drawCircle(brush, dotR * k, o(x, y)) }
                 val rr = r - 2f
-                drawArc(Color.White.copy(alpha = shine), 222f, 74f, false, o(100f - rr, 100f - rr), androidx.compose.ui.geometry.Size(2 * rr * k, 2 * rr * k), style = Stroke(4f * k, cap = androidx.compose.ui.graphics.StrokeCap.Round))
+                drawArc(
+                    Color.White.copy(alpha = shine),
+                    222f,
+                    74f,
+                    false,
+                    o(100f - rr, 100f - rr),
+                    androidx.compose.ui.geometry.Size(
+                        2 * rr * k,
+                        2 * rr * k
+                    ),
+                    style = Stroke(4f * k, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                )
             }
         }
         ring(72f, 18f, 40f, 280f, outer, listOf(164.2f to 132.7f, 164.2f to 67.3f), 8f, 0.55f, outerTurn)

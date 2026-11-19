@@ -70,7 +70,19 @@ import com.cerclerouge.app.ui.theme.Inter
  */
 object V {
     fun text(size: TextUnit, weight: FontWeight = FontWeight.Normal, line: TextUnit = TextUnit.Unspecified, spacing: Float = 0f) =
-        TextStyle(fontFamily = Inter, fontWeight = weight, fontSize = size, lineHeight = line, letterSpacing = if (spacing == 0f) TextUnit.Unspecified else spacing.em)
+        TextStyle(
+            fontFamily = Inter,
+            fontWeight = weight,
+            fontSize = size,
+            lineHeight = line,
+            letterSpacing = if (spacing ==
+                0f
+            ) {
+                TextUnit.Unspecified
+            } else {
+                spacing.em
+            }
+        )
 
     /** Grand titre d'onglet (Réglages, Proches) : 34 px, gras, -0,6 px. */
     val tabTitle = text(34.sp, FontWeight.Bold, 40.sp, -0.018f)
@@ -97,11 +109,17 @@ object V {
 
 /** Fond d'un écran « Verre » (gris #EDEDF0 ; onboarding et configuration #F4F6F9). */
 @Composable
-fun screenBg(onboarding: Boolean = false): Color = if (onboarding && Cr.colors.surface == Color(0xFFEDEDF0)) Color(0xFFF4F6F9) else Cr.colors.surface
+fun screenBg(onboarding: Boolean = false): Color = if (onboarding &&
+    Cr.colors.surface == Color(0xFFEDEDF0)
+) {
+    Color(0xFFF4F6F9)
+} else {
+    Cr.colors.surface
+}
 
 /** En-tête d'un onglet : grand titre 34 px et sous-titre (padding 22 / 20). */
 @Composable
-fun TabHeader(title: String, subtitle: String? = null, modifier: Modifier = Modifier) {
+fun TabHeader(title: String, modifier: Modifier = Modifier, subtitle: String? = null) {
     Column(modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 22.dp)) {
         Text(title, style = V.tabTitle, color = Cr.colors.ink, modifier = Modifier.semantics { heading() })
         subtitle?.let { Text(it, style = V.body, color = Cr.colors.muted, modifier = Modifier.padding(top = 4.dp)) }
@@ -128,7 +146,10 @@ fun BackHeader(title: String, onBack: () -> Unit, subtitle: String? = null, trai
 /** Libellé de section en capitales (14 px, #66788A), marge 20 / 20 / 8, avec un texte ou une action à droite. */
 @Composable
 fun SectionLabel(text: String, right: String? = null, onRight: (() -> Unit)? = null) {
-    Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Text(text.uppercase(), style = V.section, color = Cr.colors.muted, modifier = Modifier.weight(1f).semantics { heading() })
         right?.let {
             val m = if (onRight != null) Modifier.clickable(role = Role.Button, onClick = onRight).padding(vertical = 12.dp) else Modifier
@@ -139,7 +160,12 @@ fun SectionLabel(text: String, right: String? = null, onRight: (() -> Unit)? = n
 
 /** Carte blanche « Verre » : rayon 22, liseré 4 %, ombre très légère, marge latérale 16. */
 @Composable
-fun VCard(modifier: Modifier = Modifier, padding: PaddingValues = PaddingValues(0.dp), radius: Dp = 22.dp, content: @Composable ColumnScope.() -> Unit) {
+fun VCard(
+    modifier: Modifier = Modifier,
+    padding: PaddingValues = PaddingValues(0.dp),
+    radius: Dp = 22.dp,
+    content: @Composable ColumnScope.() -> Unit
+) {
     val shape = RoundedCornerShape(radius)
     Column(
         modifier
@@ -175,7 +201,13 @@ fun ListRow(@DrawableRes icon: Int?, text: String, onClick: () -> Unit, value: S
         icon?.let { GlassIcon(it, 32.dp) }
         Text(text, style = V.row, color = Cr.colors.ink, modifier = Modifier.weight(1f))
         value?.let { Text(it, style = V.body, color = Cr.colors.muted) }
-        if (trailing != null) trailing() else PixelIconView(PixelIcon.ARROW_LEFT, 22.dp, Cr.colors.ink, Modifier.scale(-1f, 1f), strokeWidth = 2f)
+        if (trailing !=
+            null
+        ) {
+            trailing()
+        } else {
+            PixelIconView(PixelIcon.ARROW_LEFT, 22.dp, Cr.colors.ink, Modifier.scale(-1f, 1f), strokeWidth = 2f)
+        }
     }
 }
 
@@ -189,18 +221,45 @@ fun Divider(modifier: Modifier = Modifier) = Box(modifier.fillMaxWidth().height(
 
 /** Bouton principal encre : 62 de haut, pilule, texte blanc 19 px (onboarding, configuration). */
 @Composable
-fun InkButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, height: Dp = 62.dp, icon: PixelIcon? = null) =
-    PillButton(text, onClick, modifier, Cr.colors.ink, Cr.colors.raised, enabled, height, if (height >= 60.dp) 19.sp else 16.sp, icon)
+fun InkButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    height: Dp = 62.dp,
+    icon: PixelIcon? = null
+) = PillButton(text, onClick, modifier, Cr.colors.ink, Cr.colors.raised, enabled, height, if (height >= 60.dp) 19.sp else 16.sp, icon)
 
 /** Bouton blanc ombré (54) : « Je suis en sécurité », actions secondaires. */
 @Composable
-fun WhiteButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, height: Dp = 54.dp, icon: PixelIcon? = null) =
-    PillButton(text, onClick, modifier, Cr.colors.raised, Cr.colors.ink, enabled, height, if (height >= 60.dp) 18.sp else 16.sp, icon, shadow = true)
+fun WhiteButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    height: Dp = 54.dp,
+    icon: PixelIcon? = null
+) = PillButton(
+    text, onClick, modifier, Cr.colors.raised, Cr.colors.ink, enabled, height,
+    if (height >=
+        60.dp
+    ) {
+        18.sp
+    } else {
+        16.sp
+    },
+    icon, shadow = true
+)
 
 /** Bouton rouge (dégradé du SOS) pour une action d'alerte. */
 @Composable
-fun RedButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, height: Dp = 54.dp) =
-    PillButton(text, onClick, modifier, Color(0xFFD91F2A), Color.White, true, height, 16.sp, null, brush = Brush.verticalGradient(listOf(Color(0xFFF0333E), Color(0xFFC8141D))))
+fun RedButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, height: Dp = 54.dp) = PillButton(
+    text, onClick, modifier,
+    Color(
+        0xFFD91F2A
+    ),
+    Color.White, true, height, 16.sp, null, brush = Brush.verticalGradient(listOf(Color(0xFFF0333E), Color(0xFFC8141D)))
+)
 
 /** Bouton contour rouge (action destructrice : tout effacer). */
 @Composable
@@ -250,7 +309,10 @@ private fun PillButton(
 /** Pastille d'état (26 de haut, 12 px demi-gras). */
 @Composable
 fun Chip(text: String, bg: Color, fg: Color, modifier: Modifier = Modifier) {
-    Box(modifier.heightIn(min = 26.dp).clip(RoundedCornerShape(13.dp)).background(bg).padding(horizontal = 10.dp, vertical = 4.dp), contentAlignment = Alignment.Center) {
+    Box(
+        modifier.heightIn(min = 26.dp).clip(RoundedCornerShape(13.dp)).background(bg).padding(horizontal = 10.dp, vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
         Text(text, style = V.chip, color = fg, maxLines = 1)
     }
 }
@@ -283,7 +345,9 @@ object Marks {
 @Composable
 fun MonoBox(lines: List<MonoLine>, modifier: Modifier = Modifier, side: Dp = 16.dp) {
     Column(
-        modifier.padding(horizontal = side).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Cr.colors.raised).padding(horizontal = 12.dp, vertical = 10.dp)
+        modifier.padding(
+            horizontal = side
+        ).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Cr.colors.raised).padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         lines.forEach { l ->
             Text(
@@ -317,11 +381,26 @@ fun VField(
     side: Dp = 16.dp
 ) {
     Column(modifier.padding(horizontal = side).fillMaxWidth()) {
-        label?.let { Text(it, style = V.text(14.sp, FontWeight.SemiBold), color = Cr.colors.ink, modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)) }
+        label?.let {
+            Text(
+                it,
+                style = V.text(14.sp, FontWeight.SemiBold),
+                color = Cr.colors.ink,
+                modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+            )
+        }
         OutlinedTextField(
             value = value,
             onValueChange = onChange,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 58.dp).then(if (label == null && placeholder != null) Modifier.semantics { contentDescription = placeholder } else Modifier),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 58.dp).then(
+                if (label == null &&
+                    placeholder != null
+                ) {
+                    Modifier.semantics { contentDescription = placeholder }
+                } else {
+                    Modifier
+                }
+            ),
             textStyle = V.text(17.sp),
             singleLine = true,
             isError = error != null,
@@ -336,7 +415,20 @@ fun VField(
             )
         )
         val under = error ?: hint
-        under?.let { Text(it, style = V.small, color = if (error != null) Cr.colors.danger else Cr.colors.muted, modifier = Modifier.padding(start = 4.dp, top = 6.dp)) }
+        under?.let {
+            Text(
+                it,
+                style = V.small,
+                color = if (error !=
+                    null
+                ) {
+                    Cr.colors.danger
+                } else {
+                    Cr.colors.muted
+                },
+                modifier = Modifier.padding(start = 4.dp, top = 6.dp)
+            )
+        }
     }
 }
 
@@ -357,7 +449,11 @@ fun VToggle(checked: Boolean, onChange: (Boolean) -> Unit) = Switch(
 /** Ligne d'accord : titre 16 px, sous-titre 13 px, interrupteur à droite. */
 @Composable
 fun ToggleRow(title: String, subtitle: String?, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(title, style = V.text(16.sp, FontWeight.Medium), color = Cr.colors.ink)
             subtitle?.let { Text(it, style = V.small, color = Cr.colors.muted) }
@@ -381,8 +477,25 @@ private val AVATARS = listOf(Color(0xFFCFE3FB), Color(0xFFDCF2C8), Color(0xFFFFE
 @Composable
 fun StepBar(step: Int, total: Int, modifier: Modifier = Modifier) {
     val label = stringResource(R.string.v_step_of, step, total)
-    Row(modifier.padding(horizontal = 20.dp).fillMaxWidth().semantics { contentDescription = label }, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        repeat(total) { i -> Box(Modifier.weight(1f).height(5.dp).clip(RoundedCornerShape(3.dp)).background(if (i < step) Cr.colors.ink else Color(0xFFC9D2DB))) }
+    Row(
+        modifier.padding(horizontal = 20.dp).fillMaxWidth().semantics {
+            contentDescription = label
+        },
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        repeat(total) { i ->
+            Box(
+                Modifier.weight(1f).height(5.dp).clip(RoundedCornerShape(3.dp)).background(
+                    if (i <
+                        step
+                    ) {
+                        Cr.colors.ink
+                    } else {
+                        Color(0xFFC9D2DB)
+                    }
+                )
+            )
+        }
     }
 }
 
@@ -397,7 +510,7 @@ fun PageDots(page: Int, total: Int, modifier: Modifier = Modifier) {
 
 /** Points du code PIN (18 dp, écart 18) : pleins pour les chiffres saisis. */
 @Composable
-fun PinDots(filled: Int, total: Int = 4, modifier: Modifier = Modifier) {
+fun PinDots(filled: Int, modifier: Modifier = Modifier, total: Int = 4) {
     Row(modifier.semantics { contentDescription = "$filled / $total" }, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
         repeat(total) { i ->
             val m = Modifier.size(18.dp).clip(CircleShape)
@@ -418,11 +531,19 @@ fun Keypad(onDigit: (String) -> Unit, onDelete: () -> Unit, modifier: Modifier =
                     when (k) {
                         "" -> Box(cell, contentAlignment = Alignment.Center) { extra?.invoke() }
                         "<" -> Box(
-                            cell.clip(RoundedCornerShape(22.dp)).clickable(role = Role.Button, onClick = onDelete).semantics { contentDescription = del },
+                            cell.clip(RoundedCornerShape(22.dp)).clickable(role = Role.Button, onClick = onDelete).semantics {
+                                contentDescription =
+                                    del
+                            },
                             contentAlignment = Alignment.Center
                         ) { PixelIconView(PixelIcon.BACKSPACE, 28.dp, Cr.colors.ink, strokeWidth = 2f) }
                         else -> Box(
-                            cell.shadow(1.dp, RoundedCornerShape(22.dp)).clip(RoundedCornerShape(22.dp)).background(Cr.colors.raised).clickable(role = Role.Button) { onDigit(k) },
+                            cell.shadow(
+                                1.dp,
+                                RoundedCornerShape(22.dp)
+                            ).clip(RoundedCornerShape(22.dp)).background(Cr.colors.raised).clickable(role = Role.Button) {
+                                onDigit(k)
+                            },
                             contentAlignment = Alignment.Center
                         ) { Text(k, style = V.text(26.sp, FontWeight.Medium), color = Cr.colors.ink) }
                     }
@@ -438,7 +559,13 @@ fun BlueBanner(title: String, subtitle: String, @DrawableRes icon: Int, onClick:
     val shape = RoundedCornerShape(22.dp)
     Box(
         Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(104.dp).clip(shape)
-            .background(Brush.linearGradient(listOf(Color(0xFF1F6FE5), Color(0xFF2F86F6), Color(0xFF7DB3FA)), start = Offset(0f, 0f), end = Offset(900f, 380f)))
+            .background(
+                Brush.linearGradient(
+                    listOf(Color(0xFF1F6FE5), Color(0xFF2F86F6), Color(0xFF7DB3FA)),
+                    start = Offset(0f, 0f),
+                    end = Offset(900f, 380f)
+                )
+            )
             .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
     ) {
         GlassIcon(icon, 112.dp, Modifier.align(Alignment.TopEnd).padding(0.dp).padding(end = 0.dp))
@@ -474,7 +601,11 @@ fun DashedAdd(text: String, onClick: () -> Unit, enabled: Boolean = true) {
 /** Choix en pilules (« Parent », « Tuteur »…) : sélection encre, les autres blancs à bordure. */
 @Composable
 fun <T> PillChoice(options: List<Pair<T, String>>, current: T?, onSelect: (T) -> Unit, modifier: Modifier = Modifier) {
-    androidx.compose.foundation.layout.FlowRow(modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    androidx.compose.foundation.layout.FlowRow(
+        modifier.padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         options.forEach { (v, label) ->
             val on = v == current
             val shape = RoundedCornerShape(22.dp)
@@ -485,7 +616,13 @@ fun <T> PillChoice(options: List<Pair<T, String>>, current: T?, onSelect: (T) ->
                     .semantics { selected = on }
                     .padding(horizontal = 18.dp, vertical = 11.dp),
                 contentAlignment = Alignment.Center
-            ) { Text(label, style = V.text(15.sp, if (on) FontWeight.SemiBold else FontWeight.Medium), color = if (on) Cr.colors.raised else Cr.colors.ink) }
+            ) {
+                Text(
+                    label,
+                    style = V.text(15.sp, if (on) FontWeight.SemiBold else FontWeight.Medium),
+                    color = if (on) Cr.colors.raised else Cr.colors.ink
+                )
+            }
         }
     }
 }
@@ -495,7 +632,9 @@ fun <T> PillChoice(options: List<Pair<T, String>>, current: T?, onSelect: (T) ->
 fun InfoNote(text: String, @DrawableRes icon: Int = R.drawable.glass_proches, warn: Boolean = false) {
     val (bg, fg) = if (warn) Tone.Wait else Color(0xFFE8F1FE) to Color(0xFF1F4E8C)
     Row(
-        Modifier.padding(horizontal = 16.dp).fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(bg).padding(horizontal = 16.dp, vertical = 12.dp),
+        Modifier.padding(
+            horizontal = 16.dp
+        ).fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(bg).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -507,13 +646,20 @@ fun InfoNote(text: String, @DrawableRes icon: Int = R.drawable.glass_proches, wa
 /** Zone du bas d'un écran (boutons) : marges 18, bas 30. */
 @Composable
 fun BottomActions(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Column(modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, bottom = 30.dp, top = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp), content = content)
+    Column(
+        modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, bottom = 30.dp, top = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        content = content
+    )
 }
 
 /** Lien texte gris centré (« Plus tard », « Passer »). */
 @Composable
 fun TextLink(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = Cr.colors.muted) {
-    Box(modifier.fillMaxWidth().heightIn(min = 44.dp).clickable(role = Role.Button, onClick = onClick), contentAlignment = Alignment.Center) {
+    Box(
+        modifier.fillMaxWidth().heightIn(min = 44.dp).clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
         Text(text, style = V.text(16.sp, FontWeight.Medium), color = color)
     }
 }

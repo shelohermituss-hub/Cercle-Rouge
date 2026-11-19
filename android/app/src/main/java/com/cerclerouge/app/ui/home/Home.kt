@@ -1,31 +1,16 @@
 package com.cerclerouge.app.ui.home
 
-import com.cerclerouge.app.ui.components.V
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.foundation.layout.heightIn
-import com.cerclerouge.app.ui.components.heroCard
 import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,11 +20,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,7 +35,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -57,29 +42,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
@@ -97,7 +77,6 @@ import com.cerclerouge.app.contacts.ContactsRepository
 import com.cerclerouge.app.protection.ProtectionController
 import com.cerclerouge.app.protection.ProtectionService
 import com.cerclerouge.app.protection.UiEvent
-import com.cerclerouge.app.security.Biometric
 import com.cerclerouge.app.security.SecureScreen
 import com.cerclerouge.app.security.SecuritySettings
 import com.cerclerouge.app.server.ServerSync
@@ -105,33 +84,21 @@ import com.cerclerouge.app.ui.components.FacePhase
 import com.cerclerouge.app.ui.components.FaceUnlock
 import com.cerclerouge.app.ui.components.GlassIcon
 import com.cerclerouge.app.ui.components.LogoMark
-import com.cerclerouge.app.ui.components.NavItem
-import com.cerclerouge.app.ui.components.Orb
-import com.cerclerouge.app.ui.components.PinPad
-import com.cerclerouge.app.ui.components.PixelDisc
 import com.cerclerouge.app.ui.components.PixelIcon
-import com.cerclerouge.app.ui.components.PixelIconView
-import com.cerclerouge.app.ui.components.ProtectionButton
 import com.cerclerouge.app.ui.components.PxButton
-import com.cerclerouge.app.ui.components.PxNavBar
 import com.cerclerouge.app.ui.components.PxPanel
 import com.cerclerouge.app.ui.components.PxVariant
 import com.cerclerouge.app.ui.components.Shield3D
 import com.cerclerouge.app.ui.components.SosBar
-import com.cerclerouge.app.ui.components.TopBar
-import com.cerclerouge.app.ui.components.TraceLine
+import com.cerclerouge.app.ui.components.V
 import com.cerclerouge.app.ui.components.cappedScale
-import com.cerclerouge.app.ui.journal.traceRows
+import com.cerclerouge.app.ui.components.heroCard
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
 import com.cerclerouge.contacts.ContactStatus
-import com.cerclerouge.privacy.log.ChainedEntry
 import com.cerclerouge.privacy.log.EventLog
 import com.cerclerouge.privacy.pin.PinRepository
-import com.valentinerutto.orbmotion.orbs.OrbState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -328,12 +295,16 @@ fun HomeScreen(
             sos == SosStep.HOLD -> SosHoldScreen(
                 onBack = { sos = SosStep.NONE },
                 onTrigger = { sos = SosStep.COUNTDOWN },
-                names = book.contacts.filter { it.status == ContactStatus.ACCEPTED }.sortedBy { it.position }.map { it.name.substringBefore(' ') }.take(3),
+                names = book.contacts.filter {
+                    it.status == ContactStatus.ACCEPTED
+                }.sortedBy { it.position }.map { it.name.substringBefore(' ') }.take(3),
                 number = emergencyCountry.primary,
                 onCall = ::dial114
             )
             sos == SosStep.COUNTDOWN -> CountdownScreen(
-                names = book.contacts.filter { it.status == ContactStatus.ACCEPTED }.sortedBy { it.position }.map { it.name.substringBefore(' ') }.take(3),
+                names = book.contacts.filter {
+                    it.status == ContactStatus.ACCEPTED
+                }.sortedBy { it.position }.map { it.name.substringBefore(' ') }.take(3),
                 onCancel = { sos = SosStep.NONE },
                 onDone = {
                     sos = SosStep.NONE
@@ -463,16 +434,26 @@ internal fun HomeConsole(
                 Wordmark(height = 36.dp)
                 Spacer(Modifier.weight(1f))
                 Box(
-                    Modifier.size(48.dp).clip(CircleShape).background(c.raised).clickable(role = Role.Button, onClick = onProfile).semantics { contentDescription = profile },
+                    Modifier.size(
+                        48.dp
+                    ).clip(CircleShape).background(c.raised).clickable(role = Role.Button, onClick = onProfile).semantics {
+                        contentDescription =
+                            profile
+                    },
                     contentAlignment = Alignment.Center
                 ) { GlassIcon(R.drawable.glass_user, 30.dp) }
             }
             HeroCard(armed, contactsReady, device, since, lastOut, onHistory, onSosTrigger, onSosTap)
-            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(stringResource(R.string.home_live).uppercase(), style = V.section, color = c.muted, modifier = Modifier.weight(1f))
                 Text(
                     if (armed) {
-                        listOf(state.micGranted, state.locationGranted, true).count { it }.let { n -> pluralStringResource(R.plurals.home_sensors, n, n) }
+                        listOf(state.micGranted, state.locationGranted, true).count {
+                            it
+                        }.let { n -> pluralStringResource(R.plurals.home_sensors, n, n) }
                     } else {
                         stringResource(R.string.home_paused)
                     },
@@ -482,7 +463,9 @@ internal fun HomeConsole(
             }
             val h = if (large) 200.dp else 146.dp
             val listen = @Composable { m: Modifier -> ListenCard(activity, audioStatus, armed, onListen, m) }
-            val mapCard = @Composable { m: Modifier -> MapCard(armed, showMe, map, trip, { onTab(com.cerclerouge.app.ui.components.Tab.TRIP) }, m) }
+            val mapCard = @Composable { m: Modifier ->
+                MapCard(armed, showMe, map, trip, { onTab(com.cerclerouge.app.ui.components.Tab.TRIP) }, m)
+            }
             if (large) {
                 Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     listen(Modifier.fillMaxWidth().height(h))
@@ -494,7 +477,16 @@ internal fun HomeConsole(
                     mapCard(Modifier.weight(1f).height(h))
                 }
             }
-            WatcherCard(activity, audioStatus, armed, decision, onWatcher, Modifier.padding(top = 12.dp), explanation = explanation, stats = stats)
+            WatcherCard(
+                activity,
+                audioStatus,
+                armed,
+                decision,
+                onWatcher,
+                Modifier.padding(top = 12.dp),
+                explanation = explanation,
+                stats = stats
+            )
         }
         if (!armed) {
             // Bulle « Touche ici pour activer la protection », pointe vers le bouton central.
@@ -504,11 +496,23 @@ internal fun HomeConsole(
                     style = V.text(14.sp, FontWeight.Medium, 19.sp),
                     color = Color.White,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.widthIn(max = 258.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFF1F2A33)).padding(horizontal = 16.dp, vertical = 10.dp)
+                    modifier = Modifier.widthIn(
+                        max = 258.dp
+                    ).clip(RoundedCornerShape(14.dp)).background(Color(0xFF1F2A33)).padding(horizontal = 16.dp, vertical = 10.dp)
                 )
-                Box(Modifier.size(14.dp, 8.dp).drawBehind {
-                    drawPath(androidx.compose.ui.graphics.Path().apply { moveTo(0f, 0f); lineTo(size.width, 0f); lineTo(size.width / 2, size.height); close() }, Color(0xFF1F2A33))
-                })
+                Box(
+                    Modifier.size(14.dp, 8.dp).drawBehind {
+                        drawPath(
+                            androidx.compose.ui.graphics.Path().apply {
+                                moveTo(0f, 0f)
+                                lineTo(size.width, 0f)
+                                lineTo(size.width / 2, size.height)
+                                close()
+                            },
+                            Color(0xFF1F2A33)
+                        )
+                    }
+                )
             }
         }
         Box(Modifier.align(Alignment.BottomCenter)) {
@@ -554,7 +558,13 @@ private fun HeroCard(
             )
             com.cerclerouge.app.ui.components.Bullets(
                 buildList {
-                    if (armed) add(stringResource(R.string.v_since) to (since ?: "—")) else add(stringResource(R.string.v_last_out) to (lastOut ?: never))
+                    if (armed) {
+                        add(stringResource(R.string.v_since) to (since ?: "—"))
+                    } else {
+                        add(
+                            stringResource(R.string.v_last_out) to (lastOut ?: never)
+                        )
+                    }
                     add(stringResource(R.string.v_ready) to contactsReady.toString())
                 }
             )
@@ -610,17 +620,27 @@ private fun MapCard(
     val c = Cr.colors
     val shape = RoundedCornerShape(22.dp)
     val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: java.util.Locale.ROOT
-    Box(modifier.clip(shape).background(c.raised).border(1.dp, c.ink.copy(alpha = 0.04f), shape).clickable(role = Role.Button, onClick = onOpen)) {
+    Box(
+        modifier.clip(
+            shape
+        ).background(c.raised).border(1.dp, c.ink.copy(alpha = 0.04f), shape).clickable(role = Role.Button, onClick = onOpen)
+    ) {
         map(armed, showMe, Modifier.matchParentSize())
         Text(
             MapStyle.ATTRIBUTION,
             style = cappedScale(V.text(9.sp)),
             color = c.muted,
             maxLines = 1,
-            modifier = Modifier.align(Alignment.TopStart).padding(6.dp).background(c.raised.copy(alpha = 0.8f), RoundedCornerShape(6.dp)).padding(horizontal = 4.dp, vertical = 1.dp)
+            modifier = Modifier.align(
+                Alignment.TopStart
+            ).padding(6.dp).background(c.raised.copy(alpha = 0.8f), RoundedCornerShape(6.dp)).padding(horizontal = 4.dp, vertical = 1.dp)
         )
         Column(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(8.dp).clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = 0.92f)).padding(horizontal = 10.dp, vertical = 7.dp)
+            Modifier.align(
+                Alignment.BottomCenter
+            ).fillMaxWidth().padding(
+                8.dp
+            ).clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = 0.92f)).padding(horizontal = 10.dp, vertical = 7.dp)
         ) {
             Text(
                 stringResource(

@@ -7,6 +7,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -20,10 +21,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -69,9 +70,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.cerclerouge.app.R
-import com.cerclerouge.app.ui.components.BackHeader
 import com.cerclerouge.app.security.Biometric
-import androidx.compose.foundation.clickable
+import com.cerclerouge.app.ui.components.BackHeader
 import com.cerclerouge.app.ui.components.BottomActions
 import com.cerclerouge.app.ui.components.GlassIcon
 import com.cerclerouge.app.ui.components.InkButton
@@ -104,7 +104,13 @@ internal fun joinNames(names: List<String>): String = when (names.size) {
  * de suite, et l'appel au 114 (composeur). TalkBack : l'action « activer » déclenche directement.
  */
 @Composable
-internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit, names: List<String> = emptyList(), number: String = "114", onCall: () -> Unit = {}) {
+internal fun SosHoldScreen(
+    onBack: () -> Unit,
+    onTrigger: () -> Unit,
+    names: List<String> = emptyList(),
+    number: String = "114",
+    onCall: () -> Unit = {}
+) {
     val c = Cr.colors
     val progress = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
@@ -177,7 +183,10 @@ internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit, names: Lis
             }
             VCard(Modifier.padding(top = 24.dp), padding = PaddingValues(horizontal = 18.dp, vertical = 14.dp)) {
                 Text(stringResource(R.string.v_sos_sends), style = V.text(15.sp, FontWeight.SemiBold), color = c.ink)
-                SendsRow(R.drawable.glass_proches, if (names.isEmpty()) stringResource(R.string.v_sos_all_invited) else stringResource(R.string.v_sos_to, joinNames(names)))
+                SendsRow(
+                    R.drawable.glass_proches,
+                    if (names.isEmpty()) stringResource(R.string.v_sos_all_invited) else stringResource(R.string.v_sos_to, joinNames(names))
+                )
                 SendsRow(R.drawable.glass_pin, stringResource(R.string.v_sos_position))
                 SendsRow(R.drawable.glass_lock, stringResource(R.string.v_sos_recording))
             }
@@ -188,7 +197,11 @@ internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit, names: Lis
 
 @Composable
 private fun SendsRow(icon: Int, text: String) {
-    Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(
+        Modifier.padding(top = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         GlassIcon(icon, 28.dp)
         Text(text, style = V.text(15.sp), color = Color(0xFF2C3A47))
     }
@@ -200,7 +213,7 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit, names: Li
     val c = Cr.colors
     var seconds by remember { mutableIntStateOf(COUNTDOWN) }
     val start = remember { mutableLongStateOf(System.currentTimeMillis()) }
-    var frac by remember { mutableStateOf(1f) }
+    var frac by remember { androidx.compose.runtime.mutableFloatStateOf(1f) }
     val a11y = pluralStringResource(R.plurals.countdown_a11y, seconds, seconds)
     BackHandler(onBack = onCancel)
     LaunchedEffect(Unit) {
@@ -215,7 +228,14 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit, names: Li
     Column(Modifier.fillMaxSize().background(c.surface)) {
         Box(Modifier.padding(start = 16.dp, top = 16.dp)) { Wordmark(height = 36.dp) }
         Column(Modifier.weight(1f).fillMaxWidth().padding(top = 60.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(R.string.v_alert_in), style = V.dialog, color = Color(0xFFD91F36), modifier = Modifier.semantics { heading() })
+            Text(
+                stringResource(R.string.v_alert_in),
+                style = V.dialog,
+                color = Color(0xFFD91F36),
+                modifier = Modifier.semantics {
+                    heading()
+                }
+            )
             Box(Modifier.padding(top = 22.dp).size(220.dp), contentAlignment = Alignment.Center) {
                 Canvas(Modifier.size(220.dp)) {
                     val w = 12.dp.toPx()
@@ -243,7 +263,13 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit, names: Li
                 )
             }
             Text(
-                if (names.isEmpty()) stringResource(R.string.countdown_body) else stringResource(R.string.v_countdown_names, joinNames(names)),
+                if (names.isEmpty()) {
+                    stringResource(
+                        R.string.countdown_body
+                    )
+                } else {
+                    stringResource(R.string.v_countdown_names, joinNames(names))
+                },
                 style = V.text(17.sp, line = 24.sp),
                 color = Color(0xFF2C3A47),
                 textAlign = TextAlign.Center,
@@ -252,7 +278,13 @@ internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit, names: Li
         }
         BottomActions {
             WhiteButton(stringResource(R.string.v_cancel_mistake), onCancel, height = 62.dp)
-            Text(stringResource(R.string.v_countdown_note, seconds), style = V.small, color = c.muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text(
+                stringResource(R.string.v_countdown_note, seconds),
+                style = V.small,
+                color = c.muted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -263,8 +295,17 @@ private const val COUNTDOWN = 5
 @Composable
 private fun BlurredHome() {
     Box(Modifier.fillMaxSize().blur(3.dp)) {
-        Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 74.dp).fillMaxWidth().height(186.dp).clip(RoundedCornerShape(34.dp)).background(Color.White.copy(alpha = 0.6f)))
-        Row(Modifier.padding(start = 16.dp, end = 16.dp, top = 300.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(
+            Modifier.padding(
+                start = 16.dp,
+                end = 16.dp,
+                top = 74.dp
+            ).fillMaxWidth().height(186.dp).clip(RoundedCornerShape(34.dp)).background(Color.White.copy(alpha = 0.6f))
+        )
+        Row(
+            Modifier.padding(start = 16.dp, end = 16.dp, top = 300.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Box(Modifier.weight(1f).height(156.dp).clip(RoundedCornerShape(22.dp)).background(Color.White.copy(alpha = 0.6f)))
             Box(Modifier.weight(1f).height(156.dp).clip(RoundedCornerShape(22.dp)).background(Color.White.copy(alpha = 0.6f)))
         }
@@ -277,16 +318,36 @@ private fun BlurredHome() {
  * prévenir les proches, « Oui, je vais bien » (code) et « Non, alerter maintenant ».
  */
 @Composable
-internal fun VerificationContent(reason: String, names: List<String>, secondsLeft: Long?, totalSeconds: Long, onSafe: () -> Unit, onHelp: () -> Unit) {
+internal fun VerificationContent(
+    reason: String,
+    names: List<String>,
+    secondsLeft: Long?,
+    totalSeconds: Long,
+    onSafe: () -> Unit,
+    onHelp: () -> Unit
+) {
     val c = Cr.colors
     Box(Modifier.fillMaxSize().background(c.surface)) {
         BlurredHome()
         Column(
-            Modifier.align(Alignment.TopCenter).padding(start = 20.dp, end = 20.dp, top = 150.dp).fillMaxWidth().heroCard().padding(start = 20.dp, end = 20.dp, top = 26.dp, bottom = 20.dp),
+            Modifier.align(
+                Alignment.TopCenter
+            ).padding(
+                start = 20.dp,
+                end = 20.dp,
+                top = 150.dp
+            ).fillMaxWidth().heroCard().padding(start = 20.dp, end = 20.dp, top = 26.dp, bottom = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             GlassIcon(R.drawable.glass_terminal, 64.dp)
-            Text(stringResource(R.string.v_all_ok), style = V.dialog, color = c.ink, modifier = Modifier.padding(top = 12.dp).semantics { heading() })
+            Text(
+                stringResource(R.string.v_all_ok),
+                style = V.dialog,
+                color = c.ink,
+                modifier = Modifier.padding(top = 12.dp).semantics {
+                    heading()
+                }
+            )
             Text(
                 if (names.isEmpty()) reason else stringResource(R.string.v_verify_body, reason, joinNames(names)),
                 style = V.text(16.sp, line = 23.sp),
@@ -296,7 +357,11 @@ internal fun VerificationContent(reason: String, names: List<String>, secondsLef
             )
             secondsLeft?.let { left ->
                 Box(Modifier.padding(top = 16.dp).width(220.dp).height(8.dp).clip(RoundedCornerShape(4.dp)).background(Color(0xFFE4E9EE))) {
-                    Box(Modifier.fillMaxWidth((left.toFloat() / totalSeconds.coerceAtLeast(1)).coerceIn(0f, 1f)).height(8.dp).clip(RoundedCornerShape(4.dp)).background(Color(0xFFE31B23)))
+                    Box(
+                        Modifier.fillMaxWidth(
+                            (left.toFloat() / totalSeconds.coerceAtLeast(1)).coerceIn(0f, 1f)
+                        ).height(8.dp).clip(RoundedCornerShape(4.dp)).background(Color(0xFFE31B23))
+                    )
                 }
                 Text(
                     stringResource(R.string.v_alert_in_time, "%d:%02d".format(left / 60, left % 60)),
@@ -309,7 +374,13 @@ internal fun VerificationContent(reason: String, names: List<String>, secondsLef
                 WhiteButton(stringResource(R.string.v_im_ok), onSafe)
                 RedButton(stringResource(R.string.v_alert_now), onHelp)
             }
-            Text(stringResource(R.string.v_safe_needs_code), style = V.small, color = c.muted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 10.dp))
+            Text(
+                stringResource(R.string.v_safe_needs_code),
+                style = V.small,
+                color = c.muted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 10.dp)
+            )
         }
     }
 }
@@ -322,13 +393,23 @@ data class AlertLine(val time: String, val kind: String, val text: String)
  * qui a répondu, le journal en lignes de terminal, « Je suis en sécurité » (code) et l'appel au 114 (composeur).
  */
 @Composable
-internal fun AlertContent(title: String, body: String, lines: List<AlertLine>, number: String, onSafe: () -> Unit, onCall: () -> Unit, face: @Composable (Dp) -> Unit) {
+internal fun AlertContent(
+    title: String,
+    body: String,
+    lines: List<AlertLine>,
+    number: String,
+    onSafe: () -> Unit,
+    onCall: () -> Unit,
+    face: @Composable (Dp) -> Unit
+) {
     val c = Cr.colors
     Box(Modifier.fillMaxSize().background(c.surface)) {
         BlurredHome()
         Box(Modifier.padding(start = 16.dp, top = 16.dp)) { Wordmark(height = 36.dp) }
         Column(
-            Modifier.align(Alignment.TopCenter).padding(start = 20.dp, end = 20.dp, top = 150.dp).fillMaxWidth().heroCard().verticalScroll(rememberScrollState())
+            Modifier.align(
+                Alignment.TopCenter
+            ).padding(start = 20.dp, end = 20.dp, top = 150.dp).fillMaxWidth().heroCard().verticalScroll(rememberScrollState())
                 .padding(start = 20.dp, end = 20.dp, top = 26.dp, bottom = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -343,7 +424,13 @@ internal fun AlertContent(title: String, body: String, lines: List<AlertLine>, n
                     liveRegion = LiveRegionMode.Polite
                 }
             )
-            Text(body, style = V.text(16.sp, line = 23.sp), color = Color(0xFF2C3A47), textAlign = TextAlign.Center, modifier = Modifier.padding(top = 10.dp))
+            Text(
+                body,
+                style = V.text(16.sp, line = 23.sp),
+                color = Color(0xFF2C3A47),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 10.dp)
+            )
             if (lines.isNotEmpty()) {
                 MonoBox(
                     lines.map { l ->
@@ -361,7 +448,13 @@ internal fun AlertContent(title: String, body: String, lines: List<AlertLine>, n
                 WhiteButton(stringResource(R.string.urgent_safe), onSafe)
                 InkButton(stringResource(R.string.v_call_police, number), onCall, height = 54.dp, icon = PixelIcon.PHONE)
             }
-            Text(stringResource(R.string.v_safe_needs_code), style = V.small, color = c.muted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 10.dp))
+            Text(
+                stringResource(R.string.v_safe_needs_code),
+                style = V.small,
+                color = c.muted,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 10.dp)
+            )
         }
     }
 }
@@ -421,14 +514,33 @@ internal fun PinDialog(
 }
 
 @Composable
-internal fun PinContent(pin: String, error: Boolean, reason: String, showBio: Boolean, onBack: () -> Unit, onDigit: (String) -> Unit, onDelete: () -> Unit, onBio: () -> Unit) {
+internal fun PinContent(
+    pin: String,
+    error: Boolean,
+    reason: String,
+    showBio: Boolean,
+    onBack: () -> Unit,
+    onDigit: (String) -> Unit,
+    onDelete: () -> Unit,
+    onBio: () -> Unit
+) {
     val c = Cr.colors
-    Column(Modifier.fillMaxSize().background(c.surface).windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing).padding(bottom = 28.dp)) {
+    Column(
+        Modifier.fillMaxSize().background(
+            c.surface
+        ).windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing).padding(bottom = 28.dp)
+    ) {
         BackHeader(stringResource(R.string.v_your_code), onBack)
         Column(Modifier.fillMaxWidth().padding(top = 30.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             GlassIcon(R.drawable.glass_shield, 64.dp)
-            Text(reason, style = V.text(17.sp, line = 24.sp), color = Color(0xFF2C3A47), textAlign = TextAlign.Center, modifier = Modifier.padding(start = 32.dp, end = 32.dp, top = 16.dp))
-            PinDots(pin.length, 4, Modifier.padding(top = 30.dp))
+            Text(
+                reason,
+                style = V.text(17.sp, line = 24.sp),
+                color = Color(0xFF2C3A47),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(start = 32.dp, end = 32.dp, top = 16.dp)
+            )
+            PinDots(pin.length, Modifier.padding(top = 30.dp))
             if (error) {
                 Text(
                     stringResource(R.string.pin_wrong),
@@ -454,14 +566,21 @@ internal fun PinContent(pin: String, error: Boolean, reason: String, showBio: Bo
     }
 }
 
-
 /** Écran d'urgence : vérification en attente, ou alerte envoyée (proches, réponses, journal). */
 @Composable
-internal fun EmergencyScreen(vm: HomeViewModel, state: com.cerclerouge.alert.EngineState, number: String, onSafe: () -> Unit, onCall: () -> Unit) {
+internal fun EmergencyScreen(
+    vm: HomeViewModel,
+    state: com.cerclerouge.alert.EngineState,
+    number: String,
+    onSafe: () -> Unit,
+    onCall: () -> Unit
+) {
     com.cerclerouge.app.security.SecureScreen() // S7.04 : pas de capture de l'écran d'urgence
     val book by vm.contacts.book.collectAsState()
     val feedback by vm.server.feedback.collectAsState()
-    val names = book.contacts.filter { it.status == com.cerclerouge.contacts.ContactStatus.ACCEPTED }.sortedBy { it.position }.map { it.name.substringBefore(' ') }.take(3)
+    val names = book.contacts.filter {
+        it.status == com.cerclerouge.contacts.ContactStatus.ACCEPTED
+    }.sortedBy { it.position }.map { it.name.substringBefore(' ') }.take(3)
     val pending = state.protection == com.cerclerouge.domain.ProtectionState.ALERT_PENDING
     if (pending) {
         var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -476,7 +595,9 @@ internal fun EmergencyScreen(vm: HomeViewModel, state: com.cerclerouge.alert.Eng
         val left = deadline?.let { ((it - now) / 1000).coerceAtLeast(0) }
         val total = if (deadline != null && opened != null) ((deadline - opened) / 1000).coerceAtLeast(1) else 60
         VerificationContent(
-            reason = state.alert?.reason?.let { com.cerclerouge.app.ui.history.reasonLabel(it.name) } ?: stringResource(R.string.v_verify_generic),
+            reason =
+            state.alert?.reason?.let { com.cerclerouge.app.ui.history.reasonLabel(it.name) }
+                ?: stringResource(R.string.v_verify_generic),
             names = names,
             secondsLeft = left,
             totalSeconds = total,
@@ -512,7 +633,20 @@ internal fun EmergencyScreen(vm: HomeViewModel, state: com.cerclerouge.alert.Eng
             body = body,
             lines = log.map { e ->
                 val t = time.format(java.time.Instant.ofEpochMilli(e.utcMillis))
-                AlertLine(t, if (e.type == "evidence" || e.type == "brain" || e.type == "risk") "th" else if (e.type == "dispatch") "ok" else "nx", e.payload.take(48))
+                AlertLine(
+                    t,
+                    if (e.type == "evidence" ||
+                        e.type == "brain" ||
+                        e.type == "risk"
+                    ) {
+                        "th"
+                    } else if (e.type == "dispatch") {
+                        "ok"
+                    } else {
+                        "nx"
+                    },
+                    e.payload.take(48)
+                )
             },
             number = number,
             onSafe = onSafe,

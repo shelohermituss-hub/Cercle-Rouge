@@ -1,8 +1,5 @@
 package com.cerclerouge.app
 
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.safeDrawing
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.BackHandler
@@ -14,7 +11,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -27,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -79,7 +78,22 @@ class AppViewModel @Inject constructor(
     val appearance: com.cerclerouge.app.settings.Appearance
 ) : ViewModel()
 
-internal enum class Screen { LOADING, ONBOARDING, HOME, JOURNAL, CONTACTS, TRIP, LISTEN, VAULT, SETTINGS, WATCH, HISTORY, TALK, WATCHER, LEVEL }
+internal enum class Screen {
+    LOADING,
+    ONBOARDING,
+    HOME,
+    JOURNAL,
+    CONTACTS,
+    TRIP,
+    LISTEN,
+    VAULT,
+    SETTINGS,
+    WATCH,
+    HISTORY,
+    TALK,
+    WATCHER,
+    LEVEL
+}
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() { // FragmentActivity : requis par BiometricPrompt (S7.02)
@@ -171,7 +185,10 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                         Screen.LEVEL -> {
                             BackHandler { screen = Screen.HOME }
                             Box(Modifier.safeDrawingPadding()) {
-                                com.cerclerouge.app.ui.listen.SoundLevelScreen(level, onBack = { screen = Screen.HOME }, onTalk = { screen = Screen.TALK })
+                                com.cerclerouge.app.ui.listen.SoundLevelScreen(level, onBack = { screen = Screen.HOME }, onTalk = {
+                                    screen =
+                                        Screen.TALK
+                                })
                             }
                         }
                         Screen.TALK -> {
@@ -193,7 +210,12 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                         }
                         Screen.CONTACTS -> {
                             BackHandler { screen = Screen.HOME }
-                            TabFrame(com.cerclerouge.app.ui.components.Tab.CONTACTS, { screen = it }) { ContactsScreen(contacts, onWatch = { screen = Screen.WATCH }) { screen = Screen.HOME } }
+                            TabFrame(com.cerclerouge.app.ui.components.Tab.CONTACTS, { screen = it }) {
+                                ContactsScreen(contacts, onWatch = {
+                                    screen =
+                                        Screen.WATCH
+                                }) { screen = Screen.HOME }
+                            }
                         }
                         Screen.WATCH -> {
                             BackHandler { screen = Screen.CONTACTS }
@@ -203,7 +225,9 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                         }
                         Screen.TRIP -> {
                             BackHandler { screen = Screen.HOME }
-                            TabFrame(com.cerclerouge.app.ui.components.Tab.TRIP, { screen = it }) { TripScreen(trip) { screen = Screen.HOME } }
+                            TabFrame(com.cerclerouge.app.ui.components.Tab.TRIP, {
+                                screen = it
+                            }) { TripScreen(trip) { screen = Screen.HOME } }
                         }
                         Screen.LISTEN -> {
                             BackHandler { screen = Screen.HOME }
@@ -215,7 +239,15 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                         }
                         Screen.SETTINGS -> {
                             BackHandler { screen = Screen.HOME }
-                            TabFrame(com.cerclerouge.app.ui.components.Tab.SETTINGS, { screen = it }) { SettingsScreen(settingsVm, onBack = { screen = Screen.HOME }, onListen = { screen = Screen.LISTEN }, onContacts = { screen = Screen.CONTACTS }, onVault = { screen = Screen.VAULT }) }
+                            TabFrame(com.cerclerouge.app.ui.components.Tab.SETTINGS, { screen = it }) {
+                                SettingsScreen(settingsVm, onBack = {
+                                    screen =
+                                        Screen.HOME
+                                }, onListen = { screen = Screen.LISTEN }, onContacts = { screen = Screen.CONTACTS }, onVault = {
+                                    screen =
+                                        Screen.VAULT
+                                })
+                            }
                         }
                         Screen.JOURNAL -> {
                             BackHandler { screen = Screen.HOME }
@@ -244,7 +276,16 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
 private fun MainActivity.TabFrame(tab: com.cerclerouge.app.ui.components.Tab, go: (Screen) -> Unit, content: @Composable () -> Unit) {
     val state by app.controller.state.collectAsState()
     androidx.compose.foundation.layout.Column(Modifier.fillMaxSize()) {
-        Box(Modifier.weight(1f).windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing.only(androidx.compose.foundation.layout.WindowInsetsSides.Top + androidx.compose.foundation.layout.WindowInsetsSides.Horizontal))) { content() }
+        Box(
+            Modifier.weight(1f).windowInsetsPadding(
+                androidx.compose.foundation.layout.WindowInsets.safeDrawing.only(
+                    androidx.compose.foundation.layout.WindowInsetsSides.Top +
+                        androidx.compose.foundation.layout.WindowInsetsSides.Horizontal
+                )
+            )
+        ) {
+            content()
+        }
         com.cerclerouge.app.ui.components.MainNav(
             tab,
             { t ->

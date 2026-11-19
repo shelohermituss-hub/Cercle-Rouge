@@ -43,14 +43,18 @@ class VerreScreensTest {
         rule.setContent { CercleRougeTheme { Box(Modifier.fillMaxSize().background(Cr.colors.surface)) { content() } } }
         rule.mainClock.advanceTimeBy(700)
         val dir = File("build/verre").apply { mkdirs() }
-        File(dir, "$name.png").outputStream().use { rule.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it) }
+        File(dir, "$name.png").outputStream().use {
+            rule.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
     }
 
-    private class FakeOnb(ui: OnboardingUi, contacts: ContactBook = ContactBook()) : OnbActions {
-        override val ui = MutableStateFlow(ui)
+    private class FakeOnb(val initial: OnboardingUi, contacts: ContactBook = ContactBook()) : OnbActions {
+        override val ui = MutableStateFlow(initial)
         override val login = MutableStateFlow(LoginUi())
         override val book = MutableStateFlow(contacts)
-        override fun edit(change: OnboardingUi.() -> OnboardingUi) { ui.value = ui.value.change() }
+        override fun edit(change: OnboardingUi.() -> OnboardingUi) {
+            ui.value = ui.value.change()
+        }
         override fun goTo(step: Step) = Unit
         override fun saveProfile() = Unit
         override fun requestGuardian() = Unit
@@ -72,37 +76,78 @@ class VerreScreensTest {
     }
 
     @Test fun onb1() = capture("VerreOnb1", onb { com.cerclerouge.app.ui.onboarding.Posters(0, {}, {}, {}) })
+
     @Test fun onb2() = capture("VerreOnb2", onb { com.cerclerouge.app.ui.onboarding.Posters(1, {}, {}, {}) })
+
     @Test fun onb3() = capture("VerreOnb3", onb { com.cerclerouge.app.ui.onboarding.Posters(2, {}, {}, {}) })
+
     @Test fun onb4() = capture("VerreOnb4", onb { com.cerclerouge.app.ui.onboarding.Posters(3, {}, {}, {}) })
-    @Test fun permissions() = capture("VerrePermissions", onb { com.cerclerouge.app.ui.onboarding.PermissionsScreen(FakeOnb(OnboardingUi())) {} })
-    @Test fun setup1() = capture("VerreSetup1", onb {
-        val f = FakeOnb(OnboardingUi(step = Step.PROFILE, name = "Mia", month = "3", year = "2011", holderAttested = true))
-        com.cerclerouge.app.ui.onboarding.ProfileStep(f.ui.value, f)
-    })
-    @Test fun setup2() = capture("VerreSetup2", onb {
-        val f = FakeOnb(OnboardingUi(step = Step.GUARDIAN, guardianPhone = "+509 37 12 34 56"))
-        com.cerclerouge.app.ui.onboarding.GuardianStep(f.ui.value, f) {}
-    })
-    @Test fun setup3() = capture("VerreSetup3", onb {
-        val f = FakeOnb(OnboardingUi(step = Step.PIN, pin = "12"))
-        com.cerclerouge.app.ui.onboarding.PinStep(f.ui.value, f)
-    })
-    @Test fun setup4() = capture("VerreSetup4", onb {
-        com.cerclerouge.app.ui.onboarding.PhraseContent(com.cerclerouge.app.ui.listen.ListenUi(samples = 1), true, {}, {}, {})
-    })
-    @Test fun setup5() = capture("VerreSetup5", onb {
-        val f = FakeOnb(OnboardingUi(step = Step.FINISH, retention = Retention.HOURS_24), ContactBook(listOf(Fixtures.contact("Jean", 0, guardian = true))))
-        com.cerclerouge.app.ui.onboarding.FinishStep(f.ui.value, f) {}
-    })
+
+    @Test fun permissions() = capture(
+        "VerrePermissions",
+        onb {
+            com.cerclerouge.app.ui.onboarding.PermissionsScreen(FakeOnb(OnboardingUi())) {}
+        }
+    )
+
+    @Test fun setup1() = capture(
+        "VerreSetup1",
+        onb {
+            val f = FakeOnb(OnboardingUi(step = Step.PROFILE, name = "Mia", month = "3", year = "2011", holderAttested = true))
+            com.cerclerouge.app.ui.onboarding.ProfileStep(f.initial, f)
+        }
+    )
+
+    @Test fun setup2() = capture(
+        "VerreSetup2",
+        onb {
+            val f = FakeOnb(OnboardingUi(step = Step.GUARDIAN, guardianPhone = "+509 37 12 34 56"))
+            com.cerclerouge.app.ui.onboarding.GuardianStep(f.initial, f) {}
+        }
+    )
+
+    @Test fun setup3() = capture(
+        "VerreSetup3",
+        onb {
+            val f = FakeOnb(OnboardingUi(step = Step.PIN, pin = "12"))
+            com.cerclerouge.app.ui.onboarding.PinStep(f.initial, f)
+        }
+    )
+
+    @Test fun setup4() = capture(
+        "VerreSetup4",
+        onb {
+            com.cerclerouge.app.ui.onboarding.PhraseContent(com.cerclerouge.app.ui.listen.ListenUi(samples = 1), true, {}, {}, {})
+        }
+    )
+
+    @Test fun setup5() = capture(
+        "VerreSetup5",
+        onb {
+            val f =
+                FakeOnb(
+                    OnboardingUi(step = Step.FINISH, retention = Retention.HOURS_24),
+                    ContactBook(listOf(Fixtures.contact("Jean", 0, guardian = true)))
+                )
+            com.cerclerouge.app.ui.onboarding.FinishStep(f.initial, f) {}
+        }
+    )
 
     private val sketch: @Composable (Boolean, Boolean, Modifier) -> Unit = { armed, _, m ->
-        com.cerclerouge.app.ui.components.SketchMap(m, me = if (armed) com.cerclerouge.app.ui.components.DEFAULT_ROUTE.first() else androidx.compose.ui.geometry.Offset(44f, 60f), animate = false)
+        com.cerclerouge.app.ui.components.SketchMap(
+            m,
+            me = if (armed) com.cerclerouge.app.ui.components.DEFAULT_ROUTE.first() else androidx.compose.ui.geometry.Offset(44f, 60f),
+            animate = false
+        )
     }
 
     @Test fun homeOn() = capture("VerreAccueilActif") {
         com.cerclerouge.app.ui.home.HomeConsole(
-            com.cerclerouge.alert.EngineState(protection = com.cerclerouge.domain.ProtectionState.ARMED_FULL, micGranted = true, locationGranted = true),
+            com.cerclerouge.alert.EngineState(
+                protection = com.cerclerouge.domain.ProtectionState.ARMED_FULL,
+                micGranted = true,
+                locationGranted = true
+            ),
             {},
             3,
             {},
@@ -131,7 +176,10 @@ class VerreScreensTest {
             stats = com.cerclerouge.app.ui.home.WatcherStats(0.62f, 0.48f, 4f),
             lines = listOf(
                 com.cerclerouge.app.ui.brain.TalkLine(true, "Est-ce que je peux rentrer à pied ?"),
-                com.cerclerouge.app.ui.brain.TalkLine(false, "Je ne peux pas prédire un danger. Jean et Nadège suivent ton trajet ; si tu t'arrêtes plus de 10 min, je les préviens.")
+                com.cerclerouge.app.ui.brain.TalkLine(
+                    false,
+                    "Je ne peux pas prédire un danger. Jean et Nadège suivent ton trajet ; si tu t'arrêtes plus de 10 min, je les préviens."
+                )
             ),
             onBack = {},
             onTalk = {},
@@ -144,11 +192,21 @@ class VerreScreensTest {
         com.cerclerouge.app.ui.brain.TalkContent(
             listOf(
                 com.cerclerouge.app.ui.brain.TalkLine(true, "J'ai peur, quelqu'un me suit"),
-                com.cerclerouge.app.ui.brain.TalkLine(false, "Va vers un endroit éclairé et fréquenté. Je lance un trajet suivi et je garde Jean prêt.", com.cerclerouge.brain.TalkReply("", card, com.cerclerouge.brain.TalkAction.OPEN_TRIP)),
+                com.cerclerouge.app.ui.brain.TalkLine(
+                    false,
+                    "Va vers un endroit éclairé et fréquenté. Je lance un trajet suivi et je garde Jean prêt.",
+                    com.cerclerouge.brain.TalkReply("", card, com.cerclerouge.brain.TalkAction.OPEN_TRIP)
+                ),
                 com.cerclerouge.app.ui.brain.TalkLine(true, "Annule l'alerte"),
                 com.cerclerouge.app.ui.brain.TalkLine(false, "Je ne peux pas le faire à ta place : il faut ton code.")
             ),
-            { _, _ -> }, {}, {}, {}, {}, {}, {}
+            { _, _ -> },
+            {},
+            {},
+            {},
+            {},
+            {},
+            {}
         )
     }
 
@@ -174,19 +232,42 @@ class VerreScreensTest {
         androidx.compose.foundation.layout.Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) {
                 com.cerclerouge.app.ui.trip.TripActive(
-                    com.cerclerouge.app.ui.trip.TripCard(listOf("Jean", "Nadège"), 14, 3.2, "21 h 58", 0.45f, 12, 10, 64, null, false, null),
-                    map = { m -> com.cerclerouge.app.ui.components.SketchMap(m, route = com.cerclerouge.app.ui.components.TRIP_ROUTE, designW = 390f, designH = 758f, roadWidth = 8f, routeWidth = 2.4f, animate = false) },
+                    com.cerclerouge.app.ui.trip.TripCard(
+                        listOf(
+                            "Jean",
+                            "Nadège"
+                        ),
+                        14, 3.2, "21 h 58", 0.45f, 12, 10, 64, null, false, null
+                    ),
+                    map = { m ->
+                        com.cerclerouge.app.ui.components.SketchMap(
+                            m,
+                            route = com.cerclerouge.app.ui.components.TRIP_ROUTE,
+                            designW = 390f,
+                            designH = 758f,
+                            roadWidth = 8f,
+                            routeWidth = 2.4f,
+                            animate = false
+                        )
+                    },
                     onMore = {},
                     onArrived = {}
                 )
             }
-            com.cerclerouge.app.ui.components.MainNav(com.cerclerouge.app.ui.components.Tab.TRIP, {}, armed = true, onToggle = {}, insets = false)
+            com.cerclerouge.app.ui.components.MainNav(com.cerclerouge.app.ui.components.Tab.TRIP, {
+            }, armed = true, onToggle = {}, insets = false)
         }
     }
 
     private val book = ContactBook(
         listOf(
-            Fixtures.contact("Jean", 0, com.cerclerouge.contacts.ContactStatus.ACCEPTED, guardian = true, hasApp = true).copy(relation = "Papa"),
+            Fixtures.contact(
+                "Jean",
+                0,
+                com.cerclerouge.contacts.ContactStatus.ACCEPTED,
+                guardian = true,
+                hasApp = true
+            ).copy(relation = "Papa"),
             Fixtures.contact("Nadège", 1, com.cerclerouge.contacts.ContactStatus.ACCEPTED, hasApp = true),
             Fixtures.contact("Paul", 2)
         )
@@ -197,12 +278,14 @@ class VerreScreensTest {
             Box(Modifier.weight(1f)) {
                 com.cerclerouge.app.ui.contacts.ContactsContent(book, null, null, {}, {}, { _, _ -> }, {}, {}, {}, {}, {}, {})
             }
-            com.cerclerouge.app.ui.components.MainNav(com.cerclerouge.app.ui.components.Tab.CONTACTS, {}, armed = true, onToggle = {}, insets = false)
+            com.cerclerouge.app.ui.components.MainNav(com.cerclerouge.app.ui.components.Tab.CONTACTS, {
+            }, armed = true, onToggle = {}, insets = false)
         }
     }
 
     @Test fun addContact() = capture("VerreProcheAjout") {
-        com.cerclerouge.app.ui.contacts.AddContactContent("Nadège", "+509 34 98 76 54", com.cerclerouge.contacts.Language.FR, null, {}, {}, {}, {}, {}, {}, {})
+        com.cerclerouge.app.ui.contacts.AddContactContent("Nadège", "+509 34 98 76 54", com.cerclerouge.contacts.Language.FR, null, {
+        }, {}, {}, {}, {}, {}, {})
     }
 
     @Test fun sosHold() = capture("VerreSos") { com.cerclerouge.app.ui.home.SosHoldScreen({}, {}, listOf("Jean", "Nadège"), "114", {}) }
@@ -236,13 +319,15 @@ class VerreScreensTest {
     @Test fun settings() = capture("VerreReglages") {
         androidx.compose.foundation.layout.Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) { com.cerclerouge.app.ui.settings.SettingsMain({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}) }
-            com.cerclerouge.app.ui.components.MainNav(com.cerclerouge.app.ui.components.Tab.SETTINGS, {}, armed = true, onToggle = {}, insets = false)
+            com.cerclerouge.app.ui.components.MainNav(com.cerclerouge.app.ui.components.Tab.SETTINGS, {
+            }, armed = true, onToggle = {}, insets = false)
         }
     }
 
     @Test fun journal() = capture("VerreJournal") {
         val now = System.currentTimeMillis()
-        fun e(seq: Long, ago: Long, type: String, payload: String) = com.cerclerouge.privacy.log.ChainedEntry(seq, now - ago * 60_000, type, payload, "p", "h")
+        fun e(seq: Long, ago: Long, type: String, payload: String) =
+            com.cerclerouge.privacy.log.ChainedEntry(seq, now - ago * 60_000, type, payload, "p", "h")
         com.cerclerouge.app.ui.journal.JournalContent(
             listOf(
                 e(1, 36, "state", "OFF → ARMED_FULL : Arm"),
@@ -260,9 +345,33 @@ class VerreScreensTest {
         val now = System.currentTimeMillis()
         com.cerclerouge.app.ui.history.HistoryContent(
             listOf(
-                com.cerclerouge.privacy.db.HistoryEntity("t1", "trip", now - 86_400_000, now - 86_400_000 + 14 * 60_000, "WALK", null, "arrived"),
-                com.cerclerouge.privacy.db.HistoryEntity("a1", "alert", now - 90_000_000, now - 90_000_000 + 3 * 60_000, "DISTRESS_SCREAM", 1, "safe"),
-                com.cerclerouge.privacy.db.HistoryEntity("a2", "alert", now - 600_000_000, now - 600_000_000 + 9 * 60_000, "SOS", 2, "ended")
+                com.cerclerouge.privacy.db.HistoryEntity(
+                    "t1",
+                    "trip",
+                    now - 86_400_000,
+                    now - 86_400_000 + 14 * 60_000,
+                    "WALK",
+                    null,
+                    "arrived"
+                ),
+                com.cerclerouge.privacy.db.HistoryEntity(
+                    "a1",
+                    "alert",
+                    now - 90_000_000,
+                    now - 90_000_000 + 3 * 60_000,
+                    "DISTRESS_SCREAM",
+                    1,
+                    "safe"
+                ),
+                com.cerclerouge.privacy.db.HistoryEntity(
+                    "a2",
+                    "alert",
+                    now - 600_000_000,
+                    now - 600_000_000 + 9 * 60_000,
+                    "SOS",
+                    2,
+                    "ended"
+                )
             ),
             {},
             {}

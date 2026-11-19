@@ -16,11 +16,11 @@ import org.tensorflow.lite.Interpreter
 class Yamnet private constructor(private val interpreter: Interpreter, val labels: List<String>) {
     private val out = Array(1) { FloatArray(labels.size) }
 
-    /** Familles entendues dans [window] (exactement [WINDOW] échantillons entre -1 et 1). */
-    fun classify(window: FloatArray): List<SoundFamilies.Heard> {
+    /** Familles entendues dans [window] (exactement [WINDOW] échantillons entre -1 et 1) et ambiance (voix, musique). */
+    fun classify(window: FloatArray): Pair<List<SoundFamilies.Heard>, Pair<Float, Float>> {
         require(window.size == WINDOW)
         interpreter.run(window, out)
-        return SoundFamilies.heard(out[0], labels)
+        return SoundFamilies.heard(out[0], labels) to SoundFamilies.ambience(out[0], labels)
     }
 
     fun close() = interpreter.close()

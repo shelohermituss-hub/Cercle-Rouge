@@ -98,6 +98,39 @@ class ProtectionController @Inject constructor(
         }
     }
 
+    private var mutedUntil: java.time.Instant? = null
+    private var muteJob: kotlinx.coroutines.Job? = null
+
+    /**
+     * « Couper l'écoute 15 min » (maquette « Niveau sonore ») : le micro s'arrête, la protection reste active (position, SOS,
+     * phrase non écoutée). Journalisé. Toute alerte relance l'écoute ; à l'échéance, elle reprend seule si la protection tourne.
+     */
+    fun muteListening(minutes: Long) {
+        if (_state.value.protection.isAlert) return
+        mutedUntil = clock.instant().plusSeconds(minutes * 60)
+        audio.stop()
+        scope.launch { log.append("listen", "muted ${minutes}min") }
+        muteJob?.cancel()
+        muteJob = scope.launch {
+            delay(minutes * 60_000)
+            mutedUntil = null
+            val p = _state.value.protection
+            if (p.isArmed || p.isAlert) audio.start(phrases.load(), keywords.load())
+        }
+    }
+
+    /** Fin anticipée de la coupure. */
+    fun unmuteListening() {
+        if (mutedUntil == null) return
+        muteJob?.cancel()
+        mutedUntil = null
+        val p = _state.value.protection
+        if (p.isArmed || p.isAlert) scope.launch { audio.start(phrases.load(), keywords.load()) }
+    }
+
+    /** Écoute coupée jusqu'à cette heure (null sinon). */
+    val listeningMutedUntil: java.time.Instant? get() = mutedUntil
+
     fun send(make: (id: String) -> Input) {
         scope.launch { dispatch(make(UUID.randomUUID().toString())) }
     }
@@ -191,10 +224,18 @@ class ProtectionController @Inject constructor(
             }
             is Effect.ConfigureEngines -> {
                 log.append("engines", "audio=${effect.audio} location=${effect.location}")
-                // Écoute : seulement avec une phrase secrète ou des mots-clés enregistrés (sans détecteur, le micro ne servirait à rien).
-                val phrase = if (effect.audio) phrases.load() else null
-                val words = if (effect.audio) keywords.load() else emptyList()
-                if (phrase != null || words.isNotEmpty()) audio.start(phrase, words) else audio.stop()
+                // Écoute : dès que la protection l'autorise. Sans phrase ni mot-clé, les familles de sons (YAMNet, ADR-0029) tournent
+                // quand même. Une coupure demandée par l'utilisateur (« Couper l'écoute 15 min ») est levée par toute alerte.
+                val muted = mutedUntil?.let { clock.instant().isBefore(it) } == true && !_state.value.protection.isAlert
+                when {
+                    !effect.audio -> audio.stop()
+                    muted -> audio.stop()
+                    else -> {
+                        muteJob?.cancel()
+                        mutedUntil = null
+                        audio.start(phrases.load(), keywords.load())
+                    }
+                }
                 // Le suivi de position n'existe que dans les états qui l'autorisent (R-TRIP-01) : arrêté dans tous les autres.
                 when (effect.location) {
                     LocationProfile.ARMED -> tracker.start(TrackingProfile.ARMED)

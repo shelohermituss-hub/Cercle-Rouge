@@ -112,7 +112,7 @@ class ScreenshotTest {
         }
     }
 
-    @Test fun homeOff() = capture("home-off") { HomeConsole(EngineState(), {}, {}, 0, {}, {}, {}, nav, fakeMap) }
+    @Test fun homeOff() = capture("home-off") { HomeConsole(EngineState(), {}, 0, {}, {}, {}, fakeMap) }
 
     /** 1.20 : thème clair, contraste élevé, police à 200 % (pas de texte coupé ni de contrôle masqué). */
     @Test fun homeDark() = capture("home-dark", com.cerclerouge.app.ui.theme.ThemeMode.DARK) { ArmedHome() }
@@ -133,26 +133,22 @@ class ScreenshotTest {
     private fun ArmedHome() = HomeConsole(
         EngineState(protection = ProtectionState.ARMED_FULL, micGranted = true, locationGranted = true),
         {},
-        {},
         2,
         {},
         {},
         {},
-        nav,
         fakeMap,
-        contactNames = listOf("Marie", "Jean")
+        since = "21 h 04"
     )
 
     @Test fun homeOn() = capture("home-on") {
         HomeConsole(
             EngineState(protection = ProtectionState.ARMED_FULL, micGranted = true, locationGranted = true),
             {},
-            {},
             2,
             {},
             {},
             {},
-            nav,
             fakeMap,
             activity = ListenActivity(
                 levels = List(40) { i -> (0.5f + 0.5f * kotlin.math.sin(i / 3.0).toFloat()).coerceIn(0f, 1f) * if (i > 25) 1f else 0.25f },
@@ -164,8 +160,7 @@ class ScreenshotTest {
                 hasPhrase = true
             ),
             audioStatus = AudioStatus.RUNNING,
-            explanation = "Cris ou bruits de bagarre à proximité, sans geste sur ton téléphone : j'observe 30 s.",
-            onTalk = {}
+            explanation = "Cris ou bruits de bagarre à proximité, sans geste sur ton téléphone : j'observe 30 s."
         )
     }
 
@@ -321,7 +316,7 @@ class ScreenshotTest {
             CercleRougeTheme {
                 Box(Modifier.fillMaxSize().background(Cr.colors.surface)) {
                     when (step.intValue) {
-                        0 -> HomeConsole(EngineState(), {}, {}, 0, {}, {}, { step.intValue = 1 }, nav, fakeMap)
+                        0 -> HomeConsole(EngineState(), {}, 0, {}, { step.intValue = 1 }, {}, fakeMap)
                         1 -> SosHoldScreen({ step.intValue = 0 }, { step.intValue = 2 })
                         else -> CountdownScreen({ step.intValue = 0 }, {})
                     }
@@ -351,17 +346,7 @@ class ScreenshotTest {
             CercleRougeTheme {
                 Box(Modifier.fillMaxSize().background(Cr.colors.surface)) {
                     when (step.intValue) {
-                        0 -> HomeConsole(
-                            EngineState(),
-                            {},
-                            {},
-                            0,
-                            {},
-                            { step.intValue = 2 },
-                            { step.intValue = 1 },
-                            nav,
-                            fakeMap
-                        )
+                        0 -> HomeConsole(EngineState(), {}, 0, { step.intValue = 2 }, { step.intValue = 1 }, {}, fakeMap)
                         1 -> SosHoldScreen({ step.intValue = 0 }, { step.intValue = 2 })
                         else -> CountdownScreen({ step.intValue = 0 }, {})
                     }

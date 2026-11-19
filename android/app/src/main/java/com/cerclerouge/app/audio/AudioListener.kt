@@ -49,6 +49,12 @@ data class ListenActivity(
     val hasPhrase: Boolean = false
 )
 
+/**
+ * Les 10 dernières minutes de l'écoute (écran « Niveau sonore ») : un pic de niveau toutes les 10 s (0 à 1), le nombre de voix
+ * entendues et de bruits forts, avec l'heure du dernier. Que des nombres, en mémoire seulement : aucun son (R-AE-01).
+ */
+data class SoundHistory(val peaks: List<Pair<Long, Float>> = emptyList(), val voices: List<Long> = emptyList(), val loud: List<Long> = emptyList())
+
 enum class AudioStatus { STOPPED, RUNNING, PAUSED_MIC_BUSY, PAUSED_LOW_POWER, ERROR }
 
 /**
@@ -113,6 +119,24 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
 
     /** Familles de sons reconnues par YAMNet (IA.2) pendant l'écoute ; jamais le son lui-même. */
     val sounds: SharedFlow<SoundFamilies.Heard> = _sounds
+    private val _history = MutableStateFlow(SoundHistory())
+
+    /** Historique des 10 dernières minutes (niveaux, voix, bruits forts). */
+    val history: StateFlow<SoundHistory> = _history
+
+    private fun recordHistory(now: Long, peak: Float?, voice: Boolean, loud: Boolean) {
+        val from = now - HISTORY_MS
+        val h = _history.value
+        _history.value = SoundHistory(
+            (h.peaks + listOfNotNull(peak?.let { now to it })).filter { it.first >= from },
+            (h.voices + listOfNotNull(now.takeIf { voice })).filter { it >= from },
+            (h.loud + listOfNotNull(now.takeIf { loud })).filter { it >= from }
+        )
+    }
+    private val _ambience = MutableStateFlow<Pair<Float, Float>?>(null)
+
+    /** Dernière ambiance entendue (voix, musique, de 0 à 1), null sans écoute : pour la carte « Veilleur ». */
+    val ambience: StateFlow<Pair<Float, Float>?> = _ambience
     private val ears = Executors.newSingleThreadExecutor { Thread(it, "cr-ears").apply { priority = Thread.MIN_PRIORITY } }
     private val earsBusy = AtomicBoolean(false)
     private var yamnet: Yamnet? = null
@@ -257,6 +281,9 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
         var filled = 0
         var sinceEars = 0
         var earsPeakDb = -120.0
+        var histPeak = 0f
+        var histLevels = 0
+        var lastLoud = 0L
         try {
             while (running) {
                 val n = r.read(block, 0, block.size)
@@ -287,6 +314,18 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
                 levels.addLast(((peakDb - LEVEL_FLOOR_DB) / (LEVEL_CEIL_DB - LEVEL_FLOOR_DB)).toFloat().coerceIn(0f, 1f))
                 peakDb = -120.0
                 while (levels.size > LEVEL_HISTORY) levels.removeFirst()
+                val lv = levels.last()
+                histPeak = maxOf(histPeak, lv)
+                val loud = lv >= LOUD_LEVEL && now - lastLoud > LOUD_GAP_MS
+                if (loud) lastLoud = now
+                val voiceStart = listening && listener.inSpeech && !wasVoice
+                if (++histLevels >= HISTORY_STEP_LEVELS) {
+                    recordHistory(now, histPeak, voiceStart, loud)
+                    histPeak = 0f
+                    histLevels = 0
+                } else if (loud || voiceStart) {
+                    recordHistory(now, null, voiceStart, loud)
+                }
                 if (listening) {
                     if (listener.inSpeech && !wasVoice) events.addLast(ListenEvent(ListenEventKind.VOICE))
                     wasVoice = listener.inSpeech
@@ -311,6 +350,7 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
         } finally {
             block.fill(0)
             window.fill(0)
+            _ambience.value = null
             listener.stop()
             _activity.value = ListenActivity()
         }
@@ -326,7 +366,10 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
                     yamnetTried = true
                     yamnet = Yamnet.load(context)
                 }
-                yamnet?.classify(f)?.forEach { _sounds.tryEmit(it) }
+                yamnet?.classify(f)?.let { (heard, amb) ->
+                    heard.forEach { _sounds.tryEmit(it) }
+                    _ambience.value = amb
+                }
             } catch (_: RuntimeException) {
                 // Une erreur du modèle ne doit jamais arrêter l'écoute de la phrase secrète.
             } finally {
@@ -427,6 +470,10 @@ class AudioListener @Inject constructor(@param:ApplicationContext private val co
         private const val LEVEL_CEIL_DB = -10.0
         private const val EVENT_HISTORY = 3
         private const val RESULT_MS = 2_500L
+        private const val HISTORY_MS = 10 * 60_000L
+        private const val HISTORY_STEP_LEVELS = 100 // un pic toutes les 10 s (niveaux de 100 ms)
+        private const val LOUD_LEVEL = 0.88f // « seuil d'attention » du graphique
+        private const val LOUD_GAP_MS = 2_000L
         private const val EARS_STEP = 8_000 // une passe YAMNet toutes les 0,5 s
         private const val EARS_MIN_DB = -50.0
     }

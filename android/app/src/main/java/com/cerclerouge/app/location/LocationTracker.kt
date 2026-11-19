@@ -42,6 +42,10 @@ import kotlinx.coroutines.flow.SharedFlow
 class LocationTracker @Inject constructor(@ApplicationContext private val context: Context) {
     private val _fixes = MutableSharedFlow<TrackFix>(extraBufferCapacity = 32)
     val fixes: SharedFlow<TrackFix> = _fixes
+    private val _speed = kotlinx.coroutines.flow.MutableStateFlow<Float?>(null)
+
+    /** Dernière vitesse connue (m/s), null sans suivi : statistique « marche » de l'accueil, jamais enregistrée. */
+    val speed: kotlinx.coroutines.flow.StateFlow<Float?> = _speed
 
     private var profile: TrackingProfile? = null
     private var stopUpdates: (() -> Unit)? = null
@@ -64,6 +68,7 @@ class LocationTracker @Inject constructor(@ApplicationContext private val contex
     fun stop() {
         stopUpdates?.invoke()
         stopUpdates = null
+        _speed.value = null
         profile = null
     }
 
@@ -79,7 +84,7 @@ class LocationTracker @Inject constructor(@ApplicationContext private val contex
         val request = LocationRequest.Builder(priority, intervalMs).setMinUpdateIntervalMillis(intervalMs / 2).build()
         val callback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
-                result.locations.forEach { _fixes.tryEmit(it.toFix()) }
+                result.locations.forEach { emit(it.toFix()) }
             }
         }
         client.requestLocationUpdates(request, callback, Looper.getMainLooper())
@@ -89,12 +94,17 @@ class LocationTracker @Inject constructor(@ApplicationContext private val contex
     @SuppressLint("MissingPermission")
     private fun platform(intervalMs: Long): () -> Unit {
         val manager = context.getSystemService(LocationManager::class.java)
-        val listener = LocationListener { _fixes.tryEmit(it.toFix()) }
+        val listener = LocationListener { emit(it.toFix()) }
         val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
             .filter { runCatching { manager.isProviderEnabled(it) }.getOrDefault(false) }
             .filter { it != LocationManager.GPS_PROVIDER || granted(Manifest.permission.ACCESS_FINE_LOCATION) }
         providers.forEach { runCatching { manager.requestLocationUpdates(it, intervalMs, 0f, listener, Looper.getMainLooper()) } }
         return { manager.removeUpdates(listener) }
+    }
+
+    private fun emit(fix: TrackFix) {
+        fix.speedMps?.let { _speed.value = it }
+        _fixes.tryEmit(fix)
     }
 
     private fun googleAvailable() = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS

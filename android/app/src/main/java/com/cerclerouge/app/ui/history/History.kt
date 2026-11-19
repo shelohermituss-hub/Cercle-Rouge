@@ -37,6 +37,13 @@ private val WHEN: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM HH:mm")
 
 fun formatWhen(millis: Long): String = WHEN.format(Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()))
 
+/** Heure seule, « 21 h 04 » en français (format court de la langue sinon). */
+fun formatTime(millis: Long): String {
+    val t = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
+    return if (java.util.Locale.getDefault().language == "fr") "%d h %02d".format(t.hour, t.minute)
+    else java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT).format(t)
+}
+
 /** Libellé du motif d'une alerte (Reason) ou du mode d'un trajet ; texte brut si inconnu (anciennes données). */
 @Composable
 fun reasonLabel(e: HistoryEntity): String = stringResource(

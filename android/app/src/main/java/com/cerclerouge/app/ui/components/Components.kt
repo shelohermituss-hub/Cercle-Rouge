@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
@@ -79,7 +80,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.cerclerouge.app.R
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
@@ -261,7 +264,9 @@ fun SosBar(
     onTap: () -> Unit,
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(50),
-    minHeight: Dp = 60.dp
+    minHeight: Dp = 60.dp,
+    hint: Boolean = true,
+    labelSize: androidx.compose.ui.unit.TextUnit = 18.sp
 ) {
     val progress = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
@@ -313,11 +318,11 @@ fun SosBar(
         ) {
             Text(
                 stringResource(R.string.sos),
-                style = PxType.title.copy(letterSpacing = PxType.label.letterSpacing * 3),
+                style = V.text(labelSize, FontWeight.Bold, spacing = 0.055f),
                 color = Color.White
             )
-            Spacer(Modifier.width(10.dp))
-            Text(stringResource(R.string.sos_hint_hold), style = PxType.caption, color = Color(0xFFFFE1E3))
+            if (hint) Spacer(Modifier.width(10.dp))
+            if (hint) Text(stringResource(R.string.sos_hint_hold), style = PxType.caption, color = Color(0xFFFFE1E3))
         }
     }
 }
@@ -390,7 +395,19 @@ enum class PixelIcon(val path: String) {
     CLOCK("M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2"),
     UP("M12 19V5 M6 11l6-6 6 6"),
     DOWN("M12 5v14 M6 13l6 6 6-6"),
-    STAR("M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z")
+    STAR("M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"),
+    PLUS("M12 5v14 M5 12h14"),
+    BACKSPACE("M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z M17 9l-6 6 M11 9l6 6"),
+    ROUTE("M6 21.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M18 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"),
+    COG(
+        "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21" +
+            "a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3" +
+            "a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3" +
+            "a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21" +
+            "a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"
+    ),
+    SEND("M22 2L11 13 M22 2l-7 20-4-9-9-4z"),
+    FINGER("M7 11V8a5 5 0 0 1 10 0v3 M12 14v3 M5 11h14v9H5z")
 }
 
 /** Icône au trait (décorative : le libellé voisin porte le sens pour TalkBack). */
@@ -470,18 +487,19 @@ data class NavItem(val label: String, val icon: PixelIcon, val onClick: () -> Un
  * `center` : bouton rond du milieu (activation de la protection), qui dépasse au-dessus de la barre.
  */
 @Composable
-fun PxNavBar(items: List<NavItem>, selected: Int, center: (@Composable () -> Unit)? = null) {
+fun PxNavBar(items: List<NavItem>, selected: Int, center: (@Composable () -> Unit)? = null, insets: Boolean = true) {
     val c = Cr.colors
     val half = items.size / 2
     Box(Modifier.fillMaxWidth()) {
+        // Maquette : barre blanche pleine largeur, 86 de haut, 5 colonnes, onglets de 64 alignés en haut (marge 6).
         Row(
             Modifier
                 .fillMaxWidth()
-                .shadow(18.dp, RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp), ambientColor = Color(0x331F2A33))
                 .background(c.raised)
-                .heightIn(min = 72.dp)
-                .padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .then(if (insets) Modifier.navigationBarsPadding() else Modifier)
+                .heightIn(min = 86.dp)
+                .padding(start = 4.dp, end = 4.dp, top = 6.dp),
+            verticalAlignment = Alignment.Top
         ) {
             items.forEachIndexed { i, item ->
                 if (center != null && i == half) Spacer(Modifier.weight(1f))
@@ -495,21 +513,19 @@ fun PxNavBar(items: List<NavItem>, selected: Int, center: (@Composable () -> Uni
                         .semantics { if (active) stateDescription = "sélectionné" }
                         .padding(vertical = 6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically)
+                    verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
                 ) {
-                    PixelIconView(item.icon, 25.dp, if (active) c.ink else c.lineControl, strokeWidth = if (active) 2.4f else 1.7f)
+                    PixelIconView(item.icon, 26.dp, if (active) c.ink else Color(0xFF93A5B6).takeIf { c.surface == Color(0xFFEDEDF0) } ?: c.lineControl, strokeWidth = if (active) 2.4f else 1.6f)
                     Text(
                         item.label,
-                        style = cappedScale(
-                            if (active) PxType.label.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) else PxType.label
-                        ),
+                        style = cappedScale(V.text(13.sp, if (active) FontWeight.Bold else FontWeight.Normal)),
                         color = if (active) c.ink else c.muted,
                         maxLines = 1
                     )
                 }
             }
         }
-        if (center != null) Box(Modifier.align(Alignment.TopCenter).offset(y = (-30).dp)) { center() }
+        if (center != null) Box(Modifier.align(Alignment.TopCenter).offset(y = (-24).dp)) { center() }
     }
 }
 

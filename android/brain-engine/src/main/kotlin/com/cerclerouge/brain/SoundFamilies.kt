@@ -47,6 +47,17 @@ object SoundFamilies {
         SoundFamily.WEAPON -> null
     }
 
+    /** Classes de la voix (parole) et de la musique : ambiance affichée dans la carte « Veilleur », jamais une alerte. */
+    val VOICE = setOf("Speech", "Child speech, kid speaking", "Conversation", "Narration, monologue", "Babbling", "Whispering")
+    val MUSIC = setOf("Music", "Musical instrument", "Singing", "Drum", "Pop music", "Hip hop music", "Reggae", "Gospel music")
+
+    /** Probabilités de voix et de musique (0 à 1) dans une fenêtre de scores. */
+    fun ambience(scores: FloatArray, labels: List<String>): Pair<Float, Float> {
+        require(scores.size == labels.size) { "scores et classes de tailles différentes" }
+        fun best(names: Set<String>) = labels.indices.filter { labels[it] in names }.maxOfOrNull { scores[it] } ?: 0f
+        return best(VOICE) to best(MUSIC)
+    }
+
     /** Une famille entendue : la classe la plus probable de la famille et sa probabilité. */
     data class Heard(val family: SoundFamily, val label: String, val p: Float)
 

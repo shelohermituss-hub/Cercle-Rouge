@@ -1,5 +1,12 @@
 package com.cerclerouge.app.ui.home
 
+import com.cerclerouge.app.ui.components.V
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.foundation.layout.heightIn
+import com.cerclerouge.app.ui.components.heroCard
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -143,7 +150,9 @@ class HomeViewModel @Inject constructor(
     val device: com.cerclerouge.app.device.DeviceMonitor,
     val history: com.cerclerouge.app.history.HistoryRepository,
     val emergency: com.cerclerouge.app.settings.EmergencyNumberRepository,
-    private val guardians: GuardianSync
+    private val guardians: GuardianSync,
+    val location: com.cerclerouge.app.location.LocationTracker,
+    val trips: com.cerclerouge.app.trip.TripController
 ) : ViewModel() {
     init {
         viewModelScope.launch {
@@ -196,6 +205,14 @@ fun HomeScreen(
     val thought by vm.brain.thought.collectAsState()
     val device by vm.device.status.collectAsState()
     val listenPrefs by vm.listen.prefs.collectAsState()
+    val ambience by vm.audio.ambience.collectAsState()
+    val speed by vm.location.speed.collectAsState()
+    val tripUi by vm.trips.trip.collectAsState()
+    // « Depuis : 21 h 04 » : heure d'activation de la protection (gardée tant que l'écran vit).
+    var armedSince by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<Long?>(null) }
+    LaunchedEffect(state.protection.isArmed || state.protection.isAlert) {
+        armedSince = if (state.protection.isArmed || state.protection.isAlert) armedSince ?: System.currentTimeMillis() else null
+    }
     var lastAlert by remember { mutableStateOf<com.cerclerouge.privacy.db.HistoryEntity?>(null) }
     var lastTrip by remember { mutableStateOf<com.cerclerouge.privacy.db.HistoryEntity?>(null) }
     LaunchedEffect(state.protection, state.alert?.id) {
@@ -309,34 +326,36 @@ fun HomeScreen(
             else -> HomeConsole(
                 state = state,
                 onToggle = ::toggleProtection,
-                onSoon = { toast(context, soon) },
                 contactsReady = contactsReady,
-                onContacts = onContacts,
-                onTrip = onTrip,
-                onListen = onListen,
-                onSettings = onSettings,
                 onSosTrigger = { sos = SosStep.COUNTDOWN },
                 onSosTap = { sos = SosStep.HOLD },
-                nav = listOf(
-                    NavItem(stringResource(R.string.nav_home), PixelIcon.HOME) {},
-                    NavItem(stringResource(R.string.nav_trip), PixelIcon.ARROW_RIGHT, onTrip),
-                    NavItem(stringResource(R.string.home_row_contacts), PixelIcon.USERS, onContacts),
-                    NavItem(stringResource(R.string.home_row_settings), PixelIcon.GEAR, onSettings)
-                ),
+                onTab = { tab ->
+                    when (tab) {
+                        com.cerclerouge.app.ui.components.Tab.HOME -> Unit
+                        com.cerclerouge.app.ui.components.Tab.TRIP -> onTrip()
+                        com.cerclerouge.app.ui.components.Tab.CONTACTS -> onContacts()
+                        com.cerclerouge.app.ui.components.Tab.SETTINGS -> onSettings()
+                    }
+                },
                 map = { armed, showMe, modifier -> LiveMap(armed, showMe, modifier, coveredBottom = 28.dp) },
                 activity = activity,
                 audioStatus = audioStatus,
                 decision = decision,
                 explanation = thought?.explanation,
                 device = device,
-                contactNames = book.contacts.filter { it.status == ContactStatus.ACCEPTED }.sortedBy { it.position }
-                    .map { it.name.substringBefore(' ') },
-                lastAlert = lastAlert,
-                lastTrip = lastTrip,
-                onHistory = onHistory,
-                onVault = onVault,
-                onJournal = onJournal,
-                onTalk = onTalk
+                since = armedSince?.let { com.cerclerouge.app.ui.history.formatTime(it) },
+                lastOut = lastTrip?.let { com.cerclerouge.app.ui.history.formatWhen(it.startedAtMillis) },
+                trip = tripUi?.let { t ->
+                    HomeTrip(
+                        t.position?.let { com.cerclerouge.location.Geo.distance(it, t.plan.destination) / 1000.0 },
+                        java.time.Duration.between(java.time.Instant.now(), t.plan.plannedArrival).toMinutes().coerceAtLeast(0)
+                    )
+                },
+                stats = WatcherStats(ambience?.first, ambience?.second, speed?.let { it * 3.6f }),
+                onListen = onListen,
+                onWatcher = onTalk,
+                onProfile = onSettings,
+                onHistory = onHistory
             )
         }
     }
@@ -384,183 +403,152 @@ fun HomeScreen(
     }
 }
 
+/** Trajet en cours affiché sur la carte de l'accueil (« Trajet en cours · 3,2 km · 14 min »). */
+data class HomeTrip(val distanceKm: Double?, val minutesLeft: Long?)
+
+/**
+ * Accueil (maquettes « Accueil · protection active / coupée ») : logo et profil, grande carte d'état avec le bouclier et le SOS
+ * fondu dans le bas, « En direct » avec l'écoute et la carte, la carte du veilleur, la barre du bas et son bouton central.
+ */
 @Composable
 internal fun HomeConsole(
     state: EngineState,
     onToggle: () -> Unit,
-    onSoon: () -> Unit,
     contactsReady: Int,
-    onContacts: () -> Unit,
     onSosTrigger: () -> Unit,
     onSosTap: () -> Unit,
-    nav: List<NavItem>,
+    onTab: (com.cerclerouge.app.ui.components.Tab) -> Unit,
     map: @Composable (armed: Boolean, showMe: Boolean, modifier: Modifier) -> Unit,
-    onTrip: () -> Unit = onSoon,
-    onListen: () -> Unit = onToggle,
-    onSettings: () -> Unit = onSoon,
     activity: ListenActivity = ListenActivity(),
     audioStatus: AudioStatus = AudioStatus.STOPPED,
     decision: com.cerclerouge.alert.Decision? = null,
     explanation: String? = null,
     device: com.cerclerouge.sensor.DeviceStatus = com.cerclerouge.sensor.DeviceStatus(),
-    contactNames: List<String> = emptyList(),
-    lastAlert: com.cerclerouge.privacy.db.HistoryEntity? = null,
-    lastTrip: com.cerclerouge.privacy.db.HistoryEntity? = null,
-    onHistory: () -> Unit = {},
-    onVault: () -> Unit = onSoon,
-    onJournal: () -> Unit = onSoon,
-    onTalk: (() -> Unit)? = null
+    since: String? = null,
+    lastOut: String? = null,
+    trip: HomeTrip? = null,
+    stats: WatcherStats = WatcherStats(),
+    onListen: () -> Unit = {},
+    onWatcher: () -> Unit = {},
+    onProfile: () -> Unit = {},
+    onHistory: () -> Unit = {}
 ) {
     val c = Cr.colors
     val armed = state.protection.isArmed
     // P4 : la position n'est lue que protection active et autorisation accordée.
     val showMe = armed && state.locationGranted
-    val toggleA11y = stringResource(if (armed) R.string.home_disc_a11y_on else R.string.home_disc_a11y_off)
-    val toggleState = stringResource(if (armed) R.string.home_toggle_on else R.string.home_toggle_off)
     val large = androidx.compose.ui.platform.LocalDensity.current.fontScale >= LARGE_FONT
-    val vaultLabel = stringResource(R.string.home_vault)
+    val profile = stringResource(R.string.v_profile)
     Box(Modifier.fillMaxSize().background(c.surface)) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 128.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            // En-tête : logo officiel, et le coffre de preuves à droite.
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Wordmark(Modifier.weight(1f, fill = false))
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 120.dp)) {
+            // En-tête : logo (190 × 36) et bouton profil rond blanc de 48.
+            Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 20.dp, top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Wordmark(height = 36.dp)
                 Spacer(Modifier.weight(1f))
                 Box(
-                    Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(c.raised)
-                        .clickable(role = Role.Button, onClick = onVault)
-                        .semantics { contentDescription = vaultLabel },
+                    Modifier.size(48.dp).clip(CircleShape).background(c.raised).clickable(role = Role.Button, onClick = onProfile).semantics { contentDescription = profile },
                     contentAlignment = Alignment.Center
-                ) { GlassIcon(R.drawable.glass_lock, 30.dp) }
+                ) { GlassIcon(R.drawable.glass_user, 30.dp) }
             }
-            HeroCard(armed, contactsReady, device, contactNames, lastAlert, lastTrip, onHistory, onSosTrigger, onSosTap)
-            Row(Modifier.fillMaxWidth().padding(top = 2.dp, start = 4.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.home_live).uppercase(), style = PxType.label, color = c.muted, modifier = Modifier.weight(1f))
+            HeroCard(armed, contactsReady, device, since, lastOut, onHistory, onSosTrigger, onSosTap)
+            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.home_live).uppercase(), style = V.section, color = c.muted, modifier = Modifier.weight(1f))
                 Text(
                     if (armed) {
-                        listOf(state.micGranted, state.locationGranted, true).count {
-                            it
-                        }.let { n -> pluralStringResource(R.plurals.home_sensors, n, n) }
+                        listOf(state.micGranted, state.locationGranted, true).count { it }.let { n -> pluralStringResource(R.plurals.home_sensors, n, n) }
                     } else {
                         stringResource(R.string.home_paused)
                     },
-                    style = PxType.caption,
-                    color = c.ink
+                    style = V.body,
+                    color = Color(0xFF2C3A47).takeIf { c.surface == Color(0xFFEDEDF0) } ?: c.ink
                 )
             }
-            val cardHeight = 156.dp
+            val h = if (large) 200.dp else 146.dp
             val listen = @Composable { m: Modifier -> ListenCard(activity, audioStatus, armed, onListen, m) }
-            val mapCard = @Composable { m: Modifier -> MapCard(armed, showMe, map, onTrip, m) }
+            val mapCard = @Composable { m: Modifier -> MapCard(armed, showMe, map, trip, { onTab(com.cerclerouge.app.ui.components.Tab.TRIP) }, m) }
             if (large) {
-                listen(Modifier.fillMaxWidth().height(cardHeight * 1.4f))
-                mapCard(Modifier.fillMaxWidth().height(cardHeight * 1.4f))
+                Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    listen(Modifier.fillMaxWidth().height(h))
+                    mapCard(Modifier.fillMaxWidth().height(h))
+                }
             } else {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    listen(Modifier.weight(1f).height(cardHeight))
-                    mapCard(Modifier.weight(1f).height(cardHeight))
+                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    listen(Modifier.weight(1f).height(h))
+                    mapCard(Modifier.weight(1f).height(h))
                 }
             }
-            WatcherCard(activity, audioStatus, armed, decision, onJournal, explanation = explanation, onTalk = onTalk)
+            WatcherCard(activity, audioStatus, armed, decision, onWatcher, Modifier.padding(top = 12.dp), explanation = explanation, stats = stats)
         }
         if (!armed) {
-            Text(
-                stringResource(R.string.home_off_hint),
-                style = PxType.caption.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium),
-                color = c.raised,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 128.dp, start = 48.dp, end = 48.dp)
-                    .background(c.ink, RoundedCornerShape(14.dp))
-                    .padding(horizontal = 14.dp, vertical = 9.dp)
-            )
+            // Bulle « Touche ici pour activer la protection », pointe vers le bouton central.
+            Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 118.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    stringResource(R.string.home_off_hint),
+                    style = V.text(14.sp, FontWeight.Medium, 19.sp),
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.widthIn(max = 258.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFF1F2A33)).padding(horizontal = 16.dp, vertical = 10.dp)
+                )
+                Box(Modifier.size(14.dp, 8.dp).drawBehind {
+                    drawPath(androidx.compose.ui.graphics.Path().apply { moveTo(0f, 0f); lineTo(size.width, 0f); lineTo(size.width / 2, size.height); close() }, Color(0xFF1F2A33))
+                })
+            }
         }
         Box(Modifier.align(Alignment.BottomCenter)) {
-            PxNavBar(nav, selected = 0, center = { ProtectionButton(armed, toggleA11y, toggleState, onToggle) })
+            com.cerclerouge.app.ui.components.MainNav(com.cerclerouge.app.ui.components.Tab.HOME, onTab, armed, onToggle)
         }
     }
 }
 
 /**
- * Carte du haut de l'accueil (référence « Verre ») : état, proches prêts, état de l'appareil (GPS, réseau, batterie,
- * PDF 16.2), bouclier 3D à droite, et le SOS fondu dans le bas de la carte. Toucher le texte ouvre l'historique.
+ * Grande carte d'état (maquette : 200 de haut, rayon 34, dégradé blanc, bouclier 93 × 112 à droite, SOS de 54 fondu en bas).
+ * Toucher le texte ouvre l'historique.
  */
 @Composable
 private fun HeroCard(
     armed: Boolean,
     contactsReady: Int,
     device: com.cerclerouge.sensor.DeviceStatus,
-    contactNames: List<String>,
-    lastAlert: com.cerclerouge.privacy.db.HistoryEntity?,
-    lastTrip: com.cerclerouge.privacy.db.HistoryEntity?,
+    since: String?,
+    lastOut: String?,
     onHistory: () -> Unit,
     onSosTrigger: () -> Unit,
     onSosTap: () -> Unit
 ) {
     val c = Cr.colors
-    val shape = RoundedCornerShape(34.dp)
-    val net = when {
+    val issue = when {
+        !device.gpsEnabled -> stringResource(R.string.status_gps_off)
         device.network == com.cerclerouge.sensor.NetworkKind.NONE -> stringResource(R.string.status_net_none)
-        !device.validated -> stringResource(R.string.status_net_limited)
-        device.network == com.cerclerouge.sensor.NetworkKind.WIFI -> stringResource(R.string.status_net_wifi)
-        else -> stringResource(R.string.status_net_cell)
+        device.lowBattery -> device.batteryPct?.let { stringResource(R.string.status_battery, it) }
+        else -> null
     }
-    val battery = device.batteryPct?.let { stringResource(R.string.status_battery, it) } ?: stringResource(R.string.status_battery_unknown)
-    val gps = stringResource(if (device.gpsEnabled) R.string.status_gps_on else R.string.status_gps_off)
-    val deviceIssue = !device.gpsEnabled || device.network == com.cerclerouge.sensor.NetworkKind.NONE || device.lowBattery
     val never = stringResource(R.string.status_never)
-    val tripAt = lastTrip?.let { com.cerclerouge.app.ui.history.formatWhen(it.startedAtMillis) } ?: never
-    val alertAt = lastAlert?.let { com.cerclerouge.app.ui.history.formatWhen(it.startedAtMillis) } ?: never
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .shadow(22.dp, shape, ambientColor = Color(0x331F2A33), spotColor = Color(0x401F2A33))
-            .clip(shape)
-            .background(Brush.verticalGradient(listOf(c.raised, lerp(c.raised, c.surface, 0.45f))))
-    ) {
-        Box(
-            Modifier.fillMaxWidth().clickable(
-                role = Role.Button,
-                onClick = onHistory
-            ).padding(start = 20.dp, end = 16.dp, top = 18.dp, bottom = 14.dp)
+    Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp).fillMaxWidth().heightIn(min = 200.dp).heroCard()) {
+        Shield3D(on = armed, height = 112.dp, modifier = Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 22.dp))
+        Column(
+            Modifier.padding(start = 20.dp, top = 18.dp, bottom = 66.dp).width(210.dp).clickable(role = Role.Button, onClick = onHistory),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Shield3D(on = armed, height = 104.dp, modifier = Modifier.align(Alignment.TopEnd))
-            Column(Modifier.padding(end = 104.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    stringResource(if (armed) R.string.home_protected_title else R.string.home_off_title),
-                    style = PxType.title,
-                    modifier = Modifier.semantics { heading() }
-                )
-                Bullet(
-                    if (contactNames.isEmpty()) {
-                        stringResource(R.string.status_contacts_none).replaceFirstChar { it.titlecase() }
-                    } else {
-                        stringResource(R.string.home_ready_contacts, contactsReady)
-                    },
-                    if (contactNames.isEmpty()) c.warn else c.ink
-                )
-                Bullet("$gps · $net · $battery", if (deviceIssue) c.warn else c.ink)
-                Text(
-                    stringResource(R.string.status_last, tripAt, alertAt),
-                    style = PxType.caption,
-                    color = c.muted,
-                    modifier = Modifier.padding(start = 12.dp)
-                )
-            }
+            Text(
+                stringResource(if (armed) R.string.home_protected_title else R.string.home_off_title),
+                style = V.text(21.sp, FontWeight.SemiBold, 26.sp, -0.014f),
+                color = c.ink,
+                modifier = Modifier.semantics { heading() }
+            )
+            com.cerclerouge.app.ui.components.Bullets(
+                buildList {
+                    if (armed) add(stringResource(R.string.v_since) to (since ?: "—")) else add(stringResource(R.string.v_last_out) to (lastOut ?: never))
+                    add(stringResource(R.string.v_ready) to contactsReady.toString())
+                }
+            )
+            issue?.let { Text("·  $it", style = V.text(15.sp, line = 22.sp), color = c.warn) }
         }
         SosBar(
             onTrigger = onSosTrigger,
             onTap = onSosTap,
+            modifier = Modifier.align(Alignment.BottomCenter),
             shape = RoundedCornerShape(bottomStart = 34.dp, bottomEnd = 34.dp),
-            minHeight = 56.dp
+            minHeight = 54.dp
         )
     }
 }
@@ -592,49 +580,53 @@ internal fun Wordmark(modifier: Modifier = Modifier, height: androidx.compose.ui
     }
 }
 
-@Composable
-private fun Bullet(text: String, color: Color) {
-    Row(verticalAlignment = Alignment.Top) {
-        Text("·", style = PxType.body, color = Cr.colors.muted, modifier = Modifier.width(12.dp))
-        Text(text, style = PxType.body, color = color)
-    }
-}
-
-/** Visualiseur « Carte » : la carte en direct dans une carte arrondie, avec l'attribution des données. */
+/** Carte « Carte » de l'accueil : la carte en direct (claire), la pastille du trajet ou de la dernière position. */
 @Composable
 private fun MapCard(
     armed: Boolean,
     showMe: Boolean,
     map: @Composable (armed: Boolean, showMe: Boolean, modifier: Modifier) -> Unit,
+    trip: HomeTrip?,
     onOpen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val c = Cr.colors
     val shape = RoundedCornerShape(22.dp)
-    Box(modifier.clip(shape).background(c.raised).border(1.dp, c.line, shape)) {
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: java.util.Locale.ROOT
+    Box(modifier.clip(shape).background(c.raised).border(1.dp, c.ink.copy(alpha = 0.04f), shape).clickable(role = Role.Button, onClick = onOpen)) {
         map(armed, showMe, Modifier.matchParentSize())
         Text(
             MapStyle.ATTRIBUTION,
-            style = cappedScale(PxType.caption.copy(fontSize = PxType.caption.fontSize * 0.75f)),
+            style = cappedScale(V.text(9.sp)),
             color = c.muted,
             maxLines = 1,
-            modifier = Modifier.align(Alignment.TopStart).padding(8.dp).background(c.raised.copy(alpha = 0.85f), RoundedCornerShape(8.dp))
-                .padding(horizontal = 6.dp, vertical = 2.dp)
+            modifier = Modifier.align(Alignment.TopStart).padding(6.dp).background(c.raised.copy(alpha = 0.8f), RoundedCornerShape(6.dp)).padding(horizontal = 4.dp, vertical = 1.dp)
         )
         Column(
-            Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(8.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(c.raised.copy(alpha = 0.94f))
-                .clickable(role = Role.Button, onClick = onOpen)
-                .padding(horizontal = 10.dp, vertical = 6.dp)
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(8.dp).clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = 0.92f)).padding(horizontal = 10.dp, vertical = 7.dp)
         ) {
-            Text(stringResource(R.string.home_map_title), style = PxType.caption, color = c.muted)
             Text(
-                stringResource(if (showMe) R.string.home_map_live else R.string.home_map_last),
-                style = PxType.bodyBold,
+                stringResource(
+                    when {
+                        trip != null -> R.string.v_trip_running
+                        showMe -> R.string.home_map_title
+                        else -> R.string.v_last_position
+                    }
+                ),
+                style = V.text(12.sp),
+                color = Color(0xFF566B80)
+            )
+            Text(
+                when {
+                    trip != null -> listOfNotNull(
+                        trip.distanceKm?.let { String.format(locale, "%.1f km", it) },
+                        trip.minutesLeft?.let { "$it min" }
+                    ).joinToString(" · ").ifEmpty { "—" }
+                    showMe -> stringResource(R.string.home_map_live)
+                    else -> stringResource(R.string.home_map_last)
+                },
+                style = V.text(14.sp, FontWeight.SemiBold),
+                color = Color(0xFF1F2A33),
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )

@@ -308,13 +308,17 @@ class SoundFamiliesTest {
         assertEquals("music_crowd", SoundFamilies.audioClass(SoundFamily.CONTEXT, "Music"))
         assertNull(SoundFamilies.audioClass(SoundFamily.WEAPON, "Explosion"))
         kotlin.test.assertFailsWith<IllegalArgumentException> { SoundFamilies.heard(FloatArray(2), labels) }
+        val (voice, music) = SoundFamilies.ambience(floatArrayOf(0.9f, 0.7f, 0.2f, 0.31f, 0.4f, 0.0f, 0.5f, 0.1f), labels)
+        assertEquals(0.9f, voice)
+        assertEquals(0.4f, music)
+        kotlin.test.assertFailsWith<IllegalArgumentException> { SoundFamilies.ambience(FloatArray(2), labels) }
     }
 
     @Test fun `toutes les classes existent dans yamnet`() {
         val f = java.io.File("../app/src/main/assets/yamnet_labels.txt")
         if (!f.exists()) return
         val all = f.readLines().toSet()
-        SoundFamilies.LABELS.values.flatten().forEach { assertTrue(it in all, "classe absente de YAMNet : $it") }
+        (SoundFamilies.LABELS.values.flatten() + SoundFamilies.VOICE + SoundFamilies.MUSIC).forEach { assertTrue(it in all, "classe absente de YAMNet : $it") }
     }
 }
 

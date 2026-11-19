@@ -133,6 +133,7 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                         }
                         Screen.ONBOARDING -> OnboardingScreen(
                             onboarding,
+                            listen,
                             onSos = { app.controller.send { Input.Sos(it) } },
                             onDone = { screen = Screen.HOME }
                         )

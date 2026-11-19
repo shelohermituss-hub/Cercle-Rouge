@@ -522,7 +522,6 @@
     <string name="settings_brain_tier_full">full</string>
     <string name="settings_brain_ears">Sounds: YAMNet on the phone (screams, blows, gunshots, vehicles, parties).</string>
     <string name="settings_brain_rules">Reasoning: local rules, always checked by the guard.</string>
-    <string name="settings_brain_llm_missing">Language model: not installed yet. The app is complete without it.</string>
     <string name="v_step_of">Step %1$d / %2$d</string>
     <string name="v_delete">Delete</string>
     <string name="v_skip">Skip</string>
@@ -760,4 +759,19 @@
         <item quantity="one">Add a contact · %d place</item>
         <item quantity="other">Add a contact · %d places</item>
     </plurals>
+    <string name="brain_model_section">Language model (optional)</string>
+    <string name="brain_model_about">Gemma 3 (270M) runs on your phone, offline. It helps the watcher explain and can suggest an extra check; it can never remove a protection.</string>
+    <string name="brain_model_absent">Not installed: the watcher uses its rules.</string>
+    <string name="brain_model_downloading">Downloading… %1$d%%</string>
+    <string name="brain_model_verifying">Checking the fingerprint…</string>
+    <string name="brain_model_ready">Installed and verified (304 MB).</string>
+    <string name="brain_model_failed_hash">File refused: wrong model or damaged.</string>
+    <string name="brain_model_failed_network">Download interrupted. It will resume on Wi-Fi.</string>
+    <string name="brain_model_use">Use the model</string>
+    <string name="brain_model_use_sub">When off, the watcher keeps its rules.</string>
+    <string name="brain_model_delete">Delete the model</string>
+    <string name="brain_model_cancel">Cancel</string>
+    <string name="brain_model_download">Download on Wi-Fi (304 MB)</string>
+    <string name="brain_model_import">Import a file</string>
+    <string name="brain_model_note">Phones with 4 GB of memory or more. The file is checked before each use. Gemma terms of use: ai.google.dev/gemma/terms</string>
 </resources>

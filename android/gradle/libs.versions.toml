@@ -26,8 +26,10 @@ maplibre = "13.7.1"
 playServicesLocation = "21.4.0"
 orbmotion = "1.0.1"
 litert = "2.3.2"
+litertlm = "0.19.1"
 
 [libraries]
+litertlm = { module = "com.google.ai.edge.litertlm:litertlm-android", version.ref = "litertlm" }
 litert = { module = "com.google.ai.edge.litert:litert", version.ref = "litert" }
 androidx-work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }

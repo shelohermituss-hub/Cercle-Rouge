@@ -523,7 +523,6 @@
     <string name="settings_brain_tier_full">complet</string>
     <string name="settings_brain_ears">Sons : YAMNet dans le téléphone (cris, coups, tirs, véhicules, fête).</string>
     <string name="settings_brain_rules">Raisonnement : règles locales, toujours sous le contrôle de la garde.</string>
-    <string name="settings_brain_llm_missing">Modèle de langage : pas encore installé. L\'app reste complète sans lui.</string>
     <string name="v_step_of">Étape %1$d / %2$d</string>
     <string name="v_delete">Effacer</string>
     <string name="v_skip">Passer</string>
@@ -761,4 +760,19 @@
         <item quantity="one">Ajouter un proche · %d place</item>
         <item quantity="other">Ajouter un proche · %d places</item>
     </plurals>
+    <string name="brain_model_section">Modèle de langage (facultatif)</string>
+    <string name="brain_model_about">Gemma 3 (270 M) tourne dans ton téléphone, sans réseau. Il aide le veilleur à expliquer et peut proposer une vérification en plus ; il ne peut jamais retirer une protection.</string>
+    <string name="brain_model_absent">Pas installé : le veilleur utilise ses règles.</string>
+    <string name="brain_model_downloading">Téléchargement… %1$d %%</string>
+    <string name="brain_model_verifying">Vérification de l\'empreinte…</string>
+    <string name="brain_model_ready">Installé et vérifié (304 Mo).</string>
+    <string name="brain_model_failed_hash">Fichier refusé : ce n\'est pas le bon modèle ou il est abîmé.</string>
+    <string name="brain_model_failed_network">Téléchargement interrompu. Il reprendra en Wi-Fi.</string>
+    <string name="brain_model_use">Utiliser le modèle</string>
+    <string name="brain_model_use_sub">Coupé, le veilleur garde ses règles.</string>
+    <string name="brain_model_delete">Supprimer le modèle</string>
+    <string name="brain_model_cancel">Annuler</string>
+    <string name="brain_model_download">Télécharger en Wi-Fi (304 Mo)</string>
+    <string name="brain_model_import">Importer un fichier</string>
+    <string name="brain_model_note">Téléphones de 4 Go de mémoire ou plus. Le fichier est vérifié avant chaque usage. Conditions d\'utilisation de Gemma : ai.google.dev/gemma/terms</string>
 </resources>

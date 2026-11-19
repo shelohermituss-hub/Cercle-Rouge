@@ -60,11 +60,14 @@ import com.cerclerouge.app.server.ServerSync
 import com.cerclerouge.app.server.SupabaseApi
 import com.cerclerouge.app.settings.DataControl
 import com.cerclerouge.app.settings.EmergencyNumberRepository
+import com.cerclerouge.app.ui.components.DangerOutlineButton
+import com.cerclerouge.app.ui.components.OutlineButton
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PxButton
 import com.cerclerouge.app.ui.components.PxCheck
 import com.cerclerouge.app.ui.components.PxPanel
 import com.cerclerouge.app.ui.components.PxVariant
+import com.cerclerouge.app.ui.components.ToggleRow
 import com.cerclerouge.app.ui.home.PinDialog
 import com.cerclerouge.app.ui.theme.Cr
 import com.cerclerouge.app.ui.theme.PxType
@@ -109,7 +112,8 @@ class SettingsViewModel @Inject constructor(
     val emergency: EmergencyNumberRepository,
     val protectionWatch: com.cerclerouge.app.server.ProtectionWatch,
     val restore: com.cerclerouge.app.account.AccountRestore,
-    val appearance: com.cerclerouge.app.settings.Appearance
+    val appearance: com.cerclerouge.app.settings.Appearance,
+    val model: com.cerclerouge.app.brain.ModelStore
 ) : ViewModel() {
     private val _ui = MutableStateFlow(SettingsUi())
     val ui: StateFlow<SettingsUi> = _ui
@@ -507,7 +511,8 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             )
             Text(stringResource(R.string.settings_brain_ears), style = PxType.body)
             Text(stringResource(R.string.settings_brain_rules), style = PxType.body)
-            Text(stringResource(R.string.settings_brain_llm_missing), style = PxType.caption, color = c.muted)
+            Section(R.string.brain_model_section)
+            BrainModelSection(vm.model)
         }
         SettingsPage.APPEARANCE -> SubPage(stringResource(R.string.settings_section_appearance), { page = SettingsPage.MAIN }) {
             ui.message?.let {
@@ -916,4 +921,56 @@ internal fun SettingsMain(
             com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_chat, stringResource(R.string.v_set_help), onHelp)
         }
     }
+}
+
+/**
+ * Le modèle de langage (ADR-0029) : état, téléchargement en Wi-Fi, import d'un fichier, suppression, interrupteur.
+ * Sans modèle, le veilleur raisonne avec ses règles ; la protection est la même dans les deux cas.
+ */
+@Composable
+private fun BrainModelSection(store: com.cerclerouge.app.brain.ModelStore) {
+    val c = Cr.colors
+    val state by store.state.collectAsState()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var enabled by remember { mutableStateOf(store.enabled) }
+    val picker = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri -> uri?.let { scope.launch { store.import(it) } } }
+    val status = when (val st = state) {
+        com.cerclerouge.app.brain.ModelState.Absent -> stringResource(R.string.brain_model_absent)
+        is com.cerclerouge.app.brain.ModelState.Downloading -> stringResource(R.string.brain_model_downloading, st.percent)
+        com.cerclerouge.app.brain.ModelState.Verifying -> stringResource(R.string.brain_model_verifying)
+        com.cerclerouge.app.brain.ModelState.Ready -> stringResource(R.string.brain_model_ready)
+        is com.cerclerouge.app.brain.ModelState.Failed -> stringResource(
+            if (st.reason ==
+                com.cerclerouge.app.brain.ModelStore.REASON_HASH
+            ) {
+                R.string.brain_model_failed_hash
+            } else {
+                R.string.brain_model_failed_network
+            }
+        )
+    }
+    Text(stringResource(R.string.brain_model_about), style = PxType.body)
+    Text(
+        status,
+        style = PxType.bodyBold,
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+    )
+    when (state) {
+        com.cerclerouge.app.brain.ModelState.Ready -> {
+            ToggleRow(stringResource(R.string.brain_model_use), stringResource(R.string.brain_model_use_sub), enabled) {
+                enabled = it
+                store.enabled = it
+            }
+            DangerOutlineButton(stringResource(R.string.brain_model_delete), { store.delete() }, Modifier.fillMaxWidth())
+        }
+        is com.cerclerouge.app.brain.ModelState.Downloading, com.cerclerouge.app.brain.ModelState.Verifying ->
+            OutlineButton(stringResource(R.string.brain_model_cancel), { store.delete() }, Modifier.fillMaxWidth())
+        else -> {
+            OutlineButton(stringResource(R.string.brain_model_download), { store.download() }, Modifier.fillMaxWidth())
+            OutlineButton(stringResource(R.string.brain_model_import), { picker.launch(arrayOf("*/*")) }, Modifier.fillMaxWidth())
+        }
+    }
+    Text(stringResource(R.string.brain_model_note), style = PxType.caption, color = c.muted)
 }

@@ -62,9 +62,11 @@ class RiskBrain @Inject constructor(
     private val audio: com.cerclerouge.app.audio.AudioListener,
     private val log: EventLog,
     private val clock: Clock,
-    private val contacts: com.cerclerouge.app.contacts.ContactsRepository
+    private val contacts: com.cerclerouge.app.contacts.ContactsRepository,
+    private val gemma: com.cerclerouge.app.brain.GemmaReasoner
 ) {
-    private val brain = BrainOrchestrator()
+    // Règles d'abord ; le modèle de langage (s'il est installé et permis) ne peut qu'ajouter (ADR-0029).
+    private val brain = BrainOrchestrator(com.cerclerouge.brain.CombinedReasoner(com.cerclerouge.brain.RuleReasoner, gemma))
     private val _thought = MutableStateFlow<com.cerclerouge.brain.Thought?>(null)
 
     /** Dernière réflexion du cerveau au-dessus du plancher (explication du visualiseur « Veilleur »), null sans rien. */
@@ -228,6 +230,7 @@ class RiskBrain @Inject constructor(
                 tripHold = null
                 brain.reset()
             }
+            gemma.release()
             _decision.value = null
             _thought.value = null
             return

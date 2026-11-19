@@ -523,7 +523,6 @@
     <string name="settings_brain_tier_full">konplè</string>
     <string name="settings_brain_ears">Son: YAMNet nan telefòn nan (rele, kou, tire, machin, fèt).</string>
     <string name="settings_brain_rules">Rezonman: règ lokal, gad la toujou kontwole yo.</string>
-    <string name="settings_brain_llm_missing">Modèl langaj: poko enstale. Aplikasyon an konplè san li.</string>
     <string name="v_step_of">Etap %1$d / %2$d</string>
     <string name="v_delete">Efase</string>
     <string name="v_skip">Sote</string>
@@ -761,4 +760,19 @@
         <item quantity="one">Ajoute yon moun · %d plas</item>
         <item quantity="other">Ajoute yon moun · %d plas</item>
     </plurals>
+    <string name="brain_model_section">Modèl langaj (si ou vle)</string>
+    <string name="brain_model_about">Gemma 3 (270 M) mache nan telefòn ou, san rezo. Li ede veyè a esplike epi li ka pwopoze yon verifikasyon anplis ; li pa janm ka retire yon pwoteksyon.</string>
+    <string name="brain_model_absent">Pa enstale : veyè a sèvi ak règ li yo.</string>
+    <string name="brain_model_downloading">Ap telechaje… %1$d %%</string>
+    <string name="brain_model_verifying">N ap verifye anprent lan…</string>
+    <string name="brain_model_ready">Enstale epi verifye (304 Mo).</string>
+    <string name="brain_model_failed_hash">Fichye a refize : se pa bon modèl la oswa li domaje.</string>
+    <string name="brain_model_failed_network">Telechajman an kanpe. L ap repran sou Wi-Fi.</string>
+    <string name="brain_model_use">Sèvi ak modèl la</string>
+    <string name="brain_model_use_sub">Lè l etenn, veyè a kenbe règ li yo.</string>
+    <string name="brain_model_delete">Efase modèl la</string>
+    <string name="brain_model_cancel">Anile</string>
+    <string name="brain_model_download">Telechaje sou Wi-Fi (304 Mo)</string>
+    <string name="brain_model_import">Enpòte yon fichye</string>
+    <string name="brain_model_note">Telefòn ki gen 4 Go memwa oswa plis. Yo verifye fichye a anvan chak itilizasyon. Kondisyon itilizasyon Gemma : ai.google.dev/gemma/terms</string>
 </resources>

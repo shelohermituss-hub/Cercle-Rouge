@@ -28,3 +28,11 @@ ou être manipulé (un agresseur qui dit « annule l'alerte »). Il faut lui don
 + L'app reste pleinement protectrice sans modèle (téléphone modeste, fichier non téléchargé ou corrompu).
 − Un modèle de 270 M paramètres reste limité : décisions et réponses courtes, pas de longue conversation libre.
 − Le téléchargement de 304 Mo est lourd pour les forfaits mobiles : proposé, jamais imposé, Wi-Fi par défaut.
+
+## Note d'implémentation (2026-11-19, v0.8.0)
+
+Gemma 3 270M (q8, format LiteRT-LM, 304 Mo) est intégré sans être embarqué dans l'APK : téléchargement en Wi-Fi seulement
+ou import d'un fichier, SHA-256 vérifié avant chaque chargement. `CombinedReasoner` applique la règle de cette décision : les
+règles décident d'abord, le modèle ne peut qu'ajouter des actions de la liste fermée, tout passe par la garde, et une panne,
+une lenteur (> 3 s) ou un téléphone de moins de 4 Go laissent les règles seules. La qualité des réponses du modèle n'a pas
+encore été mesurée (banc IA.1 à faire sur téléphone réel).

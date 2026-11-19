@@ -378,3 +378,70 @@ class VeilleurTest {
         assertTrue(v.answer("recette du riz", on).text.contains("114"))
     }
 }
+
+class CombinedReasonerTest {
+    private val t0 = java.time.Instant.parse("2026-11-19T20:00:00Z")
+
+    private class FakeLlm(var answer: Thought?, val fail: Boolean = false) : AsyncReasoner {
+        override val version = "fake-llm"
+        var requests = 0
+
+        override fun request(events: List<SituationEvent>, ctx: SituationContext, now: java.time.Instant) {
+            requests++
+            if (fail) error("panne")
+        }
+
+        override fun result(since: java.time.Instant): Thought? = if (fail) error("panne") else answer
+    }
+
+    @Test fun `les regles decident toujours`() {
+        val events = listOf(SituationEvent.Keyword(t0, 0.9), SituationEvent.Motion(t0, MotionKind.SNATCH, 0.9))
+        // Le modèle répond « rien » : l'alerte des règles reste.
+        val llm = FakeLlm(Thought(listOf(BrainAction(ActionKind.NOTHING)), "tout va bien", "m"))
+        val t = CombinedReasoner(RuleReasoner, llm).think(events, SituationContext(), t0)
+        assertTrue(t.actions.any { it.kind == ActionKind.RAISE_LEVEL })
+        assertEquals(1, llm.requests)
+        assertEquals("rules-1+fake-llm", CombinedReasoner(RuleReasoner, llm).version)
+    }
+
+    @Test fun `le modele peut ajouter une action et expliquer`() {
+        val events = listOf(SituationEvent.Sound(t0, SoundFamily.CONTEXT, "Music", 0.9))
+        val llm =
+            FakeLlm(
+                Thought(
+                    listOf(BrainAction(ActionKind.ASK_VERIFICATION, text = "Tout va bien ?")),
+                    "Musique forte et cri bref : je vérifie.",
+                    "m"
+                )
+            )
+        val t = CombinedReasoner(RuleReasoner, llm).think(events, SituationContext(), t0)
+        assertEquals(listOf(ActionKind.ASK_VERIFICATION), t.actions.map { it.kind })
+        assertEquals("Musique forte et cri bref : je vérifie.", t.explanation)
+    }
+
+    @Test fun `explication dangereuse ignoree`() {
+        val base = Thought(listOf(BrainAction(ActionKind.NOTHING)), "calme", "r")
+        val bad = Thought(emptyList(), "Appelle le +509 3712 3456 http://x.y", "m")
+        assertEquals("calme", CombinedReasoner.merge(base, bad).explanation)
+        assertEquals(listOf(ActionKind.NOTHING), CombinedReasoner.merge(base, bad).actions.map { it.kind })
+    }
+
+    @Test fun `modele en panne ou absent sans effet`() {
+        val events = listOf(SituationEvent.Keyword(t0, 0.9))
+        val rules = RuleReasoner.think(events, SituationContext(), t0)
+        assertEquals(rules, CombinedReasoner(RuleReasoner, FakeLlm(null, fail = true)).think(events, SituationContext(), t0))
+        assertEquals(rules, CombinedReasoner(RuleReasoner, FakeLlm(null)).think(events, SituationContext(), t0))
+        assertEquals(rules, CombinedReasoner(RuleReasoner, null).think(events, SituationContext(), t0))
+    }
+
+    @Test fun `lecture de la sortie du modele`() {
+        val r = ModelOutput.read(
+            "Je pense que :\ndemander_verification(message=\"Ça va ?\")\nappeler_secours()\nexpliquer(texte=\"Cri entendu.\")",
+            "m"
+        )
+        assertEquals(listOf(ActionKind.ASK_VERIFICATION, ActionKind.EXPLAIN), r.thought.actions.map { it.kind })
+        assertEquals("Cri entendu.", r.thought.explanation)
+        assertEquals(listOf("appeler_secours"), r.unknown)
+        assertTrue(ModelOutput.prompt("contexte: x").startsWith("Situation :"))
+    }
+}

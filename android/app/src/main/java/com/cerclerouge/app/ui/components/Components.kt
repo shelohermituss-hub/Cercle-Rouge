@@ -1,6 +1,5 @@
 package com.cerclerouge.app.ui.components
 
-import androidx.compose.ui.unit.isSpecified
 import android.provider.Settings
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -83,6 +82,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import com.cerclerouge.app.R
 import com.cerclerouge.app.ui.theme.Cr

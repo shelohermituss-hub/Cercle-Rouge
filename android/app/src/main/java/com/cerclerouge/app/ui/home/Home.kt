@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -89,7 +88,6 @@ import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PxButton
 import com.cerclerouge.app.ui.components.PxPanel
 import com.cerclerouge.app.ui.components.PxVariant
-import com.cerclerouge.app.ui.components.Shield3D
 import com.cerclerouge.app.ui.components.SosBar
 import com.cerclerouge.app.ui.components.V
 import com.cerclerouge.app.ui.components.cappedScale
@@ -544,40 +542,98 @@ private fun HeroCard(
         device.lowBattery -> device.batteryPct?.let { stringResource(R.string.status_battery, it) }
         else -> null
     }
-    val never = stringResource(R.string.status_never)
-    Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp).fillMaxWidth().heightIn(min = 200.dp).heroCard()) {
-        Shield3D(on = armed, height = 112.dp, modifier = Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 22.dp))
+    // Troisième repère : le premier capteur en défaut (GPS, réseau, batterie), sinon « OK ».
+    val (sensorValue, sensorLabel) = when {
+        !device.gpsEnabled -> stringResource(R.string.hero_off_value) to stringResource(R.string.hero_gps)
+        device.network == com.cerclerouge.sensor.NetworkKind.NONE -> stringResource(R.string.hero_none_value) to
+            stringResource(R.string.hero_network)
+        device.lowBattery && device.batteryPct != null -> "${device.batteryPct} %" to stringResource(R.string.hero_battery)
+        else -> stringResource(R.string.hero_ok_value) to stringResource(R.string.hero_sensors)
+    }
+    val title = stringResource(if (armed) R.string.home_protected_title else R.string.home_off_title)
+    Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp).fillMaxWidth().heroCard()) {
         Column(
-            Modifier.padding(start = 20.dp, top = 18.dp, bottom = 66.dp).width(210.dp).clickable(role = Role.Button, onClick = onHistory),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            Modifier.fillMaxWidth().clickable(role = Role.Button, onClickLabel = stringResource(R.string.hero_history), onClick = onHistory)
+                .padding(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            StatusRing(armed, Modifier.size(132.dp))
             Text(
-                stringResource(if (armed) R.string.home_protected_title else R.string.home_off_title),
-                style = V.text(21.sp, FontWeight.SemiBold, 26.sp, -0.014f),
+                title,
+                style = V.text(22.sp, FontWeight.SemiBold, 28.sp, -0.014f),
                 color = c.ink,
-                modifier = Modifier.semantics { heading() }
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.padding(top = 10.dp).semantics { heading() }
             )
-            com.cerclerouge.app.ui.components.Bullets(
-                buildList {
-                    if (armed) {
-                        add(stringResource(R.string.v_since) to (since ?: "—"))
-                    } else {
-                        add(
-                            stringResource(R.string.v_last_out) to (lastOut ?: never)
-                        )
-                    }
-                    add(stringResource(R.string.v_ready) to contactsReady.toString())
-                }
+            Text(
+                stringResource(if (armed) R.string.hero_watching else R.string.hero_off_sub),
+                style = V.text(15.sp, line = 21.sp),
+                color = c.muted,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.padding(top = 2.dp)
             )
-            issue?.let { Text("·  $it", style = V.text(15.sp, line = 22.sp), color = c.warn) }
+            Box(Modifier.padding(top = 14.dp).fillMaxWidth().height(1.dp).background(Color(0xFFF0F2F5)))
+            Row(Modifier.fillMaxWidth()) {
+                HeroStat(if (armed) since ?: "—" else "—", stringResource(R.string.hero_since), c.ink, Modifier.weight(1f))
+                HeroStat(contactsReady.toString(), stringResource(R.string.hero_ready), c.ink, Modifier.weight(1f))
+                HeroStat(
+                    sensorValue,
+                    sensorLabel,
+                    if (sensorLabel == stringResource(R.string.hero_sensors)) c.calmText else c.warn,
+                    Modifier.weight(1f)
+                )
+            }
         }
+        // SOS compact, en haut à droite, toujours à portée du pouce : même geste (maintenir 1,5 s) que partout.
         SosBar(
             onTrigger = onSosTrigger,
             onTap = onSosTap,
-            modifier = Modifier.align(Alignment.BottomCenter),
-            shape = RoundedCornerShape(bottomStart = 34.dp, bottomEnd = 34.dp),
-            minHeight = 54.dp
+            modifier = Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 14.dp).width(92.dp),
+            shape = RoundedCornerShape(24.dp),
+            minHeight = 48.dp,
+            hint = false,
+            labelSize = 16.sp
         )
+    }
+}
+
+/**
+ * Anneau d'état (maquette B) : le cercle de l'emblème devient l'indicateur. Vert et plein quand la protection est active
+ * (il se remplit à l'activation), gris quand elle est coupée ; emblème officiel au centre, en couleurs ou éteint.
+ */
+@Composable
+internal fun StatusRing(armed: Boolean, modifier: Modifier = Modifier, emblem: androidx.compose.ui.unit.Dp = 80.dp) {
+    val fill by androidx.compose.animation.core.animateFloatAsState(
+        if (armed) 1f else 0f,
+        androidx.compose.animation.core.tween(if (com.cerclerouge.app.ui.components.reduceMotion()) 0 else 700),
+        label = "ring"
+    )
+    Box(modifier.clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
+        androidx.compose.foundation.Canvas(Modifier.matchParentSize()) {
+            val w = size.minDimension * 8f / 132f
+            val inset = w / 2
+            val arcSize = androidx.compose.ui.geometry.Size(size.width - w, size.height - w)
+            val tl = androidx.compose.ui.geometry.Offset(inset, inset)
+            val stroke = androidx.compose.ui.graphics.drawscope.Stroke(w, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+            drawArc(if (armed) Color(0xFFDDF2CC) else Color(0xFFE4E8EE), 0f, 360f, false, tl, arcSize, style = stroke)
+            if (fill > 0f) drawArc(Color(0xFF4D7C0F), -90f, 360f * fill, false, tl, arcSize, style = stroke)
+        }
+        if (armed) {
+            com.cerclerouge.app.ui.components.LogoMark(emblem, animated = true)
+        } else {
+            com.cerclerouge.app.ui.components.LogoMark(emblem, color = Color(0xFFB3BECA), deep = Color(0xFFC9D1DA))
+        }
+    }
+}
+
+@Composable
+private fun HeroStat(value: String, label: String, valueColor: Color, modifier: Modifier = Modifier) {
+    Column(
+        modifier.padding(vertical = 10.dp).semantics(mergeDescendants = true) {},
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(value, style = V.text(17.sp, FontWeight.SemiBold), color = valueColor, maxLines = 1)
+        Text(label, style = V.text(12.sp), color = Cr.colors.muted, maxLines = 1)
     }
 }
 

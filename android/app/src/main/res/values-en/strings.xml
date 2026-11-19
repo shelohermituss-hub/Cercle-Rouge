@@ -383,7 +383,6 @@
     <string name="status_gps_off">GPS off</string>
     <string name="status_net_none">No network</string>
     <string name="status_battery">Battery %1$d%%</string>
-    <string name="status_never">never</string>
     <string name="history_open">Alert and trip history</string>
     <string name="history_title">History</string>
     <string name="history_empty">Nothing yet.</string>
@@ -612,9 +611,6 @@
     <string name="v_stat_walk">Walking</string>
     <string name="v_watcher_sleep">The watcher wakes up with protection. You can talk to it at any time.</string>
     <string name="v_profile">My profile</string>
-    <string name="v_since">Since: </string>
-    <string name="v_last_out">Last outing: </string>
-    <string name="v_ready">People ready: </string>
     <string name="v_trip_running">Trip in progress</string>
     <string name="v_last_position">Last position</string>
     <string name="v_level_title">Sound level</string>
@@ -776,4 +772,16 @@
     <string name="brain_model_note">Phones with 4 GB of memory or more. The file is checked before each use. Gemma terms of use: ai.google.dev/gemma/terms</string>
     <string name="brain_model_waiting_wifi">Waiting for Wi-Fi: the download (304 MB) will start on its own as soon as you are on Wi-Fi.</string>
     <string name="brain_model_mobile">Download with mobile data (304 MB)</string>
+    <string name="hero_watching">Your circle is watching over you</string>
+    <string name="hero_off_sub">Tap the button below to turn it on</string>
+    <string name="hero_since">Since</string>
+    <string name="hero_ready">Contacts ready</string>
+    <string name="hero_gps">GPS</string>
+    <string name="hero_network">Network</string>
+    <string name="hero_battery">Battery</string>
+    <string name="hero_sensors">Sensors</string>
+    <string name="hero_off_value">Off</string>
+    <string name="hero_none_value">None</string>
+    <string name="hero_ok_value">OK</string>
+    <string name="hero_history">see history</string>
 </resources>

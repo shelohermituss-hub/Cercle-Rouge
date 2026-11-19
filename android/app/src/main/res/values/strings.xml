@@ -384,7 +384,6 @@
     <string name="status_gps_off">GPS coupé</string>
     <string name="status_net_none">Sans réseau</string>
     <string name="status_battery">Batterie %1$d %%</string>
-    <string name="status_never">jamais</string>
     <string name="history_open">Historique des alertes et trajets</string>
     <string name="history_title">Historique</string>
     <string name="history_empty">Rien pour l\'instant.</string>
@@ -613,9 +612,6 @@
     <string name="v_stat_walk">Marche</string>
     <string name="v_watcher_sleep">Le veilleur se réveille avec la protection. Tu peux lui parler à tout moment.</string>
     <string name="v_profile">Mon profil</string>
-    <string name="v_since">Depuis : </string>
-    <string name="v_last_out">Dernière sortie : </string>
-    <string name="v_ready">Proches prêts : </string>
     <string name="v_trip_running">Trajet en cours</string>
     <string name="v_last_position">Dernière position</string>
     <string name="v_level_title">Niveau sonore</string>
@@ -777,4 +773,16 @@
     <string name="brain_model_note">Téléphones de 4 Go de mémoire ou plus. Le fichier est vérifié avant chaque usage. Conditions d\'utilisation de Gemma : ai.google.dev/gemma/terms</string>
     <string name="brain_model_waiting_wifi">En attente du Wi-Fi : le téléchargement (304 Mo) démarrera tout seul dès que tu seras en Wi-Fi.</string>
     <string name="brain_model_mobile">Télécharger avec les données mobiles (304 Mo)</string>
+    <string name="hero_watching">Ton cercle veille sur toi</string>
+    <string name="hero_off_sub">Touche le bouton du bas pour l\'activer</string>
+    <string name="hero_since">Depuis</string>
+    <string name="hero_ready">Proches prêts</string>
+    <string name="hero_gps">GPS</string>
+    <string name="hero_network">Réseau</string>
+    <string name="hero_battery">Batterie</string>
+    <string name="hero_sensors">Capteurs</string>
+    <string name="hero_off_value">Coupé</string>
+    <string name="hero_none_value">Aucun</string>
+    <string name="hero_ok_value">OK</string>
+    <string name="hero_history">voir l\'historique</string>
 </resources>

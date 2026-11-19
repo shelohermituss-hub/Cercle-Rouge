@@ -384,7 +384,6 @@
     <string name="status_gps_off">GPS koupe</string>
     <string name="status_net_none">San rezo</string>
     <string name="status_battery">Batri %1$d %%</string>
-    <string name="status_never">jamè</string>
     <string name="history_open">Istwa alèt ak trajè</string>
     <string name="history_title">Istwa</string>
     <string name="history_empty">Anyen pou kounye a.</string>
@@ -613,9 +612,6 @@
     <string name="v_stat_walk">Mache</string>
     <string name="v_watcher_sleep">Veyè a reveye ak pwoteksyon an. Ou ka pale avè l nenpòt lè.</string>
     <string name="v_profile">Pwofil mwen</string>
-    <string name="v_since">Depi: </string>
-    <string name="v_last_out">Dènye sòti: </string>
-    <string name="v_ready">Moun pare: </string>
     <string name="v_trip_running">Wout an kou</string>
     <string name="v_last_position">Dènye pozisyon</string>
     <string name="v_level_title">Nivo son</string>
@@ -777,4 +773,16 @@
     <string name="brain_model_note">Telefòn ki gen 4 Go memwa oswa plis. Yo verifye fichye a anvan chak itilizasyon. Kondisyon itilizasyon Gemma : ai.google.dev/gemma/terms</string>
     <string name="brain_model_waiting_wifi">N ap tann Wi-Fi : telechajman an (304 Mo) ap kòmanse pou kont li depi ou sou Wi-Fi.</string>
     <string name="brain_model_mobile">Telechaje ak done mobil (304 Mo)</string>
+    <string name="hero_watching">Sèk ou a ap veye sou ou</string>
+    <string name="hero_off_sub">Peze bouton anba a pou w aktive l</string>
+    <string name="hero_since">Depi</string>
+    <string name="hero_ready">Pwòch ki pare</string>
+    <string name="hero_gps">GPS</string>
+    <string name="hero_network">Rezo</string>
+    <string name="hero_battery">Batri</string>
+    <string name="hero_sensors">Detektè</string>
+    <string name="hero_off_value">Etenn</string>
+    <string name="hero_none_value">Okenn</string>
+    <string name="hero_ok_value">OK</string>
+    <string name="hero_history">wè istorik la</string>
 </resources>

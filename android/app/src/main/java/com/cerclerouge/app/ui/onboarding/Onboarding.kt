@@ -83,7 +83,6 @@ import com.cerclerouge.app.ui.components.PinDots
 import com.cerclerouge.app.ui.components.PixelIcon
 import com.cerclerouge.app.ui.components.PixelIconView
 import com.cerclerouge.app.ui.components.SectionLabel
-import com.cerclerouge.app.ui.components.Shield3D
 import com.cerclerouge.app.ui.components.SketchMap
 import com.cerclerouge.app.ui.components.SosBar
 import com.cerclerouge.app.ui.components.StepBar
@@ -495,27 +494,25 @@ private fun MockHome(onSos: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, top = 26.dp)) {
         com.cerclerouge.app.ui.home.Wordmark(height = 26.dp)
         Box(Modifier.padding(top = 14.dp).fillMaxWidth().height(150.dp).heroCard(28.dp)) {
-            Column(Modifier.padding(14.dp).width(140.dp)) {
-                Text(stringResource(R.string.v_protected_f), style = V.text(16.sp, FontWeight.SemiBold), color = Cr.colors.ink)
+            Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                com.cerclerouge.app.ui.home.StatusRing(true, Modifier.size(76.dp), emblem = 46.dp)
                 Text(
-                    stringResource(R.string.v_onb1_mock_since),
-                    style = V.text(12.sp, line = 17.sp),
-                    color = Cr.colors.muted,
-                    modifier = Modifier.padding(top = 4.dp)
+                    stringResource(R.string.v_protected_f),
+                    style = V.text(16.sp, FontWeight.SemiBold),
+                    color = Cr.colors.ink,
+                    modifier = Modifier.padding(top = 6.dp)
                 )
+                Text(stringResource(R.string.v_onb1_mock_since), style = V.text(12.sp, line = 17.sp), color = Cr.colors.muted)
             }
-            Shield3D(true, 76.dp, Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 16.dp))
             SosBar(
                 onTrigger = onSos,
                 onTap = {
                 },
-                modifier = Modifier.align(
-                    Alignment.BottomCenter
-                ),
-                shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp),
-                minHeight = 40.dp,
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 10.dp).width(64.dp),
+                shape = RoundedCornerShape(18.dp),
+                minHeight = 36.dp,
                 hint = false,
-                labelSize = 15.sp
+                labelSize = 13.sp
             )
         }
         Row(Modifier.padding(top = 12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {

@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -421,8 +423,7 @@ internal fun PinDialog(
 @Composable
 internal fun PinContent(pin: String, error: Boolean, reason: String, showBio: Boolean, onBack: () -> Unit, onDigit: (String) -> Unit, onDelete: () -> Unit, onBio: () -> Unit) {
     val c = Cr.colors
-    Column(Modifier.fillMaxSize().background(c.surface).padding(bottom = 28.dp)) {
-        Spacer(Modifier.height(24.dp))
+    Column(Modifier.fillMaxSize().background(c.surface).windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing).padding(bottom = 28.dp)) {
         BackHeader(stringResource(R.string.v_your_code), onBack)
         Column(Modifier.fillMaxWidth().padding(top = 30.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             GlassIcon(R.drawable.glass_shield, 64.dp)

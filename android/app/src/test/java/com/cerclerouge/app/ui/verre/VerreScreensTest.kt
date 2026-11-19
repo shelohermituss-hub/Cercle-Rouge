@@ -232,4 +232,40 @@ class VerreScreensTest {
     @Test fun pin() = capture("VerrePin") {
         com.cerclerouge.app.ui.home.PinContent("123", true, "Entre ton code pour confirmer que tu es en sécurité.", true, {}, {}, {}, {})
     }
+
+    @Test fun settings() = capture("VerreReglages") {
+        androidx.compose.foundation.layout.Column(Modifier.fillMaxSize()) {
+            Box(Modifier.weight(1f)) { com.cerclerouge.app.ui.settings.SettingsMain({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}) }
+            com.cerclerouge.app.ui.components.MainNav(com.cerclerouge.app.ui.components.Tab.SETTINGS, {}, armed = true, onToggle = {}, insets = false)
+        }
+    }
+
+    @Test fun journal() = capture("VerreJournal") {
+        val now = System.currentTimeMillis()
+        fun e(seq: Long, ago: Long, type: String, payload: String) = com.cerclerouge.privacy.log.ChainedEntry(seq, now - ago * 60_000, type, payload, "p", "h")
+        com.cerclerouge.app.ui.journal.JournalContent(
+            listOf(
+                e(1, 36, "state", "OFF → ARMED_FULL : Arm"),
+                e(2, 28, "audio", "sound family=context p=0.48 model=yamnet-1"),
+                e(3, 22, "brain", "src=rules-1 ok=rien refus=-"),
+                e(4, 9, "state", "ARMED_FULL → ALERT_PENDING : Detection"),
+                e(5, 8, "state", "ALERT_PENDING → ARMED_FULL : ImSafe")
+            ),
+            null,
+            {}
+        )
+    }
+
+    @Test fun history() = capture("VerreHistorique") {
+        val now = System.currentTimeMillis()
+        com.cerclerouge.app.ui.history.HistoryContent(
+            listOf(
+                com.cerclerouge.privacy.db.HistoryEntity("t1", "trip", now - 86_400_000, now - 86_400_000 + 14 * 60_000, "WALK", null, "arrived"),
+                com.cerclerouge.privacy.db.HistoryEntity("a1", "alert", now - 90_000_000, now - 90_000_000 + 3 * 60_000, "DISTRESS_SCREAM", 1, "safe"),
+                com.cerclerouge.privacy.db.HistoryEntity("a2", "alert", now - 600_000_000, now - 600_000_000 + 9 * 60_000, "SOS", 2, "ended")
+            ),
+            {},
+            {}
+        )
+    }
 }

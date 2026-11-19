@@ -215,7 +215,7 @@ class MainActivity : FragmentActivity() { // FragmentActivity : requis par Biome
                         }
                         Screen.SETTINGS -> {
                             BackHandler { screen = Screen.HOME }
-                            TabFrame(com.cerclerouge.app.ui.components.Tab.SETTINGS, { screen = it }) { SettingsScreen(settingsVm, onBack = { screen = Screen.HOME }, onListen = { screen = Screen.LISTEN }) }
+                            TabFrame(com.cerclerouge.app.ui.components.Tab.SETTINGS, { screen = it }) { SettingsScreen(settingsVm, onBack = { screen = Screen.HOME }, onListen = { screen = Screen.LISTEN }, onContacts = { screen = Screen.CONTACTS }, onVault = { screen = Screen.VAULT }) }
                         }
                         Screen.JOURNAL -> {
                             BackHandler { screen = Screen.HOME }

@@ -1,5 +1,7 @@
 package com.cerclerouge.app.ui.settings
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Build
@@ -293,7 +295,7 @@ private enum class Guarded { WIPE, DELETE, BIOMETRIC_ALERTS, SIGN_OUT }
  * export et suppression du compte, fiabilité en arrière-plan, langue, confidentialité. Les actions graves demandent le PIN.
  */
 @Composable
-fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Unit) {
+fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Unit, onContacts: () -> Unit = {}, onVault: () -> Unit = {}) {
     SecureScreen()
     val c = Cr.colors
     val ui by vm.ui.collectAsState()
@@ -316,12 +318,63 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
         }
     }
 
-    Column(Modifier.fillMaxSize()) {
-        TopBar(stringResource(R.string.settings_title), onBack)
-        Column(
-            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+    var page by remember { mutableStateOf(SettingsPage.MAIN) }
+    if (page != SettingsPage.MAIN) androidx.activity.compose.BackHandler { page = SettingsPage.MAIN }
+    val openAppSettings = {
+        runCatching {
+            context.startActivity(Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${context.packageName}".toUri()))
+        }
+    }
+    when (page) {
+        SettingsPage.MAIN -> SettingsMain(
+            onProtection = onListen,
+            onListen = onListen,
+            onTrip = { page = SettingsPage.TRIP },
+            onContacts = onContacts,
+            onVault = onVault,
+            onLanguage = {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    try {
+                        context.startActivity(Intent(AndroidSettings.ACTION_APP_LOCALE_SETTINGS, "package:${context.packageName}".toUri()))
+                    } catch (_: ActivityNotFoundException) {
+                        context.startActivity(Intent(AndroidSettings.ACTION_LOCALE_SETTINGS))
+                    }
+                } else {
+                    context.startActivity(Intent(AndroidSettings.ACTION_LOCALE_SETTINGS))
+                }
+            },
+            onNotifications = {
+                runCatching {
+                    context.startActivity(Intent(AndroidSettings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(AndroidSettings.EXTRA_APP_PACKAGE, context.packageName))
+                }.onFailure { openAppSettings() }
+            },
+            onBrain = { page = SettingsPage.BRAIN },
+            onAppearance = { page = SettingsPage.APPEARANCE },
+            onPrivacy = { page = SettingsPage.PRIVACY },
+            onPermissions = { page = SettingsPage.PERMISSIONS },
+            onHelp = { page = SettingsPage.HELP }
+        )
+            SettingsPage.TRIP -> SubPage(stringResource(R.string.v_set_trip), { page = SettingsPage.MAIN }) {
+            ui.message?.let {
+                Text(
+                    stringResource(it),
+                    style = PxType.bodyBold,
+                    color = c.lime,
+                    modifier = Modifier.semantics {
+                        liveRegion =
+                            LiveRegionMode.Polite
+                    }
+                )
+            }
+
+            Section(R.string.settings_section_message)
+            CustomMessage(ui.customMessage) { vm.setCustomMessage(it) }
+
+            Section(R.string.settings_section_emergency)
+            EmergencySection(vm)
+
+            }
+            SettingsPage.PRIVACY -> SubPage(stringResource(R.string.v_set_privacy), { page = SettingsPage.MAIN }) {
             ui.message?.let {
                 Text(
                     stringResource(it),
@@ -359,17 +412,35 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
                 }
             }
             Toggle(R.string.vault_audio_toggle, R.string.vault_audio_toggle_ex, ui.recording) { vm.setRecording(it) }
-            PxButton(stringResource(R.string.settings_listen), onListen, variant = PxVariant.OUTLINE, icon = PixelIcon.MIC)
+            
+            Section(R.string.settings_section_data)
+            PxButton(stringResource(R.string.settings_export), {
+                saveExport.launch("cercle-rouge-mes-donnees.json")
+            }, variant = PxVariant.OUTLINE)
+            Text(stringResource(R.string.settings_export_ex), style = PxType.caption, color = c.muted)
+            PxButton(stringResource(R.string.settings_privacy), {
+                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, PRIVACY_URL.toUri())) }
+            }, variant = PxVariant.OUTLINE)
+            PxButton(stringResource(R.string.settings_signout), {
+                confirm = Guarded.SIGN_OUT
+            }, variant = PxVariant.OUTLINE, enabled = !ui.busy)
+            PxButton(stringResource(R.string.settings_delete), { confirm = Guarded.DELETE }, variant = PxVariant.DANGER, enabled = !ui.busy)
+            }
+            SettingsPage.PERMISSIONS -> SubPage(stringResource(R.string.v_set_permissions), { page = SettingsPage.MAIN }) {
+            ui.message?.let {
+                Text(
+                    stringResource(it),
+                    style = PxType.bodyBold,
+                    color = c.lime,
+                    modifier = Modifier.semantics {
+                        liveRegion =
+                            LiveRegionMode.Polite
+                    }
+                )
+            }
 
-            Section(R.string.settings_section_message)
-            CustomMessage(ui.customMessage) { vm.setCustomMessage(it) }
-
-            Section(R.string.settings_section_phone)
-            PhoneSection(ui, vm)
-
-            Section(R.string.guardian_req_section)
-            GuardianRequests(ui, vm, onAccept = { guardianAccept = it })
-
+            Section(R.string.v_set_permissions)
+            PxButton(stringResource(R.string.v_open_app_permissions), { openAppSettings() }, variant = PxVariant.OUTLINE)
             Section(R.string.settings_section_security)
             if (bioAvailable) {
                 Toggle(R.string.settings_bio, R.string.settings_bio_ex, ui.biometric) { vm.setBiometric(it) }
@@ -391,6 +462,33 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
                 confirm = Guarded.WIPE
             }, variant = PxVariant.DARK_DANGER, enabled = !ui.busy)
 
+            Section(R.string.settings_section_background)
+            Text(stringResource(BatteryGuide.forDevice()), style = PxType.body)
+            PxButton(stringResource(R.string.settings_battery_open), {
+                runCatching { context.startActivity(Intent(AndroidSettings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
+                    .onFailure { context.startActivity(Intent(AndroidSettings.ACTION_SETTINGS)) }
+            }, variant = PxVariant.OUTLINE)
+
+            Section(R.string.settings_section_phone)
+            PhoneSection(ui, vm)
+
+            Section(R.string.guardian_req_section)
+            GuardianRequests(ui, vm, onAccept = { guardianAccept = it })
+
+            }
+            SettingsPage.BRAIN -> SubPage(stringResource(R.string.settings_section_brain), { page = SettingsPage.MAIN }) {
+            ui.message?.let {
+                Text(
+                    stringResource(it),
+                    style = PxType.bodyBold,
+                    color = c.lime,
+                    modifier = Modifier.semantics {
+                        liveRegion =
+                            LiveRegionMode.Polite
+                    }
+                )
+            }
+
             Section(R.string.settings_section_brain)
             val tier = remember { com.cerclerouge.app.ui.brain.deviceTier(context) }
             Text(
@@ -410,12 +508,19 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             Text(stringResource(R.string.settings_brain_rules), style = PxType.body)
             Text(stringResource(R.string.settings_brain_llm_missing), style = PxType.caption, color = c.muted)
 
-            Section(R.string.settings_section_background)
-            Text(stringResource(BatteryGuide.forDevice()), style = PxType.body)
-            PxButton(stringResource(R.string.settings_battery_open), {
-                runCatching { context.startActivity(Intent(AndroidSettings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
-                    .onFailure { context.startActivity(Intent(AndroidSettings.ACTION_SETTINGS)) }
-            }, variant = PxVariant.OUTLINE)
+            }
+            SettingsPage.APPEARANCE -> SubPage(stringResource(R.string.settings_section_appearance), { page = SettingsPage.MAIN }) {
+            ui.message?.let {
+                Text(
+                    stringResource(it),
+                    style = PxType.bodyBold,
+                    color = c.lime,
+                    modifier = Modifier.semantics {
+                        liveRegion =
+                            LiveRegionMode.Polite
+                    }
+                )
+            }
 
             Section(R.string.settings_section_appearance)
             val themeMode by vm.appearance.mode.collectAsState()
@@ -451,21 +556,20 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
                 Text(stringResource(R.string.settings_language_old), style = PxType.caption, color = c.muted)
             }
 
-            Section(R.string.settings_section_emergency)
-            EmergencySection(vm)
+            }
+            SettingsPage.HELP -> SubPage(stringResource(R.string.v_set_help), { page = SettingsPage.MAIN }) {
+            ui.message?.let {
+                Text(
+                    stringResource(it),
+                    style = PxType.bodyBold,
+                    color = c.lime,
+                    modifier = Modifier.semantics {
+                        liveRegion =
+                            LiveRegionMode.Polite
+                    }
+                )
+            }
 
-            Section(R.string.settings_section_data)
-            PxButton(stringResource(R.string.settings_export), {
-                saveExport.launch("cercle-rouge-mes-donnees.json")
-            }, variant = PxVariant.OUTLINE)
-            Text(stringResource(R.string.settings_export_ex), style = PxType.caption, color = c.muted)
-            PxButton(stringResource(R.string.settings_privacy), {
-                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, PRIVACY_URL.toUri())) }
-            }, variant = PxVariant.OUTLINE)
-            PxButton(stringResource(R.string.settings_signout), {
-                confirm = Guarded.SIGN_OUT
-            }, variant = PxVariant.OUTLINE, enabled = !ui.busy)
-            PxButton(stringResource(R.string.settings_delete), { confirm = Guarded.DELETE }, variant = PxVariant.DANGER, enabled = !ui.busy)
             Section(R.string.settings_section_about)
             Text(stringResource(R.string.slogan), style = PxType.bodyBold)
             PxPanel(Modifier.fillMaxWidth(), border = c.warn) { Text(stringResource(R.string.disclaimer_full), style = PxType.caption) }
@@ -473,7 +577,7 @@ fun SettingsScreen(vm: SettingsViewModel, onBack: () -> Unit, onListen: () -> Un
             val supportCode by vm.supportCode.collectAsState()
             supportCode?.let { Text(stringResource(R.string.settings_support_code, it), style = PxType.caption, color = c.muted) }
             Text(stringResource(R.string.settings_version, BuildConfig.VERSION_NAME), style = PxType.caption, color = c.muted)
-        }
+            }
     }
 
     confirm?.let { what ->
@@ -729,5 +833,69 @@ private fun EmergencySection(vm: SettingsViewModel) {
             variant = PxVariant.DARK,
             icon = PixelIcon.PHONE
         )
+    }
+}
+
+/** Pages des réglages : la liste des maquettes, puis une page par ligne. */
+private enum class SettingsPage { MAIN, TRIP, PRIVACY, PERMISSIONS, BRAIN, APPEARANCE, HELP }
+
+/** Sous-page des réglages : en-tête avec retour, contenu défilant (cartes « Verre »). */
+@Composable
+private fun SubPage(title: String, onBack: () -> Unit, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+    Column(Modifier.fillMaxSize().background(Cr.colors.surface)) {
+        com.cerclerouge.app.ui.components.BackHeader(title, onBack)
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            content = content
+        )
+    }
+}
+
+/**
+ * Réglages (maquette VerreReglages) : grand titre, bandeau bleu « Ma protection », section Protection (écoute et phrase secrète,
+ * trajets et délais, proches, coffre) et section Général (langue, notifications, cerveau IA, apparence, confidentialité,
+ * autorisations, aide).
+ */
+@Composable
+internal fun SettingsMain(
+    onProtection: () -> Unit,
+    onListen: () -> Unit,
+    onTrip: () -> Unit,
+    onContacts: () -> Unit,
+    onVault: () -> Unit,
+    onLanguage: () -> Unit,
+    onNotifications: () -> Unit,
+    onBrain: () -> Unit,
+    onAppearance: () -> Unit,
+    onPrivacy: () -> Unit,
+    onPermissions: () -> Unit,
+    onHelp: () -> Unit
+) {
+    val languageName = (androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: java.util.Locale.FRENCH).let { l ->
+        l.getDisplayLanguage(l).replaceFirstChar { it.titlecase(l) }
+    }
+    Column(Modifier.fillMaxSize().background(Cr.colors.surface).verticalScroll(rememberScrollState()).padding(bottom = 40.dp)) {
+        com.cerclerouge.app.ui.components.TabHeader(stringResource(R.string.settings_title))
+        Box(Modifier.padding(top = 16.dp)) {
+            com.cerclerouge.app.ui.components.BlueBanner(stringResource(R.string.v_my_protection), stringResource(R.string.v_my_protection_sub), R.drawable.glass_shield, onProtection)
+        }
+        com.cerclerouge.app.ui.components.SectionLabel(stringResource(R.string.v_protection))
+        com.cerclerouge.app.ui.components.RowGroup {
+            com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_volume, stringResource(R.string.v_set_listen), onListen)
+            com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_trajet, stringResource(R.string.v_set_trip), onTrip)
+            com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_proches, stringResource(R.string.v_set_contacts), onContacts)
+            com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_lock, stringResource(R.string.v_set_vault), onVault)
+        }
+        com.cerclerouge.app.ui.components.SectionLabel(stringResource(R.string.v_general))
+        com.cerclerouge.app.ui.components.RowGroup {
+            com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_planet, stringResource(R.string.v_set_language, languageName), onLanguage)
+            com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_bell, stringResource(R.string.v_set_notifications), onNotifications)
+            com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_terminal, stringResource(R.string.settings_section_brain), onBrain)
+            com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_reglages, stringResource(R.string.settings_section_appearance), onAppearance)
+            com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_shield, stringResource(R.string.v_set_privacy), onPrivacy)
+            com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_check, stringResource(R.string.v_set_permissions), onPermissions)
+            com.cerclerouge.app.ui.components.ListRow(R.drawable.glass_chat, stringResource(R.string.v_set_help), onHelp)
+        }
     }
 }

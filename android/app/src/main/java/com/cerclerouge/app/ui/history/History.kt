@@ -1,5 +1,13 @@
 package com.cerclerouge.app.ui.history
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -93,28 +101,36 @@ fun HistoryScreen(repo: HistoryRepository, onBack: () -> Unit) {
     })
 }
 
-/** Contenu séparé du chargement pour pouvoir être testé avec des lignes fabriquées. */
+/**
+ * Historique (maquette VerreHistorique) : cartes par trajet ou alerte, regroupées « cette semaine » / « plus tôt »,
+ * type, motif, quand, durée et issue en pastille. Résumés sans coordonnées, effaçables.
+ */
 @Composable
 internal fun HistoryContent(entries: List<HistoryEntity>, onBack: () -> Unit, onClear: () -> Unit) {
     val c = Cr.colors
     var confirm by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize()) {
-        TopBar(stringResource(R.string.history_title), onBack)
-        Column(
-            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(stringResource(R.string.history_intro), style = PxType.body, color = c.muted)
+    val weekAgo = System.currentTimeMillis() - 7 * 24 * 3_600_000L
+    val (recent, older) = entries.partition { it.startedAtMillis >= weekAgo }
+    Column(Modifier.fillMaxSize().background(c.surface)) {
+        com.cerclerouge.app.ui.components.BackHeader(stringResource(R.string.history_title), onBack, stringResource(R.string.v_history_sub))
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
             if (entries.isEmpty()) {
-                PxPanel(Modifier.fillMaxWidth()) { Text(stringResource(R.string.history_empty), style = PxType.body) }
+                Text(stringResource(R.string.history_empty), style = com.cerclerouge.app.ui.components.V.body, color = c.muted, modifier = Modifier.padding(20.dp))
             }
-            entries.forEach { e -> HistoryRow(e) }
+            listOf(R.string.v_this_week to recent, R.string.v_earlier to older).forEach { (title, list) ->
+                if (list.isNotEmpty()) {
+                    com.cerclerouge.app.ui.components.SectionLabel(stringResource(title))
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) { list.forEach { HistoryRow(it) } }
+                }
+            }
             if (entries.isNotEmpty()) {
-                PxButton(
-                    stringResource(if (confirm) R.string.history_clear_confirm else R.string.history_clear),
-                    { if (confirm) onClear().also { confirm = false } else confirm = true },
-                    variant = if (confirm) PxVariant.DANGER else PxVariant.OUTLINE
-                )
+                Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 18.dp)) {
+                    if (confirm) {
+                        com.cerclerouge.app.ui.components.RedButton(stringResource(R.string.history_clear_confirm), { onClear().also { confirm = false } })
+                    } else {
+                        com.cerclerouge.app.ui.components.DangerOutlineButton(stringResource(R.string.history_clear), { confirm = true })
+                    }
+                }
             }
         }
     }
@@ -124,24 +140,34 @@ internal fun HistoryContent(entries: List<HistoryEntity>, onBack: () -> Unit, on
 private fun HistoryRow(e: HistoryEntity) {
     val c = Cr.colors
     val alert = e.kind == HistoryRepository.ALERT
-    PxPanel(Modifier.fillMaxWidth(), border = if (alert) c.danger else c.lineControl) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                stringResource(if (alert) R.string.history_alert else R.string.history_trip, reasonLabel(e)).uppercase(),
-                style = PxType.label,
-                color = if (alert) c.danger else c.lime
-            )
-            val minutes = e.endedAtMillis?.let { Duration.ofMillis(it - e.startedAtMillis).toMinutes().coerceAtLeast(0) }
-            Text(
-                listOfNotNull(
-                    formatWhen(e.startedAtMillis),
-                    minutes?.let { stringResource(R.string.history_minutes, it.toInt()) },
-                    e.level?.let { stringResource(R.string.history_level, it) },
-                    outcomeLabel(e)
-                ).joinToString(" · "),
-                style = PxType.caption,
-                color = c.muted
-            )
+    val minutes = e.endedAtMillis?.let { Duration.ofMillis(it - e.startedAtMillis).toMinutes().coerceAtLeast(0) }
+    val tone = when {
+        e.endedAtMillis == null -> com.cerclerouge.app.ui.components.Tone.Alert
+        e.outcome == HistoryRepository.ARRIVED -> com.cerclerouge.app.ui.components.Tone.Calm
+        e.outcome == HistoryRepository.SAFE -> com.cerclerouge.app.ui.components.Tone.Info
+        else -> com.cerclerouge.app.ui.components.Tone.Mute
+    }
+    com.cerclerouge.app.ui.components.VCard(padding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            com.cerclerouge.app.ui.components.GlassIcon(if (alert) R.drawable.glass_warning else R.drawable.glass_trajet, 36.dp)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    stringResource(if (alert) R.string.v_kind_alert else R.string.v_kind_trip).uppercase(),
+                    style = com.cerclerouge.app.ui.components.V.text(13.sp, spacing = 0.02f),
+                    color = Color(0xFF66788A)
+                )
+                Text(reasonLabel(e), style = com.cerclerouge.app.ui.components.V.text(16.sp, FontWeight.SemiBold), color = c.ink)
+                Text(
+                    listOfNotNull(
+                        formatWhen(e.startedAtMillis),
+                        minutes?.let { stringResource(R.string.history_minutes, it.toInt()) },
+                        e.level?.let { stringResource(R.string.history_level, it) }
+                    ).joinToString(" · "),
+                    style = com.cerclerouge.app.ui.components.V.small,
+                    color = c.muted
+                )
+            }
+            com.cerclerouge.app.ui.components.Chip(outcomeLabel(e).replaceFirstChar { it.titlecase() }, tone)
         }
     }
 }

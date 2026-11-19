@@ -1,5 +1,12 @@
 package com.cerclerouge.app.ui.journal
 
+import com.cerclerouge.app.ui.components.BackHeader
+import com.cerclerouge.app.ui.components.SectionLabel
+import com.cerclerouge.app.ui.components.VCard
+import com.cerclerouge.app.ui.components.Marks
+import com.cerclerouge.app.ui.components.TextLink
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.width
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -174,104 +181,110 @@ fun JournalScreen(log: EventLog, onHistory: () -> Unit = {}, onBack: () -> Unit)
 }
 
 /** Contenu du journal, séparé du chargement pour pouvoir être testé avec des entrées fabriquées. */
+/** Filtre du journal (maquette : Aujourd'hui · Alertes · Trajets). */
+private enum class JournalFilter { TODAY, ALERTS, TRIPS }
+
+/** Titre lisible d'une entrée technique (type du journal) quand elle n'a pas de libellé dédié. */
+@Composable
+private fun typeTitle(type: String): String = stringResource(
+    when (type) {
+        "risk" -> R.string.v_log_risk
+        "brain" -> R.string.v_log_brain
+        "audio" -> R.string.v_log_audio
+        "sensor" -> R.string.v_log_sensor
+        "trip" -> R.string.v_log_trip
+        "listen" -> R.string.v_log_listen
+        "evidence" -> R.string.v_log_evidence
+        else -> R.string.log_other
+    }
+)
+
+/**
+ * Journal (maquette VerreJournal) : tout ce que le veilleur a vu et décidé, par jour, en lignes « heure · marque · texte »,
+ * filtres en pilules et l'intégrité de la chaîne en bas. Rien n'est envoyé.
+ */
 @Composable
 internal fun JournalContent(entries: List<ChainedEntry>, broken: Long?, onBack: () -> Unit, onHistory: () -> Unit = {}) {
     val c = Cr.colors
-    val context = LocalContext.current
-    val resources = LocalResources.current
-    var alertsOnly by remember { mutableStateOf(false) }
+    var filter by remember { mutableStateOf(JournalFilter.TODAY) }
     val zone = ZoneId.systemDefault()
-    val days = remember { (6 downTo 0).map { LocalDate.now(zone).minusDays(it.toLong()) } }
-    fun countPerDay(match: (ChainedEntry) -> Boolean) = days.map { d ->
-        entries.count { match(it) && Instant.ofEpochMilli(it.utcMillis).atZone(zone).toLocalDate() == d }
-    }
-    val activations = countPerDay { humanize(it) == R.string.log_protection_on }
-    val alerts = countPerDay { humanize(it) == R.string.log_alert_sos }
-    val locale = LocalConfiguration.current.locales[0]
-    val dayLabels = days.map { it.dayOfWeek.getDisplayName(TextStyle.SHORT, locale).take(3) }
-    val readiness = listOf(
-        if (granted(context, Manifest.permission.RECORD_AUDIO)) 1f else 0.08f,
-        if (granted(context, Manifest.permission.ACCESS_FINE_LOCATION)) 1f else 0.08f,
-        if (NotificationManagerCompat.from(context).areNotificationsEnabled()) 1f else 0.08f,
-        0.08f, // contacts : gestion au Sprint 2
-        if (broken == null) 1f else 0.08f
-    )
-    val rows = remember(entries, alertsOnly) { traceRows(entries.filter { !alertsOnly || isAlert(it) }, resources) }
-
-    LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { TopBar(stringResource(R.string.journal_title), onBack) }
+    val today = LocalDate.now(zone)
+    val hhmm = remember { DateTimeFormatter.ofPattern("HH:mm") }
+    val shown = entries.filter { e ->
+        when (filter) {
+            JournalFilter.TODAY -> Instant.ofEpochMilli(e.utcMillis).atZone(zone).toLocalDate() == today
+            JournalFilter.ALERTS -> isAlert(e) || humanize(e) == R.string.log_alert_closed
+            JournalFilter.TRIPS -> e.type == "trip" || "TRIP_ACTIVE" in e.payload
+        }
+    }.sortedByDescending { it.seq }
+    val byDay = shown.groupBy { Instant.ofEpochMilli(it.utcMillis).atZone(zone).toLocalDate() }
+    LazyColumn(Modifier.fillMaxSize().background(c.surface)) {
+        item { BackHeader(stringResource(R.string.journal_title), onBack, stringResource(R.string.v_journal_sub)) }
         item {
-            Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                val status = broken?.let { stringResource(R.string.journal_broken, it.toInt()) } ?: stringResource(R.string.journal_intact)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PixelIconView(if (broken == null) PixelIcon.LOCK else PixelIcon.ALERT, 16.dp, if (broken == null) c.lime else c.danger)
-                    Text(status.uppercase(), style = PxType.label, color = if (broken == null) c.lime else c.danger)
-                }
-                PxButton(stringResource(R.string.history_open), onHistory, variant = PxVariant.OUTLINE, icon = PixelIcon.CLOCK)
-                Text(stringResource(R.string.journal_week).uppercase(), style = PxType.label, color = c.muted)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Stat(stringResource(R.string.journal_kpi_on), activations.sum(), Modifier.weight(1f))
-                    Stat(stringResource(R.string.journal_kpi_alerts), alerts.sum(), Modifier.weight(1f))
-                }
-                PxPanel(
-                    Modifier.fillMaxWidth().semantics {
-                        contentDescription = resources.getString(R.string.journal_chart)
-                    },
-                    fill = c.surface
-                ) {
-                    BarChart(dayLabels, listOf(activations, alerts), listOf(c.lime, c.warn))
-                }
-                Text(stringResource(R.string.journal_ready).uppercase(), style = PxType.label, color = c.muted)
-                PxPanel(Modifier.fillMaxWidth(), fill = c.surface) {
-                    RadarChart(
-                        listOf(
-                            stringResource(R.string.ready_mic),
-                            stringResource(R.string.ready_location),
-                            stringResource(R.string.ready_notif),
-                            stringResource(R.string.ready_contacts),
-                            stringResource(R.string.ready_log)
-                        ),
-                        readiness,
-                        c.lime,
-                        Modifier.align(Alignment.Center)
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(false to R.string.log_filter_all, true to R.string.log_filter_alerts).forEach { (value, label) ->
-                        val on = alertsOnly == value
-                        PxPanel(
-                            Modifier
-                                .weight(1f)
-                                .semantics { selected = on }
-                                .clickable(role = Role.Tab) { alertsOnly = value },
-                            border = if (on) c.lime else c.lineControl,
-                            fill = if (on) c.lime else c.raised,
-                            padding = PaddingValues(10.dp)
-                        ) {
-                            Text(
-                                stringResource(label).uppercase(),
-                                style = PxType.label,
-                                color = if (on) c.onLime else c.ink,
-                                modifier = Modifier.align(Alignment.Center)
-                            )
+            com.cerclerouge.app.ui.components.PillChoice(
+                listOf(
+                    JournalFilter.TODAY to stringResource(R.string.v_today),
+                    JournalFilter.ALERTS to stringResource(R.string.log_filter_alerts),
+                    JournalFilter.TRIPS to stringResource(R.string.v_trips)
+                ),
+                filter,
+                { filter = it },
+                Modifier.padding(top = 16.dp)
+            )
+        }
+        if (byDay.isEmpty()) {
+            item { Text(stringResource(R.string.v_journal_empty), style = com.cerclerouge.app.ui.components.V.body, color = c.muted, modifier = Modifier.padding(20.dp)) }
+        }
+        byDay.forEach { (day, list) ->
+            item(key = "d$day") {
+                SectionLabel(
+                    when (day) {
+                        today -> stringResource(R.string.v_today)
+                        today.minusDays(1) -> stringResource(R.string.v_yesterday)
+                        else -> day.format(DateTimeFormatter.ofPattern("EEEE d MMMM", LocalConfiguration.current.locales[0] ?: Locale.ROOT))
+                    }
+                )
+            }
+            item(key = "c$day") {
+                VCard(padding = PaddingValues(horizontal = 16.dp, vertical = 2.dp)) {
+                    list.forEach { e ->
+                        val label = humanize(e)
+                        val (mark, color) = when (label) {
+                            R.string.log_alert_sos -> "!" to Color(0xFFC8141D)
+                            R.string.log_dispatch -> "→" to Marks.next
+                            R.string.log_check, R.string.log_alert_closed, R.string.log_protection_on, R.string.log_protection_off -> "✓" to Marks.done
+                            else -> if (e.type == "risk" || e.type == "brain") "◆" to Marks.thought else "▸" to Marks.seen
+                        }
+                        Row(Modifier.fillMaxWidth().padding(vertical = 11.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text(hhmm.format(Instant.ofEpochMilli(e.utcMillis).atZone(zone)), style = com.cerclerouge.app.ui.components.V.mono, color = Color(0xFF66788A), modifier = Modifier.width(46.dp).padding(top = 2.dp))
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(
+                                    androidx.compose.ui.text.buildAnnotatedString {
+                                        pushStyle(androidx.compose.ui.text.SpanStyle(color = color))
+                                        append(mark)
+                                        pop()
+                                        append(" ")
+                                        append(if (label != R.string.log_other) stringResource(label) else typeTitle(e.type))
+                                    },
+                                    style = com.cerclerouge.app.ui.components.V.text(15.sp),
+                                    color = c.ink
+                                )
+                                if (label == R.string.log_other) Text(e.payload.take(80), style = com.cerclerouge.app.ui.components.V.small, color = c.muted, maxLines = 2)
+                            }
                         }
                     }
                 }
             }
         }
-        // Terminal (référence AgentPrism).
-        itemsIndexed(rows, key = { _, r -> r.key }) { i, row ->
-            val last = i == rows.lastIndex || rows[i + 1].level == 0
-            TraceLine(row, last, Modifier.background(Cr.colors.raised).padding(horizontal = 12.dp))
-        }
         item {
             Text(
-                stringResource(R.string.journal_body),
-                style = PxType.caption,
-                color = c.muted,
-                modifier = Modifier.fillMaxWidth().padding(12.dp)
+                broken?.let { stringResource(R.string.journal_broken, it.toInt()) } ?: stringResource(R.string.v_journal_intact),
+                style = com.cerclerouge.app.ui.components.V.mono,
+                color = if (broken == null) Color(0xFF66788A) else c.danger,
+                modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 12.dp)
             )
         }
+        item { TextLink(stringResource(R.string.history_open), onHistory, Modifier.padding(top = 8.dp, bottom = 24.dp), color = c.lime) }
     }
 }
 

@@ -1,5 +1,6 @@
 package com.cerclerouge.app.ui.vault
 
+import androidx.compose.foundation.background
 import android.media.MediaDataSource
 import android.media.MediaPlayer
 import android.view.WindowManager
@@ -243,30 +244,29 @@ fun VaultScreen(vm: VaultViewModel, onBack: () -> Unit) {
     LaunchedEffect(Unit) { if (vm.pinConfigured()) askPin = true else vm.unlock() }
     var confirmDelete by remember { mutableStateOf<String?>(null) }
 
-    Column(Modifier.fillMaxSize()) {
-        TopBar(stringResource(R.string.vault_title), onBack)
+    Column(Modifier.fillMaxSize().background(c.surface)) {
+        com.cerclerouge.app.ui.components.BackHeader(stringResource(R.string.v_vault_title), onBack, stringResource(R.string.v_vault_sub))
         if (!ui.unlocked) {
-            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.vault_locked), style = PxType.body, color = c.muted)
-                PxButton(stringResource(R.string.vault_unlock), { askPin = true }, icon = PixelIcon.LOCK)
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.vault_locked), style = com.cerclerouge.app.ui.components.V.body, color = c.muted)
+                com.cerclerouge.app.ui.components.InkButton(stringResource(R.string.vault_unlock), { askPin = true }, icon = PixelIcon.LOCK)
             }
         } else {
-            Column(
-                Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                PxPanel(
-                    Modifier.fillMaxWidth().toggleable(ui.audioEnabled, role = Role.Switch) { vm.setAudio(it) },
-                    border = if (ui.audioEnabled) c.lime else c.lineControl
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        PxCheck(ui.audioEnabled)
-                        Column {
-                            Text(stringResource(R.string.vault_audio_toggle), style = PxType.bodyBold)
-                            Text(stringResource(R.string.vault_audio_toggle_ex), style = PxType.caption, color = c.muted)
-                        }
-                    }
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 16.dp, bottom = 24.dp)) {
+                com.cerclerouge.app.ui.components.BlueBanner(
+                    androidx.compose.ui.res.pluralStringResource(R.plurals.v_vault_count, ui.items.size, ui.items.size),
+                    stringResource(R.string.v_vault_banner),
+                    R.drawable.glass_lock
+                )
+                com.cerclerouge.app.ui.components.SectionLabel(stringResource(R.string.v_vault_recording))
+                com.cerclerouge.app.ui.components.VCard(padding = PaddingValues(horizontal = 18.dp, vertical = 2.dp)) {
+                    com.cerclerouge.app.ui.components.ToggleRow(
+                        stringResource(R.string.vault_audio_toggle),
+                        stringResource(R.string.vault_audio_toggle_ex),
+                        ui.audioEnabled
+                    ) { vm.setAudio(it) }
                 }
+                com.cerclerouge.app.ui.components.SectionLabel(stringResource(R.string.v_kind_alert) + "s")
                 ui.message?.let {
                     Text(
                         stringResource(it),
@@ -279,12 +279,14 @@ fun VaultScreen(vm: VaultViewModel, onBack: () -> Unit) {
                     )
                 }
                 if (ui.items.isEmpty()) {
-                    PxPanel(Modifier.fillMaxWidth()) { Text(stringResource(R.string.vault_empty), style = PxType.body) }
+                    Text(stringResource(R.string.vault_empty), style = com.cerclerouge.app.ui.components.V.body, color = c.muted, modifier = Modifier.padding(horizontal = 20.dp))
                 }
-                ui.items.forEach { item ->
-                    EvidenceCard(item, ui, vm, onDelete = { confirmDelete = item.alertId })
+                Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    ui.items.forEach { item ->
+                        EvidenceCard(item, ui, vm, onDelete = { confirmDelete = item.alertId })
+                    }
                 }
-                Text(stringResource(R.string.vault_legal), style = PxType.caption, color = c.muted)
+                Text(stringResource(R.string.vault_legal), style = com.cerclerouge.app.ui.components.V.small, color = c.muted, modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 12.dp))
             }
         }
     }

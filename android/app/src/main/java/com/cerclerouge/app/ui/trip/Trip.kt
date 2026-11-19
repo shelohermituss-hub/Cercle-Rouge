@@ -1,5 +1,12 @@
 package com.cerclerouge.app.ui.trip
 
+import com.cerclerouge.app.ui.components.V
+import com.cerclerouge.app.ui.components.GlassIcon
+import com.cerclerouge.app.ui.components.heroCard
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -132,7 +139,8 @@ class TripViewModel @Inject constructor(
     private val prefs: TripPrefs,
     private val contactsRepo: com.cerclerouge.app.contacts.ContactsRepository,
     val controller: ProtectionController,
-    private val clock: Clock
+    private val clock: Clock,
+    val device: com.cerclerouge.app.device.DeviceMonitor
 ) : ViewModel() {
     val trip: StateFlow<TripUi?> = trips.trip
     val watchEnabled: StateFlow<Boolean> = watch.enabled
@@ -331,10 +339,14 @@ fun TripScreen(vm: TripViewModel, onBack: () -> Unit) {
             if (e is UiEvent.Rejected) Toast.makeText(context, resources.getString(e.reason.message()), Toast.LENGTH_LONG).show()
         }
     }
-    Column(Modifier.fillMaxSize()) {
-        TopBar(stringResource(if (trip != null) R.string.trip_active else R.string.trip_title), onBack)
-        val active = trip
-        if (active != null) ActiveTrip(vm, active) else Planner(vm)
+    val active = trip
+    if (active != null) {
+        ActiveTrip(vm, active)
+    } else {
+        Column(Modifier.fillMaxSize().background(Cr.colors.surface)) {
+            com.cerclerouge.app.ui.components.TabHeader(stringResource(R.string.trip_title), stringResource(R.string.trip_intro))
+            Planner(vm)
+        }
     }
 }
 
@@ -693,69 +705,66 @@ private fun StepButton(text: String, description: String, onClick: () -> Unit) {
     ) { Text(text, style = PxType.button) }
 }
 
+/** Ce que montre la carte flottante du trajet en cours (maquette VerreTrajet). */
+data class TripCard(
+    val followers: List<String>,
+    val minutesLeft: Int,
+    val distanceKm: Double?,
+    val arrival: String,
+    val progress: Float,
+    val deviationM: Int?,
+    val marginMin: Int?,
+    val battery: Int?,
+    val stopUntil: String?,
+    val arrived: Boolean,
+    val watch: String?
+)
+
 @Composable
 private fun ActiveTrip(vm: TripViewModel, t: TripUi) {
-    val c = Cr.colors
     var askPin by remember { mutableStateOf(false) }
-    var stopChoice by remember { mutableStateOf(false) }
     var lastPin by remember { mutableStateOf<String?>(null) }
     var bioOk by remember { mutableStateOf(false) }
     var bio by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { bio = vm.biometric() }
     val route = remember(t.plan) { vm.activeRoute(t.plan) }
-    Box(Modifier.fillMaxWidth().height(260.dp)) {
-        LiveMap(
-            armed = true,
-            showMe = true,
-            modifier = Modifier.fillMaxSize(),
-            coveredBottom = 0.dp,
-            coveredTop = 0.dp,
-            coveredEnd = 0.dp,
-            destination = t.plan.destination,
-            route = route.points,
-            routeIsRoad = route.road
-        )
-    }
-    Column(Modifier.verticalScroll(rememberScrollState()).padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (t.arrivalDetected) {
-            PxPanel(Modifier.fillMaxWidth(), border = c.lime) {
-                Text(
-                    stringResource(R.string.trip_arrival_detected),
-                    style = PxType.bodyBold,
-                    color = c.lime,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
-                )
-            }
-        }
-        PxPanel(Modifier.fillMaxWidth()) {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(stringResource(t.plan.mode.label).uppercase(), style = PxType.label, color = c.muted)
-                t.position?.let {
-                    Text(stringResource(R.string.trip_remaining, km(Geo.distance(it, t.plan.destination))), style = PxType.count)
-                }
-                Text(
-                    stringResource(R.string.trip_arrival_value, t.plan.plannedArrival.hhmm(), minutesLeft(t.plan.plannedArrival)),
-                    style = PxType.bodyBold
-                )
-                t.stopUntil?.let { Text(stringResource(R.string.trip_stop_until, it.hhmm()), style = PxType.body, color = c.warn) }
-                Text(
-                    stringResource(R.string.trip_incidents, t.incidents),
-                    style = PxType.caption,
-                    color = if (t.incidents >
-                        0
-                    ) {
-                        c.warn
-                    } else {
-                        c.muted
-                    }
-                )
-            }
-        }
-        WatchLine(vm)
-        PxButton(stringResource(R.string.trip_arrived), { askPin = true }, icon = PixelIcon.CHECK, tall = true)
-        PxButton(stringResource(R.string.trip_stop), { stopChoice = true }, variant = PxVariant.OUTLINE, icon = PixelIcon.CLOCK)
-        Text(stringResource(R.string.trip_privacy), style = PxType.caption, color = c.muted)
-    }
+    val planner by vm.ui.collectAsState()
+    val device by vm.device.status.collectAsState()
+    val watch by vm.watchStatus.collectAsState()
+    val total = Geo.distance(t.plan.origin, t.plan.destination).coerceAtLeast(1.0)
+    val remaining = t.position?.let { Geo.distance(it, t.plan.destination) }
+    val left = minutesLeft(t.plan.plannedArrival)
+    val card = TripCard(
+        followers = planner.contacts.filter { it.first in planner.recipients }.map { it.second.substringBefore(' ') },
+        minutesLeft = left,
+        distanceKm = remaining?.let { it / 1000.0 },
+        arrival = t.plan.plannedArrival.hhmm(),
+        progress = remaining?.let { (1.0 - it / total).toFloat().coerceIn(0f, 1f) } ?: 0f,
+        deviationM = t.position?.let { p -> route.points.takeIf { it.size >= 2 }?.let { Geo.distanceToPath(p, it).toInt() } },
+        marginMin = remaining?.let { (left - it / t.plan.mode.speedMps / 60).toInt() },
+        battery = device.batteryPct,
+        stopUntil = t.stopUntil?.hhmm(),
+        arrived = t.arrivalDetected,
+        watch = (watch as? WatchStatus.On)?.let { stringResource(R.string.trip_watch_on, it.recipients) }
+    )
+    TripActive(
+        card,
+        map = { m ->
+            LiveMap(
+                armed = true,
+                showMe = true,
+                modifier = m,
+                coveredBottom = 300.dp,
+                coveredTop = 0.dp,
+                coveredEnd = 0.dp,
+                destination = t.plan.destination,
+                route = route.points,
+                routeIsRoad = route.road
+            )
+        },
+        onMore = { vm.stop(15) },
+        onArrived = { askPin = true }
+    )
     if (askPin) {
         PinDialog(
             onDismiss = { askPin = false },
@@ -773,21 +782,80 @@ private fun ActiveTrip(vm: TripViewModel, t: TripUi) {
             }
         )
     }
-    if (stopChoice) {
-        Dialog(onDismissRequest = { stopChoice = false }) {
-            PxPanel(border = c.lime, fill = c.surface, padding = PaddingValues(16.dp)) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(stringResource(R.string.trip_stop), style = PxType.title)
-                    listOf(10, 20, 30, 60).forEach { m ->
-                        PxButton(stringResource(R.string.trip_stop_minutes, m), {
-                            vm.stop(m)
-                            stopChoice = false
-                        }, variant = PxVariant.OUTLINE)
-                    }
-                    PxButton(stringResource(R.string.action_cancel), { stopChoice = false }, variant = PxVariant.DARK)
+}
+
+/**
+ * Trajet en cours (maquette) : carte plein écran, carte blanche flottante en bas — destination et proches qui suivent,
+ * minutes restantes, distance et heure d'arrivée, progression, 4 mesures (écart, marge, suivent, batterie), « + 15 min »
+ * (arrêt déclaré) et « Je suis arrivé·e » (code demandé).
+ */
+@Composable
+internal fun TripActive(card: TripCard, map: @Composable (Modifier) -> Unit, onMore: () -> Unit, onArrived: () -> Unit) {
+    val c = Cr.colors
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: Locale.ROOT
+    Box(Modifier.fillMaxSize().background(c.surface)) {
+        map(Modifier.fillMaxSize())
+        Column(
+            Modifier.align(Alignment.BottomCenter).padding(start = 16.dp, end = 16.dp, bottom = 52.dp).fillMaxWidth()
+                .heroCard(28.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp)
+        ) {
+            if (card.arrived) {
+                Text(
+                    stringResource(R.string.trip_arrival_detected),
+                    style = V.text(14.sp, FontWeight.SemiBold),
+                    color = c.forest,
+                    modifier = Modifier.padding(bottom = 8.dp).semantics { liveRegion = LiveRegionMode.Polite }
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                GlassIcon(R.drawable.glass_trajet, 30.dp)
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.v_trip_running), style = V.text(17.sp, FontWeight.Medium), color = c.ink)
+                    Text(
+                        if (card.followers.isEmpty()) stringResource(R.string.v_followed_none) else stringResource(R.string.v_followed_by, card.followers.joinToString(", ")),
+                        style = V.small,
+                        color = c.muted,
+                        maxLines = 1
+                    )
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("${card.minutesLeft} min", style = V.text(22.sp, FontWeight.Bold), color = c.ink)
+                    Text(
+                        listOfNotNull(card.distanceKm?.let { String.format(locale, "%.1f km", it) }, card.arrival).joinToString(" · "),
+                        style = V.small,
+                        color = c.muted
+                    )
                 }
             }
+            Box(Modifier.padding(top = 12.dp).fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(Color(0xFFD6DEE6))) {
+                Box(Modifier.fillMaxWidth(card.progress).height(6.dp).clip(RoundedCornerShape(3.dp)).background(Color(0xFF2F86F6)))
+            }
+            card.stopUntil?.let { Text(stringResource(R.string.trip_stop_until, it), style = V.small, color = c.warn, modifier = Modifier.padding(top = 8.dp)) }
+            Row(Modifier.fillMaxWidth().padding(top = 14.dp)) {
+                TripStat(R.drawable.glass_pin, card.deviationM?.let { "$it m" } ?: "—", stringResource(R.string.v_deviation), Modifier.weight(1f))
+                TripStat(R.drawable.glass_clock, card.marginMin?.let { if (it >= 0) "+$it min" else "$it min" } ?: "—", stringResource(R.string.v_margin), Modifier.weight(1f))
+                TripStat(R.drawable.glass_proches, card.followers.size.toString(), stringResource(R.string.v_following), Modifier.weight(1f))
+                TripStat(R.drawable.glass_battery, card.battery?.let { "$it %" } ?: "—", stringResource(R.string.v_battery), Modifier.weight(1f))
+            }
+            card.watch?.let { Text(it, style = V.small, color = c.muted, modifier = Modifier.padding(top = 8.dp)) }
+            Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier.weight(1f).heightIn(min = 50.dp).clip(RoundedCornerShape(25.dp)).background(Color(0xFFE4E8EE)).clickable(role = Role.Button, onClick = onMore),
+                    contentAlignment = Alignment.Center
+                ) { Text(stringResource(R.string.v_plus_15), style = V.text(16.sp, FontWeight.SemiBold), color = c.ink) }
+                com.cerclerouge.app.ui.components.OutlineButton(stringResource(R.string.trip_arrived), onArrived, Modifier.weight(1f), height = 50.dp)
+            }
         }
+    }
+}
+
+@Composable
+private fun TripStat(icon: Int, value: String, label: String, modifier: Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        GlassIcon(icon, 26.dp)
+        Text(value, style = V.text(15.sp, FontWeight.SemiBold), color = Cr.colors.ink, modifier = Modifier.padding(top = 2.dp))
+        Text(label, style = V.small, color = Cr.colors.muted)
     }
 }
 

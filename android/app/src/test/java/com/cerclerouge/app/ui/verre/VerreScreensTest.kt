@@ -169,4 +169,39 @@ class VerreScreensTest {
             onTalk = {}
         )
     }
+
+    @Test fun trip() = capture("VerreTrajet") {
+        androidx.compose.foundation.layout.Column(Modifier.fillMaxSize()) {
+            Box(Modifier.weight(1f)) {
+                com.cerclerouge.app.ui.trip.TripActive(
+                    com.cerclerouge.app.ui.trip.TripCard(listOf("Jean", "Nadège"), 14, 3.2, "21 h 58", 0.45f, 12, 10, 64, null, false, null),
+                    map = { m -> com.cerclerouge.app.ui.components.SketchMap(m, route = com.cerclerouge.app.ui.components.TRIP_ROUTE, designW = 390f, designH = 758f, roadWidth = 8f, routeWidth = 2.4f, animate = false) },
+                    onMore = {},
+                    onArrived = {}
+                )
+            }
+            com.cerclerouge.app.ui.components.MainNav(com.cerclerouge.app.ui.components.Tab.TRIP, {}, armed = true, onToggle = {}, insets = false)
+        }
+    }
+
+    private val book = ContactBook(
+        listOf(
+            Fixtures.contact("Jean", 0, com.cerclerouge.contacts.ContactStatus.ACCEPTED, guardian = true, hasApp = true).copy(relation = "Papa"),
+            Fixtures.contact("Nadège", 1, com.cerclerouge.contacts.ContactStatus.ACCEPTED, hasApp = true),
+            Fixtures.contact("Paul", 2)
+        )
+    )
+
+    @Test fun contacts() = capture("VerreProches") {
+        androidx.compose.foundation.layout.Column(Modifier.fillMaxSize()) {
+            Box(Modifier.weight(1f)) {
+                com.cerclerouge.app.ui.contacts.ContactsContent(book, null, null, {}, {}, { _, _ -> }, {}, {}, {}, {}, {}, {})
+            }
+            com.cerclerouge.app.ui.components.MainNav(com.cerclerouge.app.ui.components.Tab.CONTACTS, {}, armed = true, onToggle = {}, insets = false)
+        }
+    }
+
+    @Test fun addContact() = capture("VerreProcheAjout") {
+        com.cerclerouge.app.ui.contacts.AddContactContent("Nadège", "+509 34 98 76 54", com.cerclerouge.contacts.Language.FR, null, {}, {}, {}, {}, {}, {}, {})
+    }
 }

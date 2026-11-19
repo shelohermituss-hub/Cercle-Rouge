@@ -1,5 +1,29 @@
 package com.cerclerouge.app.ui.contacts
 
+import com.cerclerouge.app.ui.components.TabHeader
+import com.cerclerouge.app.ui.components.BackHeader
+import com.cerclerouge.app.ui.components.SectionLabel
+import com.cerclerouge.app.ui.components.VCard
+import com.cerclerouge.app.ui.components.Avatar
+import com.cerclerouge.app.ui.components.Tone
+import com.cerclerouge.app.ui.components.DashedAdd
+import com.cerclerouge.app.ui.components.MonoBox
+import com.cerclerouge.app.ui.components.MonoLine
+import com.cerclerouge.app.ui.components.Marks
+import com.cerclerouge.app.ui.components.TextLink
+import com.cerclerouge.app.ui.components.VField
+import com.cerclerouge.app.ui.components.PillChoice
+import com.cerclerouge.app.ui.components.BottomActions
+import com.cerclerouge.app.ui.components.InkButton
+import com.cerclerouge.app.ui.components.GlassIcon
+import com.cerclerouge.app.ui.components.V
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -153,6 +177,16 @@ class ContactsViewModel @Inject constructor(
         }
     }
 
+    /** Ajoute le proche avec sa langue, puis lui envoie l'invitation par SMS (il devra accepter). */
+    fun addAndInvite(name: String, phone: String, language: Language, onDone: () -> Unit) = viewModelScope.launch {
+        val before = repo.book.value.contacts.map { it.id }.toSet()
+        add(name, phone).join()
+        val added = repo.book.value.contacts.firstOrNull { it.id !in before } ?: return@launch
+        if (added.language != language) repo.setLanguage(added.id, language)
+        invite(repo.book.value.contacts.first { it.id == added.id }).join()
+        onDone()
+    }
+
     fun remove(id: String) = viewModelScope.launch { repo.remove(id) }
 
     fun move(id: String, delta: Int) = viewModelScope.launch { repo.move(id, delta) }
@@ -183,14 +217,11 @@ data class ContactEdit(
 /** Contacts de confiance : 5 au maximum, ordre d'alerte, répondant principal, langue des messages (module produit 7). */
 @Composable
 fun ContactsScreen(vm: ContactsViewModel, onWatch: () -> Unit = {}, onBack: () -> Unit) {
-    val c = Cr.colors
     val book by vm.book.collectAsState()
     val message by vm.message.collectAsState()
-    val context = LocalContext.current
-    var manual by remember { mutableStateOf(false) }
-    var searching by remember { mutableStateOf(false) }
+    val sending by vm.sending.collectAsState()
+    var adding by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<TrustedContact?>(null) }
-    val picker = rememberLauncherForActivityResult(PickPhone(context)) { picked -> picked?.let { vm.add(it.name, it.number) } }
     // Accord des proches : relu toutes les 20 s tant que l'écran est ouvert.
     LaunchedEffect(Unit) {
         while (true) {
@@ -198,48 +229,27 @@ fun ContactsScreen(vm: ContactsViewModel, onWatch: () -> Unit = {}, onBack: () -
             vm.refreshStatuses()
         }
     }
-    val full = book.contacts.size >= ContactBook.MAX
-
-    Column(Modifier.fillMaxSize()) {
-        TopBar(stringResource(R.string.contacts_title), onBack)
-        Column(
-            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(stringResource(R.string.contacts_intro), style = PxType.body, color = c.muted)
-            Text(stringResource(R.string.contacts_count, book.contacts.size).uppercase(), style = PxType.label, color = c.lime)
-            message?.let {
-                Text(
-                    stringResource(it),
-                    style = PxType.label,
-                    color = if (it == R.string.contacts_invite_sent) c.lime else c.danger,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
-                )
-            }
-            if (book.contacts.isEmpty()) {
-                PxPanel(Modifier.fillMaxWidth()) { Text(stringResource(R.string.contacts_empty), style = PxType.body) }
-            }
-            book.contacts.forEachIndexed { i, contact ->
-                ContactRow(contact, first = i == 0, last = i == book.contacts.lastIndex, vm = vm, onEdit = { editing = contact })
-            }
-            Spacer(Modifier.size(4.dp))
-        }
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            PxButton(stringResource(R.string.contacts_pick), { picker.launch(Unit) }, icon = PixelIcon.USERS, enabled = !full)
-            PxButton(stringResource(R.string.contacts_search), {
-                searching = true
-            }, variant = PxVariant.OUTLINE, icon = PixelIcon.USERS, enabled = !full)
-            PxButton(stringResource(R.string.contacts_manual), { manual = true }, variant = PxVariant.OUTLINE, enabled = !full)
-            PxButton(stringResource(R.string.watch_open), onWatch, variant = PxVariant.DARK, icon = PixelIcon.SHIELD)
-        }
-    }
-    if (searching) {
-        SearchDialog(vm, onDismiss = {
-            searching = false
-            vm.clearSearch()
-        }) { picked ->
-            vm.add(picked.name, picked.number) { searching = false }
-        }
+    if (adding) {
+        androidx.activity.compose.BackHandler { adding = false }
+        AddContactScreen(vm, message, onBack = {
+            adding = false
+            vm.dismissMessage()
+        })
+    } else {
+        ContactsContent(
+            book,
+            message,
+            sending,
+            onAdd = { adding = true },
+            onOpen = { editing = it },
+            onMove = { id, d -> vm.move(id, d) },
+            onPrimary = { vm.setPrimary(it) },
+            onLanguage = { vm.cycleLanguage(it) },
+            onInvite = { if (sending == null) vm.invite(it) },
+            onRemove = { vm.remove(it) },
+            onSimulate = { vm.simulateAccepted(it) },
+            onWatch = onWatch
+        )
     }
     editing?.let { contact ->
         EditDialog(contact, onDismiss = { editing = null }) { edit ->
@@ -247,61 +257,244 @@ fun ContactsScreen(vm: ContactsViewModel, onWatch: () -> Unit = {}, onBack: () -
             editing = null
         }
     }
-    if (manual) {
-        ManualDialog(
-            onDismiss = {
-                manual = false
-                vm.dismissMessage()
+}
+
+/** Ligne de statut d'un proche (police terminal) : canal et rôle dans l'alerte, ou invitation en attente. */
+@Composable
+private fun statusLine(contact: TrustedContact): Pair<String, Color> = when (contact.status) {
+    ContactStatus.ACCEPTED -> (
+        "● " + stringResource(if (contact.hasApp) R.string.v_ct_app else R.string.v_ct_sms) + " · " +
+            stringResource(if (contact.position == 0) R.string.v_ct_first else R.string.v_ct_follows)
+        ) to Color(0xFF15803D)
+    ContactStatus.PENDING -> (stringResource(R.string.v_ct_sms) + " · " + stringResource(R.string.v_ct_invited)) to Color(0xFF8A5300)
+    ContactStatus.DECLINED -> stringResource(R.string.contacts_status_declined) to Color(0xFF9E0F15)
+    ContactStatus.WITHDRAWN -> stringResource(R.string.contacts_status_withdrawn) to Color(0xFF566B80)
+}
+
+/**
+ * Onglet « Proches » (maquette VerreProches) : résumé, ordre d'alerte (« Modifier » montre les actions), proches avec leur
+ * statut, ajout en pointillés, et les règles d'envoi en lignes de terminal.
+ */
+@Composable
+internal fun ContactsContent(
+    book: ContactBook,
+    message: Int?,
+    sending: String?,
+    onAdd: () -> Unit,
+    onOpen: (TrustedContact) -> Unit,
+    onMove: (String, Int) -> Unit,
+    onPrimary: (String) -> Unit,
+    onLanguage: (TrustedContact) -> Unit,
+    onInvite: (TrustedContact) -> Unit,
+    onRemove: (String) -> Unit,
+    onSimulate: (String) -> Unit,
+    onWatch: () -> Unit,
+    initialEdit: Boolean = false
+) {
+    val c = Cr.colors
+    var edit by remember { mutableStateOf(initialEdit) }
+    val contacts = book.contacts.sortedBy { it.position }
+    val ready = contacts.count { it.status == ContactStatus.ACCEPTED }
+    val pending = contacts.count { it.status == ContactStatus.PENDING }
+    Column(Modifier.fillMaxSize().background(c.surface).verticalScroll(rememberScrollState()).padding(bottom = 40.dp)) {
+        TabHeader(stringResource(R.string.v_contacts_title), stringResource(R.string.v_contacts_sub))
+        Row(
+            Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.raised).padding(horizontal = 18.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            GlassIcon(R.drawable.glass_proches, 40.dp)
+            Column {
+                Text(stringResource(R.string.v_contacts_count, contacts.size, ContactBook.MAX), style = V.text(17.sp, FontWeight.SemiBold), color = c.ink)
+                Text(stringResource(R.string.v_contacts_summary, ready, pending), style = V.text(14.sp), color = c.muted)
+            }
+        }
+        message?.let {
+            Text(
+                stringResource(it),
+                style = V.text(14.sp, FontWeight.Medium),
+                color = if (it == R.string.contacts_invite_sent) c.forest else c.danger,
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp).semantics { liveRegion = LiveRegionMode.Polite }
+            )
+        }
+        if (contacts.isNotEmpty()) {
+            SectionLabel(stringResource(R.string.v_alert_order), stringResource(if (edit) R.string.v_done else R.string.v_edit)) { edit = !edit }
+            VCard {
+                contacts.forEachIndexed { i, ct ->
+                    if (i > 0) com.cerclerouge.app.ui.components.Divider(Modifier.padding(horizontal = 14.dp))
+                    PersonRow(ct, i, edit, sending == ct.id, contacts.size, onOpen, onMove, onPrimary, onLanguage, onInvite, onRemove, onSimulate)
+                }
+            }
+        } else {
+            Text(stringResource(R.string.contacts_empty), style = V.body, color = c.muted, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 18.dp))
+        }
+        Box(Modifier.padding(top = 12.dp)) {
+            DashedAdd(stringResource(R.string.v_add_contact_places, ContactBook.MAX - contacts.size), onAdd, enabled = contacts.size < ContactBook.MAX)
+        }
+        MonoBox(
+            buildList {
+                val alerted = contacts.filter { it.status == ContactStatus.ACCEPTED }.take(3).map { it.name.substringBefore(' ') }
+                add(MonoLine("›", Marks.next, if (alerted.isEmpty()) stringResource(R.string.v_ct_rule_none) else stringResource(R.string.v_ct_rule_alert, alerted.joinToString(", "))))
+                add(MonoLine("›", Marks.next, stringResource(R.string.v_ct_rule_sms)))
+                contacts.filter { it.status == ContactStatus.PENDING }.forEach { add(MonoLine("›", Marks.wait, stringResource(R.string.v_ct_rule_pending, it.name.substringBefore(' ')))) }
             },
-            onAdd = { name, phone -> vm.add(name, phone) { manual = false } },
-            error = message
+            Modifier.padding(top = 12.dp)
         )
+        TextLink(stringResource(R.string.watch_open), onWatch, Modifier.padding(top = 8.dp), color = c.lime)
     }
 }
 
 @Composable
-private fun ContactRow(contact: TrustedContact, first: Boolean, last: Boolean, vm: ContactsViewModel, onEdit: () -> Unit) {
+private fun PersonRow(
+    ct: TrustedContact,
+    index: Int,
+    edit: Boolean,
+    sending: Boolean,
+    count: Int,
+    onOpen: (TrustedContact) -> Unit,
+    onMove: (String, Int) -> Unit,
+    onPrimary: (String) -> Unit,
+    onLanguage: (TrustedContact) -> Unit,
+    onInvite: (TrustedContact) -> Unit,
+    onRemove: (String) -> Unit,
+    onSimulate: (String) -> Unit
+) {
     val c = Cr.colors
-    val accepted = contact.status == ContactStatus.ACCEPTED
-    PxPanel(Modifier.fillMaxWidth(), border = if (accepted) c.lime else c.lineControl, padding = PaddingValues(10.dp)) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("${contact.position + 1}", style = PxType.title, color = c.lime)
-                Column(Modifier.weight(1f)) {
-                    Text(contact.name, style = PxType.bodyBold, maxLines = 1)
-                    Text(contact.phone.value, style = PxType.caption, color = c.muted)
-                    val sub = listOfNotNull(
-                        contact.relation,
-                        stringResource(roleLabel(contact.role)).takeIf {
-                            contact.role !=
-                                ContactRole.NONE
+    val (line, lineColor) = statusLine(ct)
+    val order = stringResource(R.string.v_alert_position, index + 1)
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier.fillMaxWidth().clickable(role = Role.Button) { onOpen(ct) }.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Avatar(ct.name, index)
+            Column(Modifier.weight(1f)) {
+                Text(
+                    androidx.compose.ui.text.buildAnnotatedString {
+                        append(ct.name)
+                        ct.relation?.takeIf { it.isNotBlank() }?.let {
+                            pushStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Normal, color = c.muted))
+                            append(" · $it")
+                            pop()
                         }
-                    )
-                    if (sub.isNotEmpty()) Text(sub.joinToString(" · "), style = PxType.caption, color = c.ink, maxLines = 1)
-                }
-                Text(statusLabel(contact.status).uppercase(), style = PxType.label, color = if (accepted) c.lime else c.warn)
+                    },
+                    style = V.text(17.sp, FontWeight.SemiBold),
+                    color = c.ink,
+                    maxLines = 1
+                )
+                Text(line, style = V.mono, color = lineColor, maxLines = 2)
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(PixelIcon.UP, stringResource(R.string.contacts_move_up), enabled = !first) { vm.move(contact.id, -1) }
-                IconButton(PixelIcon.DOWN, stringResource(R.string.contacts_move_down), enabled = !last) { vm.move(contact.id, 1) }
-                IconButton(
-                    PixelIcon.STAR,
-                    stringResource(R.string.contacts_primary),
-                    selected = contact.role == ContactRole.PRIMARY
-                ) { vm.setPrimary(contact.id) }
-                Chip(contact.language.name) { vm.cycleLanguage(contact) }
-                Chip(stringResource(R.string.contacts_edit)) { onEdit() }
+            when {
+                ct.isGuardian -> com.cerclerouge.app.ui.components.Chip(stringResource(R.string.v_referent), Tone.Ink)
+                ct.status == ContactStatus.ACCEPTED -> com.cerclerouge.app.ui.components.Chip(stringResource(R.string.contacts_status_accepted), Tone.Calm)
+                ct.status == ContactStatus.PENDING -> com.cerclerouge.app.ui.components.Chip(stringResource(R.string.contacts_status_pending), Tone.Wait)
+                else -> com.cerclerouge.app.ui.components.Chip(stringResource(R.string.contacts_status_declined), Tone.Mute)
+            }
+            Text("${index + 1}", style = V.text(13.sp, FontWeight.SemiBold), color = Color(0xFF66788A), modifier = Modifier.width(18.dp).semantics { contentDescription = order })
+        }
+        if (edit) {
+            Row(Modifier.fillMaxWidth().padding(start = 72.dp, end = 10.dp, bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(PixelIcon.UP, stringResource(R.string.contacts_move_up), enabled = index > 0) { onMove(ct.id, -1) }
+                IconButton(PixelIcon.DOWN, stringResource(R.string.contacts_move_down), enabled = index < count - 1) { onMove(ct.id, 1) }
+                IconButton(PixelIcon.STAR, stringResource(R.string.contacts_primary), selected = ct.role == ContactRole.PRIMARY) { onPrimary(ct.id) }
+                Chip(ct.language.name) { onLanguage(ct) }
+                if (ct.status != ContactStatus.ACCEPTED && ct.status != ContactStatus.WITHDRAWN) {
+                    Chip(stringResource(if (sending) R.string.contacts_inviting else R.string.contacts_invite)) { onInvite(ct) }
+                }
+                if (BuildConfig.DEBUG && ct.status != ContactStatus.ACCEPTED) Chip(stringResource(R.string.contacts_simulate)) { onSimulate(ct.id) }
                 Spacer(Modifier.weight(1f))
-                if (!accepted && contact.status != ContactStatus.WITHDRAWN) {
-                    val sending by vm.sending.collectAsState()
-                    Chip(stringResource(if (sending == contact.id) R.string.contacts_inviting else R.string.contacts_invite)) {
-                        if (sending == null) vm.invite(contact)
-                    }
-                }
-                if (BuildConfig.DEBUG && !accepted) Chip(stringResource(R.string.contacts_simulate)) { vm.simulateAccepted(contact.id) }
-                IconButton(PixelIcon.CROSS, stringResource(R.string.contacts_remove)) { vm.remove(contact.id) }
+                IconButton(PixelIcon.CROSS, stringResource(R.string.contacts_remove)) { onRemove(ct.id) }
             }
-            if (contact.isGuardian) Text(stringResource(R.string.contacts_guardian).uppercase(), style = PxType.label, color = c.muted)
+        }
+    }
+}
+
+/**
+ * Ajouter un proche (maquette VerreProcheAjout) : prénom, numéro, choix dans les contacts du téléphone, langue des messages,
+ * aperçu du SMS d'invitation, « Envoyer l'invitation » (ajout puis invitation par SMS).
+ */
+@Composable
+private fun AddContactScreen(vm: ContactsViewModel, message: Int?, onBack: () -> Unit) {
+    val context = LocalContext.current
+    var name by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("+509") }
+    var lang by remember { mutableStateOf(Language.FR) }
+    var searching by remember { mutableStateOf(false) }
+    val picker = rememberLauncherForActivityResult(PickPhone(context)) { picked ->
+        picked?.let {
+            name = it.name
+            phone = it.number
+        }
+    }
+    AddContactContent(
+        name,
+        phone,
+        lang,
+        message,
+        onName = { name = it.take(40) },
+        onPhone = { phone = it.take(20) },
+        onLang = { lang = it },
+        onPick = { picker.launch(Unit) },
+        onSearch = { searching = true },
+        onSend = { vm.addAndInvite(name.trim(), phone, lang, onBack) },
+        onBack = onBack
+    )
+    if (searching) {
+        SearchDialog(vm, onDismiss = {
+            searching = false
+            vm.clearSearch()
+        }) { picked ->
+            name = picked.name
+            phone = picked.number
+            searching = false
+            vm.clearSearch()
+        }
+    }
+}
+
+@Composable
+internal fun AddContactContent(
+    name: String,
+    phone: String,
+    lang: Language,
+    message: Int?,
+    onName: (String) -> Unit,
+    onPhone: (String) -> Unit,
+    onLang: (Language) -> Unit,
+    onPick: () -> Unit,
+    onSearch: () -> Unit,
+    onSend: () -> Unit,
+    onBack: () -> Unit
+) {
+    val c = Cr.colors
+    Column(Modifier.fillMaxSize().background(c.surface)) {
+        BackHeader(stringResource(R.string.v_add_title), onBack, stringResource(R.string.v_add_sub))
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 22.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            VField(stringResource(R.string.v_first_name), name, onName)
+            VField(
+                stringResource(R.string.v_number),
+                phone,
+                onPhone,
+                hint = stringResource(R.string.v_number_hint),
+                error = message?.takeIf { it != R.string.contacts_invite_sent }?.let { stringResource(it) },
+                keyboard = KeyboardOptions(keyboardType = KeyboardType.Phone)
+            )
+            Box(Modifier.padding(horizontal = 16.dp)) {
+                com.cerclerouge.app.ui.components.WhiteButton(stringResource(R.string.v_pick_contacts), onPick, icon = PixelIcon.USERS)
+            }
+            TextLink(stringResource(R.string.contacts_search), onSearch, color = c.lime)
+            Column {
+                Text(stringResource(R.string.v_msg_language), style = V.text(14.sp, FontWeight.SemiBold), color = c.ink, modifier = Modifier.padding(start = 20.dp, bottom = 8.dp))
+                PillChoice(listOf(Language.FR to "Français", Language.HT to "Kreyòl", Language.EN to "English"), lang, onLang)
+            }
+            Column(Modifier.padding(horizontal = 16.dp).fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(c.raised).padding(horizontal = 16.dp, vertical = 12.dp)) {
+                Text(stringResource(R.string.v_sms_preview), style = V.text(14.sp, FontWeight.SemiBold), color = c.ink)
+                Text(stringResource(R.string.v_sms_preview_body), style = V.text(14.sp, line = 20.sp), color = Color(0xFF2C3A47))
+            }
+        }
+        BottomActions {
+            InkButton(stringResource(R.string.v_send_invite), onSend, enabled = name.isNotBlank() && phone.count(Char::isDigit) >= 8)
         }
     }
 }

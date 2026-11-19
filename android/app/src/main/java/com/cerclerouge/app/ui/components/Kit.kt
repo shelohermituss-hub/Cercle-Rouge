@@ -132,7 +132,7 @@ fun SectionLabel(text: String, right: String? = null, onRight: (() -> Unit)? = n
         Text(text.uppercase(), style = V.section, color = Cr.colors.muted, modifier = Modifier.weight(1f).semantics { heading() })
         right?.let {
             val m = if (onRight != null) Modifier.clickable(role = Role.Button, onClick = onRight).padding(vertical = 12.dp) else Modifier
-            Text(it, style = V.body, color = if (onRight != null) Cr.colors.lime else Cr.colors.ink, modifier = m)
+            Text(it, style = V.body, color = Cr.colors.ink, modifier = m)
         }
     }
 }

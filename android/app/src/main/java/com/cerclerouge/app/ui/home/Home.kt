@@ -325,8 +325,15 @@ fun HomeScreen(
             state.protection.isAlert -> EmergencyScreen(vm, state, emergencyCountry.primary, onSafe = {
                 guarded(Guarded.IM_SAFE)
             }, onCall = ::dial114)
-            sos == SosStep.HOLD -> SosHoldScreen(onBack = { sos = SosStep.NONE }, onTrigger = { sos = SosStep.COUNTDOWN })
+            sos == SosStep.HOLD -> SosHoldScreen(
+                onBack = { sos = SosStep.NONE },
+                onTrigger = { sos = SosStep.COUNTDOWN },
+                names = book.contacts.filter { it.status == ContactStatus.ACCEPTED }.sortedBy { it.position }.map { it.name.substringBefore(' ') }.take(3),
+                number = emergencyCountry.primary,
+                onCall = ::dial114
+            )
             sos == SosStep.COUNTDOWN -> CountdownScreen(
+                names = book.contacts.filter { it.status == ContactStatus.ACCEPTED }.sortedBy { it.position }.map { it.name.substringBefore(' ') }.take(3),
                 onCancel = { sos = SosStep.NONE },
                 onDone = {
                     sos = SosStep.NONE
@@ -646,212 +653,12 @@ private fun MapCard(
 
 private const val LARGE_FONT = 1.5f
 
-/** Maquette « SOS · appui long » : 12 carrés s'allument autour du disque pendant 1,5 s. */
-@Composable
-internal fun SosHoldScreen(onBack: () -> Unit, onTrigger: () -> Unit) {
-    val c = Cr.colors
-    val progress = remember { Animatable(0f) }
-    val scope = rememberCoroutineScope()
-    val haptic = LocalHapticFeedback.current
-    val a11y = stringResource(R.string.sos_a11y)
-    BackHandler(onBack = onBack)
-    Column(Modifier.fillMaxSize()) {
-        TopBar(stringResource(R.string.sos), onBack)
-        Column(Modifier.fillMaxWidth().padding(top = 36.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(Modifier.size(300.dp), contentAlignment = Alignment.Center) {
-                val lit = (progress.value * 12).toInt()
-                repeat(12) { i ->
-                    val angle = Math.toRadians(i * 30.0 - 90)
-                    Box(
-                        Modifier
-                            .offset((130 * Math.cos(angle)).dp, (130 * Math.sin(angle)).dp)
-                            .size(12.dp).clip(CircleShape)
-                            .background(c.danger.copy(alpha = if (i < lit) 1f else 0.2f))
-                    )
-                }
-                PixelDisc(
-                    size = 200.dp,
-                    cells = 25,
-                    fill = c.danger,
-                    glow = c.danger,
-                    modifier = Modifier
-                        .semantics {
-                            role = Role.Button
-                            contentDescription = a11y
-                            onClick {
-                                onTrigger()
-                                true
-                            }
-                        }
-                        .pointerInput(Unit) {
-                            awaitEachGesture {
-                                awaitFirstDown()
-                                val job = scope.launch {
-                                    progress.snapTo(0f)
-                                    progress.animateTo(1f, tween(1500, easing = LinearEasing))
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    onTrigger()
-                                }
-                                waitForUpOrCancellation()
-                                if (progress.value < 1f) {
-                                    job.cancel()
-                                    scope.launch { progress.snapTo(0f) }
-                                }
-                            }
-                        }
-                ) {
-                    PixelIconView(PixelIcon.ALERT, 40.dp, Color.White, strokeWidth = 2.2f)
-                    Text(
-                        stringResource(R.string.sos),
-                        style = PxType.display.copy(
-                            fontSize = PxType.display.fontSize * 1.7f,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                        ),
-                        color = Color.White
-                    )
-                }
-            }
-            Spacer(Modifier.height(20.dp))
-            Text(stringResource(R.string.sos_hold_title), style = PxType.display)
-            Spacer(Modifier.height(6.dp))
-            Text(stringResource(R.string.sos_hold_body), style = PxType.body, color = c.muted, textAlign = TextAlign.Center)
-        }
-        Spacer(Modifier.weight(1f))
-        PxPanel(Modifier.fillMaxWidth().padding(12.dp), padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                PixelIconView(PixelIcon.LOCK, 24.dp, c.lime)
-                Text(stringResource(R.string.sos_hold_note), style = PxType.caption)
-            }
-        }
-    }
-}
-
-/** Maquette « SOS · compte à rebours » : 5 s pour annuler, puis l'alerte part. */
-@Composable
-internal fun CountdownScreen(onCancel: () -> Unit, onDone: () -> Unit) {
-    val c = Cr.colors
-    var seconds by remember { mutableIntStateOf(5) }
-    val a11y = pluralStringResource(R.plurals.countdown_a11y, seconds, seconds)
-    BackHandler(onBack = onCancel)
-    LaunchedEffect(Unit) {
-        while (seconds > 0) {
-            delay(1000)
-            seconds--
-        }
-        onDone()
-    }
-    Column(Modifier.fillMaxSize()) {
-        TopBar(stringResource(R.string.sos), null)
-        Column(Modifier.fillMaxWidth().padding(top = 28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(R.string.countdown_label).uppercase(), style = PxType.label, color = c.danger)
-            Box(Modifier.padding(top = 8.dp), contentAlignment = Alignment.Center) {
-                Orb(OrbState.CONNECTING, 220.dp, c.danger)
-                Text(
-                    "$seconds",
-                    style = PxType.digits,
-                    color = c.danger,
-                    modifier = Modifier.semantics {
-                        liveRegion = LiveRegionMode.Assertive
-                        contentDescription = a11y
-                    }
-                )
-            }
-            Text(stringResource(R.string.countdown_seconds), style = PxType.display, modifier = Modifier.padding(top = 12.dp))
-            Text(
-                stringResource(R.string.countdown_body),
-                style = PxType.body,
-                color = c.muted,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
-            )
-        }
-        Spacer(Modifier.weight(1f))
-        PxButton(stringResource(R.string.action_cancel), onCancel, Modifier.padding(12.dp), icon = PixelIcon.CROSS, tall = true)
-    }
-}
-
-/** Maquette « Urgence » : bandeau d'alerte, contacts, journal, « Je suis en sécurité » et 114. */
-@Composable
-private fun EmergencyScreen(vm: HomeViewModel, state: EngineState, number: String, onSafe: () -> Unit, onCall: () -> Unit) {
-    SecureScreen() // S7.04 : pas de capture de l'écran d'urgence
-    val c = Cr.colors
-    val resources = LocalResources.current
-    var lines by remember { mutableStateOf(emptyList<ChainedEntry>()) }
-    LaunchedEffect(state) { lines = vm.log.latest(6) }
-    val time = remember { DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault()) }
-    Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        PxPanel(Modifier.fillMaxWidth(), radius = 34.dp, padding = PaddingValues(18.dp)) {
-            Column(
-                Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                FaceIdLoop(76.dp)
-                Text(
-                    stringResource(R.string.urgent_sent),
-                    style = PxType.display,
-                    color = c.danger,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.semantics { heading() }
-                )
-                state.alert?.let { Text(time.format(it.openedAt), style = PxType.caption, color = c.muted) }
-            }
-        }
-        Text(stringResource(R.string.urgent_contacts).uppercase(), style = PxType.label, color = c.muted)
-        // Réponses des proches via la page de suivi (S3.10) ; à défaut, combien ont été prévenus.
-        val book by vm.contacts.book.collectAsState()
-        val feedback by vm.server.feedback.collectAsState()
-        val replied = feedback.any { it.action != "VIEWED" }
-        PxPanel(
-            Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-            border = if (replied) c.lime else c.warn,
-            padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                PixelIconView(if (replied) PixelIcon.CHECK else PixelIcon.USERS, 24.dp, if (replied) c.lime else c.warn)
-                Column {
-                    when {
-                        book.contacts.isEmpty() -> Text(stringResource(R.string.emergency_no_contacts, number), style = PxType.body)
-                        feedback.isEmpty() -> Text(
-                            pluralStringResource(R.plurals.urgent_notified, book.contacts.size, book.contacts.size),
-                            style = PxType.body
-                        )
-                        else -> feedback.sortedByDescending { it.at }.forEach { f ->
-                            val who = f.label ?: stringResource(R.string.urgent_fb_someone)
-                            val text = when (f.action) {
-                                "TOOK_CONTACT" -> R.string.urgent_fb_took
-                                "FALSE_ALARM" -> R.string.urgent_fb_false
-                                "CALLED_EMERGENCY" -> R.string.urgent_fb_called
-                                else -> R.string.urgent_fb_viewed
-                            }
-                            Text(stringResource(text, who), style = if (f.action == "VIEWED") PxType.body else PxType.bodyBold)
-                        }
-                    }
-                }
-            }
-        }
-        Text(stringResource(R.string.nav_log).uppercase(), style = PxType.label, color = c.muted)
-        // Terminal du journal (référence AgentPrism).
-        Column(
-            Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.raised).padding(horizontal = 10.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            val rows = traceRows(lines, resources)
-            rows.forEachIndexed { i, row -> TraceLine(row, last = i == rows.lastIndex) }
-        }
-        PxButton(stringResource(R.string.urgent_safe), onSafe, icon = PixelIcon.CHECK, tall = true)
-        PxButton(stringResource(R.string.home_sat_call, number), onCall, variant = PxVariant.DARK_DANGER, icon = PixelIcon.PHONE)
-        // PDF 20 : l'app aide à alerter, elle ne remplace pas les secours.
-        Text(stringResource(R.string.disclaimer_short), style = PxType.caption, color = Cr.colors.muted)
-    }
-}
-
 /**
  * Animation « Face ID » de l'alerte en cours (fichier « Biometric Smart Animations » du porteur) :
  * visage → cercle qui tourne → coche, en boucle. Figée sur la coche si « réduire les animations ».
  */
 @Composable
-private fun FaceIdLoop(size: androidx.compose.ui.unit.Dp) {
+internal fun FaceIdLoop(size: androidx.compose.ui.unit.Dp) {
     val still = com.cerclerouge.app.ui.components.reduceMotion()
     var phase by remember { mutableStateOf(if (still) FacePhase.SUCCESS else FacePhase.IDLE) }
     LaunchedEffect(still) {
@@ -867,74 +674,6 @@ private fun FaceIdLoop(size: androidx.compose.ui.unit.Dp) {
         }
     }
     FaceUnlock(phase, size)
-}
-
-/**
- * PIN avec l'animation biométrique : visage au repos, cercle qui tourne pendant la vérification, puis coche (fermeture)
- * ou croix (nouvel essai).
- */
-@Composable
-internal fun PinDialog(
-    onDismiss: () -> Unit,
-    verify: suspend (String) -> Boolean,
-    onDone: () -> Unit,
-    onBiometric: (suspend () -> Unit)? = null
-) {
-    val c = Cr.colors
-    val scope = rememberCoroutineScope()
-    val activity = LocalActivity.current
-    val bioTitle = stringResource(R.string.bio_title)
-    val bioCancel = stringResource(R.string.bio_use_pin)
-    var pin by remember { mutableStateOf("") }
-    var phase by remember { mutableStateOf(FacePhase.IDLE) }
-    Dialog(onDismissRequest = onDismiss) {
-        PxPanel(fill = c.raised, radius = 32.dp, padding = PaddingValues(20.dp)) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                FaceUnlock(phase, 64.dp)
-                Text(stringResource(R.string.pin_enter), style = PxType.title)
-                if (phase == FacePhase.ERROR) {
-                    Text(
-                        stringResource(R.string.pin_wrong),
-                        style = PxType.label,
-                        color = c.danger,
-                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
-                    )
-                }
-                PinPad(pin, { v ->
-                    if (phase == FacePhase.SCANNING || phase == FacePhase.SUCCESS) return@PinPad
-                    pin = v
-                    if (phase == FacePhase.ERROR) phase = FacePhase.IDLE
-                    if (v.length == 4) {
-                        phase = FacePhase.SCANNING
-                        scope.launch {
-                            val ok = verify(v)
-                            phase = if (ok) FacePhase.SUCCESS else FacePhase.ERROR
-                            pin = ""
-                            if (ok) {
-                                delay(650)
-                                onDone()
-                            }
-                        }
-                    }
-                }, maxLength = 4)
-                // S7.02 : empreinte ou visage, seulement si l'utilisateur l'a activé (et pour une alerte, si autorisé).
-                if (onBiometric != null && Biometric.available(activity)) {
-                    PxButton(stringResource(R.string.bio_button), {
-                        if (phase == FacePhase.SCANNING || phase == FacePhase.SUCCESS) return@PxButton
-                        scope.launch {
-                            if (Biometric.prompt(activity, bioTitle, bioCancel)) {
-                                phase = FacePhase.SUCCESS
-                                onBiometric()
-                                delay(650)
-                                onDone()
-                            }
-                        }
-                    }, variant = PxVariant.OUTLINE, icon = PixelIcon.LOCK)
-                }
-                PxButton(stringResource(R.string.action_cancel), onDismiss, variant = PxVariant.OUTLINE)
-            }
-        }
-    }
 }
 
 private fun toast(context: Context, text: String) = Toast.makeText(context, text, Toast.LENGTH_SHORT).show()

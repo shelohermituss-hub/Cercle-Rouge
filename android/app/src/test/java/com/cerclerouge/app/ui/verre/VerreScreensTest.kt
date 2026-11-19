@@ -204,4 +204,32 @@ class VerreScreensTest {
     @Test fun addContact() = capture("VerreProcheAjout") {
         com.cerclerouge.app.ui.contacts.AddContactContent("Nadège", "+509 34 98 76 54", com.cerclerouge.contacts.Language.FR, null, {}, {}, {}, {}, {}, {}, {})
     }
+
+    @Test fun sosHold() = capture("VerreSos") { com.cerclerouge.app.ui.home.SosHoldScreen({}, {}, listOf("Jean", "Nadège"), "114", {}) }
+
+    @Test fun sosCountdown() = capture("VerreSosCompte") { com.cerclerouge.app.ui.home.CountdownScreen({}, {}, listOf("Jean", "Nadège")) }
+
+    @Test fun verification() = capture("VerreVerification") {
+        com.cerclerouge.app.ui.home.VerificationContent("Cris et choc près de toi", listOf("Jean", "Nadège"), 38, 60, {}, {})
+    }
+
+    @Test fun alert() = capture("VerreAlerte") {
+        com.cerclerouge.app.ui.home.AlertContent(
+            "Tes proches sont prévenus",
+            "Jean, Nadège et Paul voient ta position. Jean est en route (6 min). Mets-toi en lieu sûr si tu peux.",
+            listOf(
+                com.cerclerouge.app.ui.home.AlertLine("21:32:05", "ok", "Jean · notification reçue"),
+                com.cerclerouge.app.ui.home.AlertLine("21:32:09", "ok", "Paul · SMS livré"),
+                com.cerclerouge.app.ui.home.AlertLine("21:32:12", "th", "preuves chiffrées")
+            ),
+            "114",
+            {},
+            {},
+            face = { com.cerclerouge.app.ui.components.FaceUnlock(com.cerclerouge.app.ui.components.FacePhase.SUCCESS, it) }
+        )
+    }
+
+    @Test fun pin() = capture("VerrePin") {
+        com.cerclerouge.app.ui.home.PinContent("123", true, "Entre ton code pour confirmer que tu es en sécurité.", true, {}, {}, {}, {})
+    }
 }

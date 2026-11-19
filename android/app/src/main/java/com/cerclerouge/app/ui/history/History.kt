@@ -46,8 +46,11 @@ fun formatTime(millis: Long): String {
 
 /** Libellé du motif d'une alerte (Reason) ou du mode d'un trajet ; texte brut si inconnu (anciennes données). */
 @Composable
-fun reasonLabel(e: HistoryEntity): String = stringResource(
-    when (e.reason) {
+fun reasonLabel(e: HistoryEntity): String = reasonLabel(e.reason)
+
+@Composable
+fun reasonLabel(reason: String?): String = stringResource(
+    when (reason) {
         "SOS" -> R.string.reason_sos
         "DISTRESS_SCREAM" -> R.string.reason_scream
         "VIOLENCE_SOUND" -> R.string.reason_violence
